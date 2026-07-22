@@ -1,72 +1,268 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getHealth } from '../api/health'
-import { clearToken } from '../api/client'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { clearToken, getLocalDate } from '../api/client'
+import { getEntriesByMonth, getEntrySummary } from '../api/entries'
+import BottomNav from '../components/BottomNav'
 
-// Feature 0 skeleton screen: confirms the frontend can reach the backend.
+const moodDetails = {
+  1: ['😞', 'Rough', 'bg-error-container/20'],
+  2: ['😔', 'Low', 'bg-primary-container/30'],
+  3: ['😐', 'Okay', 'bg-surface-container-highest'],
+  4: ['😊', 'Good', 'bg-secondary-container/30'],
+  5: ['😁', 'Great', 'bg-tertiary-container/30'],
+}
+
 export default function Home() {
-  const [state, setState] = useState({ status: 'loading' })
+  const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), [])
+  const month = formatMonth(today)
+  const [entries, setEntries] = useState([])
+  const [summary, setSummary] = useState({
+    entry_count: 0,
+    dominant_mood: null,
+    top_tag: null,
+  })
+  const [status, setStatus] = useState('Loading your journal...')
   const navigate = useNavigate()
 
   useEffect(() => {
-    getHealth()
-      .then((h) => setState({ status: 'ok', ...h }))
-      .catch((e) => setState({ status: 'error', error: String(e) }))
-  }, [])
+    Promise.all([getEntriesByMonth(month), getEntrySummary(month)])
+      .then(([monthEntries, monthSummary]) => {
+        setEntries(monthEntries)
+        setSummary(monthSummary)
+        setStatus('')
+      })
+      .catch((error) => setStatus(error.message))
+  }, [month])
 
-  const ok = state.status === 'ok'
-  const pill =
-    state.status === 'loading'
-      ? 'bg-surface-container text-on-surface-variant'
-      : ok
-        ? 'bg-secondary-container text-on-secondary-container'
-        : 'bg-error-container text-on-error-container'
+  const entriesByDate = useMemo(
+    () => Object.fromEntries(entries.map((entry) => [entry.date, entry])),
+    [entries],
+  )
+  const week = useMemo(() => weekDays(today), [today])
+  const recent = useMemo(
+    () => [...entries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2),
+    [entries],
+  )
+  const dominantMood = summary.dominant_mood
+    ? moodDetails[summary.dominant_mood]
+    : null
 
   return (
-    <div className="min-h-screen bg-background text-on-background flex flex-col items-center justify-center px-container-margin">
-      <div
-        className="w-full max-w-md bg-white rounded-[24px] p-lg cloud-shadow flex flex-col items-center gap-md text-center"
-        role="status"
-        aria-live="polite"
-      >
-        <div
-          className="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center text-[28px]"
-          aria-hidden="true"
-        >
-          🌸
+    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
+      <header className="flex items-center justify-between px-container-margin py-md">
+        <div className="flex items-center gap-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-xl">
+            🌸
+          </div>
+          <h1 className="text-headline-lg-mobile font-headline-lg-mobile">Moodila</h1>
         </div>
-        <h1 className="text-headline-xl font-headline-xl text-on-surface">MoodShare</h1>
-        <p className="text-body-sm font-body-sm text-on-surface-variant">
-          A calm place to keep track of your days.
-        </p>
-
-        <div className={`mt-sm flex items-center gap-xs px-md py-sm rounded-full text-label-lg font-label-lg ${pill}`}>
-          <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
-            {state.status === 'loading' ? 'sync' : ok ? 'check_circle' : 'error'}
-          </span>
-          {state.status === 'loading' ? 'Checking backend...' : ok ? 'backend OK' : 'Backend unreachable'}
-        </div>
-
-        {ok && (
-          <p className="text-label-sm font-label-sm text-on-surface-variant">
-            db: {state.db} / {new Date(state.time).toLocaleTimeString()}
-          </p>
-        )}
-        {state.status === 'error' && (
-          <p className="text-label-sm font-label-sm text-error">{state.error}</p>
-        )}
-
         <button
           type="button"
+          aria-label="Log out"
+          title="Log out"
           onClick={() => {
             clearToken()
             navigate('/login', { replace: true })
           }}
-          className="mt-sm h-11 px-lg rounded-lg bg-surface-container-low text-on-surface-variant text-label-lg font-label-lg"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
         >
-          Log out
+          <span className="material-symbols-outlined text-[20px]">logout</span>
         </button>
+      </header>
+
+      <div className="space-y-lg px-container-margin">
+        <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
+          <div className="relative z-10 flex max-w-[75%] flex-col items-start gap-md">
+            <h2 className="text-headline-lg font-headline-lg text-on-primary-container">
+              {greeting()}
+            </h2>
+            <Link
+              to="/entries/new"
+              className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md"
+            >
+              Journal today
+              <span className="material-symbols-outlined text-[18px]">edit</span>
+            </Link>
+          </div>
+        </section>
+
+        <section className="space-y-md">
+          <div className="flex items-end justify-between">
+            <h2 className="text-label-lg font-label-lg text-on-surface-variant">
+              This week's mood
+            </h2>
+            <Link to="/calendar" className="text-label-sm font-label-sm text-primary">
+              See more
+            </Link>
+          </div>
+          <div className="flex justify-between gap-sm overflow-x-auto rounded-[24px] bg-white/40 p-md cloud-shadow">
+            {week.map((date) => {
+              const key = formatDate(date)
+              const entry = entriesByDate[key]
+              const mood = entry && moodDetails[entry.mood]
+              const isToday = key === getLocalDate()
+              const isFuture = key > getLocalDate()
+              return (
+                <Link
+                  key={key}
+                  to={isFuture ? '#' : `/entries/new?date=${key}`}
+                  aria-disabled={isFuture}
+                  onClick={(event) => isFuture && event.preventDefault()}
+                  className={`flex min-w-12 flex-col items-center gap-xs ${isFuture ? 'opacity-40' : ''}`}
+                >
+                  <span
+                    className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
+                      mood ? mood[2] : 'bg-surface-variant'
+                    } ${isToday ? 'ring-2 ring-primary' : ''}`}
+                  >
+                    {mood ? mood[0] : (
+                      <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
+                        add
+                      </span>
+                    )}
+                  </span>
+                  <span className={`text-label-sm font-label-sm ${isToday ? 'font-bold text-primary' : 'text-on-surface-variant'}`}>
+                    {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-2 gap-md" aria-labelledby="summary-title">
+          <div className="col-span-2 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
+            <h2 id="summary-title" className="text-headline-lg font-headline-lg text-on-surface">
+              Mood summary
+            </h2>
+            <div className="mt-sm flex items-baseline gap-xs">
+              <span className="text-headline-xl font-headline-xl text-on-surface">
+                {summary.entry_count}
+              </span>
+              <span className="text-body-md font-body-md text-on-surface-variant">
+                entries
+              </span>
+            </div>
+            <p className="mt-1 text-body-sm font-body-sm text-on-surface-variant">
+              Total moods logged this month
+            </p>
+          </div>
+          <div className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-lg">
+            <span className="text-label-sm font-label-sm text-on-surface-variant">
+              Dominant mood
+            </span>
+            <div className="flex items-center gap-xs">
+              <span className="text-[28px]">{dominantMood?.[0] || '—'}</span>
+              <span className="text-headline-lg font-headline-lg text-on-surface">
+                {dominantMood?.[1] || 'None'}
+              </span>
+            </div>
+          </div>
+          <div className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-lg">
+            <span className="text-label-sm font-label-sm text-on-surface-variant">
+              Most used tag
+            </span>
+            <div className="flex items-center gap-xs">
+              <span className="material-symbols-outlined text-[28px] text-secondary">
+                auto_awesome
+              </span>
+              <span className="min-w-0 break-words text-headline-lg font-headline-lg text-on-surface">
+                {summary.top_tag || 'None'}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-md">
+          <div className="flex items-center justify-between">
+            <h2 className="text-label-lg font-label-lg uppercase text-on-surface-variant">
+              Recent logs
+            </h2>
+            <span className="rounded-full bg-surface-container px-sm py-xs text-label-sm font-label-sm text-on-surface-variant">
+              This month
+            </span>
+          </div>
+          <div className="space-y-sm">
+            {recent.map((entry) => {
+              const mood = moodDetails[entry.mood]
+              return (
+                <Link
+                  key={entry.date}
+                  to={`/entries/new?date=${entry.date}`}
+                  className="flex items-center gap-md rounded-[24px] bg-white p-md cloud-shadow"
+                >
+                  <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] text-[28px] ${mood[2]}`}>
+                    {mood[0]}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-start justify-between gap-xs">
+                      <strong className="truncate text-body-md text-on-surface">
+                        {entry.tags[0] || mood[1]}
+                      </strong>
+                      <span className="shrink-0 text-label-sm font-label-sm text-on-surface-variant/60">
+                        {relativeDate(entry.date)}
+                      </span>
+                    </span>
+                    <span className="block truncate text-body-sm text-on-surface-variant">
+                      {entry.text || 'No note for this day.'}
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
+            {!status && recent.length === 0 && (
+              <Link
+                to="/entries/new"
+                className="flex min-h-24 items-center justify-center rounded-[24px] bg-white p-md text-body-sm text-on-surface-variant cloud-shadow"
+              >
+                Your recent entries will appear here.
+              </Link>
+            )}
+          </div>
+        </section>
+
+        {status && (
+          <p role="status" className="text-center text-body-sm font-body-sm text-on-surface-variant">
+            {status}
+          </p>
+        )}
       </div>
-    </div>
+      <BottomNav />
+    </main>
   )
+}
+
+function greeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function weekDays(today) {
+  const mondayOffset = (today.getDay() + 6) % 7
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset)
+  return Array.from({ length: 7 }, (_, index) =>
+    new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + index),
+  )
+}
+
+function relativeDate(date) {
+  const today = getLocalDate()
+  if (date === today) return 'Today'
+  const yesterday = new Date(`${today}T12:00:00`)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (date === formatDate(yesterday)) return 'Yesterday'
+  return new Date(`${date}T12:00:00`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatMonth(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function formatDate(date) {
+  return `${formatMonth(date)}-${String(date.getDate()).padStart(2, '0')}`
 }

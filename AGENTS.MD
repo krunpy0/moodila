@@ -124,27 +124,27 @@ end-to-end:
 
 ### Фича 2 — Создание записи дневника (Add Entry)
 
-- [ ] Backend: таблица `entries`, эндпоинт `POST /entries` (mood, tags, text,
-      date), `GET /entries/me?date=...`
-- [ ] Frontend: экран Add Entry по референсу (выбор эмодзи настроения, чипы
-      тегов, текстовое поле, кнопка Save)
-- [ ] Тест: создал запись → она сохранилась в БД → видна при повторном запросе
+- [ X ] Backend: таблица `entries`, эндпоинт `POST /entries` (mood, tags, text,
+  date), `GET /entries/me?date=...`
+- [ X ] Frontend: экран Add Entry по референсу (выбор эмодзи настроения, чипы
+  тегов, текстовое поле, кнопка Save)
+- [ X ] Тест: создал запись → она сохранилась в БД → видна при повторном запросе
 
 ### Фича 3 — Календарь (свой)
 
-- [ ] Backend: `GET /entries/me?month=YYYY-MM` — список записей месяца с mood
+- [x] Backend: `GET /entries/me?month=YYYY-MM` — список записей месяца с mood
       для отрисовки точек в календаре
-- [ ] Frontend: экран Calendar (Month view) с эмодзи по дням, переход между
+- [x] Frontend: экран Calendar (Month view) с эмодзи по дням, переход между
       месяцами, клик по дню открывает запись
-- [ ] Тест: сделанные записи отображаются нужными эмодзи в нужных днях
+- [x] Тест: сделанные записи отображаются нужными эмодзи в нужных днях
 
 ### Фича 4 — Home с summary
 
-- [ ] Backend: эндпоинт `GET /entries/summary?month=YYYY-MM` (доминирующее
+- [x] Backend: эндпоинт `GET /entries/summary?month=YYYY-MM` (доминирующее
       настроение, самый частый тег, количество записей)
-- [ ] Frontend: экран Home — приветствие, "This week's mood", Recent logs,
+- [x] Frontend: экран Home — приветствие, "This week's mood", Recent logs,
       блок Mood summary
-- [ ] Тест: карточки summary показывают реальные агрегаты по записям юзера
+- [x] Тест: карточки summary показывают реальные агрегаты по записям юзера
 
 ### Фича 5 — Друзья: заявка и подтверждение
 

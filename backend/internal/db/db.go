@@ -88,14 +88,15 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, dir string) error {
 			return fmt.Errorf("read migration %s: %w", name, err)
 		}
 
-		// Apply the migration and record its version in a single multi-statement
-		// simple-query batch. Postgres executes such a batch as one implicit
-		// transaction, so it is atomic — while avoiding pgx's explicit Begin/Tx
-		// path, which stalls through Supabase's connection pooler.
-		version := strings.ReplaceAll(name, "'", "''")
-		batch := string(sqlBytes) + "\n;\nINSERT INTO schema_migrations (version) VALUES ('" + version + "');"
-		if _, err := pool.Exec(ctx, batch); err != nil {
+		// Supabase's pooler can stall on multi-statement batches. Migrations are
+		// idempotent, so apply the SQL first and record it only after success.
+		if _, err := pool.Exec(ctx, string(sqlBytes)); err != nil {
 			return fmt.Errorf("apply migration %s: %w", name, err)
+		}
+		if _, err := pool.Exec(ctx,
+			`INSERT INTO schema_migrations (version) VALUES ($1)`, name,
+		); err != nil {
+			return fmt.Errorf("record migration %s: %w", name, err)
 		}
 		fmt.Printf("migration applied: %s\n", name)
 	}

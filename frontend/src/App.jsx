@@ -4,6 +4,8 @@ import { getSession } from './api/auth'
 import { clearToken, getToken } from './api/client'
 import Home from './pages/Home'
 import Auth from './pages/Auth'
+import AddEntry from './pages/AddEntry'
+import Calendar from './pages/Calendar'
 
 export default function App() {
   return (
@@ -15,6 +17,22 @@ export default function App() {
           element={
             <RequireAuth>
               <Home />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/entries/new"
+          element={
+            <RequireAuth>
+              <AddEntry />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <RequireAuth>
+              <Calendar />
             </RequireAuth>
           }
         />

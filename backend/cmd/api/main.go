@@ -57,6 +57,11 @@ func main() {
 	router.POST("/auth/register", auth.Register)
 	router.POST("/auth/login", auth.Login)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), auth.Session)
+	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
+	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
+	authorized.POST("/entries", entries.Save)
+	authorized.GET("/entries/me", entries.Me)
+	authorized.GET("/entries/summary", entries.Summary)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

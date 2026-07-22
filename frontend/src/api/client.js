@@ -4,12 +4,21 @@ const TOKEN_KEY = 'moodshare_token'
 export const getToken = () => localStorage.getItem(TOKEN_KEY)
 export const setToken = (token) => localStorage.setItem(TOKEN_KEY, token)
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY)
+export const getLocalDate = () => {
+  const now = new Date()
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+  ].join('-')
+}
 
 export async function api(path, options = {}) {
   const token = getToken()
   const res = await fetch(BASE + path, {
     headers: {
       'Content-Type': 'application/json',
+      'X-Time-Zone': Intl.DateTimeFormat().resolvedOptions().timeZone,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },

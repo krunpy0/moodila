@@ -1,0 +1,180 @@
+package handlers
+
+import (
+	"errors"
+	"net/http"
+	"strings"
+	"time"
+
+	"moodshare/internal/repository"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
+)
+
+type Entries struct {
+	Entries repository.Entries
+}
+
+type entryInput struct {
+	Date string   `json:"date"`
+	Mood int      `json:"mood"`
+	Tags []string `json:"tags"`
+	Text string   `json:"text"`
+}
+
+func (h Entries) Save(c *gin.Context) {
+	if h.Entries.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	var input entryInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
+		return
+	}
+	input.Date = strings.TrimSpace(input.Date)
+	input.Text = strings.TrimSpace(input.Text)
+	input.Tags = cleanTags(input.Tags)
+	today, err := currentDate(time.Now(), c.GetHeader("X-Time-Zone"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid time zone"})
+		return
+	}
+	if err := validateEntryAt(input, today); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	entry, err := h.Entries.Save(
+		c.Request.Context(), c.GetString("userID"), input.Date, input.Mood, input.Tags, input.Text,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save entry"})
+		return
+	}
+	c.JSON(http.StatusOK, entry)
+}
+
+func (h Entries) Me(c *gin.Context) {
+	if h.Entries.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	if month := strings.TrimSpace(c.Query("month")); month != "" {
+		_, nextMonth, err := monthBounds(month)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "month must be YYYY-MM"})
+			return
+		}
+		entries, err := h.Entries.ByMonth(
+			c.Request.Context(),
+			c.GetString("userID"),
+			month,
+			nextMonth,
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load entries"})
+			return
+		}
+		c.JSON(http.StatusOK, entries)
+		return
+	}
+
+	date := strings.TrimSpace(c.Query("date"))
+	if _, err := time.Parse(time.DateOnly, date); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "date must be YYYY-MM-DD"})
+		return
+	}
+	entry, err := h.Entries.ByDate(c.Request.Context(), c.GetString("userID"), date)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "entry not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load entry"})
+		return
+	}
+	c.JSON(http.StatusOK, entry)
+}
+
+func (h Entries) Summary(c *gin.Context) {
+	if h.Entries.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	month, nextMonth, err := monthBounds(strings.TrimSpace(c.Query("month")))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "month must be YYYY-MM"})
+		return
+	}
+	summary, err := h.Entries.Summary(c.Request.Context(), c.GetString("userID"), month, nextMonth)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load summary"})
+		return
+	}
+	c.JSON(http.StatusOK, summary)
+}
+
+func monthBounds(month string) (string, string, error) {
+	start, err := time.Parse("2006-01", month)
+	if err != nil || start.Format("2006-01") != month {
+		return "", "", errors.New("invalid month")
+	}
+	return month, start.AddDate(0, 1, 0).Format("2006-01"), nil
+}
+
+func validateEntryAt(input entryInput, today time.Time) error {
+	date, err := time.Parse(time.DateOnly, input.Date)
+	if err != nil {
+		return errors.New("date must be YYYY-MM-DD")
+	}
+	if date.After(today) {
+		return errors.New("date cannot be in the future")
+	}
+	if input.Mood < 1 || input.Mood > 5 {
+		return errors.New("mood must be between 1 and 5")
+	}
+	if len(input.Tags) > 10 {
+		return errors.New("choose at most 10 tags")
+	}
+	for _, tag := range input.Tags {
+		if tag == "" || len(tag) > 24 {
+			return errors.New("tags must be 1-24 characters")
+		}
+	}
+	if len(input.Text) > 5000 {
+		return errors.New("text must be 5000 characters or fewer")
+	}
+	return nil
+}
+
+func currentDate(now time.Time, timeZone string) (time.Time, error) {
+	location := time.UTC
+	if timeZone = strings.TrimSpace(timeZone); timeZone != "" {
+		var err error
+		location, err = time.LoadLocation(timeZone)
+		if err != nil {
+			return time.Time{}, err
+		}
+	}
+	local := now.In(location)
+	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC), nil
+}
+
+func cleanTags(tags []string) []string {
+	clean := make([]string, 0, len(tags))
+	seen := make(map[string]bool, len(tags))
+	for _, tag := range tags {
+		tag = strings.TrimSpace(tag)
+		key := strings.ToLower(tag)
+		if tag != "" && !seen[key] {
+			seen[key] = true
+			clean = append(clean, tag)
+		}
+	}
+	return clean
+}
