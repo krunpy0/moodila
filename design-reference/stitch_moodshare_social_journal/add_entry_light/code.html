@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="en" class="light" style=""><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#d7c1c8",
+                        "tertiary-fixed": "#eae4b1",
+                        "inverse-surface": "#303030",
+                        "primary-fixed-dim": "#d7c1c8",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#d6e5ef",
+                        "tertiary": "#636037",
+                        "surface-dim": "#dcd9d9",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#fbf9f8",
+                        "on-primary-fixed-variant": "#524249",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#6e6b41",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#76646b",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#bac9d3",
+                        "tertiary-container": "#f2ecb8",
+                        "surface-container-high": "#eae8e7",
+                        "on-background": "#1b1c1c",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#f0eded",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-fixed": "#1e1c00",
+                        "surface-container-highest": "#e4e2e1",
+                        "on-secondary-fixed": "#0f1d25",
+                        "surface": "#fbf9f8",
+                        "secondary": "#526069",
+                        "primary": "#6b5a60",
+                        "surface-bright": "#fbf9f8",
+                        "inverse-on-surface": "#f3f0f0",
+                        "secondary-container": "#d3e2ed",
+                        "surface-container-low": "#f6f3f2",
+                        "on-surface-variant": "#4d4447",
+                        "on-secondary-container": "#56656e",
+                        "primary-container": "#fce4ec",
+                        "outline": "#7f7478",
+                        "on-primary-fixed": "#25181e",
+                        "outline-variant": "#d0c3c7",
+                        "surface-tint": "#6b5a60",
+                        "tertiary-fixed-dim": "#cdc897",
+                        "on-tertiary-fixed-variant": "#4b4822",
+                        "surface-variant": "#e4e2e1",
+                        "on-secondary-fixed-variant": "#3b4951",
+                        "primary-fixed": "#f4dce4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "12px",
+                        "xs": "8px",
+                        "container-margin": "20px",
+                        "xl": "32px",
+                        "gutter": "12px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "label-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}</script></head><body class="bg-background text-on-surface min-h-screen pb-32">
+
+    <!-- Top Navigation Bar -->
+    <header class="flex justify-between items-center w-full px-container-margin py-md bg-transparent fixed top-0 z-40 backdrop-blur-md">
+        <button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:opacity-80 transition-opacity">
+            <span class="material-symbols-outlined text-on-surface" data-original-icon="arrow_back">arrow_back</span>
+        </button>
+        <h1 class="text-headline-lg-mobile font-headline-lg-mobile font-semibold text-on-surface">Record your day</h1>
+        <div class="w-10"></div> <!-- Spacer for symmetry -->
+    </header>
+
+    <main class="mt-20 px-container-margin space-y-lg">
+        
+        <!-- Mood Selection Card -->
+        <section class="bg-white rounded-[24px] p-lg mood-shadow">
+            <h2 class="text-label-lg font-label-lg text-on-surface-variant mb-md">How are you feeling today?</h2>
+            <div class="flex justify-between items-center mb-lg">
+                <button onclick="selectMood(this)" class="mood-btn group flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-error-container/20 group-hover:bg-error-container/40 transition-colors">
+                        <span class="material-symbols-outlined text-error text-[28px]">sentiment_very_dissatisfied</span>
+                    </div>
+                </button>
+                <button onclick="selectMood(this)" class="mood-btn group flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-tertiary-container/20 group-hover:bg-tertiary-container/40 transition-colors">
+                        <span class="material-symbols-outlined text-tertiary text-[28px]">sentiment_dissatisfied</span>
+                    </div>
+                </button>
+                <button onclick="selectMood(this)" class="mood-btn group flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-secondary-container/20 group-hover:bg-secondary-container/40 transition-colors">
+                        <span class="material-symbols-outlined text-secondary text-[28px]">sentiment_neutral</span>
+                    </div>
+                </button>
+                <button onclick="selectMood(this)" class="mood-btn group flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-primary-container/20 group-hover:bg-primary-container/40 transition-colors">
+                        <span class="material-symbols-outlined text-primary text-[28px]">sentiment_satisfied</span>
+                    </div>
+                </button>
+                <button onclick="selectMood(this)" class="mood-btn group flex flex-col items-center gap-2">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center bg-tertiary-fixed/30 group-hover:bg-tertiary-fixed/50 transition-colors">
+                        <span class="material-symbols-outlined text-tertiary-fixed-dim text-[28px]" style="font-variation-settings: 'FILL' 1;">sentiment_very_satisfied</span>
+                    </div>
+                </button>
+            </div>
+            
+            <div class="flex flex-wrap gap-xs">
+                <button class="px-md py-xs rounded-full bg-surface-container-low text-label-sm font-label-sm text-on-surface-variant hover:bg-primary-container hover:text-primary transition-colors">Calm</button>
+                <button class="px-md py-xs rounded-full bg-surface-container-low text-label-sm font-label-sm text-on-surface-variant hover:bg-primary-container hover:text-primary transition-colors">Chill</button>
+                <button class="px-md py-xs rounded-full bg-surface-container-low text-label-sm font-label-sm text-on-surface-variant hover:bg-primary-container hover:text-primary transition-colors">Motivated</button>
+                <button class="px-md py-xs rounded-full bg-surface-container-low text-label-sm font-label-sm text-on-surface-variant hover:bg-primary-container hover:text-primary transition-colors">Grateful</button>
+                <button class="px-md py-xs rounded-full bg-surface-container-low text-label-sm font-label-sm text-on-surface-variant hover:bg-primary-container hover:text-primary transition-colors">Inspired</button>
+                <button class="px-md py-xs rounded-full bg-surface-container-low text-label-sm font-label-sm text-on-surface-variant hover:bg-primary-container hover:text-primary transition-colors">Peaceful</button>
+            </div>
+        </section>
+
+        <!-- Summary Section -->
+        <section class="bg-white rounded-[24px] p-lg mood-shadow">
+            <h2 class="text-label-lg font-label-lg text-on-surface-variant mb-md">Write a summary of your day</h2>
+            <div class="relative">
+                <textarea placeholder="Start writing..." class="w-full border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant/40 min-h-[160px] p-0 resize-none bg-transparent"></textarea>
+                
+                <div class="flex items-center gap-md mt-lg pt-md border-t border-surface-container">
+                    <button class="flex items-center justify-center w-8 h-8 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">image</span>
+                    </button>
+                    <button class="flex items-center justify-center w-8 h-8 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">mic</span>
+                    </button>
+                    <button class="flex items-center justify-center w-8 h-8 rounded-full text-on-surface-variant hover:bg-surface-container transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">attach_file</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gratitude List Section -->
+        
+
+        <!-- Save Button -->
+        <button class="w-full py-md bg-primary text-on-primary rounded-full font-label-lg text-label-lg interactive-shadow hover:bg-primary/90 transition-all duration-300">
+            Save Entry
+        </button>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (Floating Shell) -->
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex justify-around items-center px-4 py-2 bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-xl shadow-[0px_10px_30px_rgba(0,0,0,0.04)] w-[90%] max-w-md rounded-full">
+        <a href="#" class="flex items-center justify-center text-on-surface-variant dark:text-surface-variant w-12 h-12 hover:bg-surface-container-highest dark:hover:bg-surface-variant rounded-full transition-all">
+            <span class="material-symbols-outlined">home</span>
+        </a>
+        <a href="#" class="flex items-center justify-center text-on-surface-variant dark:text-surface-variant w-12 h-12 hover:bg-surface-container-highest dark:hover:bg-surface-variant rounded-full transition-all">
+            <span class="material-symbols-outlined">calendar_today</span>
+        </a>
+        <a href="#" class="flex items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full w-12 h-12 scale-110 shadow-lg">
+            <span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">add</span>
+        </a>
+        <a href="#" class="flex items-center justify-center text-on-surface-variant dark:text-surface-variant w-12 h-12 hover:bg-surface-container-highest dark:hover:bg-surface-variant rounded-full transition-all">
+            <span class="material-symbols-outlined">grid_view</span>
+        </a>
+        <a href="#" class="flex items-center justify-center text-on-surface-variant dark:text-surface-variant w-12 h-12 hover:bg-surface-container-highest dark:hover:bg-surface-variant rounded-full transition-all">
+            <span class="material-symbols-outlined">person</span>
+        </a>
+    </nav>
+
+    <script class="">
+        function selectMood(btn) {
+            // Remove active classes from all mood buttons
+            document.querySelectorAll('.mood-btn div').forEach(el => {
+                el.classList.remove('ring-4', 'ring-primary-container', 'bg-primary-container');
+            });
+            // Add active effect to selected
+            const innerDiv = btn.querySelector</script></body></html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html><html lang="en" class="light"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#d7c1c8",
+                        "tertiary-fixed": "#eae4b1",
+                        "inverse-surface": "#303030",
+                        "primary-fixed-dim": "#d7c1c8",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#d6e5ef",
+                        "tertiary": "#636037",
+                        "surface-dim": "#dcd9d9",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#fbf9f8",
+                        "on-primary-fixed-variant": "#524249",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#6e6b41",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#76646b",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#bac9d3",
+                        "tertiary-container": "#f2ecb8",
+                        "surface-container-high": "#eae8e7",
+                        "on-background": "#1b1c1c",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#f0eded",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-fixed": "#1e1c00",
+                        "surface-container-highest": "#e4e2e1",
+                        "on-secondary-fixed": "#0f1d25",
+                        "surface": "#fbf9f8",
+                        "secondary": "#526069",
+                        "primary": "#6b5a60",
+                        "surface-bright": "#fbf9f8",
+                        "inverse-on-surface": "#f3f0f0",
+                        "secondary-container": "#d3e2ed",
+                        "surface-container-low": "#f6f3f2",
+                        "on-surface-variant": "#4d4447",
+                        "on-secondary-container": "#56656e",
+                        "primary-container": "#fce4ec",
+                        "outline": "#7f7478",
+                        "on-primary-fixed": "#25181e",
+                        "outline-variant": "#d0c3c7",
+                        "surface-tint": "#6b5a60",
+                        "tertiary-fixed-dim": "#cdc897",
+                        "on-tertiary-fixed-variant": "#4b4822",
+                        "surface-variant": "#e4e2e1",
+                        "on-secondary-fixed-variant": "#3b4951",
+                        "primary-fixed": "#f4dce4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "12px",
+                        "xs": "8px",
+                        "container-margin": "20px",
+                        "xl": "32px",
+                        "gutter": "12px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "label-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}}catch(_e){}</script><meta charset="utf-8"></head><body class="bg-background text-on-surface min-h-screen flex flex-col items-center">
+<main class="w-full max-w-md bg-background min-h-screen relative pb-32 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-container-margin py-md bg-transparent">
+<div class="flex items-center gap-sm">
+<div class="flex items-center gap-xs cursor-pointer active:scale-95 transition-transform">
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-semibold text-on-surface">Your calendar</span>
+<span class="material-symbols-outlined text-primary" data-original-icon="expand_more">expand_more</span>
+</div>
+<div class="flex -space-x-2 ml-2">
+<img class="w-8 h-8 rounded-full border-2 border-background object-cover" data-alt="A close-up portrait of a serene woman with a soft smile, high-key warm lighting, minimalist aesthetic, in a soft-focused natural environment. The visual style is empathetic and lived-in, matching a gentle wellness app brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlBCP43g4BWsA9jE_XLrB4NslpXjP5QRucX9at2B1jUtSVAQY-_Z2WRhFCA56eOEuG7I0aLjjZtIAqhmE8bIb54P_up_dzbPuOtiEUkcUwfyCcKKQW5p6GMtIM30DXkJCl-6HyUir3jUAoYgPl2COfstVpiAtUhtnGgGcrsl142bLyeGeCLsoWjxJdIkCDfpSFUWGZUQegwUNd6ZRTJgbL7GYgGrvotVhutKyIURJDHDhYGzzeuhYs">
+<img class="w-8 h-8 rounded-full border-2 border-background object-cover" data-alt="A portrait of a young man looking thoughtful and calm, bathed in golden hour light. The image has a soft-grain film quality and uses a warm, pastel-toned color palette consistent with a mental wellness platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1nuqsraCyQQBaBcZe4JBXGZFdTgm8RbHG1FAcXW0AVH1vJdQAR46EdCyDuXTSVn47rjHG1s2jfW0MDkYUTKWT4Owv0CL49Q8zcxFYwTk7uR8O2s1Wu2z0X0dUBHOpac639GJksD5OhIJPzTx84fMFH9WvMRzapBCeJL8VpKzKI1HRM6mrm1mH0icalxW9UlfPlOzedLyCLK-YAwR7qb6e4zPReHl67FbLH9jlYb7qj3u1eQfTRY45">
+<div class="w-8 h-8 rounded-full border-2 border-background bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container">+3</div>
+</div>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity active:scale-95">
+
+</button>
+</header>
+<!-- Segmented Control for Week/Month -->
+<section class="px-container-margin mb-lg">
+<div class="bg-surface-container-low p-1 rounded-full flex gap-1">
+<button class="flex-1 py-2 rounded-full text-label-lg font-label-lg text-on-surface-variant transition-all" id="toggle-week">Week</button>
+<button class="flex-1 py-2 rounded-full text-label-lg font-label-lg bg-surface-container-lowest text-on-surface cloud-shadow transition-all" id="toggle-month">Month</button>
+</div>
+</section>
+<!-- Calendar Navigation -->
+<section class="px-container-margin flex justify-between items-center mb-md">
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-high rounded-full transition-colors">chevron_left</button>
+<h2 class="text-headline-lg-mobile font-headline-lg-mobile">July 2025</h2>
+<button class="material-symbols-outlined text-on-surface-variant p-2 hover:bg-surface-container-high rounded-full transition-colors">chevron_right</button>
+</section>
+<!-- Calendar Grid -->
+<section class="px-container-margin mb-xl">
+<div class="grid grid-cols-7 gap-y-6 text-center">
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">MO</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">TU</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">WE</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">TH</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">FR</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">SA</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant/60">SU</span>
+<div class="py-2 text-on-surface-variant/20 text-body-md font-body-md">30</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">1</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-container/30 text-secondary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_satisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">2</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-primary-container/30 text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_very_satisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">3</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-tertiary-container/30 text-tertiary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_content</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">4</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center border-2 border-dashed border-outline-variant text-outline-variant">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md font-bold">5</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-container/30 text-secondary active:scale-90 transition-transform ring-2 ring-primary">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_satisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">6</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-tertiary-container/30 text-tertiary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">mood</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">7</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-primary-container/30 text-primary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_dissatisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">8</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center border-2 border-dashed border-outline-variant text-outline-variant">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">9</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-tertiary-container/30 text-tertiary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_very_satisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">10</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center border-2 border-dashed border-outline-variant text-outline-variant">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">11</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-highest text-on-surface-variant active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_neutral</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">12</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-container/30 text-secondary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_satisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">13</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-container/30 text-secondary active:scale-90 transition-transform">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_very_satisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">14</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-secondary-container/30 text-secondary">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_satisfied</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1">
+<span class="text-body-md font-body-md">15</span>
+<div class="w-10 h-10 rounded-full flex items-center justify-center bg-primary-container/30 text-primary">
+<span class="material-symbols-outlined active-dot text-[20px]">sentiment_dissatisfied</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Mood Summary Section (Updated to match SCREEN_11 structure for Light theme) -->
+<section class="px-container-margin mb-lg">
+<div class="grid grid-cols-2 gap-md">
+<!-- Top Row: Main Summary Card -->
+<div class="col-span-2 bg-surface-container-lowest p-lg rounded-[24px] shadow-[0px_8px_24px_rgba(0,0,0,0.04)]">
+<div class="flex justify-between items-center mb-sm">
+<h3 class="text-headline-lg font-headline-lg text-on-surface">Mood summary</h3>
+<button class="text-primary text-label-lg font-label-lg">View detail</button>
+</div>
+<div class="flex items-baseline gap-xs">
+<span class="text-headline-xl font-headline-xl text-on-surface">15</span>
+<span class="text-body-md font-body-md text-on-surface-variant">entries</span>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Total moods logged this month</p>
+</div>
+<!-- Left Card: Dominant Mood -->
+<div class="bg-primary-container/30 p-lg rounded-[24px] flex flex-col justify-between min-h-[140px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Dominant Mood</span>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[28px]">spa</span>
+<span class="text-headline-lg font-headline-lg text-on-surface">Calm</span>
+</div>
+</div>
+<!-- Right Card: Most Shared -->
+<div class="bg-secondary-container/30 p-lg rounded-[24px] flex flex-col justify-between min-h-[140px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant">Most Shared</span>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary text-[28px]">auto_awesome</span>
+<span class="text-headline-lg font-headline-lg text-on-surface">Inspired</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex justify-around items-center px-4 py-2 bg-surface/80 dark:bg-inverse-surface/80 backdrop-blur-xl shadow-[0px_10px_30px_rgba(0,0,0,0.04)] w-[90%] max-w-md rounded-full">
+<button class="flex items-center justify-center text-on-surface-variant dark:text-surface-variant w-12 h-12 hover:bg-surface-container-highest dark:hover:bg-surface-variant rounded-full active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex items-center justify-center bg-primary-container dark:bg-primary text-on-primary-container dark:text-on-primary rounded-full w-12 h-12 active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_today</span>
+</button>
+<button class="flex items-center justify-center bg-on-background text-background rounded-full w-14 h-14 shadow-lg active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[32px]">add</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant dark:text-surface-variant w-12 h-12 hover:bg-surface-container-highest dark:hover:bg-surface-variant rounded-full active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">grid_view</span>
+</button>
+<button class="flex items-center justify-center text-on-surface-variant dark:text-surface-variant w-12 h-12 hover:bg-surface-container-highest dark:hover:bg-surface-variant rounded-full active:scale-90 transition-all duration-300 ease-out">
+<span class="material-symbols-outlined">person</span>
+</button>
+</nav>
+</main>
+<script class="">
+        // Micro-interactions for toggle buttons
+        const weekBtn = document.getElementById('toggle-week');
+        const monthBtn = document.getElementById('toggle-month');
+
+        weekBtn.addEventListener('click', () => {
+            weekBtn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'cloud-shadow');
+            weekBtn.classList.remove('text-on-surface-variant');
+            monthBtn.classList.remove('bg-surface-container-lowest', 'text-on-surface', 'cloud-shadow');
+            monthBtn.classList.add('text-on-surface-variant');
+        });
+
+        monthBtn.addEventListener('click', () => {
+            monthBtn.classList.add('bg-surface-container-lowest', 'text-on-surface', 'cloud-shadow');
+            monthBtn.classList.remove('text-on-surface-variant');
+            weekBtn.classList.remove('bg-</script></body></html>
