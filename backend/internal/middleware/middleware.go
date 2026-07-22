@@ -1,47 +1,31 @@
-// Package middleware provides cross-cutting HTTP middleware (CORS, logging).
+// Package middleware provides cross-cutting Gin middleware.
 package middleware
 
 import (
 	"log"
-	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // CORS allows the configured frontend origin and answers preflight requests.
-func CORS(origin string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
-			next.ServeHTTP(w, r)
-		})
+func CORS(origin string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", origin)
+		c.Header("Vary", "Origin")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
 	}
 }
 
 // Logger logs method, path, status code and duration for each request.
-func Logger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
-		next.ServeHTTP(sw, r)
-		log.Printf("%s %s %d %s", r.Method, r.URL.Path, sw.status, time.Since(start))
-	})
-}
-
-// statusWriter captures the response status code for logging.
-type statusWriter struct {
-	http.ResponseWriter
-	status int
-}
-
-func (w *statusWriter) WriteHeader(code int) {
-	w.status = code
-	w.ResponseWriter.WriteHeader(code)
+func Logger(c *gin.Context) {
+	start := time.Now()
+	c.Next()
+	log.Printf("%s %s %d %s", c.Request.Method, c.Request.URL.Path, c.Writer.Status(), time.Since(start))
 }

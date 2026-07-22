@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getHealth } from '../api/health'
+import { clearToken } from '../api/client'
 
 // Feature 0 skeleton screen: confirms the frontend can reach the backend.
 export default function Home() {
   const [state, setState] = useState({ status: 'loading' })
+  const navigate = useNavigate()
 
   useEffect(() => {
     getHealth()
@@ -52,6 +55,17 @@ export default function Home() {
         {state.status === 'error' && (
           <p className="text-label-sm font-label-sm text-error">{state.error}</p>
         )}
+
+        <button
+          type="button"
+          onClick={() => {
+            clearToken()
+            navigate('/login', { replace: true })
+          }}
+          className="mt-sm h-11 px-lg rounded-lg bg-surface-container-low text-on-surface-variant text-label-lg font-label-lg"
+        >
+          Log out
+        </button>
       </div>
     </div>
   )

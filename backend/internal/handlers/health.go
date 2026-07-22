@@ -3,10 +3,9 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -15,14 +14,14 @@ type Health struct {
 	Pool *pgxpool.Pool
 }
 
-func (h Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h Health) Get(c *gin.Context) {
 	db := "not_configured"
 	if h.Pool != nil {
 		db = "unavailable"
 		// Two quick attempts: if the pool hands out a stale conn, it's dropped
 		// and the retry gets a fresh one.
 		for i := 0; i < 2; i++ {
-			ctx, cancel := context.WithTimeout(r.Context(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
 			err := h.Pool.Ping(ctx)
 			cancel()
 			if err == nil {
@@ -32,16 +31,9 @@ func (h Health) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
+	c.JSON(200, gin.H{
 		"status": "ok",
 		"db":     db,
 		"time":   time.Now().UTC().Format(time.RFC3339),
 	})
-}
-
-// writeJSON is a small helper shared by handlers in this package.
-func writeJSON(w http.ResponseWriter, status int, body any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(body)
 }

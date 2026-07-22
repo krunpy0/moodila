@@ -10,7 +10,9 @@ import (
 	"moodshare/internal/db"
 	"moodshare/internal/handlers"
 	"moodshare/internal/middleware"
+	"moodshare/internal/repository"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -44,17 +46,21 @@ func main() {
 		}
 	}
 
-	mux := http.NewServeMux()
-	mux.Handle("GET /health", handlers.Health{Pool: pool})
+	router := gin.New()
+	router.Use(gin.Recovery(), middleware.Logger, middleware.CORS(cfg.CORSOrigin))
 
-	// Middleware chain (outermost first): logging -> CORS -> routes.
-	var handler http.Handler = mux
-	handler = middleware.CORS(cfg.CORSOrigin)(handler)
-	handler = middleware.Logger(handler)
+	router.GET("/health", handlers.Health{Pool: pool}.Get)
+	auth := handlers.Auth{
+		Users:     repository.Users{Pool: pool},
+		JWTSecret: cfg.JWTSecret,
+	}
+	router.POST("/auth/register", auth.Register)
+	router.POST("/auth/login", auth.Login)
+	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), auth.Session)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
-		Handler:           handler,
+		Handler:           router,
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 

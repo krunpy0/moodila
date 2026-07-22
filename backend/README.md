@@ -1,6 +1,6 @@
 # MoodShare — Backend (Go)
 
-REST API for MoodShare. Go standard-library HTTP server + Postgres (Supabase) via `pgx`.
+REST API for MoodShare. Gin + Postgres (Supabase) via `pgx`.
 
 ## Structure
 
@@ -10,7 +10,8 @@ internal/
   config/              env / .env loading
   db/                  pgx pool + SQL migrator
   handlers/            HTTP handlers, grouped by feature (health, ...)
-  middleware/          CORS, request logging
+  middleware/          JWT auth, CORS, request logging
+  repository/          SQL queries by entity
   models/              structs mirroring the DB schema
 migrations/            *.sql migrations, applied in lexical order at startup
 ```
@@ -37,3 +38,6 @@ reports the DB status.
 ## Endpoints
 
 - `GET /health` → `{"status":"ok","db":"connected|unavailable|not_configured","time":"..."}`
+- `POST /auth/register` → create account and return JWT
+- `POST /auth/login` → return JWT
+- `GET /auth/session` → validate `Authorization: Bearer <token>`
