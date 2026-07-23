@@ -175,18 +175,18 @@ end-to-end:
 
 ### Фича 8 — Профиль
 
-- [x] Backend: `GET /users/me`, `PATCH /users/me` (аватар, display_name)
-- [x] Frontend: экран Profile — аватар, username, recent entries, список
+- [ ] Backend: `GET /users/me`, `PATCH /users/me` (аватар, display_name)
+- [ ] Frontend: экран Profile — аватар, username, recent entries, список
       друзей, настройки (тема и т.п. можно заглушкой)
-- [x] Тест: можно поменять аватар/имя и увидеть изменения сразу
+- [ ] Тест: можно поменять аватар/имя и увидеть изменения сразу
 
 ### Фича 9 — Фото в записях
 
-- [ ] Backend: интеграция с Supabase Storage — эндпоинт получения
+- [x] Backend: интеграция с Supabase Storage — эндпоинт получения
       signed upload URL, поле `photo_url` в `entries`
-- [ ] Frontend: кнопка добавления фото в Add Entry, отображение фото в
+- [x] Frontend: кнопка добавления фото в Add Entry, отображение фото в
       карточках Calendar/Feed
-- [ ] Тест: загруженное фото видно и в своей записи, и в ленте у друга
+- [x] Тест: загруженное фото видно и в своей записи, и в ленте у друга
 
 ### Фича 10 (по желанию, позже) — OAuth и приватность записей
 
