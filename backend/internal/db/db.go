@@ -72,14 +72,27 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, dir string) error {
 	}
 	sort.Strings(files)
 
-	for _, name := range files {
-		var applied bool
-		if err := pool.QueryRow(ctx,
-			`SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)`, name,
-		).Scan(&applied); err != nil {
-			return fmt.Errorf("check migration %s: %w", name, err)
+	applied := make(map[string]bool, len(files))
+	rows, err := pool.Query(ctx, `SELECT version FROM schema_migrations`)
+	if err != nil {
+		return fmt.Errorf("load applied migrations: %w", err)
+	}
+	for rows.Next() {
+		var version string
+		if err := rows.Scan(&version); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan applied migration: %w", err)
 		}
-		if applied {
+		applied[version] = true
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return fmt.Errorf("load applied migrations: %w", err)
+	}
+	rows.Close()
+
+	for _, name := range files {
+		if applied[name] {
 			continue
 		}
 

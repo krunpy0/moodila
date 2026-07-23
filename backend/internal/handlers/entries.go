@@ -119,6 +119,43 @@ func (h Entries) Summary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
+// Friend returns a friend's public calendar entries for the requested month.
+// Calendar access is deliberately restricted to accepted friendships.
+func (h Entries) Friend(c *gin.Context) {
+	if h.Entries.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	friendID := strings.TrimSpace(c.Param("friend_id"))
+	if !validUUID(friendID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "friend_id must be a valid UUID"})
+		return
+	}
+	month, nextMonth, err := monthBounds(strings.TrimSpace(c.Query("month")))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "month must be YYYY-MM"})
+		return
+	}
+
+	allowed, err := h.Entries.CanViewFriend(c.Request.Context(), c.GetString("userID"), friendID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify friendship"})
+		return
+	}
+	if !allowed {
+		c.JSON(http.StatusForbidden, gin.H{"error": "friend calendar is unavailable"})
+		return
+	}
+
+	entries, err := h.Entries.VisibleByMonth(c.Request.Context(), friendID, month, nextMonth)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friend entries"})
+		return
+	}
+	c.JSON(http.StatusOK, entries)
+}
+
 func monthBounds(month string) (string, string, error) {
 	start, err := time.Parse("2006-01", month)
 	if err != nil || start.Format("2006-01") != month {

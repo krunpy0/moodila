@@ -5,6 +5,9 @@ export const getEntry = (date) => api(`/entries/me?date=${encodeURIComponent(dat
 export const getEntriesByMonth = (month) =>
   api(`/entries/me?month=${encodeURIComponent(month)}`)
 
+export const getFriendEntriesByMonth = (friendId, month) =>
+  api(`/entries/friend/${encodeURIComponent(friendId)}?month=${encodeURIComponent(month)}`)
+
 export const getEntrySummary = (month) =>
   api(`/entries/summary?month=${encodeURIComponent(month)}`)
 

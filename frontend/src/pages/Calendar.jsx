@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getEntriesByMonth } from "../api/entries";
+import { getEntriesByMonth, getFriendEntriesByMonth } from "../api/entries";
+import { getFriends } from "../api/friends";
 import { getLocalDate } from "../api/client";
 import BottomNav from "../components/BottomNav";
 
@@ -20,18 +21,29 @@ const moods = {
 export default function Calendar() {
   const [month, setMonth] = useState(startOfMonth(new Date()));
   const [entries, setEntries] = useState([]);
+  const [friends, setFriends] = useState([]);
+  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [selectedFriendEntry, setSelectedFriendEntry] = useState(null);
+  const [friendMenuOpen, setFriendMenuOpen] = useState(false);
   const [status, setStatus] = useState("Loading calendar...");
   const monthKey = formatMonth(month);
 
   useEffect(() => {
+    getFriends().then(setFriends).catch(() => setFriends([]));
+  }, []);
+
+  useEffect(() => {
     setStatus("Loading calendar...");
-    getEntriesByMonth(monthKey)
+    const loadEntries = selectedFriend
+      ? getFriendEntriesByMonth(selectedFriend.id, monthKey)
+      : getEntriesByMonth(monthKey);
+    loadEntries
       .then((data) => {
         setEntries(data);
         setStatus("");
       })
       .catch((error) => setStatus(error.message));
-  }, [monthKey]);
+  }, [monthKey, selectedFriend]);
 
   const entriesByDate = useMemo(
     () => Object.fromEntries(entries.map((entry) => [entry.date, entry])),
@@ -41,10 +53,76 @@ export default function Calendar() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 text-on-surface">
-      <header className="flex items-center px-container-margin py-md">
-        <h1 className="text-headline-lg-mobile font-headline-lg-mobile">
-          Your calendar
-        </h1>
+      <header className="px-container-margin py-md">
+        {selectedFriend ? (
+          <div className="rounded-[24px] bg-surface-container-lowest p-md cloud-shadow">
+            <button
+              type="button"
+              aria-expanded={friendMenuOpen}
+              onClick={() => setFriendMenuOpen((open) => !open)}
+              className="flex w-full items-center justify-between text-left active:scale-[0.98]"
+            >
+              <div className="flex items-center gap-md">
+                <FriendAvatar friend={selectedFriend} size="large" />
+                <span className="flex flex-col">
+                  <span className="text-label-sm font-label-sm text-on-surface-variant/60">
+                    Viewing calendar
+                  </span>
+                  <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold">
+                    {friendName(selectedFriend)}
+                  </span>
+                </span>
+              </div>
+              <span className="material-symbols-outlined text-primary">expand_more</span>
+            </button>
+            {friendMenuOpen && (
+              <div className="mt-md border-t border-outline-variant pt-md">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedFriend(null); setSelectedFriendEntry(null); setFriendMenuOpen(false); }}
+                  className="flex w-full items-center gap-sm rounded-xl p-2 text-left hover:bg-surface-container-low"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-primary">
+                    <span className="material-symbols-outlined">person</span>
+                  </span>
+                  <span className="text-body-md font-body-md">My calendar</span>
+                </button>
+                {friends.map((friend) => (
+                  <button
+                    type="button"
+                    key={friend.id}
+                    onClick={() => { setSelectedFriend(friend); setSelectedFriendEntry(null); setFriendMenuOpen(false); }}
+                    className="mt-xs flex w-full items-center justify-between rounded-xl p-2 text-left hover:bg-surface-container-low"
+                  >
+                    <span className="flex items-center gap-sm"><FriendAvatar friend={friend} /><span className="text-body-md font-body-md">{friendName(friend)}</span></span>
+                    <span className="material-symbols-outlined text-on-surface-variant/20">chevron_right</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            type="button"
+            aria-expanded={friendMenuOpen}
+            onClick={() => setFriendMenuOpen((open) => !open)}
+            className="flex w-full items-center justify-between rounded-[24px] bg-surface-container-lowest p-md text-left cloud-shadow active:scale-[0.98]"
+          >
+            <span className="text-headline-lg-mobile font-headline-lg-mobile">Your calendar</span>
+            <span className="material-symbols-outlined text-primary">expand_more</span>
+          </button>
+        )}
+        {!selectedFriend && friendMenuOpen && (
+          <div className="mt-xs rounded-[24px] bg-surface-container-lowest p-md cloud-shadow">
+            <p className="mb-xs text-label-sm font-label-sm text-on-surface-variant/60">Viewing calendar</p>
+            {friends.length ? friends.map((friend) => (
+              <button type="button" key={friend.id} onClick={() => { setSelectedFriend(friend); setSelectedFriendEntry(null); setFriendMenuOpen(false); }} className="flex w-full items-center justify-between rounded-xl p-2 text-left hover:bg-surface-container-low">
+                <span className="flex items-center gap-sm"><FriendAvatar friend={friend} /><span className="text-body-md font-body-md">{friendName(friend)}</span></span>
+                <span className="material-symbols-outlined text-on-surface-variant/20">chevron_right</span>
+              </button>
+            )) : <p className="p-2 text-body-sm font-body-sm text-on-surface-variant">Add friends to view their calendars.</p>}
+          </div>
+        )}
       </header>
 
       <section className="mb-lg px-container-margin" aria-label="Calendar view">
@@ -134,6 +212,30 @@ export default function Calendar() {
               );
             }
 
+            const content = (
+              <>
+                <span className={today ? "font-bold" : ""}>{date.getDate()}</span>
+                <span className={`flex h-10 w-10 items-center justify-center rounded-full ${mood ? `${mood[1]} ${mood[2]} ${today ? "ring-2 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
+                  <span className="material-symbols-outlined text-[20px]" style={entry ? { fontVariationSettings: "'FILL' 1" } : undefined}>{mood ? mood[0] : "add"}</span>
+                </span>
+              </>
+            );
+            if (selectedFriend) {
+              if (!entry) {
+                return <span key={dateKey} className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md">{content}</span>;
+              }
+              return (
+                <button
+                  key={dateKey}
+                  type="button"
+                  onClick={() => setSelectedFriendEntry(entry)}
+                  aria-label={`Read ${friendName(selectedFriend)}'s entry for ${date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
+                  className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md active:scale-95"
+                >
+                  {content}
+                </button>
+              );
+            }
             return (
               <Link
                 key={dateKey}
@@ -148,25 +250,7 @@ export default function Calendar() {
                 )}`}
                 className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md"
               >
-                <span className={today ? "font-bold" : ""}>
-                  {date.getDate()}
-                </span>
-                <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                    mood
-                      ? `${mood[1]} ${mood[2]} ${today ? "ring-2 ring-primary" : ""}`
-                      : "border-2 border-dashed border-outline-variant text-outline-variant"
-                  }`}
-                >
-                  <span
-                    className="material-symbols-outlined text-[20px]"
-                    style={
-                      entry ? { fontVariationSettings: "'FILL' 1" } : undefined
-                    }
-                  >
-                    {mood ? mood[0] : "add"}
-                  </span>
-                </span>
+                {content}
               </Link>
             );
           })}
@@ -185,9 +269,68 @@ export default function Calendar() {
         )}
       </section>
 
+      {selectedFriendEntry && selectedFriend && (
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-on-surface/20 px-container-margin pb-md sm:items-center"
+          role="presentation"
+          onMouseDown={() => setSelectedFriendEntry(null)}
+        >
+          <article
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="friend-entry-title"
+            onMouseDown={(event) => event.stopPropagation()}
+            className="w-full rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow"
+          >
+            <div className="mb-md flex items-start justify-between gap-md">
+              <div className="flex items-center gap-sm">
+                <FriendAvatar friend={selectedFriend} />
+                <div>
+                  <p className="text-label-sm font-label-sm text-on-surface-variant">{friendName(selectedFriend)}'s day</p>
+                  <h2 id="friend-entry-title" className="text-headline-lg-mobile font-headline-lg-mobile">
+                    {formatEntryDate(selectedFriendEntry.date)}
+                  </h2>
+                </div>
+              </div>
+              <button type="button" aria-label="Close entry" onClick={() => setSelectedFriendEntry(null)} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="mb-md flex items-center gap-sm">
+              <span className={`flex h-12 w-12 items-center justify-center rounded-full ${moods[selectedFriendEntry.mood][1]} ${moods[selectedFriendEntry.mood][2]}`}>
+                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>{moods[selectedFriendEntry.mood][0]}</span>
+              </span>
+              <div className="flex flex-wrap gap-xs">
+                {selectedFriendEntry.tags.map((tag) => <span key={tag} className="rounded-full bg-primary-container px-md py-xs text-label-sm font-label-sm text-primary">{tag}</span>)}
+              </div>
+            </div>
+            <p className="whitespace-pre-wrap text-body-md font-body-md leading-6 text-on-surface">{selectedFriendEntry.text || "No note shared for this day."}</p>
+            <p className="mt-lg text-label-sm font-label-sm text-on-surface-variant/60">View only</p>
+          </article>
+        </div>
+      )}
+
       <BottomNav />
     </main>
   );
+}
+
+function friendName(friend) {
+  return friend.display_name || friend.username;
+}
+
+function FriendAvatar({ friend, size = "default" }) {
+  const dimensions = size === "large" ? "h-12 w-12" : "h-10 w-10";
+  if (friend.avatar_url) return <img src={friend.avatar_url} alt="" className={`${dimensions} rounded-full border-2 border-primary-container object-cover`} />;
+  return <span className={`${dimensions} flex items-center justify-center rounded-full bg-secondary-container font-bold text-on-secondary-container`}>{friendName(friend).slice(0, 1).toUpperCase()}</span>;
+}
+
+function formatEntryDate(date) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function startOfMonth(date) {

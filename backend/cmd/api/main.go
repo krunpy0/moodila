@@ -58,10 +58,18 @@ func main() {
 	router.POST("/auth/login", auth.Login)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), auth.Session)
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
+	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
 	authorized.POST("/entries", entries.Save)
 	authorized.GET("/entries/me", entries.Me)
+	authorized.GET("/entries/friend/:friend_id", entries.Friend)
 	authorized.GET("/entries/summary", entries.Summary)
+	authorized.GET("/users/search", friends.Search)
+	authorized.POST("/friends/request", friends.Request)
+	authorized.POST("/friends/accept", friends.Accept)
+	authorized.POST("/friends/decline", friends.Decline)
+	authorized.GET("/friends", friends.Accepted)
+	authorized.GET("/friends/pending", friends.Pending)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

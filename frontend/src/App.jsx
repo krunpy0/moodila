@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Auth from './pages/Auth'
 import AddEntry from './pages/AddEntry'
 import Calendar from './pages/Calendar'
+import Friends from './pages/Friends'
 
 export default function App() {
   return (
@@ -33,6 +34,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Calendar />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <RequireAuth>
+              <Friends />
             </RequireAuth>
           }
         />

@@ -148,22 +148,22 @@ end-to-end:
 
 ### Фича 5 — Друзья: заявка и подтверждение
 
-- [ ] Backend: таблица `friendships`, эндпоинты: поиск пользователя по
+- [x] Backend: таблица `friendships`, эндпоинты: поиск пользователя по
       username (`GET /users/search?q=...`), `POST /friends/request`,
       `POST /friends/accept`, `POST /friends/decline`, `GET /friends` (принятые),
       `GET /friends/pending`
-- [ ] Frontend: экран Manage Friends — поиск по username, список pending
+- [x] Frontend: экран Manage Friends — поиск по username, список pending
       (кнопки принять/отклонить), список принятых друзей
-- [ ] Тест: юзер А отправляет заявку юзеру Б, Б видит её в pending, принимает,
+- [x] Тест: юзер А отправляет заявку юзеру Б, Б видит её в pending, принимает,
       оба видят друг друга в списке друзей
 
 ### Фича 6 — Просмотр календаря друга
 
-- [ ] Backend: `GET /entries/friend/{friend_id}?month=YYYY-MM` — только не
+- [x] Backend: `GET /entries/friend/{friend_id}?month=YYYY-MM` — только не
       скрытые записи, только если friendship = accepted
-- [ ] Frontend: экран Calendar с переключателем "Viewing calendar" (селектор
+- [x] Frontend: экран Calendar с переключателем "Viewing calendar" (селектор
       друга), те же mood-точки, но по данным друга
-- [ ] Тест: если А и Б друзья, А видит календарь Б (без скрытых записей Б)
+- [x] Тест: если А и Б друзья, А видит календарь Б (без скрытых записей Б)
 
 ### Фича 7 — Лента (Feed)
 
