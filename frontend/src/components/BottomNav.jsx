@@ -4,7 +4,7 @@ const items = [
   ['/', 'home', 'Home'],
   ['/calendar', 'calendar_today', 'Calendar'],
   ['/entries/new', 'add', 'Add entry'],
-  [null, 'grid_view', 'Feed'],
+  ['/feed', 'grid_view', 'Feed'],
   ['/friends', 'person', 'Friends'],
 ]
 

@@ -7,6 +7,7 @@ import Auth from './pages/Auth'
 import AddEntry from './pages/AddEntry'
 import Calendar from './pages/Calendar'
 import Friends from './pages/Friends'
+import Feed from './pages/Feed'
 
 export default function App() {
   return (
@@ -42,6 +43,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Friends />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/feed"
+          element={
+            <RequireAuth>
+              <Feed />
             </RequireAuth>
           }
         />
