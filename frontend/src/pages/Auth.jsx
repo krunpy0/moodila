@@ -53,7 +53,7 @@ export default function Auth() {
             id="auth-title"
             className="text-headline-xl font-headline-xl text-on-surface"
           >
-            MoodShare
+            Moodila
           </h1>
           <p className="mt-xs text-body-sm font-body-sm text-on-surface-variant">
             Keep your days close. Share them gently.
