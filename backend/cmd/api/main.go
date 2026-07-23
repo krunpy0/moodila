@@ -11,6 +11,7 @@ import (
 	"moodshare/internal/handlers"
 	"moodshare/internal/middleware"
 	"moodshare/internal/repository"
+	"moodshare/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -58,14 +59,25 @@ func main() {
 	router.POST("/auth/login", auth.Login)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), auth.Session)
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
+	storageHandler := handlers.Storage{Storage: storage.S3{
+		Endpoint: cfg.S3Endpoint, Region: cfg.S3Region, Bucket: cfg.S3Bucket,
+		AccessKeyID: cfg.S3AccessKeyID, SecretAccessKey: cfg.S3SecretAccessKey,
+		SessionToken: cfg.S3SessionToken, PublicBaseURL: cfg.S3PublicBaseURL,
+		ForcePathStyle: cfg.S3ForcePathStyle,
+	}, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
 	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}}
+	users := handlers.Users{Users: repository.Users{Pool: pool}, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}}
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
 	authorized.POST("/entries", entries.Save)
+	authorized.POST("/storage/entry-photos/upload-url", storageHandler.SignUpload)
+	authorized.PUT("/storage/entry-photos/upload/:token", storageHandler.Upload)
 	authorized.GET("/entries/me", entries.Me)
 	authorized.GET("/entries/friend/:friend_id", entries.Friend)
 	authorized.GET("/entries/summary", entries.Summary)
 	authorized.GET("/users/search", friends.Search)
+	authorized.GET("/users/me", users.Me)
+	authorized.PATCH("/users/me", users.UpdateMe)
 	authorized.POST("/friends/request", friends.Request)
 	authorized.POST("/friends/accept", friends.Accept)
 	authorized.POST("/friends/decline", friends.Decline)

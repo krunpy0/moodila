@@ -1,64 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useDeferredValue, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  acceptFriendRequest,
-  declineFriendRequest,
-  getFriends,
-  getPendingFriends,
-  searchUsers,
-  sendFriendRequest,
-} from '../api/friends'
+import { useAcceptFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useSendFriendRequestMutation, useUserSearchQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
+import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
 
 export default function Friends() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [pending, setPending] = useState([])
-  const [friends, setFriends] = useState([])
-  const [busy, setBusy] = useState('')
-  const [status, setStatus] = useState('Loading friends...')
   const navigate = useNavigate()
-
-  const loadLists = () =>
-    Promise.all([getPendingFriends(), getFriends()]).then(([requests, accepted]) => {
-      setPending(requests)
-      setFriends(accepted)
-      setStatus('')
-    })
-
-  useEffect(() => {
-    loadLists().catch((error) => setStatus(error.message))
-  }, [])
-
-  useEffect(() => {
-    const value = query.trim().toLowerCase()
-    if (!value) {
-      setResults([])
-      return undefined
-    }
-    const timer = setTimeout(() => {
-      searchUsers(value)
-        .then(setResults)
-        .catch((error) => setStatus(error.message))
-    }, 250)
-    return () => clearTimeout(timer)
-  }, [query])
-
-  const act = async (key, request, refreshSearch = false) => {
-    setBusy(key)
-    setStatus('')
-    try {
-      await request()
-      await loadLists()
-      if (refreshSearch && query.trim()) {
-        setResults(await searchUsers(query.trim().toLowerCase()))
-      }
-    } catch (error) {
-      setStatus(error.message)
-    } finally {
-      setBusy('')
-    }
-  }
+  const searchTerm = useDeferredValue(query.trim().toLowerCase())
+  const friendsQuery = useFriendsQuery()
+  const pendingQuery = usePendingFriendsQuery()
+  const searchQuery = useUserSearchQuery(searchTerm)
+  const sendRequest = useSendFriendRequestMutation()
+  const acceptRequest = useAcceptFriendRequestMutation()
+  const declineRequest = useDeclineFriendRequestMutation()
+  const friends = friendsQuery.data || []
+  const pending = pendingQuery.data || []
+  const results = searchQuery.data || []
+  const isLoading = friendsQuery.isLoading || pendingQuery.isLoading
+  const error = friendsQuery.error || pendingQuery.error || searchQuery.error || sendRequest.error || acceptRequest.error || declineRequest.error
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
@@ -97,15 +57,15 @@ export default function Friends() {
           />
         </label>
 
-        {query.trim() && (
+        {!isLoading && query.trim() && (
           <UserSection title="Search results">
             {results.map((user) => (
               <UserCard key={user.id} user={user}>
                 <SearchAction
                   user={user}
-                  busy={busy === user.id}
+                  busy={sendRequest.isPending && sendRequest.variables === user.id}
                   onSend={() =>
-                    act(user.id, () => sendFriendRequest(user.id), true)
+                    sendRequest.mutate(user.id)
                   }
                 />
               </UserCard>
@@ -114,6 +74,7 @@ export default function Friends() {
           </UserSection>
         )}
 
+        {isLoading ? <FriendsSkeleton /> : <>
         <UserSection title="Pending requests" count={pending.length}>
           {pending.map((user) => (
             <UserCard key={user.friendship_id} user={user}>
@@ -121,23 +82,15 @@ export default function Friends() {
                 <CircleButton
                   label={`Decline request from ${user.display_name}`}
                   icon="close"
-                  disabled={busy === user.friendship_id}
-                  onClick={() =>
-                    act(user.friendship_id, () =>
-                      declineFriendRequest(user.friendship_id),
-                    )
-                  }
+                  disabled={declineRequest.isPending}
+                  onClick={() => declineRequest.mutate(user.friendship_id)}
                 />
                 <CircleButton
                   primary
                   label={`Accept request from ${user.display_name}`}
                   icon="check"
-                  disabled={busy === user.friendship_id}
-                  onClick={() =>
-                    act(user.friendship_id, () =>
-                      acceptFriendRequest(user.friendship_id),
-                    )
-                  }
+                  disabled={acceptRequest.isPending}
+                  onClick={() => acceptRequest.mutate(user.friendship_id)}
                 />
               </div>
             </UserCard>
@@ -152,14 +105,10 @@ export default function Friends() {
           {friends.length === 0 && <Empty text="Your friends will appear here." />}
         </UserSection>
 
-        {status && (
-          <p
-            role="status"
-            className={`text-center text-body-sm ${
-              status === 'Loading friends...' ? 'text-on-surface-variant' : 'text-error'
-            }`}
-          >
-            {status}
+        </>}
+        {error && (
+          <p role="alert" className="text-center text-body-sm text-error">
+            {error.message}
           </p>
         )}
       </div>
@@ -271,4 +220,3 @@ function Empty({ text }) {
     </p>
   )
 }
-

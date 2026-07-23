@@ -13,9 +13,11 @@ export const getLocalDate = () => {
   ].join('-')
 }
 
+export const apiURL = (path) => (/^https?:\/\//.test(path) ? path : BASE + path)
+
 export async function api(path, options = {}) {
   const token = getToken()
-  const res = await fetch(BASE + path, {
+  const res = await fetch(apiURL(path), {
     headers: {
       'Content-Type': 'application/json',
       'X-Time-Zone': Intl.DateTimeFormat().resolvedOptions().timeZone,

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { clearToken, getLocalDate } from '../api/client'
-import { getEntriesByMonth, getEntrySummary } from '../api/entries'
+import { useEntriesQuery, useEntrySummaryQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
+import { HomeSkeleton } from '../components/skeleton/PageSkeletons'
 
 const moodDetails = {
   1: ['😞', 'Rough', 'bg-error-container/20'],
@@ -15,24 +16,13 @@ const moodDetails = {
 export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), [])
   const month = formatMonth(today)
-  const [entries, setEntries] = useState([])
-  const [summary, setSummary] = useState({
-    entry_count: 0,
-    dominant_mood: null,
-    top_tag: null,
-  })
-  const [status, setStatus] = useState('Loading your journal...')
   const navigate = useNavigate()
-
-  useEffect(() => {
-    Promise.all([getEntriesByMonth(month), getEntrySummary(month)])
-      .then(([monthEntries, monthSummary]) => {
-        setEntries(monthEntries)
-        setSummary(monthSummary)
-        setStatus('')
-      })
-      .catch((error) => setStatus(error.message))
-  }, [month])
+  const entriesQuery = useEntriesQuery(month)
+  const summaryQuery = useEntrySummaryQuery(month)
+  const entries = entriesQuery.data || []
+  const summary = summaryQuery.data || { entry_count: 0, dominant_mood: null, top_tag: null }
+  const isLoading = entriesQuery.isLoading || summaryQuery.isLoading
+  const error = entriesQuery.error || summaryQuery.error
 
   const entriesByDate = useMemo(
     () => Object.fromEntries(entries.map((entry) => [entry.date, entry])),
@@ -71,6 +61,7 @@ export default function Home() {
       </header>
 
       <div className="space-y-lg px-container-margin">
+        {isLoading ? <HomeSkeleton /> : <>
         <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
           <div className="relative z-10 flex max-w-[75%] flex-col items-start gap-md">
             <h2 className="text-headline-lg font-headline-lg text-on-primary-container">
@@ -210,7 +201,7 @@ export default function Home() {
                 </Link>
               )
             })}
-            {!status && recent.length === 0 && (
+            {!isLoading && !error && recent.length === 0 && (
               <Link
                 to="/entries/new"
                 className="flex min-h-24 items-center justify-center rounded-[24px] bg-white p-md text-body-sm text-on-surface-variant cloud-shadow"
@@ -221,9 +212,10 @@ export default function Home() {
           </div>
         </section>
 
-        {status && (
-          <p role="status" className="text-center text-body-sm font-body-sm text-on-surface-variant">
-            {status}
+        </>}
+        {error && (
+          <p role="alert" className="text-center text-body-sm font-body-sm text-error">
+            {error.message}
           </p>
         )}
       </div>

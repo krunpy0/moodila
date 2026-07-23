@@ -17,10 +17,11 @@ type Entries struct {
 }
 
 type entryInput struct {
-	Date string   `json:"date"`
-	Mood int      `json:"mood"`
-	Tags []string `json:"tags"`
-	Text string   `json:"text"`
+	Date     string   `json:"date"`
+	Mood     int      `json:"mood"`
+	Tags     []string `json:"tags"`
+	Text     string   `json:"text"`
+	PhotoURL *string  `json:"photo_url"`
 }
 
 func (h Entries) Save(c *gin.Context) {
@@ -36,6 +37,17 @@ func (h Entries) Save(c *gin.Context) {
 	}
 	input.Date = strings.TrimSpace(input.Date)
 	input.Text = strings.TrimSpace(input.Text)
+	if input.PhotoURL != nil {
+		photoURL := strings.TrimSpace(*input.PhotoURL)
+		if photoURL == "" {
+			input.PhotoURL = nil
+		} else if len(photoURL) > 2048 || !(strings.HasPrefix(photoURL, "https://") || strings.HasPrefix(photoURL, "http://")) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "photo_url must be a valid URL"})
+			return
+		} else {
+			input.PhotoURL = &photoURL
+		}
+	}
 	input.Tags = cleanTags(input.Tags)
 	today, err := currentDate(time.Now(), c.GetHeader("X-Time-Zone"))
 	if err != nil {
@@ -48,7 +60,7 @@ func (h Entries) Save(c *gin.Context) {
 	}
 
 	entry, err := h.Entries.Save(
-		c.Request.Context(), c.GetString("userID"), input.Date, input.Mood, input.Tags, input.Text,
+		c.Request.Context(), c.GetString("userID"), input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save entry"})

@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { login, register } from "../api/auth";
 import { getToken, setToken } from "../api/client";
+import { queryKeys } from "../api/queries";
 
 export default function Auth() {
   const [mode, setMode] = useState("login");
@@ -11,8 +13,18 @@ export default function Auth() {
     username: "",
   });
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const authMutation = useMutation({
+    mutationFn: (data) => (mode === "login" ? login(data) : register(data)),
+    onSuccess: (result) => {
+      setToken(result.token);
+      queryClient.removeQueries();
+      queryClient.invalidateQueries({ queryKey: queryKeys.session });
+      navigate("/", { replace: true });
+    },
+    onError: (requestError) => setError(requestError.message),
+  });
 
   if (getToken()) return <Navigate to="/" replace />;
 
@@ -21,18 +33,8 @@ export default function Auth() {
 
   const submit = async (event) => {
     event.preventDefault();
-    setLoading(true);
     setError("");
-    try {
-      const result =
-        mode === "login" ? await login(form) : await register(form);
-      setToken(result.token);
-      navigate("/", { replace: true });
-    } catch (requestError) {
-      setError(requestError.message);
-    } finally {
-      setLoading(false);
-    }
+    authMutation.mutate(form);
   };
 
   const switchMode = (nextMode) => {
@@ -124,10 +126,10 @@ export default function Auth() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={authMutation.isPending}
               className="mt-xs h-12 rounded-lg bg-primary-container text-on-primary-container text-label-lg font-label-lg disabled:opacity-60"
             >
-              {loading
+              {authMutation.isPending
                 ? "Please wait..."
                 : mode === "login"
                   ? "Log in"

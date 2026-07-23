@@ -2,6 +2,22 @@
 
 REST API for MoodShare. Gin + Postgres (Supabase) via `pgx`.
 
+## Photo storage (S3-compatible)
+
+Photos are uploaded directly from the browser using a short-lived, presigned
+S3 PUT URL. The API response remains `{"upload_url":"…","photo_url":"…"}`
+for compatibility with the frontend.
+
+Set `S3_BUCKET`, `ACCESS_KEY_ID`, and `SECRET_ACCESS_KEY`. Both keys are
+required: the access key identifies the credential and the secret key signs the
+upload URL. Set `S3_ENDPOINT` for any S3-compatible provider (R2, MinIO, B2,
+etc.); leave it empty for AWS S3. `S3_PUBLIC_BASE_URL` should be the public
+bucket or CDN origin used to display saved photos.
+
+Configure bucket CORS to allow browser `PUT` requests from `CORS_ORIGIN` with
+the `Content-Type` request header. The URLs stored in entries must be publicly
+readable, typically through a public bucket or a CDN.
+
 ## Structure
 
 ```

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { getEntriesByMonth, getFriendEntriesByMonth } from "../api/entries";
-import { getFriends } from "../api/friends";
+import { useEntriesQuery, useFriendEntriesQuery, useFriendsQuery } from "../api/queries";
 import { getLocalDate } from "../api/client";
 import BottomNav from "../components/BottomNav";
+import { CalendarSkeleton } from "../components/skeleton/PageSkeletons";
 
 const weekdays = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const moods = {
@@ -20,30 +20,18 @@ const moods = {
 
 export default function Calendar() {
   const [month, setMonth] = useState(startOfMonth(new Date()));
-  const [entries, setEntries] = useState([]);
-  const [friends, setFriends] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedFriendEntry, setSelectedFriendEntry] = useState(null);
   const [friendMenuOpen, setFriendMenuOpen] = useState(false);
-  const [status, setStatus] = useState("Loading calendar...");
   const monthKey = formatMonth(month);
-
-  useEffect(() => {
-    getFriends().then(setFriends).catch(() => setFriends([]));
-  }, []);
-
-  useEffect(() => {
-    setStatus("Loading calendar...");
-    const loadEntries = selectedFriend
-      ? getFriendEntriesByMonth(selectedFriend.id, monthKey)
-      : getEntriesByMonth(monthKey);
-    loadEntries
-      .then((data) => {
-        setEntries(data);
-        setStatus("");
-      })
-      .catch((error) => setStatus(error.message));
-  }, [monthKey, selectedFriend]);
+  const friendsQuery = useFriendsQuery();
+  const ownEntriesQuery = useEntriesQuery(monthKey);
+  const friendEntriesQuery = useFriendEntriesQuery(selectedFriend?.id, monthKey, Boolean(selectedFriend));
+  const activeEntriesQuery = selectedFriend ? friendEntriesQuery : ownEntriesQuery;
+  const entries = activeEntriesQuery.data || [];
+  const friends = friendsQuery.data || [];
+  const isLoading = activeEntriesQuery.isLoading || friendsQuery.isLoading;
+  const error = activeEntriesQuery.error || friendsQuery.error;
 
   const entriesByDate = useMemo(
     () => Object.fromEntries(entries.map((entry) => [entry.date, entry])),
@@ -125,6 +113,7 @@ export default function Calendar() {
         )}
       </header>
 
+      {isLoading ? <section className="px-container-margin pt-md"><CalendarSkeleton /></section> : <>
       <section className="mb-lg px-container-margin" aria-label="Calendar view">
         <div className="flex gap-1 rounded-full bg-surface-container-low p-1">
           <button
@@ -255,19 +244,13 @@ export default function Calendar() {
             );
           })}
         </div>
-        {status && (
-          <p
-            role="status"
-            className={`mt-md text-center text-xl font-body-sm ${
-              status === "Loading calendar..."
-                ? "text-on-surface-variant"
-                : "text-error"
-            }`}
-          >
-            {status}
+        {error && (
+          <p role="alert" className="mt-md text-center text-xl font-body-sm text-error">
+            {error.message}
           </p>
         )}
       </section>
+      </>}
 
       {selectedFriendEntry && selectedFriend && (
         <div
@@ -305,6 +288,7 @@ export default function Calendar() {
               </div>
             </div>
             <p className="whitespace-pre-wrap text-body-md font-body-md leading-6 text-on-surface">{selectedFriendEntry.text || "No note shared for this day."}</p>
+            {selectedFriendEntry.photo_url && <img src={selectedFriendEntry.photo_url} alt={`Photo from ${friendName(selectedFriend)}'s day`} className="mt-md max-h-72 w-full rounded-2xl object-cover" />}
             <p className="mt-lg text-label-sm font-label-sm text-on-surface-variant/60">View only</p>
           </article>
         </div>

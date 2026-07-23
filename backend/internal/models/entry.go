@@ -19,6 +19,7 @@ type CalendarEntry struct {
 	Mood      int       `json:"mood"`
 	Tags      []string  `json:"tags"`
 	Text      string    `json:"text"`
+	PhotoURL  *string   `json:"photo_url"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

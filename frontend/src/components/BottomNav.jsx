@@ -5,7 +5,7 @@ const items = [
   ['/calendar', 'calendar_today', 'Calendar'],
   ['/entries/new', 'add', 'Add entry'],
   ['/feed', 'grid_view', 'Feed'],
-  ['/friends', 'person', 'Friends'],
+  ['/profile', 'person', 'Profile'],
 ]
 
 export default function BottomNav() {

@@ -2,7 +2,7 @@
 // Design tokens mirrored verbatim from the Stitch HTML references
 // (design-reference/) so those screens port to JSX 1:1. See DESIGN.md.
 export default {
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       colors: {

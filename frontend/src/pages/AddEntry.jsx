@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { getEntry, saveEntry } from '../api/entries'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
+import { useEntryQuery, useSaveEntryMutation } from '../api/queries'
+import { uploadEntryPhoto } from '../api/entries'
 import BottomNav from '../components/BottomNav'
+import { useNotifications } from '../components/Notifications'
 
 const moods = [
   ['sentiment_very_dissatisfied', 'text-error', 'bg-error-container/20'],
@@ -15,22 +17,30 @@ const availableTags = ['Calm', 'Chill', 'Motivated', 'Grateful', 'Inspired', 'Pe
 
 export default function AddEntry() {
   const [params] = useSearchParams()
+  const navigate = useNavigate()
+  const { notify } = useNotifications()
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
-  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '' })
+  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null })
   const [status, setStatus] = useState('')
+  const entryQuery = useEntryQuery(date, !futureDate)
+  const saveMutation = useSaveEntryMutation()
 
   useEffect(() => {
     if (futureDate) {
       setStatus('Future entries are not available.')
       return
     }
-    getEntry(date)
-      .then(({ mood, tags, text }) => setForm({ date, mood, tags, text }))
-      .catch((error) => {
-        if (error.status !== 404) setStatus(error.message)
-      })
-  }, [date, futureDate])
+    if (entryQuery.data) {
+      const { mood, tags, text, photo_url: photoURL } = entryQuery.data
+      setForm({ date, mood, tags, text, photo_url: photoURL || null })
+      setStatus('')
+    } else if (entryQuery.isError && entryQuery.error.status !== 404) {
+      setStatus(entryQuery.error.message)
+    } else if (!entryQuery.isLoading) {
+      setForm({ date, mood: 0, tags: [], text: '', photo_url: null })
+    }
+  }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error])
 
   const toggleTag = (tag) =>
     setForm((current) => ({
@@ -44,20 +54,36 @@ export default function AddEntry() {
     event.preventDefault()
     if (futureDate) {
       setStatus('Future entries are not available.')
+      notify('Future entries are not available.', 'error')
       return
     }
     if (!form.mood) {
       setStatus('Choose a mood first.')
+      notify('Choose a mood first.', 'error')
       return
     }
-    setStatus('Saving...')
+    saveMutation.mutate(form, {
+      onSuccess: (saved) => {
+        notify('Your entry has been saved.')
+        navigate(`/calendar?month=${saved.date.slice(0, 7)}`, { replace: true })
+      },
+      onError: (error) => setStatus(error.message),
+    })
+  }
+
+  const selectPhoto = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setStatus('Choose an image file.'); notify('Choose an image file.', 'error'); return }
+    if (file.size > 10 * 1024 * 1024) { setStatus('Image must be 10 MB or smaller.'); notify('Image must be 10 MB or smaller.', 'error'); return }
+    setStatus('Uploading photo...')
     try {
-      const saved = await saveEntry(form)
-      setForm({ date: saved.date, mood: saved.mood, tags: saved.tags, text: saved.text })
-      setStatus('Entry saved.')
-    } catch (error) {
-      setStatus(error.message)
-    }
+      const photoURL = await uploadEntryPhoto(file)
+      setForm((current) => ({ ...current, photo_url: photoURL }))
+      setStatus('Photo attached. Save your entry to publish it.')
+      notify('Photo attached. Save your entry to publish it.')
+    } catch (error) { setStatus(error.message); notify(error.message, 'error') }
   }
 
   return (
@@ -138,9 +164,21 @@ export default function AddEntry() {
             placeholder="Start writing..."
             className="min-h-[210px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
           />
+          {form.photo_url && (
+            <div className="relative mb-md overflow-hidden rounded-2xl bg-surface-container-low">
+              <img src={form.photo_url} alt="Selected entry" className="max-h-64 w-full object-cover" />
+              <button type="button" onClick={() => setForm((current) => ({ ...current, photo_url: null }))} aria-label="Remove photo" className="absolute right-sm top-sm flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+          )}
           <div className="mt-lg flex items-center gap-md border-t border-surface-container pt-md">
+            <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">
+              <span className="material-symbols-outlined text-[20px]">image</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={selectPhoto} className="sr-only" />
+              <span className="sr-only">Add image</span>
+            </label>
             {[
-              ['image', 'Add image'],
               ['mic', 'Record audio'],
               ['attach_file', 'Attach file'],
             ].map(([icon, label]) => (
@@ -170,10 +208,10 @@ export default function AddEntry() {
         )}
         <button
           type="submit"
-          disabled={futureDate || status === 'Saving...'}
+          disabled={futureDate || saveMutation.isPending}
           className="h-14 w-full rounded-full bg-primary text-label-lg font-label-lg text-on-primary disabled:opacity-60"
         >
-          {status === 'Saving...' ? 'Saving...' : 'Save Entry'}
+          {saveMutation.isPending ? 'Saving...' : 'Save Entry'}
         </button>
       </form>
 

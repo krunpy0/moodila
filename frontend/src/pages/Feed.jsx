@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { getFeed, likeEntry } from '../api/feed'
+import { useFeedQuery, useLikeEntryMutation } from '../api/queries'
 import BottomNav from '../components/BottomNav'
+import { FeedSkeleton } from '../components/skeleton/PageSkeletons'
 
 const moods = {
   1: ['😞', 'Rough', 'bg-error-container/60 text-on-error-container'],
@@ -11,34 +11,12 @@ const moods = {
 }
 
 export default function Feed() {
-  const [entries, setEntries] = useState([])
-  const [status, setStatus] = useState('Loading your friends’ moments...')
-  const [liking, setLiking] = useState('')
-
-  useEffect(() => {
-    getFeed()
-      .then((feed) => {
-        setEntries(feed)
-        setStatus('')
-      })
-      .catch((error) => setStatus(error.message))
-  }, [])
+  const feedQuery = useFeedQuery()
+  const likeMutation = useLikeEntryMutation()
+  const entries = feedQuery.data || []
 
   const like = async (entryId) => {
-    if (liking) return
-    setLiking(entryId)
-    try {
-      const result = await likeEntry(entryId)
-      setEntries((current) => current.map((entry) => (
-        entry.id === entryId
-          ? { ...entry, like_count: result.like_count, liked_by_me: result.liked_by_me }
-          : entry
-      )))
-    } catch (error) {
-      setStatus(error.message)
-    } finally {
-      setLiking('')
-    }
+    if (!likeMutation.isPending) likeMutation.mutate(entryId)
   }
 
   return (
@@ -50,9 +28,10 @@ export default function Feed() {
       </header>
 
       <section className="space-y-md px-container-margin pt-sm" aria-live="polite">
-        {entries.map((entry) => <FeedCard key={entry.id} entry={entry} busy={liking === entry.id} onLike={like} />)}
+        {feedQuery.isLoading ? <FeedSkeleton /> : <>
+        {entries.map((entry) => <FeedCard key={entry.id} entry={entry} busy={likeMutation.isPending && likeMutation.variables === entry.id} onLike={like} />)}
 
-        {!status && entries.length === 0 && (
+        {!feedQuery.isLoading && !feedQuery.isError && entries.length === 0 && (
           <div className="rounded-[24px] bg-surface-container-low p-lg text-center">
             <span className="material-symbols-outlined text-[32px] text-primary">diversity_1</span>
             <h2 className="mt-sm text-body-md font-semibold text-on-surface">Your feed is quiet</h2>
@@ -60,7 +39,9 @@ export default function Feed() {
           </div>
         )}
 
-        {status && <p role="status" className="py-lg text-center text-body-sm text-on-surface-variant">{status}</p>}
+        </>}
+        {feedQuery.isError && <p role="alert" className="py-lg text-center text-body-sm text-error">{feedQuery.error.message}</p>}
+        {likeMutation.isError && <p role="alert" className="py-lg text-center text-body-sm text-error">{likeMutation.error.message}</p>}
       </section>
       <BottomNav />
     </main>
@@ -87,6 +68,7 @@ function FeedCard({ entry, busy, onLike }) {
           {entry.tags.map((tag) => <span key={tag} className="rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant">{tag}</span>)}
         </div>
         <p className="whitespace-pre-wrap text-body-md leading-6 text-on-surface">{entry.text || 'No note for this day.'}</p>
+        {entry.photo_url && <img src={entry.photo_url} alt={`Photo from ${authorName}'s day`} className="max-h-96 w-full rounded-2xl object-cover" loading="lazy" />}
       </div>
 
       <footer className="mt-md flex items-center border-t border-surface-container pt-sm">

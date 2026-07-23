@@ -1,0 +1,106 @@
+package handlers
+
+import (
+	"errors"
+	"net/http"
+	"strings"
+
+	"moodshare/internal/models"
+	"moodshare/internal/repository"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
+)
+
+type Users struct {
+	Users   repository.Users
+	Entries repository.Entries
+	Friends repository.Friends
+}
+
+type profileUpdateInput struct {
+	DisplayName *string `json:"display_name"`
+	AvatarURL   *string `json:"avatar_url"`
+}
+
+type profileResponse struct {
+	User          models.User         `json:"user"`
+	RecentEntries []models.Entry      `json:"recent_entries"`
+	Friends       []models.FriendUser `json:"friends"`
+}
+
+func (h Users) Me(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	ctx := c.Request.Context()
+	user, err := h.Users.ByID(ctx, c.GetString("userID"))
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load profile"})
+		return
+	}
+	recent, err := h.Entries.Recent(ctx, user.ID, 6)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load recent entries"})
+		return
+	}
+	friends, err := h.Friends.Accepted(ctx, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friends"})
+		return
+	}
+	c.JSON(http.StatusOK, profileResponse{User: user, RecentEntries: recent, Friends: friends})
+}
+
+func (h Users) UpdateMe(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	var input profileUpdateInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
+		return
+	}
+	if input.DisplayName != nil {
+		name := strings.TrimSpace(*input.DisplayName)
+		if name == "" || len(name) > 60 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "display_name must be 1-60 characters"})
+			return
+		}
+		input.DisplayName = &name
+	}
+	if input.AvatarURL != nil {
+		avatar := strings.TrimSpace(*input.AvatarURL)
+		if len(avatar) > 2048 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "avatar_url is too long"})
+			return
+		}
+		input.AvatarURL = &avatar
+	}
+	if input.DisplayName == nil && input.AvatarURL == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "at least one field is required"})
+		return
+	}
+	user, err := h.Users.UpdateProfile(c.Request.Context(), c.GetString("userID"), input.DisplayName, input.AvatarURL)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update profile"})
+		return
+	}
+	c.JSON(http.StatusOK, user)
+}
+
+func (h Users) available(c *gin.Context) bool {
+	if h.Users.Pool != nil && h.Entries.Pool != nil && h.Friends.Pool != nil {
+		return true
+	}
+	c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+	return false
+}

@@ -17,3 +17,13 @@
 .cloud-shadow {
   box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.04);
 }
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.skeleton {
+  background: #e4e2e1;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}

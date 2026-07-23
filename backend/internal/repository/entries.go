@@ -12,15 +12,15 @@ type Entries struct {
 	Pool *pgxpool.Pool
 }
 
-func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string) (models.Entry, error) {
+func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL *string) (models.Entry, error) {
 	var entry models.Entry
 	err := r.Pool.QueryRow(ctx, `
-		INSERT INTO entries (user_id, date, mood, tags, text)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO entries (user_id, date, mood, tags, text, photo_url)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (user_id, date) DO UPDATE
-		SET mood = EXCLUDED.mood, tags = EXCLUDED.tags, text = EXCLUDED.text
+		SET mood = EXCLUDED.mood, tags = EXCLUDED.tags, text = EXCLUDED.text, photo_url = EXCLUDED.photo_url
 		RETURNING id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at`,
-		userID, date, mood, tags, text,
+		userID, date, mood, tags, text, photoURL,
 	).Scan(
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
 		&entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt,
@@ -42,9 +42,28 @@ func (r Entries) ByDate(ctx context.Context, userID, date string) (models.Entry,
 	return entry, err
 }
 
+func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models.Entry, error) {
+	rows, err := r.Pool.Query(ctx, `
+		SELECT id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at
+		FROM entries WHERE user_id = $1 ORDER BY date DESC, created_at DESC LIMIT $2`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	entries := make([]models.Entry, 0)
+	for rows.Next() {
+		var entry models.Entry
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt); err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	return entries, rows.Err()
+}
+
 func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT date::text, mood, tags, text, created_at
+		SELECT date::text, mood, tags, text, photo_url, created_at
 		FROM entries
 		WHERE user_id = $1 AND date >= $2 AND date < $3
 		ORDER BY date`,
@@ -58,7 +77,7 @@ func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) (
 	entries := make([]models.CalendarEntry, 0)
 	for rows.Next() {
 		var entry models.CalendarEntry
-		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -81,7 +100,7 @@ func (r Entries) CanViewFriend(ctx context.Context, userID, friendID string) (bo
 
 func (r Entries) VisibleByMonth(ctx context.Context, userID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT date::text, mood, tags, text, created_at
+		SELECT date::text, mood, tags, text, photo_url, created_at
 		FROM entries
 		WHERE user_id = $1
 		  AND is_hidden = false
@@ -97,7 +116,7 @@ func (r Entries) VisibleByMonth(ctx context.Context, userID, month, nextMonth st
 	entries := make([]models.CalendarEntry, 0)
 	for rows.Next() {
 		var entry models.CalendarEntry
-		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)

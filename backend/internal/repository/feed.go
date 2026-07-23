@@ -62,7 +62,7 @@ func (r Feed) Like(ctx context.Context, viewerID, entryID string) (models.LikeRe
 }
 
 const feedQuery = `
-	SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.created_at,
+	SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.created_at,
 	       u.id, u.username, u.display_name, u.avatar_url,
 	       COUNT(l.user_id)::int, COALESCE(BOOL_OR(l.user_id = $1), false)
 	FROM entries e
@@ -82,7 +82,7 @@ type feedRow interface {
 func scanFeedEntry(row feedRow) (models.FeedEntry, error) {
 	var entry models.FeedEntry
 	err := row.Scan(
-		&entry.ID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.CreatedAt,
+		&entry.ID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.CreatedAt,
 		&entry.Author.ID, &entry.Author.Username, &entry.Author.DisplayName, &entry.Author.AvatarURL,
 		&entry.LikeCount, &entry.LikedByMe,
 	)

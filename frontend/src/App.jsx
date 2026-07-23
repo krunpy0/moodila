@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { getSession } from './api/auth'
 import { clearToken, getToken } from './api/client'
+import { useSessionQuery } from './api/queries'
 import Home from './pages/Home'
 import Auth from './pages/Auth'
 import AddEntry from './pages/AddEntry'
 import Calendar from './pages/Calendar'
 import Friends from './pages/Friends'
 import Feed from './pages/Feed'
+import Profile from './pages/Profile'
 
 export default function App() {
   return (
@@ -54,6 +54,7 @@ export default function App() {
             </RequireAuth>
           }
         />
+        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
@@ -61,23 +62,13 @@ export default function App() {
 }
 
 function RequireAuth({ children }) {
-  const [valid, setValid] = useState(null)
-
-  useEffect(() => {
-    if (!getToken()) {
-      setValid(false)
-      return
-    }
-    getSession()
-      .then(() => setValid(true))
-      .catch(() => {
-        clearToken()
-        setValid(false)
-      })
-  }, [])
-
-  if (valid === false) return <Navigate to="/login" replace />
-  if (valid === null) {
+  const hasToken = Boolean(getToken())
+  const { isLoading, isError } = useSessionQuery(hasToken)
+  if (!hasToken || isError) {
+    if (isError) clearToken()
+    return <Navigate to="/login" replace />
+  }
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-on-surface-variant">
         Checking session...

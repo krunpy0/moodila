@@ -32,3 +32,25 @@ func (r Users) ByEmail(ctx context.Context, email string) (models.User, error) {
 	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Username, &user.DisplayName, &user.AvatarURL, &user.CreatedAt)
 	return user, err
 }
+
+func (r Users) ByID(ctx context.Context, id string) (models.User, error) {
+	var user models.User
+	err := r.Pool.QueryRow(ctx, `
+		SELECT id, email, password_hash, username, display_name, avatar_url, created_at
+		FROM users WHERE id = $1`, id,
+	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Username, &user.DisplayName, &user.AvatarURL, &user.CreatedAt)
+	return user, err
+}
+
+func (r Users) UpdateProfile(ctx context.Context, id string, displayName, avatarURL *string) (models.User, error) {
+	var user models.User
+	err := r.Pool.QueryRow(ctx, `
+		UPDATE users
+		SET display_name = COALESCE($2, display_name),
+		    avatar_url = CASE WHEN $3::text IS NULL THEN avatar_url ELSE NULLIF($3, '') END
+		WHERE id = $1
+		RETURNING id, email, password_hash, username, display_name, avatar_url, created_at`,
+		id, displayName, avatarURL,
+	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Username, &user.DisplayName, &user.AvatarURL, &user.CreatedAt)
+	return user, err
+}
