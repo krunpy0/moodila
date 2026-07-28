@@ -242,6 +242,51 @@ func (h Entries) Visibility(c *gin.Context) {
 	c.JSON(http.StatusOK, entry)
 }
 
+func (h Entries) Delete(c *gin.Context) {
+	if h.Entries.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	userID := c.GetString("userID")
+	entryID := strings.TrimSpace(c.Param("id"))
+
+	if entryID != "" {
+		if !validUUID(entryID) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "id must be a valid UUID"})
+			return
+		}
+		err := h.Entries.Delete(c.Request.Context(), entryID, userID)
+		if errors.Is(err, repository.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "entry not found"})
+			return
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete entry"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "entry deleted"})
+		return
+	}
+
+	date := strings.TrimSpace(c.Query("date"))
+	if _, err := time.Parse(time.DateOnly, date); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id or date YYYY-MM-DD is required"})
+		return
+	}
+	err := h.Entries.DeleteByDate(c.Request.Context(), userID, date)
+	if errors.Is(err, repository.ErrNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "entry not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete entry"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "entry deleted"})
+}
+
+
 func monthBounds(month string) (string, string, error) {
 	start, err := time.Parse("2006-01", month)
 	if err != nil || start.Format("2006-01") != month {

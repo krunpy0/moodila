@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAcceptFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useSendFriendRequestMutation, useUserSearchQuery } from '../api/queries'
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useSendFriendRequestMutation, useUnfriendMutation, useUserSearchQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
 import HeaderBell from '../components/HeaderBell'
 import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
@@ -15,11 +15,13 @@ export default function Friends() {
   const sendRequest = useSendFriendRequestMutation()
   const acceptRequest = useAcceptFriendRequestMutation()
   const declineRequest = useDeclineFriendRequestMutation()
+  const unfriend = useUnfriendMutation()
+  const cancelRequest = useCancelFriendRequestMutation()
   const friends = friendsQuery.data || []
   const pending = pendingQuery.data || []
   const results = searchQuery.data || []
   const isLoading = friendsQuery.isLoading || pendingQuery.isLoading
-  const error = friendsQuery.error || pendingQuery.error || searchQuery.error || sendRequest.error || acceptRequest.error || declineRequest.error
+  const error = friendsQuery.error || pendingQuery.error || searchQuery.error || sendRequest.error || acceptRequest.error || declineRequest.error || unfriend.error || cancelRequest.error
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
@@ -65,9 +67,11 @@ export default function Friends() {
                 <SearchAction
                   user={user}
                   busy={sendRequest.isPending && sendRequest.variables === user.id}
-                  onSend={() =>
-                    sendRequest.mutate(user.id)
-                  }
+                  onSend={() => sendRequest.mutate(user.id)}
+                  onCancel={() => cancelRequest.mutate(user.id)}
+                  onUnfriend={() => unfriend.mutate(user.id)}
+                  unfriendBusy={unfriend.isPending}
+                  cancelBusy={cancelRequest.isPending}
                 />
               </UserCard>
             ))}
@@ -101,7 +105,14 @@ export default function Friends() {
 
         <UserSection title="My friends">
           {friends.map((user) => (
-            <UserCard key={user.id} user={user} />
+            <UserCard key={user.id} user={user}>
+              <CircleButton
+                label={`Remove ${user.display_name || user.username} from friends`}
+                icon="person_remove"
+                disabled={unfriend.isPending}
+                onClick={() => unfriend.mutate(user.id)}
+              />
+            </UserCard>
           ))}
           {friends.length === 0 && <Empty text="Your friends will appear here." />}
         </UserSection>
@@ -185,15 +196,32 @@ function Avatar({ user }) {
   )
 }
 
-function SearchAction({ user, busy, onSend }) {
+function SearchAction({ user, busy, onSend, onCancel, onUnfriend, unfriendBusy, cancelBusy }) {
   if (user.status === 'accepted') {
-    return <CircleButton label="Already friends" icon="check" disabled />
-  }
-  if (user.status === 'pending') {
     return (
       <CircleButton
-        label={user.requester_is_me ? 'Request sent' : 'Request received'}
-        icon={user.requester_is_me ? 'schedule' : 'mail'}
+        label={`Unfriend ${user.display_name || user.username}`}
+        icon="person_remove"
+        disabled={unfriendBusy}
+        onClick={onUnfriend}
+      />
+    )
+  }
+  if (user.status === 'pending') {
+    if (user.requester_is_me) {
+      return (
+        <CircleButton
+          label={`Cancel friend request to ${user.display_name || user.username}`}
+          icon="close"
+          disabled={cancelBusy}
+          onClick={onCancel}
+        />
+      )
+    }
+    return (
+      <CircleButton
+        label="Request received"
+        icon="mail"
         disabled
       />
     )
@@ -201,13 +229,14 @@ function SearchAction({ user, busy, onSend }) {
   return (
     <CircleButton
       primary
-      label={`Send friend request to ${user.display_name}`}
+      label={`Send friend request to ${user.display_name || user.username}`}
       icon="person_add"
       disabled={busy}
       onClick={onSend}
     />
   )
 }
+
 
 function CircleButton({ label, icon, primary = false, ...props }) {
   return (

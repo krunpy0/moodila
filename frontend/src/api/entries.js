@@ -20,6 +20,14 @@ export const updateEntryVisibility = (entryId, isHidden) =>
     body: JSON.stringify({ is_hidden: isHidden }),
   })
 
+export const deleteEntry = (entryIdOrDate) => {
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entryIdOrDate)
+  if (isUUID) {
+    return api(`/entries/${encodeURIComponent(entryIdOrDate)}`, { method: 'DELETE' })
+  }
+  return api(`/entries?date=${encodeURIComponent(entryIdOrDate)}`, { method: 'DELETE' })
+}
+
 export const requestPhotoUpload = (file) =>
   api('/storage/entry-photos/upload-url', {
     method: 'POST',
@@ -30,9 +38,14 @@ export async function uploadEntryPhoto(file) {
   const { upload_url: uploadURL, photo_url: photoURL } = await requestPhotoUpload(file)
   const response = await fetch(apiURL(uploadURL), {
     method: 'PUT',
-    headers: { 'Content-Type': file.type, Authorization: `Bearer ${getToken()}` },
+    headers: {
+      'Content-Type': file.type,
+      'X-Time-Zone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+      Authorization: `Bearer ${getToken()}`,
+    },
     body: file,
   })
   if (!response.ok) throw new Error('Could not upload photo. Please try again.')
   return photoURL
 }
+

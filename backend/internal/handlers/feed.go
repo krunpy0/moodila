@@ -3,6 +3,7 @@ package handlers
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"moodshare/internal/repository"
@@ -28,13 +29,27 @@ func (h Feed) List(c *gin.Context) {
 	if !h.available(c) {
 		return
 	}
-	entries, err := h.Feed.List(c.Request.Context(), c.GetString("userID"))
+	limitStr := strings.TrimSpace(c.Query("limit"))
+	limit := 10
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+	cursor := strings.TrimSpace(c.Query("cursor"))
+
+	entries, nextCursor, err := h.Feed.List(c.Request.Context(), c.GetString("userID"), limit, cursor)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load feed"})
 		return
 	}
-	c.JSON(http.StatusOK, entries)
+	c.JSON(http.StatusOK, gin.H{
+		"items":       entries,
+		"entries":     entries,
+		"next_cursor": nextCursor,
+	})
 }
+
 
 func (h Feed) Like(c *gin.Context) {
 	if !h.available(c) {

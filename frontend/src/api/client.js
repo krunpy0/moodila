@@ -34,3 +34,6 @@ export async function api(path, options = {}) {
   }
   return res.status === 204 ? null : res.json()
 }
+
+export const fetchClient = api
+

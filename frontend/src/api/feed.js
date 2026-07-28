@@ -1,6 +1,13 @@
 import { api } from './client'
 
-export const getFeed = () => api('/feed')
+export const getFeed = ({ limit, cursor } = {}) => {
+  const params = new URLSearchParams()
+  if (limit) params.set('limit', limit)
+  if (cursor) params.set('cursor', cursor)
+  const queryString = params.toString()
+  return api(`/feed${queryString ? `?${queryString}` : ''}`)
+}
+
 
 export const likeEntry = (entryId, reaction = '❤️') =>
   api(`/feed/${encodeURIComponent(entryId)}/like`, {

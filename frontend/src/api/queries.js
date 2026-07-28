@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSession } from './auth'
-import { getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, saveEntry, updateEntryVisibility } from './entries'
+import { deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, saveEntry, updateEntryVisibility } from './entries'
 import { likeEntry, getFeed, getComments, addComment, deleteComment } from './feed'
-import { acceptFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest } from './friends'
+import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser } from './friends'
 import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
 import { queryKeys } from './queryKeys'
 
@@ -18,6 +18,14 @@ export const useFriendEntriesQuery = (friendId, month, enabled = true) => useQue
 export const useFriendsQuery = () => useQuery({ queryKey: queryKeys.friends, queryFn: getFriends, staleTime: 5 * 60_000 })
 export const usePendingFriendsQuery = () => useQuery({ queryKey: queryKeys.pendingFriends, queryFn: getPendingFriends, staleTime: 30_000 })
 export const useFeedQuery = () => useQuery({ queryKey: queryKeys.feed, queryFn: getFeed, staleTime: 30_000 })
+export const useInfiniteFeedQuery = (limit = 10) =>
+  useInfiniteQuery({
+    queryKey: queryKeys.feed,
+    queryFn: ({ pageParam }) => getFeed({ cursor: pageParam, limit }),
+    initialPageParam: undefined,
+    getNextPageParam: (lastPage) => lastPage.next_cursor || undefined,
+    staleTime: 30_000,
+  })
 export const useCommentsQuery = (entryId, enabled = true) => useQuery({ queryKey: queryKeys.comments(entryId), queryFn: () => getComments(entryId), enabled: Boolean(entryId) && enabled, staleTime: 30_000, retry: false, meta: { ignore404: true } })
 export const useProfileQuery = () => useQuery({ queryKey: queryKeys.profile, queryFn: getMyProfile, staleTime: 60_000 })
 export const useFriendProfileQuery = (friendId, enabled = true) => useQuery({ queryKey: queryKeys.friendProfile(friendId), queryFn: () => getFriendProfile(friendId), enabled: Boolean(friendId) && enabled, staleTime: 60_000, retry: false })
@@ -34,6 +42,20 @@ export function useSaveEntryMutation() {
     queryClient.invalidateQueries({ queryKey: queryKeys.profile })
     queryClient.setQueryData(queryKeys.entry(entry.date), entry)
   }})
+}
+
+export function useDeleteEntryMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteEntry,
+    onSuccess: (_, entryIdOrDate) => {
+      queryClient.invalidateQueries({ queryKey: ['entries', 'me'] })
+      queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+      queryClient.removeQueries({ queryKey: queryKeys.entry(entryIdOrDate) })
+    },
+  })
 }
 
 export function useUpdateEntryVisibilityMutation() {
@@ -96,6 +118,8 @@ function useFriendMutation(mutationFn) {
 export const useSendFriendRequestMutation = () => useFriendMutation(sendFriendRequest)
 export const useAcceptFriendRequestMutation = () => useFriendMutation(acceptFriendRequest)
 export const useDeclineFriendRequestMutation = () => useFriendMutation(declineFriendRequest)
+export const useUnfriendMutation = () => useFriendMutation(unfriendUser)
+export const useCancelFriendRequestMutation = () => useFriendMutation(cancelFriendRequest)
 
 export function useUpdateProfileMutation() {
   const queryClient = useQueryClient()
@@ -115,3 +139,4 @@ export function useMarkNotificationsAsReadMutation() {
     },
   })
 }
+

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  useFeedQuery,
+  useInfiniteFeedQuery,
   useLikeEntryMutation,
   useCommentsQuery,
   useAddCommentMutation,
@@ -23,9 +23,31 @@ const moods = {
 const emojiReactions = ['❤️', '🫂', '👏', '💡', '😁']
 
 export default function Feed() {
-  const feedQuery = useFeedQuery()
+  const feedQuery = useInfiniteFeedQuery(10)
   const likeMutation = useLikeEntryMutation()
-  const entries = feedQuery.data || []
+  const observerRef = useRef(null)
+
+  const entries = feedQuery.data
+    ? feedQuery.data.pages.flatMap((page) => page.items || page.entries || [])
+    : []
+
+  const fetchNextPage = feedQuery.fetchNextPage
+  const hasNextPage = feedQuery.hasNextPage
+  const isFetchingNextPage = feedQuery.isFetchingNextPage
+
+  useEffect(() => {
+    if (!observerRef.current || !hasNextPage || isFetchingNextPage) return
+    const observer = new IntersectionObserver(
+      (observerEntries) => {
+        if (observerEntries[0].isIntersecting && hasNextPage) {
+          fetchNextPage()
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(observerRef.current)
+    return () => observer.disconnect()
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const handleReact = (entryId, reaction) => {
     if (!likeMutation.isPending) {
@@ -58,6 +80,14 @@ export default function Feed() {
               />
             ))}
 
+            {hasNextPage && (
+              <div ref={observerRef} className="py-md text-center">
+                <p className="text-body-sm text-on-surface-variant">
+                  {isFetchingNextPage ? 'Loading more...' : 'Scroll down for more'}
+                </p>
+              </div>
+            )}
+
             {!feedQuery.isLoading && !feedQuery.isError && entries.length === 0 && (
               <div className="rounded-[24px] bg-surface-container-low p-lg text-center">
                 <span className="material-symbols-outlined text-[32px] text-primary">diversity_1</span>
@@ -74,6 +104,7 @@ export default function Feed() {
     </main>
   )
 }
+
 
 function FeedCard({ entry, busy, onReact }) {
   const [showComments, setShowComments] = useState(false)

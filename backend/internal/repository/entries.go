@@ -241,3 +241,26 @@ func (r Entries) UpdateVisibility(ctx context.Context, entryID, userID string, i
 	)
 	return entry, err
 }
+
+func (r Entries) Delete(ctx context.Context, entryID, userID string) error {
+	commandTag, err := r.Pool.Exec(ctx, `DELETE FROM entries WHERE id = $1 AND user_id = $2`, entryID, userID)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (r Entries) DeleteByDate(ctx context.Context, userID, date string) error {
+	commandTag, err := r.Pool.Exec(ctx, `DELETE FROM entries WHERE user_id = $1 AND date = $2`, userID, date)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+

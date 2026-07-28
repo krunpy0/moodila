@@ -21,6 +21,16 @@ export const declineFriendRequest = (friendshipId) =>
     body: JSON.stringify({ friendship_id: friendshipId }),
   })
 
+export const unfriendUser = (friendId) =>
+  api(`/friends/${encodeURIComponent(friendId)}`, { method: 'DELETE' })
+
+export const cancelFriendRequest = (userId) =>
+  api('/friends/cancel', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: userId }),
+  })
+
 export const getFriends = () => api('/friends')
 export const getPendingFriends = () => api('/friends/pending')
+
 

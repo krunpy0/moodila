@@ -2,7 +2,10 @@ package repository
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
+	"strings"
+	"time"
 
 	"moodshare/internal/models"
 
@@ -14,10 +17,66 @@ type Feed struct {
 	Pool *pgxpool.Pool
 }
 
-func (r Feed) List(ctx context.Context, viewerID string) ([]models.FeedEntry, error) {
-	rows, err := r.Pool.Query(ctx, feedQuery, viewerID, viewerID)
+func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor string) ([]models.FeedEntry, string, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	var cursorDate string
+	var cursorCreatedAt time.Time
+	var cursorID string
+	var hasCursor bool
+
+	if cursor != "" {
+		decoded, err := base64.StdEncoding.DecodeString(cursor)
+		if err == nil {
+			parts := strings.Split(string(decoded), "|")
+			if len(parts) == 3 {
+				cursorDate = parts[0]
+				t, err := time.Parse(time.RFC3339Nano, parts[1])
+				if err == nil {
+					cursorCreatedAt = t
+					cursorID = parts[2]
+					hasCursor = true
+				}
+			}
+		}
+	}
+
+	query := `
+		SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.created_at,
+		       u.id, u.username, u.display_name, u.avatar_url,
+		       COUNT(DISTINCT l.user_id)::int,
+		       COALESCE(BOOL_OR(l.user_id = $1), false),
+		       COALESCE(MAX(CASE WHEN l.user_id = $1 THEN l.reaction END), ''),
+		       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id)
+		FROM entries e
+		JOIN users u ON u.id = e.user_id
+		JOIN friendships f ON f.status = 'accepted'
+			AND ((f.requester_id = $2 AND f.addressee_id = e.user_id)
+				OR (f.addressee_id = $2 AND f.requester_id = e.user_id))
+		LEFT JOIN likes l ON l.entry_id = e.id
+		WHERE e.is_hidden = false`
+
+	var args []any
+	args = append(args, viewerID, viewerID)
+
+	if hasCursor {
+		query += ` AND (e.date, e.created_at, e.id) < ($3, $4, $5)`
+		args = append(args, cursorDate, cursorCreatedAt, cursorID)
+		query += ` GROUP BY e.id, u.id ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $6`
+		args = append(args, limit+1)
+	} else {
+		query += ` GROUP BY e.id, u.id ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $3`
+		args = append(args, limit+1)
+	}
+
+	rows, err := r.Pool.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer rows.Close()
 
@@ -25,12 +84,24 @@ func (r Feed) List(ctx context.Context, viewerID string) ([]models.FeedEntry, er
 	for rows.Next() {
 		entry, err := scanFeedEntry(rows)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		entries = append(entries, entry)
 	}
-	return entries, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, "", err
+	}
+
+	var nextCursor string
+	if len(entries) > limit {
+		last := entries[limit-1]
+		nextCursor = base64.StdEncoding.EncodeToString([]byte(last.Date + "|" + last.CreatedAt.Format(time.RFC3339Nano) + "|" + last.ID))
+		entries = entries[:limit]
+	}
+
+	return entries, nextCursor, nil
 }
+
 
 func (r Feed) React(ctx context.Context, viewerID, entryID, reaction string) (models.LikeResult, error) {
 	if reaction == "" {

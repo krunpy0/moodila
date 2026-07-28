@@ -122,7 +122,58 @@ func (h Friends) respond(c *gin.Context, status string) {
 	c.JSON(http.StatusOK, friendship)
 }
 
+func (h Friends) Unfriend(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	targetID := strings.TrimSpace(c.Param("id"))
+	if !validUUID(targetID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "valid friend_id or friendship_id is required"})
+		return
+	}
+	err := h.Friends.Delete(c.Request.Context(), c.GetString("userID"), targetID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "friendship not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not remove friend"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "unfriended successfully"})
+}
+
+func (h Friends) Cancel(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	var input friendInput
+	_ = c.ShouldBindJSON(&input)
+	targetID := strings.TrimSpace(input.UserID)
+	if targetID == "" {
+		targetID = strings.TrimSpace(input.FriendshipID)
+	}
+	if targetID == "" {
+		targetID = strings.TrimSpace(c.Query("user_id"))
+	}
+	if !validUUID(targetID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "valid user_id or friendship_id is required"})
+		return
+	}
+	err := h.Friends.CancelRequest(c.Request.Context(), c.GetString("userID"), targetID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "pending friend request not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not cancel friend request"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "friend request cancelled"})
+}
+
 func (h Friends) list(c *gin.Context, load func(context.Context, string) ([]models.FriendUser, error)) {
+
 	if !h.available(c) {
 		return
 	}

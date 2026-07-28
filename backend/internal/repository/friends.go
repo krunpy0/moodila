@@ -5,6 +5,7 @@ import (
 
 	"moodshare/internal/models"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -126,3 +127,38 @@ func (r Friends) list(ctx context.Context, query, userID string) ([]models.Frien
 	}
 	return users, rows.Err()
 }
+
+func (r Friends) Delete(ctx context.Context, userID, targetID string) error {
+	commandTag, err := r.Pool.Exec(ctx, `
+		DELETE FROM friendships
+		WHERE status = 'accepted' AND (
+			(id = $1 AND (requester_id = $2 OR addressee_id = $2))
+			OR (
+				LEAST(requester_id, addressee_id) = LEAST($2::uuid, $1::uuid)
+				AND GREATEST(requester_id, addressee_id) = GREATEST($2::uuid, $1::uuid)
+			)
+		)`, targetID, userID)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}
+
+func (r Friends) CancelRequest(ctx context.Context, requesterID, targetID string) error {
+	commandTag, err := r.Pool.Exec(ctx, `
+		DELETE FROM friendships
+		WHERE status = 'pending'
+		  AND requester_id = $1
+		  AND (addressee_id = $2 OR id = $2)`, requesterID, targetID)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}
+

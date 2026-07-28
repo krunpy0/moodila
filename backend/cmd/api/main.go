@@ -80,6 +80,8 @@ func main() {
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
 	authorized.POST("/entries", mutationLimiter, entries.Save)
+	authorized.DELETE("/entries/:id", mutationLimiter, entries.Delete)
+	authorized.DELETE("/entries", mutationLimiter, entries.Delete)
 	authorized.PATCH("/entries/:id/visibility", mutationLimiter, entries.Visibility)
 	authorized.POST("/storage/entry-photos/upload-url", uploadLimiter, storageHandler.SignUpload)
 	authorized.PUT("/storage/entry-photos/upload/:token", uploadLimiter, storageHandler.Upload)
@@ -93,6 +95,8 @@ func main() {
 	authorized.POST("/friends/request", mutationLimiter, friends.Request)
 	authorized.POST("/friends/accept", mutationLimiter, friends.Accept)
 	authorized.POST("/friends/decline", mutationLimiter, friends.Decline)
+	authorized.POST("/friends/cancel", mutationLimiter, friends.Cancel)
+	authorized.DELETE("/friends/:id", mutationLimiter, friends.Unfriend)
 	authorized.GET("/friends", readLimiter, friends.Accepted)
 	authorized.GET("/friends/pending", readLimiter, friends.Pending)
 	authorized.GET("/feed", readLimiter, feed.List)

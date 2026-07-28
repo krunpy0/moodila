@@ -90,7 +90,7 @@ func TestHiddenEntriesE2E(t *testing.T) {
 	}
 
 	// 2. Friend B views Feed -> should see Entry 1, but NOT Entry 2
-	feedList, err := feedRepo.List(ctx, userB.ID)
+	feedList, _, err := feedRepo.List(ctx, userB.ID, 10, "")
 	if err != nil {
 		t.Fatalf("Feed.List: %v", err)
 	}

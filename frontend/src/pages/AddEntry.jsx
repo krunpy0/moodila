@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
-import { useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
+import { useDeleteEntryMutation, useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
 import { uploadEntryPhoto } from '../api/entries'
 import BottomNav from '../components/BottomNav'
 import { useNotifications } from '../components/Notifications'
@@ -23,9 +23,12 @@ export default function AddEntry() {
   const futureDate = date > getLocalDate()
   const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, is_hidden: false })
   const [status, setStatus] = useState('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const entryQuery = useEntryQuery(date, !futureDate)
   const saveMutation = useSaveEntryMutation()
   const visibilityMutation = useUpdateEntryVisibilityMutation()
+  const deleteMutation = useDeleteEntryMutation()
+
 
   useEffect(() => {
     if (futureDate) {
@@ -259,9 +262,64 @@ export default function AddEntry() {
         >
           {saveMutation.isPending ? 'Saving...' : 'Save Entry'}
         </button>
+
+        {entryQuery.data && (
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex h-14 w-full items-center justify-center gap-xs rounded-full border border-error/30 bg-error-container/20 text-label-lg font-label-lg text-error hover:bg-error-container/40"
+          >
+            <span className="material-symbols-outlined text-[20px]">delete</span>
+            <span>Delete Entry</span>
+          </button>
+        )}
       </form>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-[24px] bg-white p-lg cloud-shadow space-y-md text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error-container/40 text-error">
+              <span className="material-symbols-outlined text-[28px]">delete</span>
+            </div>
+            <h2 className="text-headline-lg font-headline-lg text-on-surface">Delete this entry?</h2>
+            <p className="text-body-sm text-on-surface-variant">
+              This will permanently remove your mood log for {date}. This action cannot be undone.
+            </p>
+            <div className="flex gap-sm pt-xs">
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 rounded-full bg-surface-container-high py-3 text-label-lg font-label-lg text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  const targetId = entryQuery.data?.id || date
+                  deleteMutation.mutate(targetId, {
+                    onSuccess: () => {
+                      notify('Entry deleted.')
+                      navigate('/calendar', { replace: true })
+                    },
+                    onError: (err) => {
+                      notify(err.message, 'error')
+                      setShowDeleteModal(false)
+                    },
+                  })
+                }}
+                className="flex-1 rounded-full bg-error py-3 text-label-lg font-label-lg text-on-error disabled:opacity-60"
+              >
+                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>
   )
 }
+
