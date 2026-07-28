@@ -20,6 +20,7 @@ type CalendarEntry struct {
 	Tags      []string  `json:"tags"`
 	Text      string    `json:"text"`
 	PhotoURL  *string   `json:"photo_url"`
+	IsHidden  bool      `json:"is_hidden"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

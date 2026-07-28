@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useEntriesQuery, useFriendEntriesQuery, useFriendsQuery } from "../api/queries";
 import { getLocalDate } from "../api/client";
 import BottomNav from "../components/BottomNav";
+import HeaderBell from "../components/HeaderBell";
 import { CalendarSkeleton } from "../components/skeleton/PageSkeletons";
 
 const weekdays = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
@@ -19,16 +20,45 @@ const moods = {
 };
 
 export default function Calendar() {
+  const [viewMode, setViewMode] = useState("month");
   const [month, setMonth] = useState(startOfMonth(new Date()));
+  const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedFriendEntry, setSelectedFriendEntry] = useState(null);
   const [friendMenuOpen, setFriendMenuOpen] = useState(false);
+  const [touchStart, setTouchStart] = useState(null);
+
   const monthKey = formatMonth(month);
+  const weekEnd = addDays(weekStart, 6);
+  const weekStartMonthKey = formatMonth(weekStart);
+  const weekEndMonthKey = formatMonth(weekEnd);
+  const isMultiMonthWeek = viewMode === "week" && weekStartMonthKey !== weekEndMonthKey;
+
   const friendsQuery = useFriendsQuery();
-  const ownEntriesQuery = useEntriesQuery(monthKey);
-  const friendEntriesQuery = useFriendEntriesQuery(selectedFriend?.id, monthKey, Boolean(selectedFriend));
-  const activeEntriesQuery = selectedFriend ? friendEntriesQuery : ownEntriesQuery;
-  const entries = activeEntriesQuery.data || [];
+
+  const ownMonthEntriesQuery = useEntriesQuery(viewMode === "month" ? monthKey : weekStartMonthKey);
+  const ownEndMonthEntriesQuery = useEntriesQuery(isMultiMonthWeek ? weekEndMonthKey : null, isMultiMonthWeek);
+
+  const friendMonthEntriesQuery = useFriendEntriesQuery(
+    selectedFriend?.id,
+    viewMode === "month" ? monthKey : weekStartMonthKey,
+    Boolean(selectedFriend)
+  );
+  const friendEndMonthEntriesQuery = useFriendEntriesQuery(
+    selectedFriend?.id,
+    weekEndMonthKey,
+    Boolean(selectedFriend) && isMultiMonthWeek
+  );
+
+  const activeEntriesQuery = selectedFriend ? friendMonthEntriesQuery : ownMonthEntriesQuery;
+  const activeEndEntriesQuery = selectedFriend ? friendEndMonthEntriesQuery : ownEndMonthEntriesQuery;
+
+  const entries = useMemo(() => {
+    const mainList = activeEntriesQuery.data || [];
+    const secondaryList = isMultiMonthWeek ? (activeEndEntriesQuery.data || []) : [];
+    return [...mainList, ...secondaryList];
+  }, [activeEntriesQuery.data, activeEndEntriesQuery.data, isMultiMonthWeek]);
+
   const friends = friendsQuery.data || [];
   const isLoading = activeEntriesQuery.isLoading || friendsQuery.isLoading;
   const error = activeEntriesQuery.error || friendsQuery.error;
@@ -37,7 +67,47 @@ export default function Calendar() {
     () => Object.fromEntries(entries.map((entry) => [entry.date, entry])),
     [entries],
   );
-  const days = useMemo(() => calendarDays(month), [month]);
+
+  const days = useMemo(() => {
+    if (viewMode === "week") {
+      return getWeekDays(weekStart).map((date) => ({ date, currentMonth: true }));
+    }
+    return calendarDays(month);
+  }, [viewMode, weekStart, month]);
+
+  const handleTouchStart = (e) => {
+    setTouchStart({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    });
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStart) return;
+    const touchEnd = {
+      x: e.changedTouches[0].clientX,
+      y: e.changedTouches[0].clientY,
+    };
+    const diffX = touchEnd.x - touchStart.x;
+    const diffY = touchEnd.y - touchStart.y;
+
+    if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      if (diffX < 0) {
+        if (viewMode === "month") {
+          setMonth((current) => addMonths(current, 1));
+        } else {
+          setWeekStart((current) => addWeeks(current, 1));
+        }
+      } else {
+        if (viewMode === "month") {
+          setMonth((current) => addMonths(current, -1));
+        } else {
+          setWeekStart((current) => addWeeks(current, -1));
+        }
+      }
+    }
+    setTouchStart(null);
+  };
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 text-on-surface">
@@ -118,45 +188,89 @@ export default function Calendar() {
         <div className="flex gap-1 rounded-full bg-surface-container-low p-1">
           <button
             type="button"
-            disabled
-            title="Week view is coming later"
-            className="flex-1 rounded-full py-2 text-label-lg font-label-lg text-on-surface-variant opacity-60"
+            onClick={() => {
+              if (viewMode !== "week") {
+                const today = new Date();
+                if (month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear()) {
+                  setWeekStart(startOfWeek(today));
+                } else {
+                  setWeekStart(startOfWeek(month));
+                }
+                setViewMode("week");
+              }
+            }}
+            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
+              viewMode === "week"
+                ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
+                : "text-on-surface-variant hover:text-on-surface"
+            }`}
           >
             Week
           </button>
-          <span className="flex-1 rounded-full bg-surface-container-lowest py-2 text-center text-label-lg font-label-lg text-on-surface cloud-shadow">
+          <button
+            type="button"
+            onClick={() => {
+              if (viewMode !== "month") {
+                setMonth(startOfMonth(weekStart));
+                setViewMode("month");
+              }
+            }}
+            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
+              viewMode === "month"
+                ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
+                : "text-on-surface-variant hover:text-on-surface"
+            }`}
+          >
             Month
-          </span>
+          </button>
         </div>
       </section>
 
       <section className="mb-md flex items-center justify-between px-container-margin">
         <button
           type="button"
-          aria-label="Previous month"
-          onClick={() => setMonth((current) => addMonths(current, -1))}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant"
+          aria-label={viewMode === "month" ? "Previous month" : "Previous week"}
+          onClick={() => {
+            if (viewMode === "month") {
+              setMonth((current) => addMonths(current, -1));
+            } else {
+              setWeekStart((current) => addWeeks(current, -1));
+            }
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95 transition-transform"
         >
           <span className="material-symbols-outlined">chevron_left</span>
         </button>
         <h2 className="text-headline-lg-mobile font-headline-lg-mobile">
-          {month.toLocaleDateString("en-US", {
-            month: "long",
-            year: "numeric",
-          })}
+          {viewMode === "month"
+            ? month.toLocaleDateString("en-US", {
+                month: "long",
+                year: "numeric",
+              })
+            : formatWeekHeader(weekStart, weekEnd)}
         </h2>
         <button
           type="button"
-          aria-label="Next month"
-          onClick={() => setMonth((current) => addMonths(current, 1))}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant"
+          aria-label={viewMode === "month" ? "Next month" : "Next week"}
+          onClick={() => {
+            if (viewMode === "month") {
+              setMonth((current) => addMonths(current, 1));
+            } else {
+              setWeekStart((current) => addWeeks(current, 1));
+            }
+          }}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95 transition-transform"
         >
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
       </section>
 
-      <section className="px-container-margin">
-        <div className="grid grid-cols-7 text-center">
+      <section
+        className="px-container-margin touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="grid grid-cols-7 text-center select-none">
           {weekdays.map((day) => (
             <span
               key={day}
@@ -203,7 +317,14 @@ export default function Calendar() {
 
             const content = (
               <>
-                <span className={today ? "font-bold" : ""}>{date.getDate()}</span>
+                <span className={`flex items-center gap-0.5 ${today ? "font-bold" : ""}`}>
+                  {date.getDate()}
+                  {!selectedFriend && entry?.is_hidden && (
+                    <span className="material-symbols-outlined text-[13px] text-on-surface-variant/80" title="Hidden from friends">
+                      lock
+                    </span>
+                  )}
+                </span>
                 <span className={`flex h-10 w-10 items-center justify-center rounded-full ${mood ? `${mood[1]} ${mood[2]} ${today ? "ring-2 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
                   <span className="material-symbols-outlined text-[20px]" style={entry ? { fontVariationSettings: "'FILL' 1" } : undefined}>{mood ? mood[0] : "add"}</span>
                 </span>
@@ -325,6 +446,30 @@ function addMonths(date, amount) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
+function startOfWeek(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay();
+  const offset = (day + 6) % 7;
+  d.setDate(d.getDate() - offset);
+  return d;
+}
+
+function addWeeks(date, amount) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + amount * 7);
+  return d;
+}
+
+function addDays(date, amount) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + amount);
+  return d;
+}
+
+function getWeekDays(weekStart) {
+  return Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+}
+
 function calendarDays(month) {
   const first = startOfMonth(month);
   const offset = (first.getDay() + 6) % 7;
@@ -337,6 +482,21 @@ function calendarDays(month) {
     );
     return { date, currentMonth: date.getMonth() === month.getMonth() };
   });
+}
+
+function formatWeekHeader(start, end) {
+  const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+  const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+  const startYear = start.getFullYear();
+  const endYear = end.getFullYear();
+
+  if (startYear !== endYear) {
+    return `${startMonth} ${start.getDate()}, ${startYear} – ${endMonth} ${end.getDate()}, ${endYear}`;
+  }
+  if (start.getMonth() !== end.getMonth()) {
+    return `${startMonth} ${start.getDate()} – ${endMonth} ${end.getDate()}, ${startYear}`;
+  }
+  return `${startMonth} ${start.getDate()} – ${end.getDate()}, ${startYear}`;
 }
 
 function formatMonth(date) {

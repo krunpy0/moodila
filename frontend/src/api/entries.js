@@ -14,6 +14,12 @@ export const getEntrySummary = (month) =>
 export const saveEntry = (entry) =>
   api('/entries', { method: 'POST', body: JSON.stringify(entry) })
 
+export const updateEntryVisibility = (entryId, isHidden) =>
+  api(`/entries/${encodeURIComponent(entryId)}/visibility`, {
+    method: 'PATCH',
+    body: JSON.stringify({ is_hidden: isHidden }),
+  })
+
 export const requestPhotoUpload = (file) =>
   api('/storage/entry-photos/upload-url', {
     method: 'POST',

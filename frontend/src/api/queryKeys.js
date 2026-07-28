@@ -6,7 +6,10 @@ export const queryKeys = {
   friends: ['friends', 'list'],
   pendingFriends: ['friends', 'pending'],
   feed: ['feed'],
+  comments: (entryId) => ['feed', 'comments', entryId],
   session: ['auth', 'session'],
   profile: ['profile'],
   friendProfile: (id) => ['users', 'profile', id],
+  notifications: ['notifications', 'list'],
+  unreadCount: ['notifications', 'unreadCount'],
 }

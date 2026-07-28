@@ -2,25 +2,36 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"moodshare/internal/models"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var (
+	ErrNotFound  = errors.New("entry not found")
+	ErrForbidden = errors.New("forbidden")
 )
 
 type Entries struct {
 	Pool *pgxpool.Pool
 }
 
-func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL *string) (models.Entry, error) {
+func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL *string, isHidden *bool) (models.Entry, error) {
 	var entry models.Entry
 	err := r.Pool.QueryRow(ctx, `
-		INSERT INTO entries (user_id, date, mood, tags, text, photo_url)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO entries (user_id, date, mood, tags, text, photo_url, is_hidden)
+		VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, false))
 		ON CONFLICT (user_id, date) DO UPDATE
-		SET mood = EXCLUDED.mood, tags = EXCLUDED.tags, text = EXCLUDED.text, photo_url = EXCLUDED.photo_url
+		SET mood = EXCLUDED.mood,
+		    tags = EXCLUDED.tags,
+		    text = EXCLUDED.text,
+		    photo_url = EXCLUDED.photo_url,
+		    is_hidden = COALESCE($7, entries.is_hidden)
 		RETURNING id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at`,
-		userID, date, mood, tags, text, photoURL,
+		userID, date, mood, tags, text, photoURL, isHidden,
 	).Scan(
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
 		&entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt,
@@ -63,7 +74,7 @@ func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models
 
 func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT date::text, mood, tags, text, photo_url, created_at
+		SELECT date::text, mood, tags, text, photo_url, is_hidden, created_at
 		FROM entries
 		WHERE user_id = $1 AND date >= $2 AND date < $3
 		ORDER BY date`,
@@ -77,7 +88,7 @@ func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) (
 	entries := make([]models.CalendarEntry, 0)
 	for rows.Next() {
 		var entry models.CalendarEntry
-		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -204,3 +215,29 @@ func (r Entries) VisibleSummary(ctx context.Context, userID, month, nextMonth st
 	return summary, err
 }
 
+func (r Entries) UpdateVisibility(ctx context.Context, entryID, userID string, isHidden bool) (models.Entry, error) {
+	var ownerID string
+	err := r.Pool.QueryRow(ctx, `SELECT user_id FROM entries WHERE id = $1`, entryID).Scan(&ownerID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.Entry{}, ErrNotFound
+	}
+	if err != nil {
+		return models.Entry{}, err
+	}
+	if ownerID != userID {
+		return models.Entry{}, ErrForbidden
+	}
+
+	var entry models.Entry
+	err = r.Pool.QueryRow(ctx, `
+		UPDATE entries
+		SET is_hidden = $1
+		WHERE id = $2
+		RETURNING id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at`,
+		isHidden, entryID,
+	).Scan(
+		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
+		&entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt,
+	)
+	return entry, err
+}

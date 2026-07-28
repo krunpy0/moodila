@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/time/rate"
 )
 
 func main() {
@@ -50,14 +51,21 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery(), middleware.Logger, middleware.CORS(cfg.CORSOrigin))
 
-	router.GET("/health", handlers.Health{Pool: pool}.Get)
+	// Tier-based Rate Limiters
+	authLimiter := middleware.RateLimit(rate.Every(12*time.Second), 5, middleware.IPKey)
+	uploadLimiter := middleware.RateLimit(rate.Every(4*time.Second), 10, middleware.UserOrIPKey)
+	mutationLimiter := middleware.RateLimit(rate.Every(2*time.Second), 15, middleware.UserOrIPKey)
+	readLimiter := middleware.RateLimit(rate.Every(600*time.Millisecond), 30, middleware.UserOrIPKey)
+	healthLimiter := middleware.RateLimit(rate.Every(200*time.Millisecond), 50, middleware.IPKey)
+
+	router.GET("/health", healthLimiter, handlers.Health{Pool: pool}.Get)
 	auth := handlers.Auth{
 		Users:     repository.Users{Pool: pool},
 		JWTSecret: cfg.JWTSecret,
 	}
-	router.POST("/auth/register", auth.Register)
-	router.POST("/auth/login", auth.Login)
-	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), auth.Session)
+	router.POST("/auth/register", authLimiter, auth.Register)
+	router.POST("/auth/login", authLimiter, auth.Login)
+	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), readLimiter, auth.Session)
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
 	storageHandler := handlers.Storage{Storage: storage.S3{
 		Endpoint: cfg.S3Endpoint, Region: cfg.S3Region, Bucket: cfg.S3Bucket,
@@ -65,27 +73,36 @@ func main() {
 		SessionToken: cfg.S3SessionToken, PublicBaseURL: cfg.S3PublicBaseURL,
 		ForcePathStyle: cfg.S3ForcePathStyle,
 	}, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
-	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}}
+	notificationsRepo := repository.Notifications{Pool: pool}
+	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo}
+	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Notifications: notificationsRepo}
 	users := handlers.Users{Users: repository.Users{Pool: pool}, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}}
-	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}}
+	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
-	authorized.POST("/entries", entries.Save)
-	authorized.POST("/storage/entry-photos/upload-url", storageHandler.SignUpload)
-	authorized.PUT("/storage/entry-photos/upload/:token", storageHandler.Upload)
-	authorized.GET("/entries/me", entries.Me)
-	authorized.GET("/entries/friend/:friend_id", entries.Friend)
-	authorized.GET("/entries/summary", entries.Summary)
-	authorized.GET("/users/search", friends.Search)
-	authorized.GET("/users/me", users.Me)
-	authorized.PATCH("/users/me", users.UpdateMe)
-	authorized.GET("/users/:id/profile", users.FriendProfile)
-	authorized.POST("/friends/request", friends.Request)
-	authorized.POST("/friends/accept", friends.Accept)
-	authorized.POST("/friends/decline", friends.Decline)
-	authorized.GET("/friends", friends.Accepted)
-	authorized.GET("/friends/pending", friends.Pending)
-	authorized.GET("/feed", feed.List)
-	authorized.POST("/feed/:entry_id/like", feed.Like)
+	authorized.POST("/entries", mutationLimiter, entries.Save)
+	authorized.PATCH("/entries/:id/visibility", mutationLimiter, entries.Visibility)
+	authorized.POST("/storage/entry-photos/upload-url", uploadLimiter, storageHandler.SignUpload)
+	authorized.PUT("/storage/entry-photos/upload/:token", uploadLimiter, storageHandler.Upload)
+	authorized.GET("/entries/me", readLimiter, entries.Me)
+	authorized.GET("/entries/friend/:friend_id", readLimiter, entries.Friend)
+	authorized.GET("/entries/summary", readLimiter, entries.Summary)
+	authorized.GET("/users/search", readLimiter, friends.Search)
+	authorized.GET("/users/me", readLimiter, users.Me)
+	authorized.PATCH("/users/me", mutationLimiter, users.UpdateMe)
+	authorized.GET("/users/:id/profile", readLimiter, users.FriendProfile)
+	authorized.POST("/friends/request", mutationLimiter, friends.Request)
+	authorized.POST("/friends/accept", mutationLimiter, friends.Accept)
+	authorized.POST("/friends/decline", mutationLimiter, friends.Decline)
+	authorized.GET("/friends", readLimiter, friends.Accepted)
+	authorized.GET("/friends/pending", readLimiter, friends.Pending)
+	authorized.GET("/feed", readLimiter, feed.List)
+	authorized.POST("/feed/:entry_id/like", mutationLimiter, feed.Like)
+	authorized.GET("/feed/:entry_id/comments", readLimiter, feed.GetComments)
+	authorized.POST("/feed/:entry_id/comments", mutationLimiter, feed.AddComment)
+	authorized.DELETE("/feed/comments/:comment_id", mutationLimiter, feed.DeleteComment)
+	authorized.GET("/notifications", readLimiter, notificationsHandler.List)
+	authorized.GET("/notifications/unread-count", readLimiter, notificationsHandler.UnreadCount)
+	authorized.POST("/notifications/mark-read", mutationLimiter, notificationsHandler.MarkRead)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

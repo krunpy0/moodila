@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { clearToken, getLocalDate } from '../api/client'
 import { useEntriesQuery, useEntrySummaryQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
+import HeaderBell from '../components/HeaderBell'
 import { HomeSkeleton } from '../components/skeleton/PageSkeletons'
 
 const moodDetails = {
@@ -46,18 +47,21 @@ export default function Home() {
           </div>
           <h1 className="text-headline-lg-mobile font-headline-lg-mobile">Moodila</h1>
         </div>
-        <button
-          type="button"
-          aria-label="Log out"
-          title="Log out"
-          onClick={() => {
-            clearToken()
-            navigate('/login', { replace: true })
-          }}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
-        >
-          <span className="material-symbols-outlined text-[20px]">logout</span>
-        </button>
+        <div className="flex items-center gap-xs">
+          <HeaderBell />
+          <button
+            type="button"
+            aria-label="Log out"
+            title="Log out"
+            onClick={() => {
+              clearToken()
+              navigate('/login', { replace: true })
+            }}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
+          >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+          </button>
+        </div>
       </header>
 
       <div className="space-y-lg px-container-margin">
@@ -112,8 +116,13 @@ export default function Home() {
                       </span>
                     )}
                   </span>
-                  <span className={`text-label-sm font-label-sm ${isToday ? 'font-bold text-primary' : 'text-on-surface-variant'}`}>
+                  <span className={`text-label-sm font-label-sm flex items-center gap-0.5 ${isToday ? 'font-bold text-primary' : 'text-on-surface-variant'}`}>
                     {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                    {entry?.is_hidden && (
+                      <span className="material-symbols-outlined text-[12px]" title="Hidden from friends">
+                        lock
+                      </span>
+                    )}
                   </span>
                 </Link>
               )
@@ -190,7 +199,12 @@ export default function Home() {
                       <strong className="truncate text-body-md text-on-surface">
                         {entry.tags[0] || mood[1]}
                       </strong>
-                      <span className="shrink-0 text-label-sm font-label-sm text-on-surface-variant/60">
+                      <span className="flex shrink-0 items-center gap-1 text-label-sm font-label-sm text-on-surface-variant/60">
+                        {entry.is_hidden && (
+                          <span className="material-symbols-outlined text-[13px]" title="Hidden from friends">
+                            lock
+                          </span>
+                        )}
                         {relativeDate(entry.date)}
                       </span>
                     </span>

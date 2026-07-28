@@ -2,6 +2,7 @@ import { useDeferredValue, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAcceptFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useSendFriendRequestMutation, useUserSearchQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
+import HeaderBell from '../components/HeaderBell'
 import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
 
 export default function Friends() {
@@ -36,8 +37,8 @@ export default function Friends() {
             Add Friends
           </h1>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant bg-primary-container text-primary">
-          <span className="material-symbols-outlined text-[20px]">person</span>
+        <div className="flex items-center gap-xs">
+          <HeaderBell />
         </div>
       </header>
 

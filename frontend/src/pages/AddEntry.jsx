@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
-import { useEntryQuery, useSaveEntryMutation } from '../api/queries'
+import { useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
 import { uploadEntryPhoto } from '../api/entries'
 import BottomNav from '../components/BottomNav'
 import { useNotifications } from '../components/Notifications'
@@ -21,10 +21,11 @@ export default function AddEntry() {
   const { notify } = useNotifications()
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
-  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null })
+  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, is_hidden: false })
   const [status, setStatus] = useState('')
   const entryQuery = useEntryQuery(date, !futureDate)
   const saveMutation = useSaveEntryMutation()
+  const visibilityMutation = useUpdateEntryVisibilityMutation()
 
   useEffect(() => {
     if (futureDate) {
@@ -32,13 +33,13 @@ export default function AddEntry() {
       return
     }
     if (entryQuery.data) {
-      const { mood, tags, text, photo_url: photoURL } = entryQuery.data
-      setForm({ date, mood, tags, text, photo_url: photoURL || null })
+      const { mood, tags, text, photo_url: photoURL, is_hidden: isHidden } = entryQuery.data
+      setForm({ date, mood, tags, text, photo_url: photoURL || null, is_hidden: Boolean(isHidden) })
       setStatus('')
     } else if (entryQuery.isError && entryQuery.error.status !== 404) {
       setStatus(entryQuery.error.message)
     } else if (!entryQuery.isLoading) {
-      setForm({ date, mood: 0, tags: [], text: '', photo_url: null })
+      setForm({ date, mood: 0, tags: [], text: '', photo_url: null, is_hidden: false })
     }
   }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error])
 
@@ -194,6 +195,51 @@ export default function AddEntry() {
               </button>
             ))}
           </div>
+        </section>
+
+        <section className="flex items-center justify-between rounded-[24px] bg-white p-lg cloud-shadow">
+          <div className="flex items-center gap-md">
+            <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
+              {form.is_hidden ? 'lock' : 'public'}
+            </span>
+            <div>
+              <span className="block text-body-md font-label-lg text-on-surface">
+                Hide entry from friends
+              </span>
+              <span className="block text-body-sm text-on-surface-variant">
+                {form.is_hidden ? 'Visible only to you' : 'Visible to friends'}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={form.is_hidden}
+            aria-label="Hide entry from friends"
+            onClick={() => {
+              const nextHidden = !form.is_hidden
+              setForm((current) => ({ ...current, is_hidden: nextHidden }))
+              if (entryQuery.data?.id) {
+                visibilityMutation.mutate({ entryId: entryQuery.data.id, isHidden: nextHidden }, {
+                  onSuccess: () => notify(nextHidden ? 'Entry hidden from friends' : 'Entry visible to friends'),
+                  onError: (err) => notify(err.message, 'error'),
+                })
+              }
+            }}
+            className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+              form.is_hidden ? 'bg-primary' : 'bg-surface-container-highest'
+            }`}
+          >
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
+                form.is_hidden ? 'translate-x-6 text-on-primary-container' : 'translate-x-0 text-on-surface-variant'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                {form.is_hidden ? 'lock' : 'public'}
+              </span>
+            </span>
+          </button>
         </section>
 
         {status && (

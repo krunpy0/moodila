@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"moodshare/internal/models"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -30,41 +32,151 @@ func (r Feed) List(ctx context.Context, viewerID string) ([]models.FeedEntry, er
 	return entries, rows.Err()
 }
 
-// Like only allows likes on an entry that remains visible to an accepted friend.
-// The unique primary key makes repeated POSTs idempotent.
-func (r Feed) Like(ctx context.Context, viewerID, entryID string) (models.LikeResult, error) {
+func (r Feed) React(ctx context.Context, viewerID, entryID, reaction string) (models.LikeResult, error) {
+	if reaction == "" {
+		reaction = "❤️"
+	}
+
 	var result models.LikeResult
+	result.EntryID = entryID
+
+	accessible, err := r.canAccessEntry(ctx, viewerID, entryID)
+	if err != nil {
+		return result, err
+	}
+	if !accessible {
+		return result, pgx.ErrNoRows
+	}
+
+	// Toggle or update reaction
+	var existingReaction string
+	err = r.Pool.QueryRow(ctx, `SELECT reaction FROM likes WHERE entry_id = $1 AND user_id = $2`, entryID, viewerID).Scan(&existingReaction)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		// Insert new reaction
+		_, err = r.Pool.Exec(ctx, `INSERT INTO likes (entry_id, user_id, reaction) VALUES ($1, $2, $3)`, entryID, viewerID, reaction)
+	} else if err == nil {
+		if existingReaction == reaction {
+			// Toggle off if same reaction
+			_, err = r.Pool.Exec(ctx, `DELETE FROM likes WHERE entry_id = $1 AND user_id = $2`, entryID, viewerID)
+		} else {
+			// Update reaction if different
+			_, err = r.Pool.Exec(ctx, `UPDATE likes SET reaction = $3 WHERE entry_id = $1 AND user_id = $2`, entryID, viewerID, reaction)
+		}
+	}
+	if err != nil {
+		return result, err
+	}
+
+	// Get updated stats
+	err = r.Pool.QueryRow(ctx, `
+		SELECT COUNT(*)::int,
+		       COALESCE(BOOL_OR(user_id = $1), false),
+		       COALESCE(MAX(CASE WHEN user_id = $1 THEN reaction END), '')
+		FROM likes
+		WHERE entry_id = $2`, viewerID, entryID).Scan(&result.LikeCount, &result.LikedByMe, &result.MyReaction)
+
+	return result, err
+}
+
+func (r Feed) GetComments(ctx context.Context, viewerID, entryID string) ([]models.Comment, error) {
+	accessible, err := r.canAccessEntry(ctx, viewerID, entryID)
+	if err != nil || !accessible {
+		return nil, pgx.ErrNoRows
+	}
+
+	rows, err := r.Pool.Query(ctx, `
+		SELECT c.id, c.entry_id, c.user_id, c.text, c.created_at,
+		       u.id, u.username, u.display_name, u.avatar_url
+		FROM comments c
+		JOIN users u ON u.id = c.user_id
+		WHERE c.entry_id = $1
+		ORDER BY c.created_at ASC`, entryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	comments := make([]models.Comment, 0)
+	for rows.Next() {
+		var comment models.Comment
+		if err := rows.Scan(
+			&comment.ID, &comment.EntryID, &comment.UserID, &comment.Text, &comment.CreatedAt,
+			&comment.Author.ID, &comment.Author.Username, &comment.Author.DisplayName, &comment.Author.AvatarURL,
+		); err != nil {
+			return nil, err
+		}
+		comments = append(comments, comment)
+	}
+	return comments, rows.Err()
+}
+
+func (r Feed) AddComment(ctx context.Context, viewerID, entryID, text string) (models.Comment, error) {
+	var comment models.Comment
+
+	accessible, err := r.canAccessEntry(ctx, viewerID, entryID)
+	if err != nil || !accessible {
+		return comment, pgx.ErrNoRows
+	}
+
+	err = r.Pool.QueryRow(ctx, `
+		WITH inserted AS (
+			INSERT INTO comments (entry_id, user_id, text)
+			VALUES ($1, $2, $3)
+			RETURNING id, entry_id, user_id, text, created_at
+		)
+		SELECT i.id, i.entry_id, i.user_id, i.text, i.created_at,
+		       u.id, u.username, u.display_name, u.avatar_url
+		FROM inserted i
+		JOIN users u ON u.id = i.user_id`, entryID, viewerID, text).Scan(
+		&comment.ID, &comment.EntryID, &comment.UserID, &comment.Text, &comment.CreatedAt,
+		&comment.Author.ID, &comment.Author.Username, &comment.Author.DisplayName, &comment.Author.AvatarURL,
+	)
+
+	return comment, err
+}
+
+func (r Feed) DeleteComment(ctx context.Context, viewerID, commentID string) error {
+	commandTag, err := r.Pool.Exec(ctx, `DELETE FROM comments WHERE id = $1 AND user_id = $2`, commentID, viewerID)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}
+
+func (r Feed) GetEntryOwner(ctx context.Context, entryID string) (string, error) {
+	var ownerID string
+	err := r.Pool.QueryRow(ctx, `SELECT user_id FROM entries WHERE id = $1`, entryID).Scan(&ownerID)
+	return ownerID, err
+}
+
+func (r Feed) canAccessEntry(ctx context.Context, viewerID, entryID string) (bool, error) {
+	var accessible bool
 	err := r.Pool.QueryRow(ctx, `
-		WITH visible_entry AS (
-			SELECT e.id
-			FROM entries e
-			JOIN friendships f ON f.status = 'accepted'
+		SELECT EXISTS (
+			SELECT 1 FROM entries e
+			LEFT JOIN friendships f ON f.status = 'accepted'
 				AND ((f.requester_id = $1 AND f.addressee_id = e.user_id)
 					OR (f.addressee_id = $1 AND f.requester_id = e.user_id))
-			WHERE e.id = $2 AND e.is_hidden = false
-		), inserted AS (
-			INSERT INTO likes (entry_id, user_id)
-			SELECT id, $1 FROM visible_entry
-			ON CONFLICT (entry_id, user_id) DO NOTHING
-			RETURNING entry_id
-		)
-		-- A data-modifying CTE is not visible through the statement's table
-		-- snapshot. Include inserted explicitly so the response reflects a
-		-- freshly-created like immediately.
-		SELECT v.id,
-		       COUNT(l.user_id)::int + CASE WHEN EXISTS (SELECT 1 FROM inserted) THEN 1 ELSE 0 END,
-		       COALESCE(BOOL_OR(l.user_id = $1), false) OR EXISTS (SELECT 1 FROM inserted)
-		FROM visible_entry v
-		LEFT JOIN likes l ON l.entry_id = v.id
-		GROUP BY v.id`, viewerID, entryID,
-	).Scan(&result.EntryID, &result.LikeCount, &result.LikedByMe)
-	return result, err
+			WHERE e.id = $2
+			  AND (
+			      e.user_id = $1
+			      OR (f.id IS NOT NULL AND e.is_hidden = false)
+			  )
+		)`, viewerID, entryID).Scan(&accessible)
+	return accessible, err
 }
 
 const feedQuery = `
 	SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.created_at,
 	       u.id, u.username, u.display_name, u.avatar_url,
-	       COUNT(l.user_id)::int, COALESCE(BOOL_OR(l.user_id = $1), false)
+	       COUNT(DISTINCT l.user_id)::int,
+	       COALESCE(BOOL_OR(l.user_id = $1), false),
+	       COALESCE(MAX(CASE WHEN l.user_id = $1 THEN l.reaction END), ''),
+	       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id)
 	FROM entries e
 	JOIN users u ON u.id = e.user_id
 	JOIN friendships f ON f.status = 'accepted'
@@ -84,7 +196,7 @@ func scanFeedEntry(row feedRow) (models.FeedEntry, error) {
 	err := row.Scan(
 		&entry.ID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.CreatedAt,
 		&entry.Author.ID, &entry.Author.Username, &entry.Author.DisplayName, &entry.Author.AvatarURL,
-		&entry.LikeCount, &entry.LikedByMe,
+		&entry.LikeCount, &entry.LikedByMe, &entry.MyReaction, &entry.CommentCount,
 	)
 	return entry, err
 }

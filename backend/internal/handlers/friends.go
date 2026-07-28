@@ -19,7 +19,8 @@ import (
 var usernameSearchPattern = regexp.MustCompile(`^[a-z0-9_]+$`)
 
 type Friends struct {
-	Friends repository.Friends
+	Friends       repository.Friends
+	Notifications repository.Notifications
 }
 
 type friendInput struct {
@@ -71,6 +72,9 @@ func (h Friends) Request(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not send friend request"})
 		return
 	}
+
+	_ = h.Notifications.Create(c.Request.Context(), input.UserID, c.GetString("userID"), "friend_request", &friendship.ID, nil)
+
 	c.JSON(http.StatusCreated, friendship)
 }
 
@@ -110,6 +114,11 @@ func (h Friends) respond(c *gin.Context, status string) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update friend request"})
 		return
 	}
+
+	if status == "accepted" {
+		_ = h.Notifications.Create(c.Request.Context(), friendship.RequesterID, c.GetString("userID"), "friend_accept", &friendship.ID, nil)
+	}
+
 	c.JSON(http.StatusOK, friendship)
 }
 

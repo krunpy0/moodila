@@ -60,3 +60,12 @@ func TestCurrentDateUsesUserTimeZone(t *testing.T) {
 		t.Fatalf("local date = %s", got.Format(time.DateOnly))
 	}
 }
+
+func TestVisibilityInputValidation(t *testing.T) {
+	// Test struct for JSON binding
+	v := visibilityInput{}
+	if v.IsHidden != nil {
+		t.Fatal("expected IsHidden to be nil when not provided")
+	}
+}
+

@@ -93,12 +93,12 @@ export default function Auth() {
               />
             )}
             <Field
-              label="Email"
+              label="Email or Username"
               name="email"
-              type="email"
+              type="text"
               value={form.email}
               onChange={update}
-              autoComplete="email"
+              autoComplete="username"
               required
             />
             <Field

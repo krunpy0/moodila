@@ -27,7 +27,7 @@ func (r Users) ByEmail(ctx context.Context, email string) (models.User, error) {
 	var user models.User
 	err := r.Pool.QueryRow(ctx, `
 		SELECT id, email, password_hash, username, display_name, avatar_url, created_at
-		FROM users WHERE email = $1`,
+		FROM users WHERE email = $1 OR username = $1`,
 		email,
 	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Username, &user.DisplayName, &user.AvatarURL, &user.CreatedAt)
 	return user, err
