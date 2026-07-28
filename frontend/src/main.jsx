@@ -4,6 +4,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@ta
 import './index.css'
 import App from './App.jsx'
 import { NotificationsProvider, notifyError } from './components/Notifications.jsx'
+import { ThemeProvider } from './context/ThemeContext.jsx'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,9 +22,11 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <NotificationsProvider>
-        <App />
-      </NotificationsProvider>
+      <ThemeProvider>
+        <NotificationsProvider>
+          <App />
+        </NotificationsProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,
 )
