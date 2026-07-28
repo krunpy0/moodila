@@ -109,7 +109,6 @@ func (h Storage) Upload(c *gin.Context) {
 		log.Printf("s3 put failed: %v", err)
     c.JSON(http.StatusBadGateway, gin.H{"error": "could not upload photo"})
     return
-		return
 	}
 	c.Status(http.StatusNoContent)
 }

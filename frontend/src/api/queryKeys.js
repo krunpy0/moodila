@@ -8,4 +8,5 @@ export const queryKeys = {
   feed: ['feed'],
   session: ['auth', 'session'],
   profile: ['profile'],
+  friendProfile: (id) => ['users', 'profile', id],
 }

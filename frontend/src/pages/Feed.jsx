@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useFeedQuery, useLikeEntryMutation } from '../api/queries'
 import BottomNav from '../components/BottomNav'
 import { FeedSkeleton } from '../components/skeleton/PageSkeletons'
@@ -54,11 +55,13 @@ function FeedCard({ entry, busy, onLike }) {
   return (
     <article className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
       <header className="flex items-center gap-sm">
-        <Avatar author={entry.author} />
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
-          <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {relativeDate(entry.date)}</p>
-        </div>
+        <Link to={`/profile/${entry.author.id}`} className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80">
+          <Avatar author={entry.author} />
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
+            <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {relativeDate(entry.date)}</p>
+          </div>
+        </Link>
         <span className={`flex h-11 w-11 items-center justify-center rounded-full text-xl ${moodClass}`} title={moodName}>{emoji}</span>
       </header>
 

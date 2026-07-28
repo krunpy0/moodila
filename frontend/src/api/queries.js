@@ -3,7 +3,7 @@ import { getSession } from './auth'
 import { getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, saveEntry } from './entries'
 import { likeEntry, getFeed } from './feed'
 import { acceptFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest } from './friends'
-import { getMyProfile, updateMyProfile } from './users'
+import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
 import { queryKeys } from './queryKeys'
 
 export { queryKeys }
@@ -17,6 +17,7 @@ export const useFriendsQuery = () => useQuery({ queryKey: queryKeys.friends, que
 export const usePendingFriendsQuery = () => useQuery({ queryKey: queryKeys.pendingFriends, queryFn: getPendingFriends, staleTime: 30_000 })
 export const useFeedQuery = () => useQuery({ queryKey: queryKeys.feed, queryFn: getFeed, staleTime: 30_000 })
 export const useProfileQuery = () => useQuery({ queryKey: queryKeys.profile, queryFn: getMyProfile, staleTime: 60_000 })
+export const useFriendProfileQuery = (friendId, enabled = true) => useQuery({ queryKey: queryKeys.friendProfile(friendId), queryFn: () => getFriendProfile(friendId), enabled: Boolean(friendId) && enabled, staleTime: 60_000, retry: false })
 export const useUserSearchQuery = (query) => useQuery({ queryKey: ['users', 'search', query], queryFn: () => searchUsers(query), enabled: Boolean(query), staleTime: 30_000 })
 
 export function useSaveEntryMutation() {

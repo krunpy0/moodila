@@ -78,6 +78,7 @@ func main() {
 	authorized.GET("/users/search", friends.Search)
 	authorized.GET("/users/me", users.Me)
 	authorized.PATCH("/users/me", users.UpdateMe)
+	authorized.GET("/users/:id/profile", users.FriendProfile)
 	authorized.POST("/friends/request", friends.Request)
 	authorized.POST("/friends/accept", friends.Accept)
 	authorized.POST("/friends/decline", friends.Decline)

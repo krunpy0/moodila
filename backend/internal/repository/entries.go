@@ -152,3 +152,55 @@ func (r Entries) Summary(ctx context.Context, userID, month, nextMonth string) (
 	).Scan(&summary.EntryCount, &summary.DominantMood, &summary.TopTag)
 	return summary, err
 }
+
+func (r Entries) VisibleRecent(ctx context.Context, userID string, limit int) ([]models.Entry, error) {
+	rows, err := r.Pool.Query(ctx, `
+		SELECT id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at
+		FROM entries
+		WHERE user_id = $1 AND is_hidden = false
+		ORDER BY date DESC, created_at DESC
+		LIMIT $2`, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	entries := make([]models.Entry, 0)
+	for rows.Next() {
+		var entry models.Entry
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt); err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	return entries, rows.Err()
+}
+
+func (r Entries) VisibleSummary(ctx context.Context, userID, month, nextMonth string) (models.EntrySummary, error) {
+	var summary models.EntrySummary
+	err := r.Pool.QueryRow(ctx, `
+		SELECT
+			COUNT(*)::int,
+			(
+				SELECT mood
+				FROM entries
+				WHERE user_id = $1 AND is_hidden = false AND date >= $2 AND date < $3
+				GROUP BY mood
+				ORDER BY COUNT(*) DESC, mood DESC
+				LIMIT 1
+			),
+			(
+				SELECT tag
+				FROM entries
+				CROSS JOIN LATERAL UNNEST(entries.tags) AS tags(tag)
+				WHERE user_id = $1 AND is_hidden = false AND date >= $2 AND date < $3
+				GROUP BY tag
+				ORDER BY COUNT(*) DESC, LOWER(tag)
+				LIMIT 1
+			)
+		FROM entries
+		WHERE user_id = $1 AND is_hidden = false AND date >= $2 AND date < $3`,
+		userID, month+"-01", nextMonth+"-01",
+	).Scan(&summary.EntryCount, &summary.DominantMood, &summary.TopTag)
+	return summary, err
+}
+

@@ -1,5 +1,5 @@
 import { useDeferredValue, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAcceptFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useSendFriendRequestMutation, useUserSearchQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
 import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
@@ -132,17 +132,30 @@ function UserSection({ title, count, children }) {
 }
 
 function UserCard({ user, children }) {
+  const isFriend = !user.status || user.status === 'accepted'
   return (
     <div className="flex min-h-[112px] items-center justify-between gap-sm rounded-[24px] border border-surface-container bg-white p-lg cloud-shadow">
-      <div className="flex min-w-0 items-center gap-md">
-        <Avatar user={user} />
-        <div className="min-w-0">
-          <p className="truncate text-body-md font-semibold text-on-surface">
-            {user.display_name || user.username}
-          </p>
-          <p className="truncate text-label-sm text-on-surface-variant">@{user.username}</p>
+      {isFriend ? (
+        <Link to={`/profile/${user.id}`} className="flex min-w-0 flex-1 items-center gap-md rounded-xl transition-opacity hover:opacity-80">
+          <Avatar user={user} />
+          <div className="min-w-0">
+            <p className="truncate text-body-md font-semibold text-on-surface">
+              {user.display_name || user.username}
+            </p>
+            <p className="truncate text-label-sm text-on-surface-variant">@{user.username}</p>
+          </div>
+        </Link>
+      ) : (
+        <div className="flex min-w-0 items-center gap-md">
+          <Avatar user={user} />
+          <div className="min-w-0">
+            <p className="truncate text-body-md font-semibold text-on-surface">
+              {user.display_name || user.username}
+            </p>
+            <p className="truncate text-label-sm text-on-surface-variant">@{user.username}</p>
+          </div>
         </div>
-      </div>
+      )}
       {children}
     </div>
   )
