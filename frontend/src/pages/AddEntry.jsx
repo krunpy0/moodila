@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
 import { useDeleteEntryMutation, useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
-import { uploadEntryPhoto } from '../api/entries'
+import { uploadEntryPhoto, uploadEntryAudio } from '../api/entries'
 import BottomNav from '../components/BottomNav'
 import { useNotifications } from '../components/Notifications'
+import VoiceNotePlayer from '../components/VoiceNotePlayer'
+import ImageWithSkeleton from '../components/ImageWithSkeleton'
 
 const moods = [
   ['sentiment_very_dissatisfied', 'text-error', 'bg-error-container/20'],
@@ -21,7 +23,7 @@ export default function AddEntry() {
   const { notify } = useNotifications()
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
-  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, is_hidden: false })
+  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
   const [status, setStatus] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const entryQuery = useEntryQuery(date, !futureDate)
@@ -29,6 +31,35 @@ export default function AddEntry() {
   const visibilityMutation = useUpdateEntryVisibilityMutation()
   const deleteMutation = useDeleteEntryMutation()
 
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+
+  const selectPhoto = async (event) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) { setStatus('Choose an image file.'); notify('Choose an image file.', 'error'); return }
+    if (file.size > 10 * 1024 * 1024) { setStatus('Image must be 10 MB or smaller.'); notify('Image must be 10 MB or smaller.', 'error'); return }
+    setStatus('Uploading photo...')
+    setIsUploadingPhoto(true)
+    try {
+      const photoURL = await uploadEntryPhoto(file)
+      setForm((current) => ({ ...current, photo_url: photoURL }))
+      setStatus('Photo attached. Save your entry to publish it.')
+      notify('Photo attached. Save your entry to publish it.')
+    } catch (error) {
+      setStatus(error.message)
+      notify(error.message, 'error')
+    } finally {
+      setIsUploadingPhoto(false)
+    }
+  }
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [audioBlob, setAudioBlob] = useState(null)
+  const [audioDuration, setAudioDuration] = useState(null)
+  const mediaRecorderRef = useRef(null)
+  const recordingTimerRef = useRef(null)
+  const audioChunksRef = useRef([])
 
   useEffect(() => {
     if (futureDate) {
@@ -36,13 +67,14 @@ export default function AddEntry() {
       return
     }
     if (entryQuery.data) {
-      const { mood, tags, text, photo_url: photoURL, is_hidden: isHidden } = entryQuery.data
-      setForm({ date, mood, tags, text, photo_url: photoURL || null, is_hidden: Boolean(isHidden) })
+      const { mood, tags, text, photo_url: photoURL, audio_url: audioURL, audio_duration: audioDur, is_hidden: isHidden } = entryQuery.data
+      setForm({ date, mood, tags, text, photo_url: photoURL || null, audio_url: audioURL || null, audio_duration: audioDur || null, is_hidden: Boolean(isHidden) })
+      setAudioDuration(audioDur || null)
       setStatus('')
     } else if (entryQuery.isError && entryQuery.error.status !== 404) {
       setStatus(entryQuery.error.message)
     } else if (!entryQuery.isLoading) {
-      setForm({ date, mood: 0, tags: [], text: '', photo_url: null, is_hidden: false })
+      setForm({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
     }
   }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error])
 
@@ -53,6 +85,68 @@ export default function AddEntry() {
         ? current.tags.filter((item) => item !== tag)
         : [...current.tags, tag],
     }))
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      notify('Microphone access is not supported in your browser.', 'error')
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      audioChunksRef.current = []
+      const recorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = recorder
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop())
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+        setAudioBlob(blob)
+        clearInterval(recordingTimerRef.current)
+        setIsRecording(false)
+      }
+
+      recorder.start(100)
+      setIsRecording(true)
+      setRecordingTime(0)
+
+      const startTime = Date.now()
+      recordingTimerRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000)
+        setRecordingTime(elapsed)
+        setAudioDuration(elapsed)
+        if (elapsed >= 30) {
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop()
+          }
+          clearInterval(recordingTimerRef.current)
+          setIsRecording(false)
+        }
+      }, 200)
+    } catch (err) {
+      console.error('Microphone error:', err)
+      notify('Could not access microphone.', 'error')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+    clearInterval(recordingTimerRef.current)
+    setIsRecording(false)
+  }
+
+  const clearAudio = () => {
+    setAudioBlob(null)
+    setAudioDuration(null)
+    setForm((current) => ({ ...current, audio_url: null, audio_duration: null }))
+  }
 
   const submit = async (event) => {
     event.preventDefault()
@@ -66,28 +160,30 @@ export default function AddEntry() {
       notify('Choose a mood first.', 'error')
       return
     }
-    saveMutation.mutate(form, {
+
+    let payload = { ...form }
+
+    if (audioBlob) {
+      setStatus('Uploading voice note...')
+      try {
+        const uploadedAudioUrl = await uploadEntryAudio(audioBlob)
+        payload.audio_url = uploadedAudioUrl
+        payload.audio_duration = audioDuration || 1
+      } catch (err) {
+        setStatus(err.message)
+        notify(err.message, 'error')
+        return
+      }
+    }
+
+    setStatus('Saving entry...')
+    saveMutation.mutate(payload, {
       onSuccess: (saved) => {
         notify('Your entry has been saved.')
         navigate(`/calendar?month=${saved.date.slice(0, 7)}`, { replace: true })
       },
       onError: (error) => setStatus(error.message),
     })
-  }
-
-  const selectPhoto = async (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (!file.type.startsWith('image/')) { setStatus('Choose an image file.'); notify('Choose an image file.', 'error'); return }
-    if (file.size > 10 * 1024 * 1024) { setStatus('Image must be 10 MB or smaller.'); notify('Image must be 10 MB or smaller.', 'error'); return }
-    setStatus('Uploading photo...')
-    try {
-      const photoURL = await uploadEntryPhoto(file)
-      setForm((current) => ({ ...current, photo_url: photoURL }))
-      setStatus('Photo attached. Save your entry to publish it.')
-      notify('Photo attached. Save your entry to publish it.')
-    } catch (error) { setStatus(error.message); notify(error.message, 'error') }
   }
 
   return (
@@ -168,35 +264,92 @@ export default function AddEntry() {
             placeholder="Start writing..."
             className="min-h-[210px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
           />
-          {form.photo_url && (
-            <div className="relative mb-md overflow-hidden rounded-2xl bg-surface-container-low">
-              <img src={form.photo_url} alt="Selected entry" className="max-h-64 w-full object-cover" />
-              <button type="button" onClick={() => setForm((current) => ({ ...current, photo_url: null }))} aria-label="Remove photo" className="absolute right-sm top-sm flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm">
-                <span className="material-symbols-outlined text-[20px]">close</span>
-              </button>
+          {(form.photo_url || isUploadingPhoto) && (
+            <div className="mb-md">
+              <ImageWithSkeleton
+                src={form.photo_url}
+                alt="Selected entry photo"
+                className="max-h-64 w-full object-cover rounded-2xl"
+                skeletonHeightClass="h-56 sm:h-64"
+                isUploading={isUploadingPhoto}
+                uploadingText="Uploading photo..."
+              >
+                {form.photo_url && !isUploadingPhoto && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((current) => ({ ...current, photo_url: null }))}
+                    aria-label="Remove photo"
+                    className="absolute right-sm top-sm z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm hover:bg-background"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">close</span>
+                  </button>
+                )}
+              </ImageWithSkeleton>
             </div>
           )}
+
+          {/* Voice Note Preview or Live Recording */}
+          {isRecording ? (
+            <div className="mb-md flex items-center justify-between rounded-2xl bg-error-container/30 p-md border border-error/20">
+              <div className="flex items-center gap-sm">
+                <span className="h-3 w-3 rounded-full bg-error animate-pulse" />
+                <span className="text-label-lg font-medium text-error">
+                  Recording... 0:{recordingTime < 10 ? '0' : ''}{recordingTime} / 0:30
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={stopRecording}
+                className="flex h-9 px-md items-center gap-1 rounded-full bg-error text-on-error text-label-sm font-semibold shadow-sm hover:bg-error/90"
+              >
+                <span className="material-symbols-outlined text-[18px]">stop</span>
+                Done
+              </button>
+            </div>
+          ) : (audioBlob || form.audio_url) ? (
+            <div className="mb-md">
+              <VoiceNotePlayer
+                blob={audioBlob}
+                audioUrl={form.audio_url}
+                duration={audioDuration || form.audio_duration}
+                onDelete={clearAudio}
+              />
+            </div>
+          ) : null}
+
           <div className="mt-lg flex items-center gap-md border-t border-surface-container pt-md">
             <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">
               <span className="material-symbols-outlined text-[20px]">image</span>
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={selectPhoto} className="sr-only" />
               <span className="sr-only">Add image</span>
             </label>
-            {[
-              ['mic', 'Record audio'],
-              ['attach_file', 'Attach file'],
-            ].map(([icon, label]) => (
-              <button
-                key={icon}
-                type="button"
-                disabled
-                title={`${label} (coming later)`}
-                aria-label={`${label} (coming later)`}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant opacity-60"
-              >
-                <span className="material-symbols-outlined text-[20px]">{icon}</span>
-              </button>
-            ))}
+
+            {/* Active Mic Button */}
+            <button
+              type="button"
+              onClick={isRecording ? stopRecording : startRecording}
+              title={isRecording ? 'Stop recording' : 'Record voice note'}
+              aria-label={isRecording ? 'Stop recording' : 'Record voice note'}
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                isRecording
+                  ? 'bg-error text-on-error animate-pulse'
+                  : (audioBlob || form.audio_url)
+                  ? 'bg-primary-container text-primary'
+                  : 'text-on-surface-variant hover:bg-surface-container'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[20px]">{isRecording ? 'stop' : 'mic'}</span>
+            </button>
+
+            <button
+              type="button"
+              disabled
+              title="Attach file (coming later)"
+              aria-label="Attach file (coming later)"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant opacity-60"
+            >
+              <span className="material-symbols-outlined text-[20px]">attach_file</span>
+            </button>
           </div>
         </section>
 

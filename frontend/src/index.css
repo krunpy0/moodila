@@ -138,3 +138,8 @@
 .dark .bg-white\/40 {
   background-color: rgb(var(--color-surface-container-lowest) / 0.4);
 }
+
+.skeleton {
+  @apply animate-pulse bg-surface-container-high;
+}
+

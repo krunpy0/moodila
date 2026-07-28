@@ -47,7 +47,7 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 	}
 
 	query := `
-		SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.created_at,
+		SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at,
 		       u.id, u.username, u.display_name, u.avatar_url,
 		       COUNT(DISTINCT l.user_id)::int,
 		       COALESCE(BOOL_OR(l.user_id = $1), false),
@@ -265,7 +265,7 @@ type feedRow interface {
 func scanFeedEntry(row feedRow) (models.FeedEntry, error) {
 	var entry models.FeedEntry
 	err := row.Scan(
-		&entry.ID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.CreatedAt,
+		&entry.ID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.CreatedAt,
 		&entry.Author.ID, &entry.Author.Username, &entry.Author.DisplayName, &entry.Author.AvatarURL,
 		&entry.LikeCount, &entry.LikedByMe, &entry.MyReaction, &entry.CommentCount,
 	)

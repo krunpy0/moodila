@@ -38,7 +38,7 @@ func main() {
 			log.Fatal(err)
 		}
 		defer pool.Exec(context.Background(), `DELETE FROM users WHERE email = $1`, email)
-		entry, err := (repository.Entries{Pool: pool}).Save(ctx, user.ID, "2026-07-22", 5, []string{"Calm", "Grateful"}, "test", nil, nil)
+		entry, err := (repository.Entries{Pool: pool}).Save(ctx, user.ID, "2026-07-22", 5, []string{"Calm", "Grateful"}, "test", nil, nil, nil, nil)
 		fmt.Printf("entry=%+v error=%v\n", entry, err)
 		return
 	}

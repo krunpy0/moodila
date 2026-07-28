@@ -5,6 +5,8 @@ import { getLocalDate } from "../api/client";
 import BottomNav from "../components/BottomNav";
 import HeaderBell from "../components/HeaderBell";
 import { CalendarSkeleton } from "../components/skeleton/PageSkeletons";
+import VoiceNotePlayer from "../components/VoiceNotePlayer";
+import ImageWithSkeleton from "../components/ImageWithSkeleton";
 
 const weekdays = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const moods = {
@@ -409,7 +411,17 @@ export default function Calendar() {
               </div>
             </div>
             <p className="whitespace-pre-wrap text-body-md font-body-md leading-6 text-on-surface">{selectedFriendEntry.text || "No note shared for this day."}</p>
-            {selectedFriendEntry.photo_url && <img src={selectedFriendEntry.photo_url} alt={`Photo from ${friendName(selectedFriend)}'s day`} className="mt-md max-h-72 w-full rounded-2xl object-cover" />}
+            {selectedFriendEntry.photo_url && (
+              <div className="mt-md">
+                <ImageWithSkeleton
+                  src={selectedFriendEntry.photo_url}
+                  alt={`Photo from ${friendName(selectedFriend)}'s day`}
+                  className="max-h-72 w-full rounded-2xl object-cover"
+                  skeletonHeightClass="h-48 sm:h-64"
+                />
+              </div>
+            )}
+            {selectedFriendEntry.audio_url && <VoiceNotePlayer audioUrl={selectedFriendEntry.audio_url} duration={selectedFriendEntry.audio_duration} className="mt-md" />}
             <p className="mt-lg text-label-sm font-label-sm text-on-surface-variant/60">View only</p>
           </article>
         </div>

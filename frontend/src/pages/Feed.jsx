@@ -11,6 +11,8 @@ import {
 import BottomNav from '../components/BottomNav'
 import HeaderBell from '../components/HeaderBell'
 import { FeedSkeleton } from '../components/skeleton/PageSkeletons'
+import VoiceNotePlayer from '../components/VoiceNotePlayer'
+import ImageWithSkeleton from '../components/ImageWithSkeleton'
 
 const moods = {
   1: ['😞', 'Rough', 'bg-error-container/60 text-on-error-container'],
@@ -134,7 +136,16 @@ function FeedCard({ entry, busy, onReact }) {
         </div>
         <p className="whitespace-pre-wrap text-body-md leading-6 text-on-surface">{entry.text || 'No note for this day.'}</p>
         {entry.photo_url && (
-          <img src={entry.photo_url} alt={`Photo from ${authorName}'s day`} className="max-h-96 w-full rounded-2xl object-cover" loading="lazy" />
+          <ImageWithSkeleton
+            src={entry.photo_url}
+            alt={`Photo from ${authorName}'s day`}
+            className="max-h-96 w-full rounded-2xl object-cover"
+            skeletonHeightClass="h-64 sm:h-80"
+            loading="lazy"
+          />
+        )}
+        {entry.audio_url && (
+          <VoiceNotePlayer audioUrl={entry.audio_url} duration={entry.audio_duration} className="mt-sm" />
         )}
       </div>
 

@@ -19,22 +19,24 @@ type Entries struct {
 	Pool *pgxpool.Pool
 }
 
-func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL *string, isHidden *bool) (models.Entry, error) {
+func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool) (models.Entry, error) {
 	var entry models.Entry
 	err := r.Pool.QueryRow(ctx, `
-		INSERT INTO entries (user_id, date, mood, tags, text, photo_url, is_hidden)
-		VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, false))
+		INSERT INTO entries (user_id, date, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, false))
 		ON CONFLICT (user_id, date) DO UPDATE
 		SET mood = EXCLUDED.mood,
 		    tags = EXCLUDED.tags,
 		    text = EXCLUDED.text,
 		    photo_url = EXCLUDED.photo_url,
-		    is_hidden = COALESCE($7, entries.is_hidden)
-		RETURNING id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at`,
-		userID, date, mood, tags, text, photoURL, isHidden,
+		    audio_url = EXCLUDED.audio_url,
+		    audio_duration = EXCLUDED.audio_duration,
+		    is_hidden = COALESCE($9, entries.is_hidden)
+		RETURNING id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden, created_at`,
+		userID, date, mood, tags, text, photoURL, audioURL, audioDuration, isHidden,
 	).Scan(
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
-		&entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt,
+		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
 	return entry, err
 }
@@ -42,20 +44,20 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 func (r Entries) ByDate(ctx context.Context, userID, date string) (models.Entry, error) {
 	var entry models.Entry
 	err := r.Pool.QueryRow(ctx, `
-		SELECT id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at
+		SELECT id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden, created_at
 		FROM entries
 		WHERE user_id = $1 AND date = $2`,
 		userID, date,
 	).Scan(
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
-		&entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt,
+		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
 	return entry, err
 }
 
 func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models.Entry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at
+		SELECT id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden, created_at
 		FROM entries WHERE user_id = $1 ORDER BY date DESC, created_at DESC LIMIT $2`, userID, limit)
 	if err != nil {
 		return nil, err
@@ -64,7 +66,7 @@ func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models
 	entries := make([]models.Entry, 0)
 	for rows.Next() {
 		var entry models.Entry
-		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -74,7 +76,7 @@ func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models
 
 func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT date::text, mood, tags, text, photo_url, is_hidden, created_at
+		SELECT date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden, created_at
 		FROM entries
 		WHERE user_id = $1 AND date >= $2 AND date < $3
 		ORDER BY date`,
@@ -88,7 +90,7 @@ func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) (
 	entries := make([]models.CalendarEntry, 0)
 	for rows.Next() {
 		var entry models.CalendarEntry
-		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -111,7 +113,7 @@ func (r Entries) CanViewFriend(ctx context.Context, userID, friendID string) (bo
 
 func (r Entries) VisibleByMonth(ctx context.Context, userID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT date::text, mood, tags, text, photo_url, created_at
+		SELECT date::text, mood, tags, text, photo_url, audio_url, audio_duration, created_at
 		FROM entries
 		WHERE user_id = $1
 		  AND is_hidden = false
@@ -127,7 +129,7 @@ func (r Entries) VisibleByMonth(ctx context.Context, userID, month, nextMonth st
 	entries := make([]models.CalendarEntry, 0)
 	for rows.Next() {
 		var entry models.CalendarEntry
-		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -166,7 +168,7 @@ func (r Entries) Summary(ctx context.Context, userID, month, nextMonth string) (
 
 func (r Entries) VisibleRecent(ctx context.Context, userID string, limit int) ([]models.Entry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at
+		SELECT id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden, created_at
 		FROM entries
 		WHERE user_id = $1 AND is_hidden = false
 		ORDER BY date DESC, created_at DESC
@@ -178,7 +180,7 @@ func (r Entries) VisibleRecent(ctx context.Context, userID string, limit int) ([
 	entries := make([]models.Entry, 0)
 	for rows.Next() {
 		var entry models.Entry
-		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -233,11 +235,11 @@ func (r Entries) UpdateVisibility(ctx context.Context, entryID, userID string, i
 		UPDATE entries
 		SET is_hidden = $1
 		WHERE id = $2
-		RETURNING id, user_id, date::text, mood, tags, text, photo_url, is_hidden, created_at`,
+		RETURNING id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden, created_at`,
 		isHidden, entryID,
 	).Scan(
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
-		&entry.Text, &entry.PhotoURL, &entry.IsHidden, &entry.CreatedAt,
+		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
 	return entry, err
 }

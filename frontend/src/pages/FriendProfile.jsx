@@ -2,6 +2,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useFriendProfileQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
 import { ProfileSkeleton } from '../components/skeleton/PageSkeletons'
+import VoiceNotePlayer from '../components/VoiceNotePlayer'
+import ImageWithSkeleton from '../components/ImageWithSkeleton'
 
 const moods = { 1: '😞', 2: '😔', 3: '😐', 4: '😊', 5: '😁' }
 const moodDetails = {
@@ -140,8 +142,19 @@ export default function FriendProfile() {
                       </span>
                     </div>
                     {entry.photo_url && (
-                      <div className="my-xs h-16 w-full overflow-hidden rounded-xl bg-surface-container-low">
-                        <img src={entry.photo_url} alt="" className="h-full w-full object-cover" />
+                      <div className="my-xs">
+                        <ImageWithSkeleton
+                          src={entry.photo_url}
+                          alt="Entry photo"
+                          className="h-16 w-full object-cover rounded-xl"
+                          containerClassName="rounded-xl"
+                          skeletonHeightClass="h-16"
+                        />
+                      </div>
+                    )}
+                    {entry.audio_url && (
+                      <div className="my-xs">
+                        <VoiceNotePlayer audioUrl={entry.audio_url} duration={entry.audio_duration} />
                       </div>
                     )}
                     <p className="line-clamp-2 text-body-sm text-on-surface">

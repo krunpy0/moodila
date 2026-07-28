@@ -17,12 +17,14 @@ type Entries struct {
 }
 
 type entryInput struct {
-	Date     string   `json:"date"`
-	Mood     int      `json:"mood"`
-	Tags     []string `json:"tags"`
-	Text     string   `json:"text"`
-	PhotoURL *string  `json:"photo_url"`
-	IsHidden *bool    `json:"is_hidden"`
+	Date          string   `json:"date"`
+	Mood          int      `json:"mood"`
+	Tags          []string `json:"tags"`
+	Text          string   `json:"text"`
+	PhotoURL      *string  `json:"photo_url"`
+	AudioURL      *string  `json:"audio_url"`
+	AudioDuration *int     `json:"audio_duration"`
+	IsHidden      *bool    `json:"is_hidden"`
 }
 
 type visibilityInput struct {
@@ -53,6 +55,21 @@ func (h Entries) Save(c *gin.Context) {
 			input.PhotoURL = &photoURL
 		}
 	}
+	if input.AudioURL != nil {
+		audioURL := strings.TrimSpace(*input.AudioURL)
+		if audioURL == "" {
+			input.AudioURL = nil
+		} else if len(audioURL) > 2048 || !(strings.HasPrefix(audioURL, "https://") || strings.HasPrefix(audioURL, "http://")) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "audio_url must be a valid URL"})
+			return
+		} else {
+			input.AudioURL = &audioURL
+		}
+	}
+	if input.AudioDuration != nil && (*input.AudioDuration < 0 || *input.AudioDuration > 300) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "audio_duration is invalid"})
+		return
+	}
 	input.Tags = cleanTags(input.Tags)
 	today, err := currentDate(time.Now(), c.GetHeader("X-Time-Zone"))
 	if err != nil {
@@ -65,7 +82,7 @@ func (h Entries) Save(c *gin.Context) {
 	}
 
 	entry, err := h.Entries.Save(
-		c.Request.Context(), c.GetString("userID"), input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.IsHidden,
+		c.Request.Context(), c.GetString("userID"), input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save entry"})

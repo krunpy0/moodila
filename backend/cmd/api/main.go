@@ -84,6 +84,7 @@ func main() {
 	authorized.DELETE("/entries", mutationLimiter, entries.Delete)
 	authorized.PATCH("/entries/:id/visibility", mutationLimiter, entries.Visibility)
 	authorized.POST("/storage/entry-photos/upload-url", uploadLimiter, storageHandler.SignUpload)
+	authorized.POST("/storage/entry-audio/upload-url", uploadLimiter, storageHandler.SignAudioUpload)
 	authorized.PUT("/storage/entry-photos/upload/:token", uploadLimiter, storageHandler.Upload)
 	authorized.GET("/entries/me", readLimiter, entries.Me)
 	authorized.GET("/entries/friend/:friend_id", readLimiter, entries.Friend)

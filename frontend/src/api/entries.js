@@ -49,3 +49,26 @@ export async function uploadEntryPhoto(file) {
   return photoURL
 }
 
+export const requestAudioUpload = (file) =>
+  api('/storage/entry-audio/upload-url', {
+    method: 'POST',
+    body: JSON.stringify({ filename: file.name || 'voicenote.webm', content_type: file.type || 'audio/webm', size: file.size }),
+  })
+
+export async function uploadEntryAudio(audioBlob) {
+  const file = new File([audioBlob], audioBlob.name || 'voicenote.webm', { type: audioBlob.type || 'audio/webm' })
+  const { upload_url: uploadURL, audio_url: audioURL } = await requestAudioUpload(file)
+  const response = await fetch(apiURL(uploadURL), {
+    method: 'PUT',
+    headers: {
+      'Content-Type': file.type,
+      'X-Time-Zone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: file,
+  })
+  if (!response.ok) throw new Error('Could not upload voice note. Please try again.')
+  return audioURL
+}
+
+

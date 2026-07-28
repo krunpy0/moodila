@@ -40,6 +40,11 @@ type Upload struct {
 	PhotoURL  string `json:"photo_url"`
 }
 
+type AudioUpload struct {
+	UploadURL string `json:"upload_url"`
+	AudioURL  string `json:"audio_url"`
+}
+
 type PreparedUpload struct {
 	ObjectKey string
 	PhotoURL  string
@@ -62,6 +67,26 @@ func (s S3) PrepareUpload(userID, filename, contentType string) (PreparedUpload,
 		now = s.Now().UTC()
 	}
 	objectKey := path.Join(userID, now.Format("2006/01"), hex.EncodeToString(random)+ext)
+	return PreparedUpload{ObjectKey: objectKey, PhotoURL: s.publicURL(objectKey)}, nil
+}
+
+func (s S3) PrepareAudioUpload(userID, filename, contentType string) (PreparedUpload, error) {
+	if s.Bucket == "" || s.AccessKeyID == "" || s.SecretAccessKey == "" {
+		return PreparedUpload{}, fmt.Errorf("storage is not configured")
+	}
+	ext, ok := allowedAudioType(contentType, filename)
+	if !ok {
+		return PreparedUpload{}, fmt.Errorf("unsupported audio type")
+	}
+	random := make([]byte, 16)
+	if _, err := rand.Read(random); err != nil {
+		return PreparedUpload{}, fmt.Errorf("generate object name: %w", err)
+	}
+	now := time.Now().UTC()
+	if s.Now != nil {
+		now = s.Now().UTC()
+	}
+	objectKey := path.Join(userID, "audio", now.Format("2006/01"), hex.EncodeToString(random)+ext)
 	return PreparedUpload{ObjectKey: objectKey, PhotoURL: s.publicURL(objectKey)}, nil
 }
 
@@ -215,6 +240,32 @@ func allowedImageType(contentType, filename string) (string, bool) {
 		return "", false
 	}
 	if guessed := mime.TypeByExtension(strings.ToLower(path.Ext(filename))); guessed != "" && !strings.HasPrefix(guessed, "image/") {
+		return "", false
+	}
+	return ext, true
+}
+
+func allowedAudioType(contentType, filename string) (string, bool) {
+	contentType = strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+	allowed := map[string]string{
+		"audio/webm":     ".webm",
+		"audio/ogg":      ".ogg",
+		"audio/mp4":      ".m4a",
+		"audio/x-m4a":    ".m4a",
+		"audio/m4a":      ".m4a",
+		"audio/aac":      ".aac",
+		"audio/mpeg":     ".mp3",
+		"audio/mp3":      ".mp3",
+		"audio/wav":      ".wav",
+		"audio/x-wav":    ".wav",
+	}
+	ext, ok := allowed[contentType]
+	if !ok {
+		// Fallback: check extension
+		extName := strings.ToLower(path.Ext(filename))
+		if extName == ".webm" || extName == ".ogg" || extName == ".m4a" || extName == ".mp3" || extName == ".wav" || extName == ".mp4" {
+			return extName, true
+		}
 		return "", false
 	}
 	return ext, true
