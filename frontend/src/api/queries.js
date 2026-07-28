@@ -9,7 +9,7 @@ import { queryKeys } from './queryKeys'
 export { queryKeys }
 
 export const useSessionQuery = (enabled) => useQuery({ queryKey: queryKeys.session, queryFn: getSession, enabled, staleTime: 5 * 60_000 })
-export const useEntryQuery = (date, enabled = true) => useQuery({ queryKey: queryKeys.entry(date), queryFn: () => getEntry(date), enabled, staleTime: 2 * 60_000, retry: false })
+export const useEntryQuery = (date, enabled = true) => useQuery({ queryKey: queryKeys.entry(date), queryFn: () => getEntry(date), enabled, staleTime: 2 * 60_000, retry: false, meta: { ignore404: true } })
 export const useEntriesQuery = (month) => useQuery({ queryKey: queryKeys.entries(month), queryFn: () => getEntriesByMonth(month), staleTime: 2 * 60_000 })
 export const useEntrySummaryQuery = (month) => useQuery({ queryKey: queryKeys.entrySummary(month), queryFn: () => getEntrySummary(month), staleTime: 60_000 })
 export const useFriendEntriesQuery = (friendId, month, enabled) => useQuery({ queryKey: queryKeys.friendEntries(friendId, month), queryFn: () => getFriendEntriesByMonth(friendId, month), enabled, staleTime: 2 * 60_000 })

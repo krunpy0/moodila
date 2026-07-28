@@ -9,7 +9,12 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 60_000, refetchOnWindowFocus: false, retry: 1 },
   },
-  queryCache: new QueryCache({ onError: notifyError }),
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      if (error?.status === 404 && query?.meta?.ignore404) return
+      notifyError(error)
+    },
+  }),
   mutationCache: new MutationCache({ onError: notifyError }),
 })
 
