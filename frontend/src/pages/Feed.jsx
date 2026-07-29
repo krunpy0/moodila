@@ -108,12 +108,96 @@ export default function Feed() {
 }
 
 
+/** Mood-specific tint backgrounds for mood-only cards */
+const moodTintBg = {
+  1: 'bg-error-container/30',
+  2: 'bg-primary-container/40',
+  3: 'bg-surface-container-high/50',
+  4: 'bg-secondary-container/40',
+  5: 'bg-tertiary-container/40',
+}
+
 function FeedCard({ entry, busy, onReact }) {
   const [showComments, setShowComments] = useState(false)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
   const [emoji, moodName, moodClass] = moods[entry.mood] || moods[3]
   const authorName = entry.author.display_name || entry.author.username
 
+  const hasText = !!entry.text
+  const hasPhoto = !!entry.photo_url
+  const hasAudio = !!entry.audio_url
+  const hasTags = entry.tags && entry.tags.length > 0
+  const isMoodOnly = !hasText && !hasPhoto && !hasAudio
+
+  /* ── Mood-only card: compact, centered, tinted ── */
+  if (isMoodOnly) {
+    return (
+      <article className={`rounded-[24px] p-lg cloud-shadow ${moodTintBg[entry.mood] || 'bg-surface-container-high/50'}`}>
+        <header className="flex items-center gap-sm">
+          <Link to={`/profile/${entry.author.id}`} className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80">
+            <Avatar author={entry.author} />
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
+              <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {relativeDate(entry.date)}</p>
+            </div>
+          </Link>
+        </header>
+
+        <div className="mt-md flex flex-col items-center gap-sm py-sm">
+          <span className="text-[52px] leading-none" role="img" aria-label={moodName}>{emoji}</span>
+          <span className={`rounded-full px-md py-xs text-label-lg font-label-lg ${moodClass}`}>{moodName}</span>
+          {hasTags && (
+            <div className="mt-xs flex flex-wrap justify-center gap-xs">
+              {entry.tags.map((tag) => (
+                <span key={tag} className="rounded-full bg-surface-container-lowest/60 px-sm py-xs text-label-sm text-on-surface-variant">{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <footer className="relative mt-sm border-t border-on-surface/5 pt-sm">
+          {emojiPickerOpen && (
+            <div className="absolute -top-12 left-0 z-20 flex items-center gap-xs rounded-full bg-surface-container-high p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
+              {emojiReactions.map((reac) => (
+                <button
+                  key={reac}
+                  type="button"
+                  onClick={() => { onReact(entry.id, reac); setEmojiPickerOpen(false) }}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-xl transition-transform hover:scale-125 active:scale-95"
+                >{reac}</button>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setEmojiPickerOpen((prev) => !prev)}
+              disabled={busy}
+              aria-label="Select reaction"
+              className={`flex items-center gap-xs rounded-full px-sm py-xs text-label-sm font-label-sm transition-colors disabled:opacity-70 ${
+                entry.liked_by_me ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container-lowest/60 text-on-surface-variant'
+              }`}
+            >
+              <span className="text-[16px]">{entry.my_reaction || '❤️'}</span>
+              <span>{entry.like_count || 0}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowComments((prev) => !prev)}
+              className="flex items-center gap-xs rounded-full bg-surface-container-lowest/60 px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container-lowest"
+            >
+              <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
+              <span>{entry.comment_count || 0} {entry.comment_count === 1 ? 'comment' : 'comments'}</span>
+            </button>
+          </div>
+        </footer>
+
+        {showComments && <CommentsSection entryId={entry.id} />}
+      </article>
+    )
+  }
+
+  /* ── Standard card (has text / photo / audio) ── */
   return (
     <article className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
       <header className="flex items-center gap-sm">
@@ -134,8 +218,10 @@ function FeedCard({ entry, busy, onReact }) {
             <span key={tag} className="rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant">{tag}</span>
           ))}
         </div>
-        <p className="whitespace-pre-wrap text-body-md leading-6 text-on-surface">{entry.text || 'No note for this day.'}</p>
-        {entry.photo_url && (
+        {hasText && (
+          <p className="whitespace-pre-wrap text-body-md leading-6 text-on-surface">{entry.text}</p>
+        )}
+        {hasPhoto && (
           <ImageWithSkeleton
             src={entry.photo_url}
             alt={`Photo from ${authorName}'s day`}
@@ -144,7 +230,7 @@ function FeedCard({ entry, busy, onReact }) {
             loading="lazy"
           />
         )}
-        {entry.audio_url && (
+        {hasAudio && (
           <VoiceNotePlayer audioUrl={entry.audio_url} duration={entry.audio_duration} className="mt-sm" />
         )}
       </div>
