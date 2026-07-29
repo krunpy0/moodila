@@ -12,13 +12,11 @@ const jwtIssuer = "moodshare"
 func Auth(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var raw string
-		if cookieToken, err := c.Cookie("token"); err == nil && strings.TrimSpace(cookieToken) != "" {
+		header := c.GetHeader("Authorization")
+		if strings.HasPrefix(header, "Bearer ") {
+			raw = strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
+		} else if cookieToken, err := c.Cookie("token"); err == nil && strings.TrimSpace(cookieToken) != "" {
 			raw = strings.TrimSpace(cookieToken)
-		} else {
-			header := c.GetHeader("Authorization")
-			if strings.HasPrefix(header, "Bearer ") {
-				raw = strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
-			}
 		}
 
 		if raw == "" {

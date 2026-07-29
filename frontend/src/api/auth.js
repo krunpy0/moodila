@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, getToken, removeToken } from './client'
 
 export const register = (data) =>
   api('/auth/register', { method: 'POST', body: JSON.stringify(data) })
@@ -6,11 +6,21 @@ export const register = (data) =>
 export const login = (data) =>
   api('/auth/login', { method: 'POST', body: JSON.stringify(data) })
 
-export const getSession = () => api('/auth/session')
+export const getSession = () => {
+  if (!getToken()) {
+    const error = new Error('missing token')
+    error.status = 401
+    return Promise.reject(error)
+  }
+  return api('/auth/session')
+}
 
 export const logout = async () => {
-  if (typeof localStorage !== 'undefined') {
-    localStorage.removeItem('csrf_token')
+  removeToken()
+  try {
+    return await api('/auth/logout', { method: 'POST' })
+  } catch {
+    // Ignore errors during logout
+    return null
   }
-  return api('/auth/logout', { method: 'POST' })
 }

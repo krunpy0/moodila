@@ -1,10 +1,7 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/mail"
 	"regexp"
@@ -22,18 +19,8 @@ import (
 var usernamePattern = regexp.MustCompile(`^[a-z0-9_]{3,24}$`)
 
 type Auth struct {
-	Users          repository.Users
-	JWTSecret      string
-	CookieSameSite http.SameSite
-	CookieDomain   string
-	CookieSecure   bool
-}
-
-func (h Auth) getSameSite() http.SameSite {
-	if h.CookieSameSite == 0 {
-		return http.SameSiteLaxMode
-	}
-	return h.CookieSameSite
+	Users     repository.Users
+	JWTSecret string
 }
 
 type credentials struct {
@@ -110,36 +97,12 @@ func (h Auth) Login(c *gin.Context) {
 }
 
 func (h Auth) Session(c *gin.Context) {
-	csrfToken, _ := c.Cookie("csrf_token")
 	c.JSON(http.StatusOK, gin.H{
-		"user_id":    c.GetString("userID"),
-		"csrf_token": csrfToken,
+		"user_id": c.GetString("userID"),
 	})
 }
 
 func (h Auth) Logout(c *gin.Context) {
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "token",
-		Value:    "",
-		Path:     "/",
-		Domain:   h.CookieDomain,
-		MaxAge:   -1,
-		Expires:  time.Unix(0, 0),
-		HttpOnly: true,
-		Secure:   h.CookieSecure,
-		SameSite: h.getSameSite(),
-	})
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "csrf_token",
-		Value:    "",
-		Path:     "/",
-		Domain:   h.CookieDomain,
-		MaxAge:   -1,
-		Expires:  time.Unix(0, 0),
-		HttpOnly: false,
-		Secure:   h.CookieSecure,
-		SameSite: h.getSameSite(),
-	})
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
 
@@ -157,42 +120,10 @@ func (h Auth) respondWithToken(c *gin.Context, status int, userID string, user a
 		return
 	}
 
-	csrfToken := generateCSRFToken()
-
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "token",
-		Value:    signed,
-		Path:     "/",
-		Domain:   h.CookieDomain,
-		MaxAge:   604800,
-		HttpOnly: true,
-		Secure:   h.CookieSecure,
-		SameSite: h.getSameSite(),
-	})
-
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     "csrf_token",
-		Value:    csrfToken,
-		Path:     "/",
-		Domain:   h.CookieDomain,
-		MaxAge:   604800,
-		HttpOnly: false,
-		Secure:   h.CookieSecure,
-		SameSite: h.getSameSite(),
-	})
-
 	c.JSON(status, gin.H{
-		"user":       user,
-		"csrf_token": csrfToken,
+		"token": signed,
+		"user":  user,
 	})
-}
-
-func generateCSRFToken() string {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return fmt.Sprintf("%d", time.Now().UnixNano())
-	}
-	return hex.EncodeToString(b)
 }
 
 func validateRegistration(input credentials) error {

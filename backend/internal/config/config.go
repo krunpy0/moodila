@@ -4,7 +4,6 @@ package config
 
 import (
 	"bufio"
-	"net/http"
 	"os"
 	"strings"
 )
@@ -17,9 +16,6 @@ type Config struct {
 	CORSOrigin        string
 	APIPublicURL      string
 	AppEnv            string
-	CookieSameSite    http.SameSite
-	CookieDomain      string
-	CookieSecure      bool
 	S3Endpoint        string
 	S3Region          string
 	S3Bucket          string
@@ -42,9 +38,6 @@ func Load() Config {
 		CORSOrigin:        getenv("CORS_ORIGIN", "http://localhost:5173"),
 		APIPublicURL:      strings.TrimRight(getenv("API_PUBLIC_URL", "http://localhost:8080"), "/"),
 		AppEnv:            getenv("APP_ENV", "development"),
-		CookieSameSite:    parseSameSite(getenv("COOKIE_SAMESITE", "lax")),
-		CookieDomain:      getenv("COOKIE_DOMAIN", ""),
-		CookieSecure:      parseBool(getenv("COOKIE_SECURE", "true")),
 		S3Endpoint:        strings.TrimRight(os.Getenv("S3_ENDPOINT"), "/"),
 		S3Region:          getenv("S3_REGION", "us-east-1"),
 		S3Bucket:          getenv("S3_BUCKET", "entry-photos"),
@@ -56,18 +49,7 @@ func Load() Config {
 	}
 }
 
-func parseSameSite(v string) http.SameSite {
-	switch strings.ToLower(strings.TrimSpace(v)) {
-	case "none":
-		return http.SameSiteNoneMode
-	case "strict":
-		return http.SameSiteStrictMode
-	case "lax":
-		return http.SameSiteLaxMode
-	default:
-		return http.SameSiteLaxMode
-	}
-}
+
 
 func parseBool(v string) bool {
 	return strings.EqualFold(strings.TrimSpace(v), "true") || v == "1"
