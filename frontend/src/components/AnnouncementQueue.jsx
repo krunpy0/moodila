@@ -73,7 +73,7 @@ export default function AnnouncementQueue() {
           onClick={handleDismiss}
           className="mt-xs w-full rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md hover:bg-primary/90 active:scale-[0.98] transition-all"
         >
-          Понятно
+          Got it
         </button>
       </div>
     </div>

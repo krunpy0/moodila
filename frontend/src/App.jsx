@@ -11,6 +11,7 @@ import Profile from './pages/Profile'
 import FriendProfile from './pages/FriendProfile'
 import Admin from './pages/Admin'
 import AnnouncementQueue from './components/AnnouncementQueue'
+import PWAInstallPrompt from './components/PWAInstallPrompt'
 
 export default function App() {
   return (
@@ -82,6 +83,7 @@ function RequireAuth({ children }) {
   }
   return (
     <>
+      <PWAInstallPrompt />
       <AnnouncementQueue />
       {children}
     </>

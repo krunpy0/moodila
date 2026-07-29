@@ -9,6 +9,14 @@ export function notifyError(error) {
   notifyFromOutside?.(message, 'error')
 }
 
+export function notifySuccess(message) {
+  notifyFromOutside?.(message, 'success')
+}
+
+export function notifyInfo(message) {
+  notifyFromOutside?.(message, 'info')
+}
+
 export function NotificationsProvider({ children }) {
   const [notifications, setNotifications] = useState([])
 
@@ -30,8 +38,8 @@ export function NotificationsProvider({ children }) {
       {children}
       <div className="pointer-events-none fixed inset-x-0 top-4 z-[100] mx-auto flex w-full max-w-md flex-col gap-sm px-container-margin" aria-live="polite" aria-atomic="true">
         {notifications.map(({ id, message, type }) => (
-          <div key={id} role={type === 'error' ? 'alert' : 'status'} className={`pointer-events-auto flex items-center gap-sm rounded-2xl px-md py-sm shadow-lg ${type === 'error' ? 'bg-error-container text-on-error-container' : 'bg-primary-container text-on-primary-container'}`}>
-            <span className="material-symbols-outlined" aria-hidden="true">{type === 'error' ? 'error' : 'check_circle'}</span>
+          <div key={id} role={type === 'error' ? 'alert' : 'status'} className={`pointer-events-auto flex items-center gap-sm rounded-2xl px-md py-sm shadow-lg ${type === 'error' ? 'bg-error-container text-on-error-container' : type === 'info' ? 'bg-slate-800 text-slate-100 border border-slate-700' : 'bg-primary-container text-on-primary-container'}`}>
+            <span className="material-symbols-outlined" aria-hidden="true">{type === 'error' ? 'error' : type === 'info' ? 'info' : 'check_circle'}</span>
             <p className="min-w-0 flex-1 text-body-sm font-body-sm">{message}</p>
             <button type="button" aria-label="Dismiss notification" onClick={() => dismiss(id)} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-black/5">
               <span className="material-symbols-outlined text-[18px]" aria-hidden="true">close</span>

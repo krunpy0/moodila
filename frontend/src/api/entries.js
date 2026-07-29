@@ -1,4 +1,5 @@
 import { api, apiURL, getToken } from './client'
+import { saveOfflineEntry, syncOfflineEntries } from '../utils/offlineStore'
 
 export const getEntry = (date) => api(`/entries/me?date=${encodeURIComponent(date)}`)
 
@@ -11,8 +12,26 @@ export const getFriendEntriesByMonth = (friendId, month) =>
 export const getEntrySummary = (month) =>
   api(`/entries/summary?month=${encodeURIComponent(month)}`)
 
-export const saveEntry = (entry) =>
+export const saveEntryDirect = (entry) =>
   api('/entries', { method: 'POST', body: JSON.stringify(entry) })
+
+export const saveEntry = async (entry) => {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return saveOfflineEntry(entry)
+  }
+  try {
+    return await saveEntryDirect(entry)
+  } catch (err) {
+    // If error is network related (e.g. Failed to fetch), store offline
+    if (err.name === 'TypeError' || err.message?.includes('fetch') || !navigator.onLine) {
+      console.warn('Network request failed, saving entry offline:', err)
+      return saveOfflineEntry(entry)
+    }
+    throw err
+  }
+}
+
+export const syncOfflineEntriesWithBackend = () => syncOfflineEntries(saveEntryDirect)
 
 export const updateEntryVisibility = (entryId, isHidden) =>
   api(`/entries/${encodeURIComponent(entryId)}/visibility`, {
