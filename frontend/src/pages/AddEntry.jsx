@@ -7,14 +7,9 @@ import BottomNav from '../components/BottomNav'
 import { useNotifications } from '../components/Notifications'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
+import MoodIcon from '../components/MoodIcon'
+import { MOODS } from '../utils/moods'
 
-const moods = [
-  ['sentiment_very_dissatisfied', 'text-error', 'bg-error-container/20'],
-  ['sentiment_dissatisfied', 'text-tertiary', 'bg-tertiary-container/20'],
-  ['sentiment_neutral', 'text-secondary', 'bg-secondary-container/20'],
-  ['sentiment_satisfied', 'text-primary', 'bg-primary-container/20'],
-  ['sentiment_very_satisfied', 'text-tertiary-fixed-dim', 'bg-tertiary-fixed/30'],
-]
 const availableTags = ['Calm', 'Chill', 'Motivated', 'Grateful', 'Inspired', 'Peaceful']
 
 export default function AddEntry() {
@@ -206,26 +201,20 @@ export default function AddEntry() {
             How are you feeling today?
           </h2>
           <div className="mb-lg flex items-center justify-between">
-            {moods.map(([icon, color, background], index) => {
-              const value = index + 1
-              const selected = form.mood === value
+            {Object.values(MOODS).map((item) => {
+              const selected = form.mood === item.value
               return (
                 <button
-                  key={icon}
+                  key={item.value}
                   type="button"
-                  aria-label={`Mood ${value} of 5`}
+                  aria-label={`Mood ${item.value} of 5 (${item.label})`}
                   aria-pressed={selected}
-                  onClick={() => setForm((current) => ({ ...current, mood: value }))}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full ${background} ${
-                    selected ? 'ring-4 ring-primary-container' : ''
+                  onClick={() => setForm((current) => ({ ...current, mood: item.value }))}
+                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-95 ${item.bg} ${
+                    selected ? 'ring-4 ring-primary/40 scale-105' : 'opacity-80 hover:opacity-100'
                   }`}
                 >
-                  <span
-                    className={`material-symbols-outlined text-[28px] ${color}`}
-                    style={selected ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                  >
-                    {icon}
-                  </span>
+                  <MoodIcon mood={item.value} className="text-[28px]" filled={selected} />
                 </button>
               )
             })}

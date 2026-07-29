@@ -7,20 +7,10 @@ import HeaderBell from "../components/HeaderBell";
 import { CalendarSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
+import MoodIcon from "../components/MoodIcon";
+import { getMoodInfo } from "../utils/moods";
 
 const weekdays = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
-const moods = {
-  1: ["sentiment_very_dissatisfied", "bg-primary-container/30", "text-primary", "Very Low"],
-  2: ["sentiment_dissatisfied", "bg-primary-container/30", "text-primary", "Low"],
-  3: [
-    "sentiment_neutral",
-    "bg-surface-container-highest",
-    "text-on-surface-variant",
-    "Neutral",
-  ],
-  4: ["sentiment_satisfied", "bg-secondary-container/30", "text-secondary", "Good"],
-  5: ["sentiment_very_satisfied", "bg-tertiary-container/30", "text-tertiary", "Great"],
-};
 
 export default function Calendar() {
   const [viewMode, setViewMode] = useState("month");
@@ -286,7 +276,7 @@ export default function Calendar() {
             {days.map(({ date, currentMonth }) => {
               const dateKey = formatDate(date);
               const entry = entriesByDate[dateKey];
-              const mood = entry && moods[entry.mood];
+              const mood = entry && getMoodInfo(entry.mood);
               const todayKey = getLocalDate();
               const today = dateKey === todayKey;
               const future = dateKey > todayKey;
@@ -329,8 +319,12 @@ export default function Calendar() {
                       </span>
                     )}
                   </span>
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${mood ? `${mood[1]} ${mood[2]} ${today ? "ring-2 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
-                    <span className="material-symbols-outlined text-[20px]" style={entry ? { fontVariationSettings: "'FILL' 1" } : undefined}>{mood ? mood[0] : "add"}</span>
+                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${mood ? `${mood.bg} ${today ? "ring-2 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
+                    {entry ? (
+                      <MoodIcon mood={entry.mood} className="text-[20px]" />
+                    ) : (
+                      <span className="material-symbols-outlined text-[20px]">add</span>
+                    )}
                   </span>
                 </>
               );
@@ -397,7 +391,7 @@ export default function Calendar() {
             {days.map(({ date }) => {
               const dateKey = formatDate(date);
               const entry = entriesByDate[dateKey];
-              const mood = entry && moods[entry.mood];
+              const mood = entry && getMoodInfo(entry.mood);
               const todayKey = getLocalDate();
               const today = dateKey === todayKey;
               const future = dateKey > todayKey;
@@ -432,21 +426,16 @@ export default function Calendar() {
                     {entry ? (
                       <div className="flex items-center gap-md flex-1 min-w-0">
                         <span
-                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${mood[1]} ${mood[2]} ${
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${mood.bg} ${
                             today ? "ring-2 ring-primary/40" : ""
                           }`}
                         >
-                          <span
-                            className="material-symbols-outlined text-[26px]"
-                            style={{ fontVariationSettings: "'FILL' 1" }}
-                          >
-                            {mood[0]}
-                          </span>
+                          <MoodIcon mood={entry.mood} className="text-[26px]" />
                         </span>
                         <div className="flex flex-col flex-1 min-w-0">
                           <div className="flex items-center gap-xs">
                             <span className="text-label-lg font-bold text-on-surface">
-                              {mood[3]}
+                              {mood.label}
                             </span>
                             {!selectedFriend && entry.is_hidden && (
                               <span
@@ -606,8 +595,8 @@ export default function Calendar() {
               </button>
             </div>
             <div className="mb-md flex items-center gap-sm">
-              <span className={`flex h-12 w-12 items-center justify-center rounded-full ${moods[selectedFriendEntry.mood][1]} ${moods[selectedFriendEntry.mood][2]}`}>
-                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>{moods[selectedFriendEntry.mood][0]}</span>
+              <span className={`flex h-12 w-12 items-center justify-center rounded-full ${getMoodInfo(selectedFriendEntry.mood).bg}`}>
+                <MoodIcon mood={selectedFriendEntry.mood} className="text-[26px]" />
               </span>
               <div className="flex flex-wrap gap-xs">
                 {selectedFriendEntry.tags.map((tag) => <span key={tag} className="rounded-full bg-primary-container px-md py-xs text-label-sm font-label-sm text-primary">{tag}</span>)}

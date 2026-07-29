@@ -11,14 +11,8 @@ import {
 import BottomNav from "../components/BottomNav";
 import HeaderBell from "../components/HeaderBell";
 import { HomeSkeleton } from "../components/skeleton/PageSkeletons";
-
-const moodDetails = {
-  1: ["😞", "Rough", "bg-error-container/20"],
-  2: ["😔", "Low", "bg-primary-container/30"],
-  3: ["😐", "Okay", "bg-surface-container-highest"],
-  4: ["😊", "Good", "bg-secondary-container/30"],
-  5: ["😁", "Great", "bg-tertiary-container/30"],
-};
+import MoodIcon from "../components/MoodIcon";
+import { getMoodInfo } from "../utils/moods";
 
 export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), []);
@@ -50,7 +44,7 @@ export default function Home() {
     [entries],
   );
   const dominantMood = summary.dominant_mood
-    ? moodDetails[summary.dominant_mood]
+    ? getMoodInfo(summary.dominant_mood)
     : null;
 
   const initials = displayName
@@ -150,7 +144,7 @@ export default function Home() {
                 {week.map((date) => {
                   const key = formatDate(date);
                   const entry = entriesByDate[key];
-                  const mood = entry && moodDetails[entry.mood];
+                  const mood = entry && getMoodInfo(entry.mood);
                   const isToday = key === getLocalDate();
                   const isFuture = key > getLocalDate();
                   return (
@@ -162,12 +156,12 @@ export default function Home() {
                       className={`flex min-w-12 flex-col items-center gap-xs ${isFuture ? "opacity-40" : ""}`}
                     >
                       <span
-                        className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
-                          mood ? mood[2] : "bg-surface-variant"
+                        className={`flex h-12 w-12 items-center justify-center rounded-full ${
+                          mood ? mood.bg : "bg-surface-variant"
                         } ${isToday ? "ring-2 ring-primary" : ""}`}
                       >
-                        {mood ? (
-                          mood[0]
+                        {entry ? (
+                          <MoodIcon mood={entry.mood} className="text-[26px]" />
                         ) : (
                           <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
                             add
@@ -221,11 +215,13 @@ export default function Home() {
                   Dominant mood
                 </span>
                 <div className="flex items-center gap-xs">
-                  <span className="text-[28px]">
-                    {dominantMood?.[0] || "—"}
-                  </span>
+                  {dominantMood ? (
+                    <MoodIcon mood={summary.dominant_mood} className="text-[32px]" />
+                  ) : (
+                    <span className="text-body-md text-on-surface-variant">—</span>
+                  )}
                   <span className="text-headline-lg font-headline-lg text-on-surface">
-                    {dominantMood?.[1] || "None"}
+                    {dominantMood ? dominantMood.label : "None"}
                   </span>
                 </div>
               </div>
@@ -255,7 +251,7 @@ export default function Home() {
               </div>
               <div className="space-y-sm">
                 {recent.map((entry) => {
-                  const mood = moodDetails[entry.mood];
+                  const mood = getMoodInfo(entry.mood);
                   return (
                     <Link
                       key={entry.date}
@@ -263,14 +259,14 @@ export default function Home() {
                       className="flex items-center gap-md rounded-[24px] bg-white p-md cloud-shadow"
                     >
                       <span
-                        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] text-[28px] ${mood[2]}`}
+                        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] ${mood.bg}`}
                       >
-                        {mood[0]}
+                        <MoodIcon mood={entry.mood} className="text-[32px]" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-start justify-between gap-xs">
                           <strong className="truncate text-body-md text-on-surface">
-                            {entry.tags[0] || mood[1]}
+                            {entry.tags[0] || mood.label}
                           </strong>
                           <span className="flex shrink-0 items-center gap-1 text-label-sm font-label-sm text-on-surface-variant/60">
                             {entry.is_hidden && (

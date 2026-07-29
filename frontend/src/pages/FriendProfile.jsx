@@ -4,15 +4,8 @@ import BottomNav from '../components/BottomNav'
 import { ProfileSkeleton } from '../components/skeleton/PageSkeletons'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
-
-const moods = { 1: '😞', 2: '😔', 3: '😐', 4: '😊', 5: '😁' }
-const moodDetails = {
-  1: ['😞', 'Rough'],
-  2: ['😔', 'Low'],
-  3: ['😐', 'Okay'],
-  4: ['😊', 'Good'],
-  5: ['😁', 'Great'],
-}
+import MoodIcon from '../components/MoodIcon'
+import { getMoodInfo } from '../utils/moods'
 
 export default function FriendProfile() {
   const { id } = useParams()
@@ -22,7 +15,7 @@ export default function FriendProfile() {
   const user = profile?.user
   const entries = profile?.entries || []
   const summary = profile?.summary || { entry_count: 0, dominant_mood: null, top_tag: null }
-  const dominantMood = summary.dominant_mood ? moodDetails[summary.dominant_mood] : null
+  const dominantMood = summary.dominant_mood ? getMoodInfo(summary.dominant_mood) : null
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
@@ -98,9 +91,13 @@ export default function FriendProfile() {
                   Dominant mood
                 </span>
                 <div className="flex items-center gap-xs">
-                  <span className="text-[28px]">{dominantMood?.[0] || '—'}</span>
+                  {dominantMood ? (
+                    <MoodIcon mood={summary.dominant_mood} className="text-[32px]" />
+                  ) : (
+                    <span className="text-body-md text-on-surface-variant">—</span>
+                  )}
                   <span className="text-headline-lg font-headline-lg text-on-surface">
-                    {dominantMood?.[1] || 'None'}
+                    {dominantMood ? dominantMood.label : 'None'}
                   </span>
                 </div>
               </div>
@@ -137,8 +134,8 @@ export default function FriendProfile() {
                       <span className="text-label-sm text-on-surface-variant">
                         {formatDate(entry.date)}
                       </span>
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-container text-lg">
-                        {moods[entry.mood] || '😐'}
+                      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood).bg}`}>
+                        <MoodIcon mood={entry.mood} className="text-[20px]" />
                       </span>
                     </div>
                     {entry.photo_url && (

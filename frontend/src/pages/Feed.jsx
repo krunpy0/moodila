@@ -13,14 +13,8 @@ import HeaderBell from '../components/HeaderBell'
 import { FeedSkeleton } from '../components/skeleton/PageSkeletons'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
-
-const moods = {
-  1: ['😞', 'Rough', 'bg-error-container/60 text-on-error-container'],
-  2: ['😔', 'Low', 'bg-primary-container text-on-primary-container'],
-  3: ['😐', 'Okay', 'bg-surface-container-highest text-on-surface-variant'],
-  4: ['😊', 'Good', 'bg-secondary-container text-on-secondary-container'],
-  5: ['😁', 'Great', 'bg-tertiary-container text-on-tertiary-container'],
-}
+import MoodIcon from '../components/MoodIcon'
+import { getMoodInfo } from '../utils/moods'
 
 const emojiReactions = ['❤️', '🫂', '👏', '💡', '😁']
 
@@ -120,7 +114,7 @@ const moodTintBg = {
 function FeedCard({ entry, busy, onReact }) {
   const [showComments, setShowComments] = useState(false)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
-  const [emoji, moodName, moodClass] = moods[entry.mood] || moods[3]
+  const moodInfo = getMoodInfo(entry.mood)
   const authorName = entry.author.display_name || entry.author.username
 
   const hasText = !!entry.text
@@ -144,8 +138,10 @@ function FeedCard({ entry, busy, onReact }) {
         </header>
 
         <div className="mt-md flex flex-col items-center gap-sm py-sm">
-          <span className="text-[52px] leading-none" role="img" aria-label={moodName}>{emoji}</span>
-          <span className={`rounded-full px-md py-xs text-label-lg font-label-lg ${moodClass}`}>{moodName}</span>
+          <span className={`flex h-16 w-16 items-center justify-center rounded-full ${moodInfo.bg}`}>
+            <MoodIcon mood={entry.mood} className="text-[36px]" />
+          </span>
+          <span className={`rounded-full px-md py-xs text-label-lg font-label-lg ${moodInfo.bg} ${moodInfo.color}`}>{moodInfo.label}</span>
           {hasTags && (
             <div className="mt-xs flex flex-wrap justify-center gap-xs">
               {entry.tags.map((tag) => (
@@ -208,12 +204,14 @@ function FeedCard({ entry, busy, onReact }) {
             <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date)}</p>
           </div>
         </Link>
-        <span className={`flex h-11 w-11 items-center justify-center rounded-full text-xl ${moodClass}`} title={moodName}>{emoji}</span>
+        <span className={`flex h-11 w-11 items-center justify-center rounded-full ${moodInfo.bg}`} title={moodInfo.label}>
+          <MoodIcon mood={entry.mood} className="text-[24px]" />
+        </span>
       </header>
 
       <div className="mt-md space-y-sm">
         <div className="flex flex-wrap gap-xs">
-          <span className={`rounded-full px-sm py-xs text-label-sm font-label-sm ${moodClass}`}>{moodName}</span>
+          <span className={`rounded-full px-sm py-xs text-label-sm font-label-sm ${moodInfo.bg} ${moodInfo.color}`}>{moodInfo.label}</span>
           {entry.tags.map((tag) => (
             <span key={tag} className="rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant">{tag}</span>
           ))}
