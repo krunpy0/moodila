@@ -60,8 +60,11 @@ func main() {
 
 	router.GET("/health", healthLimiter, handlers.Health{Pool: pool}.Get)
 	auth := handlers.Auth{
-		Users:     repository.Users{Pool: pool},
-		JWTSecret: cfg.JWTSecret,
+		Users:          repository.Users{Pool: pool},
+		JWTSecret:      cfg.JWTSecret,
+		CookieSameSite: cfg.CookieSameSite,
+		CookieDomain:   cfg.CookieDomain,
+		CookieSecure:   cfg.CookieSecure,
 	}
 	router.POST("/auth/register", authLimiter, auth.Register)
 	router.POST("/auth/login", authLimiter, auth.Login)

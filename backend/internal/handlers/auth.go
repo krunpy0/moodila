@@ -22,8 +22,18 @@ import (
 var usernamePattern = regexp.MustCompile(`^[a-z0-9_]{3,24}$`)
 
 type Auth struct {
-	Users     repository.Users
-	JWTSecret string
+	Users          repository.Users
+	JWTSecret      string
+	CookieSameSite http.SameSite
+	CookieDomain   string
+	CookieSecure   bool
+}
+
+func (h Auth) getSameSite() http.SameSite {
+	if h.CookieSameSite == 0 {
+		return http.SameSiteLaxMode
+	}
+	return h.CookieSameSite
 }
 
 type credentials struct {
@@ -108,21 +118,23 @@ func (h Auth) Logout(c *gin.Context) {
 		Name:     "token",
 		Value:    "",
 		Path:     "/",
+		Domain:   h.CookieDomain,
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.CookieSecure,
+		SameSite: h.getSameSite(),
 	})
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "csrf_token",
 		Value:    "",
 		Path:     "/",
+		Domain:   h.CookieDomain,
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.CookieSecure,
+		SameSite: h.getSameSite(),
 	})
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
@@ -147,20 +159,22 @@ func (h Auth) respondWithToken(c *gin.Context, status int, userID string, user a
 		Name:     "token",
 		Value:    signed,
 		Path:     "/",
+		Domain:   h.CookieDomain,
 		MaxAge:   604800,
 		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.CookieSecure,
+		SameSite: h.getSameSite(),
 	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "csrf_token",
 		Value:    csrfToken,
 		Path:     "/",
+		Domain:   h.CookieDomain,
 		MaxAge:   604800,
 		HttpOnly: false,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   h.CookieSecure,
+		SameSite: h.getSameSite(),
 	})
 
 	c.JSON(status, gin.H{"user": user})
