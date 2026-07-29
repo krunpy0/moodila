@@ -17,7 +17,7 @@ func CSRF() gin.HandlerFunc {
 		}
 
 		path := c.Request.URL.Path
-		if path == "/auth/login" || path == "/auth/register" || path == "/health" {
+		if path == "/auth/login" || path == "/auth/register" || path == "/auth/logout" || path == "/health" {
 			c.Next()
 			return
 		}
