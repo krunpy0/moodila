@@ -377,7 +377,7 @@ export default function Calendar() {
 
       {selectedFriendEntry && selectedFriend && (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-on-surface/20 px-container-margin pb-md sm:items-center"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs animate-in fade-in duration-200"
           role="presentation"
           onMouseDown={() => setSelectedFriendEntry(null)}
         >
@@ -386,7 +386,7 @@ export default function Calendar() {
             aria-modal="true"
             aria-labelledby="friend-entry-title"
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow"
+            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow"
           >
             <div className="mb-md flex items-start justify-between gap-md">
               <div className="flex items-center gap-sm">
