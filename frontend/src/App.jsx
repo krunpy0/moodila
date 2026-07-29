@@ -9,6 +9,8 @@ import Friends from './pages/Friends'
 import Feed from './pages/Feed'
 import Profile from './pages/Profile'
 import FriendProfile from './pages/FriendProfile'
+import Admin from './pages/Admin'
+import AnnouncementQueue from './components/AnnouncementQueue'
 
 export default function App() {
   return (
@@ -57,6 +59,7 @@ export default function App() {
         />
         <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
         <Route path="/profile/:id" element={<RequireAuth><FriendProfile /></RequireAuth>} />
+        <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
@@ -77,5 +80,10 @@ function RequireAuth({ children }) {
       </div>
     )
   }
-  return children
+  return (
+    <>
+      <AnnouncementQueue />
+      {children}
+    </>
+  )
 }

@@ -75,8 +75,11 @@ func main() {
 	}, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
 	notificationsRepo := repository.Notifications{Pool: pool}
 	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo}
+	announcementsRepo := repository.Announcements{Pool: pool}
+	announcementsHandler := handlers.Announcements{Announcements: announcementsRepo}
+	usersRepo := repository.Users{Pool: pool}
 	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Notifications: notificationsRepo}
-	users := handlers.Users{Users: repository.Users{Pool: pool}, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}}
+	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}}
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
 	authorized.POST("/entries", mutationLimiter, entries.Save)
@@ -108,6 +111,15 @@ func main() {
 	authorized.GET("/notifications", readLimiter, notificationsHandler.List)
 	authorized.GET("/notifications/unread-count", readLimiter, notificationsHandler.UnreadCount)
 	authorized.POST("/notifications/mark-read", mutationLimiter, notificationsHandler.MarkRead)
+	authorized.GET("/announcements/unread", readLimiter, announcementsHandler.GetUnread)
+	authorized.POST("/announcements/:id/read", mutationLimiter, announcementsHandler.MarkRead)
+
+	admin := router.Group("/admin", middleware.Auth(cfg.JWTSecret), middleware.Admin(usersRepo))
+	admin.GET("/announcements", readLimiter, announcementsHandler.ListAdmin)
+	admin.POST("/announcements", mutationLimiter, announcementsHandler.CreateAdmin)
+	admin.PATCH("/announcements/:id", mutationLimiter, announcementsHandler.UpdateAdmin)
+	admin.POST("/announcements/:id/publish", mutationLimiter, announcementsHandler.PublishAdmin)
+	admin.POST("/announcements/:id/archive", mutationLimiter, announcementsHandler.ArchiveAdmin)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

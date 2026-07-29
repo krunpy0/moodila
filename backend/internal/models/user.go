@@ -12,5 +12,6 @@ type User struct {
 	Username     string    `json:"username"`
 	DisplayName  string    `json:"display_name"`
 	AvatarURL    *string   `json:"avatar_url"`
+	IsAdmin      bool      `json:"is_admin"`
 	CreatedAt    time.Time `json:"created_at"`
 }

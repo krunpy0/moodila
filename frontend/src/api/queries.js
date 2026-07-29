@@ -7,6 +7,7 @@ import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
 import { queryKeys } from './queryKeys'
 
 import { fetchNotifications, fetchUnreadNotificationCount, markNotificationsAsRead } from './notifications'
+import { archiveAdminAnnouncement, createAdminAnnouncement, getAdminAnnouncements, getUnreadAnnouncements, markAnnouncementRead, publishAdminAnnouncement, updateAdminAnnouncement } from './announcements'
 
 export { queryKeys }
 
@@ -136,6 +137,64 @@ export function useMarkNotificationsAsReadMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
+    },
+  })
+}
+
+export const useUnreadAnnouncementsQuery = (enabled = true) =>
+  useQuery({ queryKey: queryKeys.unreadAnnouncements, queryFn: getUnreadAnnouncements, enabled, staleTime: 60_000 })
+
+export const useAdminAnnouncementsQuery = (enabled = true) =>
+  useQuery({ queryKey: queryKeys.adminAnnouncements, queryFn: getAdminAnnouncements, enabled, staleTime: 10_000 })
+
+export function useMarkAnnouncementReadMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: markAnnouncementRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
+    },
+  })
+}
+
+export function useCreateAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: createAdminAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
+    },
+  })
+}
+
+export function useUpdateAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateAdminAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
+    },
+  })
+}
+
+export function usePublishAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: publishAdminAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
+    },
+  })
+}
+
+export function useArchiveAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: archiveAdminAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
     },
   })
 }
