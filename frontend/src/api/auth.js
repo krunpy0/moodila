@@ -7,3 +7,5 @@ export const login = (data) =>
   api('/auth/login', { method: 'POST', body: JSON.stringify(data) })
 
 export const getSession = () => api('/auth/session')
+
+export const logout = () => api('/auth/logout', { method: 'POST' })

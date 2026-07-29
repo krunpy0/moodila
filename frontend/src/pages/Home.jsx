@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { clearToken, getLocalDate } from '../api/client'
+import { useQueryClient } from '@tanstack/react-query'
+import { getLocalDate } from '../api/client'
+import { logout } from '../api/auth'
 import { useEntriesQuery, useEntrySummaryQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
 import HeaderBell from '../components/HeaderBell'
@@ -18,6 +20,7 @@ export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), [])
   const month = formatMonth(today)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const entriesQuery = useEntriesQuery(month)
   const summaryQuery = useEntrySummaryQuery(month)
   const entries = entriesQuery.data || []
@@ -53,8 +56,9 @@ export default function Home() {
             type="button"
             aria-label="Log out"
             title="Log out"
-            onClick={() => {
-              clearToken()
+            onClick={async () => {
+              await logout().catch(() => {})
+              queryClient.clear()
               navigate('/login', { replace: true })
             }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"

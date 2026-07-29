@@ -32,7 +32,15 @@ func TestAuth(t *testing.T) {
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
 	if response.Code != http.StatusOK || response.Body.String() != "user-123" {
-		t.Fatalf("valid token: status=%d body=%q", response.Code, response.Body.String())
+		t.Fatalf("valid header token: status=%d body=%q", response.Code, response.Body.String())
+	}
+
+	request = httptest.NewRequest(http.MethodGet, "/", nil)
+	request.AddCookie(&http.Cookie{Name: "token", Value: signed})
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusOK || response.Body.String() != "user-123" {
+		t.Fatalf("valid cookie token: status=%d body=%q", response.Code, response.Body.String())
 	}
 
 	request = httptest.NewRequest(http.MethodGet, "/", nil)

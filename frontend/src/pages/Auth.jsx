@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { login, register } from "../api/auth";
-import { getToken, setToken } from "../api/client";
-import { queryKeys } from "../api/queries";
+import { queryKeys, useSessionQuery } from "../api/queries";
 
 export default function Auth() {
   const [mode, setMode] = useState("login");
@@ -15,10 +14,11 @@ export default function Auth() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const sessionQuery = useSessionQuery(true);
+
   const authMutation = useMutation({
     mutationFn: (data) => (mode === "login" ? login(data) : register(data)),
-    onSuccess: (result) => {
-      setToken(result.token);
+    onSuccess: () => {
       queryClient.removeQueries();
       queryClient.invalidateQueries({ queryKey: queryKeys.session });
       navigate("/", { replace: true });
@@ -26,7 +26,7 @@ export default function Auth() {
     onError: (requestError) => setError(requestError.message),
   });
 
-  if (getToken()) return <Navigate to="/" replace />;
+  if (sessionQuery.data && !sessionQuery.isError) return <Navigate to="/" replace />;
 
   const update = ({ target }) =>
     setForm((current) => ({ ...current, [target.name]: target.value }));

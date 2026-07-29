@@ -1,5 +1,4 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { clearToken, getToken } from './api/client'
 import { useSessionQuery } from './api/queries'
 import Home from './pages/Home'
 import Auth from './pages/Auth'
@@ -68,10 +67,8 @@ export default function App() {
 }
 
 function RequireAuth({ children }) {
-  const hasToken = Boolean(getToken())
-  const { isLoading, isError } = useSessionQuery(hasToken)
-  if (!hasToken || isError) {
-    if (isError) clearToken()
+  const { isLoading, isError } = useSessionQuery(true)
+  if (isError) {
     return <Navigate to="/login" replace />
   }
   if (isLoading) {

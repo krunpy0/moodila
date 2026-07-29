@@ -49,7 +49,7 @@ func main() {
 	}
 
 	router := gin.New()
-	router.Use(gin.Recovery(), middleware.Logger, middleware.CORS(cfg.CORSOrigin))
+	router.Use(gin.Recovery(), middleware.Logger, middleware.CORS(cfg.CORSOrigin), middleware.CSRF())
 
 	// Tier-based Rate Limiters
 	authLimiter := middleware.RateLimit(rate.Every(12*time.Second), 5, middleware.IPKey)
@@ -65,6 +65,7 @@ func main() {
 	}
 	router.POST("/auth/register", authLimiter, auth.Register)
 	router.POST("/auth/login", authLimiter, auth.Login)
+	router.POST("/auth/logout", mutationLimiter, auth.Logout)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), readLimiter, auth.Session)
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
 	storageHandler := handlers.Storage{Storage: storage.S3{
