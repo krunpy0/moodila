@@ -3,6 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
+	"sync"
+	"time"
 
 	"moodshare/internal/models"
 
@@ -15,8 +19,81 @@ var (
 	ErrForbidden = errors.New("forbidden")
 )
 
+// SummaryCache provides thread-safe in-memory caching for month summaries.
+// Assumes single-instance deployment.
+type SummaryCache struct {
+	mu    sync.RWMutex
+	items map[string]summaryCacheItem
+	ttl   time.Duration
+}
+
+type summaryCacheItem struct {
+	summary   models.EntrySummary
+	expiresAt time.Time
+}
+
+func NewSummaryCache(ttl time.Duration) *SummaryCache {
+	if ttl <= 0 {
+		ttl = 5 * time.Minute
+	}
+	return &SummaryCache{
+		items: make(map[string]summaryCacheItem),
+		ttl:   ttl,
+	}
+}
+
+func (c *SummaryCache) Get(key string) (models.EntrySummary, bool) {
+	if c == nil {
+		return models.EntrySummary{}, false
+	}
+	c.mu.RLock()
+	item, ok := c.items[key]
+	c.mu.RUnlock()
+
+	if !ok || time.Now().After(item.expiresAt) {
+		return models.EntrySummary{}, false
+	}
+	return item.summary, true
+}
+
+func (c *SummaryCache) Set(key string, summary models.EntrySummary) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	c.items[key] = summaryCacheItem{
+		summary:   summary,
+		expiresAt: time.Now().Add(c.ttl),
+	}
+	c.mu.Unlock()
+}
+
+func (c *SummaryCache) InvalidateUser(userID string) {
+	if c == nil {
+		return
+	}
+	c.mu.Lock()
+	prefix := userID + ":"
+	for k := range c.items {
+		if strings.HasPrefix(k, prefix) {
+			delete(c.items, k)
+		}
+	}
+	c.mu.Unlock()
+}
+
+var defaultSummaryCache = NewSummaryCache(5 * time.Minute)
+
 type Entries struct {
-	Pool *pgxpool.Pool
+	Pool  *pgxpool.Pool
+	Cache *SummaryCache
+}
+
+func (r Entries) getCache() *SummaryCache {
+	if r.Cache != nil {
+		return r.Cache
+	}
+	return defaultSummaryCache
 }
 
 func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool) (models.Entry, error) {
@@ -38,6 +115,9 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
 		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
+	if err == nil {
+		r.getCache().InvalidateUser(userID)
+	}
 	return entry, err
 }
 
@@ -138,6 +218,11 @@ func (r Entries) VisibleByMonth(ctx context.Context, userID, month, nextMonth st
 }
 
 func (r Entries) Summary(ctx context.Context, userID, month, nextMonth string) (models.EntrySummary, error) {
+	cacheKey := fmt.Sprintf("%s:%s:all", userID, month)
+	if cached, ok := r.getCache().Get(cacheKey); ok {
+		return cached, nil
+	}
+
 	var summary models.EntrySummary
 	err := r.Pool.QueryRow(ctx, `
 		SELECT
@@ -163,6 +248,9 @@ func (r Entries) Summary(ctx context.Context, userID, month, nextMonth string) (
 		WHERE user_id = $1 AND date >= $2 AND date < $3`,
 		userID, month+"-01", nextMonth+"-01",
 	).Scan(&summary.EntryCount, &summary.DominantMood, &summary.TopTag)
+	if err == nil {
+		r.getCache().Set(cacheKey, summary)
+	}
 	return summary, err
 }
 
@@ -189,6 +277,11 @@ func (r Entries) VisibleRecent(ctx context.Context, userID string, limit int) ([
 }
 
 func (r Entries) VisibleSummary(ctx context.Context, userID, month, nextMonth string) (models.EntrySummary, error) {
+	cacheKey := fmt.Sprintf("%s:%s:visible", userID, month)
+	if cached, ok := r.getCache().Get(cacheKey); ok {
+		return cached, nil
+	}
+
 	var summary models.EntrySummary
 	err := r.Pool.QueryRow(ctx, `
 		SELECT
@@ -214,6 +307,9 @@ func (r Entries) VisibleSummary(ctx context.Context, userID, month, nextMonth st
 		WHERE user_id = $1 AND is_hidden = false AND date >= $2 AND date < $3`,
 		userID, month+"-01", nextMonth+"-01",
 	).Scan(&summary.EntryCount, &summary.DominantMood, &summary.TopTag)
+	if err == nil {
+		r.getCache().Set(cacheKey, summary)
+	}
 	return summary, err
 }
 
@@ -241,6 +337,9 @@ func (r Entries) UpdateVisibility(ctx context.Context, entryID, userID string, i
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
 		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
+	if err == nil {
+		r.getCache().InvalidateUser(userID)
+	}
 	return entry, err
 }
 
@@ -252,6 +351,7 @@ func (r Entries) Delete(ctx context.Context, entryID, userID string) error {
 	if commandTag.RowsAffected() == 0 {
 		return ErrNotFound
 	}
+	r.getCache().InvalidateUser(userID)
 	return nil
 }
 
@@ -263,6 +363,7 @@ func (r Entries) DeleteByDate(ctx context.Context, userID, date string) error {
 	if commandTag.RowsAffected() == 0 {
 		return ErrNotFound
 	}
+	r.getCache().InvalidateUser(userID)
 	return nil
 }
 

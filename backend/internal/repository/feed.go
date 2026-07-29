@@ -49,16 +49,15 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 	query := `
 		SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at,
 		       u.id, u.username, u.display_name, u.avatar_url,
-		       COUNT(DISTINCT l.user_id)::int,
-		       COALESCE(BOOL_OR(l.user_id = $1), false),
-		       COALESCE(MAX(CASE WHEN l.user_id = $1 THEN l.reaction END), ''),
-		       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id)
+		       (SELECT COUNT(*)::int FROM likes l WHERE l.entry_id = e.id) AS like_count,
+		       EXISTS(SELECT 1 FROM likes l WHERE l.entry_id = e.id AND l.user_id = $1) AS liked_by_me,
+		       COALESCE((SELECT reaction FROM likes l WHERE l.entry_id = e.id AND l.user_id = $1 LIMIT 1), '') AS my_reaction,
+		       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id) AS comment_count
 		FROM entries e
 		JOIN users u ON u.id = e.user_id
 		JOIN friendships f ON f.status = 'accepted'
 			AND ((f.requester_id = $2 AND f.addressee_id = e.user_id)
 				OR (f.addressee_id = $2 AND f.requester_id = e.user_id))
-		LEFT JOIN likes l ON l.entry_id = e.id
 		WHERE e.is_hidden = false`
 
 	var args []any
@@ -67,10 +66,10 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 	if hasCursor {
 		query += ` AND (e.date, e.created_at, e.id) < ($3, $4, $5)`
 		args = append(args, cursorDate, cursorCreatedAt, cursorID)
-		query += ` GROUP BY e.id, u.id ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $6`
+		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $6`
 		args = append(args, limit+1)
 	} else {
-		query += ` GROUP BY e.id, u.id ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $3`
+		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $3`
 		args = append(args, limit+1)
 	}
 
@@ -244,18 +243,16 @@ func (r Feed) canAccessEntry(ctx context.Context, viewerID, entryID string) (boo
 const feedQuery = `
 	SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.created_at,
 	       u.id, u.username, u.display_name, u.avatar_url,
-	       COUNT(DISTINCT l.user_id)::int,
-	       COALESCE(BOOL_OR(l.user_id = $1), false),
-	       COALESCE(MAX(CASE WHEN l.user_id = $1 THEN l.reaction END), ''),
-	       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id)
+	       (SELECT COUNT(*)::int FROM likes l WHERE l.entry_id = e.id) AS like_count,
+	       EXISTS(SELECT 1 FROM likes l WHERE l.entry_id = e.id AND l.user_id = $1) AS liked_by_me,
+	       COALESCE((SELECT reaction FROM likes l WHERE l.entry_id = e.id AND l.user_id = $1 LIMIT 1), '') AS my_reaction,
+	       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id) AS comment_count
 	FROM entries e
 	JOIN users u ON u.id = e.user_id
 	JOIN friendships f ON f.status = 'accepted'
 		AND ((f.requester_id = $2 AND f.addressee_id = e.user_id)
 			OR (f.addressee_id = $2 AND f.requester_id = e.user_id))
-	LEFT JOIN likes l ON l.entry_id = e.id
 	WHERE e.is_hidden = false
-	GROUP BY e.id, u.id
 	ORDER BY e.date DESC, e.created_at DESC`
 
 type feedRow interface {
