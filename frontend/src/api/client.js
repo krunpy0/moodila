@@ -8,6 +8,15 @@ export const getCookie = (name) => {
   return ''
 }
 
+export const getCSRFToken = () => {
+  const cookieVal = getCookie('csrf_token')
+  if (cookieVal) return cookieVal
+  if (typeof localStorage !== 'undefined') {
+    return localStorage.getItem('csrf_token') || ''
+  }
+  return ''
+}
+
 export const getLocalDate = () => {
   const now = new Date()
   return [
@@ -20,7 +29,7 @@ export const getLocalDate = () => {
 export const apiURL = (path) => (/^https?:\/\//.test(path) ? path : BASE + path)
 
 export async function api(path, options = {}) {
-  const csrfToken = getCookie('csrf_token')
+  const csrfToken = getCSRFToken()
   const res = await fetch(apiURL(path), {
     credentials: 'include',
     headers: {
@@ -37,7 +46,12 @@ export async function api(path, options = {}) {
     error.status = res.status
     throw error
   }
-  return res.status === 204 ? null : res.json()
+  if (res.status === 204) return null
+  const data = await res.json()
+  if (data && typeof data === 'object' && data.csrf_token && typeof localStorage !== 'undefined') {
+    localStorage.setItem('csrf_token', data.csrf_token)
+  }
+  return data
 }
 
 export const fetchClient = api

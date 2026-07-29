@@ -8,4 +8,9 @@ export const login = (data) =>
 
 export const getSession = () => api('/auth/session')
 
-export const logout = () => api('/auth/logout', { method: 'POST' })
+export const logout = async () => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('csrf_token')
+  }
+  return api('/auth/logout', { method: 'POST' })
+}

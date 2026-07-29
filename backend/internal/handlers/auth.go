@@ -110,7 +110,11 @@ func (h Auth) Login(c *gin.Context) {
 }
 
 func (h Auth) Session(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"user_id": c.GetString("userID")})
+	csrfToken, _ := c.Cookie("csrf_token")
+	c.JSON(http.StatusOK, gin.H{
+		"user_id":    c.GetString("userID"),
+		"csrf_token": csrfToken,
+	})
 }
 
 func (h Auth) Logout(c *gin.Context) {
@@ -177,7 +181,10 @@ func (h Auth) respondWithToken(c *gin.Context, status int, userID string, user a
 		SameSite: h.getSameSite(),
 	})
 
-	c.JSON(status, gin.H{"user": user})
+	c.JSON(status, gin.H{
+		"user":       user,
+		"csrf_token": csrfToken,
+	})
 }
 
 func generateCSRFToken() string {
