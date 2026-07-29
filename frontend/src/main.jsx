@@ -16,6 +16,7 @@ const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
       if (error?.status === 404 && query?.meta?.ignore404) return
+      if (error?.status === 401) return
       notifyError(error)
     },
   }),

@@ -11,7 +11,7 @@ import { archiveAdminAnnouncement, createAdminAnnouncement, getAdminAnnouncement
 
 export { queryKeys }
 
-export const useSessionQuery = (enabled) => useQuery({ queryKey: queryKeys.session, queryFn: getSession, enabled, staleTime: 5 * 60_000 })
+export const useSessionQuery = (enabled) => useQuery({ queryKey: queryKeys.session, queryFn: getSession, enabled, staleTime: 5 * 60_000, retry: false })
 export const useEntryQuery = (date, enabled = true) => useQuery({ queryKey: queryKeys.entry(date), queryFn: () => getEntry(date), enabled, staleTime: 2 * 60_000, retry: false, meta: { ignore404: true } })
 export const useEntriesQuery = (month, enabled = true) => useQuery({ queryKey: queryKeys.entries(month), queryFn: () => getEntriesByMonth(month), enabled: Boolean(month) && enabled, staleTime: 2 * 60_000 })
 export const useEntrySummaryQuery = (month) => useQuery({ queryKey: queryKeys.entrySummary(month), queryFn: () => getEntrySummary(month), staleTime: 60_000 })
