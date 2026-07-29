@@ -111,43 +111,43 @@ export default function PWAInstallPrompt() {
     <>
       {/* Offline Status Badge */}
       {isOffline && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-amber-500/95 backdrop-blur-md text-amber-950 font-medium text-xs rounded-full shadow-lg flex items-center gap-2 border border-amber-400/50 transition-all animate-pulse">
-          <span className="material-symbols-outlined text-sm">wifi_off</span>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-tertiary-container/95 text-on-tertiary-container text-xs font-medium rounded-full cloud-shadow flex items-center gap-2 border border-tertiary/20 backdrop-blur-md transition-all animate-pulse">
+          <span className="material-symbols-outlined text-base">wifi_off</span>
           <span>Offline mode: entries saved on your device</span>
         </div>
       )}
 
       {/* Sync Success Banner */}
       {syncStatus && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-emerald-600/95 backdrop-blur-md text-white font-medium text-xs rounded-full shadow-lg flex items-center gap-2 border border-emerald-400/50 transition-all">
-          <span className="material-symbols-outlined text-sm">cloud_done</span>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-secondary-container/95 text-on-secondary-container text-xs font-medium rounded-full cloud-shadow flex items-center gap-2 border border-secondary/20 backdrop-blur-md transition-all">
+          <span className="material-symbols-outlined text-base">cloud_done</span>
           <span>{syncStatus}</span>
         </div>
       )}
 
       {/* Android / Chrome Add to Home Screen Banner */}
       {showInstallBanner && (
-        <div className="fixed bottom-20 left-4 right-4 max-w-md mx-auto z-40 bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-lg flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
-              <span className="material-symbols-outlined text-white text-xl">install_mobile</span>
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] max-w-md z-40 bg-surface-container-lowest/95 text-on-surface p-4 rounded-3xl cloud-shadow border border-outline-variant/30 backdrop-blur-xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-xl">install_mobile</span>
             </div>
-            <div>
-              <h4 className="font-semibold text-sm leading-tight text-slate-100">Install MoodShare</h4>
-              <p className="text-xs text-slate-400 mt-0.5">Add to home screen for quick access</p>
+            <div className="min-w-0">
+              <h4 className="font-semibold text-sm leading-tight text-on-surface truncate">Install MoodShare</h4>
+              <p className="text-xs text-on-surface-variant mt-0.5 truncate">Add to home screen for quick access</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={dismissInstallBanner}
-              className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition"
+              className="flex h-9 w-9 items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition"
               aria-label="Close"
             >
               <span className="material-symbols-outlined text-lg">close</span>
             </button>
             <button
               onClick={handleInstallClick}
-              className="px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl shadow-md transition active:scale-95 whitespace-nowrap"
+              className="px-4 py-2 bg-primary text-on-primary hover:opacity-90 font-semibold text-xs rounded-full shadow-sm transition active:scale-95 whitespace-nowrap"
             >
               Install
             </button>
@@ -157,21 +157,21 @@ export default function PWAInstallPrompt() {
 
       {/* iOS Safari Installation Guide Banner */}
       {showIOSBanner && (
-        <div className="fixed bottom-20 left-4 right-4 max-w-md mx-auto z-40 bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-lg flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
-              <span className="material-symbols-outlined text-white text-xl">ios_share</span>
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-[calc(100%-40px)] max-w-md z-40 bg-surface-container-lowest/95 text-on-surface p-4 rounded-3xl cloud-shadow border border-outline-variant/30 backdrop-blur-xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-xl">ios_share</span>
             </div>
-            <div>
-              <h4 className="font-semibold text-sm leading-tight text-slate-100">Install on iPhone</h4>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Tap <span className="font-bold">Share</span> <span className="material-symbols-outlined text-[14px] align-middle">ios_share</span> then select <span className="font-bold">Add to Home Screen</span>.
+            <div className="min-w-0">
+              <h4 className="font-semibold text-sm leading-tight text-on-surface truncate">Install on iPhone</h4>
+              <p className="text-xs text-on-surface-variant mt-0.5">
+                Tap <span className="font-semibold text-on-surface">Share</span> <span className="material-symbols-outlined text-[14px] align-middle">ios_share</span> then select <span className="font-semibold text-on-surface">Add to Home Screen</span>.
               </p>
             </div>
           </div>
           <button
             onClick={dismissIOSBanner}
-            className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition"
+            className="flex h-9 w-9 shrink-0 items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition"
             aria-label="Close"
           >
             <span className="material-symbols-outlined text-lg">close</span>

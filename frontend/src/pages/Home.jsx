@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { getLocalDate } from '../api/client'
 import { logout } from '../api/auth'
-import { useEntriesQuery, useEntrySummaryQuery } from '../api/queries'
+import { useEntriesQuery, useEntrySummaryQuery, useProfileQuery } from '../api/queries'
 import BottomNav from '../components/BottomNav'
 import HeaderBell from '../components/HeaderBell'
 import { HomeSkeleton } from '../components/skeleton/PageSkeletons'
@@ -21,8 +21,12 @@ export default function Home() {
   const month = formatMonth(today)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const profileQuery = useProfileQuery()
   const entriesQuery = useEntriesQuery(month)
   const summaryQuery = useEntrySummaryQuery(month)
+
+  const user = profileQuery.data?.user
+  const displayName = user?.display_name || user?.username
   const entries = entriesQuery.data || []
   const summary = summaryQuery.data || { entry_count: 0, dominant_mood: null, top_tag: null }
   const isLoading = entriesQuery.isLoading || summaryQuery.isLoading
@@ -41,13 +45,27 @@ export default function Home() {
     ? moodDetails[summary.dominant_mood]
     : null
 
+  const initials = displayName
+    ? displayName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()
+    : ''
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
       <header className="flex items-center justify-between px-container-margin py-md">
         <div className="flex items-center gap-sm">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-xl">
-            🌸
-          </div>
+          <Link to="/profile" className="block shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40" title="Profile">
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={displayName || 'Profile'}
+                className="h-10 w-10 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
+                {initials || <span className="material-symbols-outlined text-[20px]">person</span>}
+              </div>
+            )}
+          </Link>
           <h1 className="text-headline-lg-mobile font-headline-lg-mobile">Moodila</h1>
         </div>
         <div className="flex items-center gap-xs">
@@ -71,9 +89,9 @@ export default function Home() {
       <div className="space-y-lg px-container-margin">
         {isLoading ? <HomeSkeleton /> : <>
         <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
-          <div className="relative z-10 flex max-w-[75%] flex-col items-start gap-md">
+          <div className="relative z-10 flex max-w-full flex-col items-start gap-md">
             <h2 className="text-headline-lg font-headline-lg text-on-primary-container">
-              {greeting()}
+              {greeting()}{displayName ? `, ${displayName}` : ''}
             </h2>
             <Link
               to="/entries/new"
