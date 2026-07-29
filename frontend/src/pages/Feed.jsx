@@ -138,7 +138,7 @@ function FeedCard({ entry, busy, onReact }) {
             <Avatar author={entry.author} />
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
-              <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {relativeDate(entry.date)}</p>
+              <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date)}</p>
             </div>
           </Link>
         </header>
@@ -205,7 +205,7 @@ function FeedCard({ entry, busy, onReact }) {
           <Avatar author={entry.author} />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
-            <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {relativeDate(entry.date)}</p>
+            <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date)}</p>
           </div>
         </Link>
         <span className={`flex h-11 w-11 items-center justify-center rounded-full text-xl ${moodClass}`} title={moodName}>{emoji}</span>
@@ -332,7 +332,7 @@ function CommentsSection({ entryId }) {
                 <div className="min-w-0 flex-1 rounded-2xl bg-surface-container-low p-sm">
                   <div className="flex items-center justify-between">
                     <span className="truncate text-label-sm font-semibold text-on-surface">{commentAuthor}</span>
-                    <span className="text-label-sm text-on-surface-variant/60">{relativeDate(comment.created_at?.slice(0, 10))}</span>
+                    <span className="text-label-sm text-on-surface-variant/60">{formatFeedDate(comment.created_at)}</span>
                   </div>
                   <p className="mt-xs whitespace-pre-wrap text-body-sm text-on-surface">{comment.text}</p>
                 </div>
@@ -385,13 +385,36 @@ function Avatar({ author, small = false }) {
   return <span className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary`}>{initials}</span>
 }
 
-function relativeDate(value) {
-  if (!value) return ''
-  const date = new Date(`${value}T12:00:00`)
+function formatFeedDate(createdAt, fallbackDate) {
+  if (!createdAt && !fallbackDate) return ''
+  const date = createdAt ? new Date(createdAt) : new Date(`${fallbackDate}T12:00:00`)
+  if (isNaN(date.getTime())) return fallbackDate || ''
+
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const timeStr = `${hours}:${minutes}`
+
   const today = new Date()
-  const todayKey = today.toISOString().slice(0, 10)
-  if (value === todayKey) return 'Today'
-  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)
-  if (value === yesterday.toISOString().slice(0, 10)) return 'Yesterday'
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const isToday =
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+
+  const yesterday = new Date(today)
+  yesterday.setDate(today.getDate() - 1)
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+
+  let dateStr = ''
+  if (isToday) {
+    dateStr = 'Today'
+  } else if (isYesterday) {
+    dateStr = 'Yesterday'
+  } else {
+    dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  return createdAt ? `${dateStr}, ${timeStr}` : dateStr
 }
