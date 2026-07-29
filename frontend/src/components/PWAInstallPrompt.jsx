@@ -6,16 +6,30 @@ import { notifySuccess, notifyInfo } from './Notifications'
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [showInstallBanner, setShowInstallBanner] = useState(false)
+  const [showIOSBanner, setShowIOSBanner] = useState(false)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [syncStatus, setSyncStatus] = useState(null)
   const queryClient = useQueryClient()
 
   useEffect(() => {
-    // Listen for beforeinstallprompt event (Android / Chrome / Desktop)
+    // Check iOS Safari device state
+    const isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent) && !window.MSStream
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone
+    const dismissedIOS = sessionStorage.getItem('pwa_ios_dismissed')
+
+    if (isIOS && !isStandalone && !dismissedIOS) {
+      setShowIOSBanner(true)
+    }
+
+    // Listen for beforeinstallprompt event (Android / Chrome / Edge / Desktop)
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      setShowInstallBanner(true)
+      if (!sessionStorage.getItem('pwa_install_dismissed')) {
+        setShowInstallBanner(true)
+      }
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -38,7 +52,7 @@ export default function PWAInstallPrompt() {
     const handleOnline = async () => {
       setIsOffline(false)
       notifyInfo('Connection restored. Syncing pending entries...')
-      
+
       try {
         const result = await syncOfflineEntriesWithBackend()
         if (result.synced > 0) {
@@ -83,6 +97,16 @@ export default function PWAInstallPrompt() {
     setDeferredPrompt(null)
   }
 
+  const dismissInstallBanner = () => {
+    setShowInstallBanner(false)
+    sessionStorage.setItem('pwa_install_dismissed', 'true')
+  }
+
+  const dismissIOSBanner = () => {
+    setShowIOSBanner(false)
+    sessionStorage.setItem('pwa_ios_dismissed', 'true')
+  }
+
   return (
     <>
       {/* Offline Status Badge */}
@@ -101,7 +125,7 @@ export default function PWAInstallPrompt() {
         </div>
       )}
 
-      {/* Add to Home Screen Banner */}
+      {/* Android / Chrome Add to Home Screen Banner */}
       {showInstallBanner && (
         <div className="fixed bottom-20 left-4 right-4 max-w-md mx-auto z-40 bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-lg flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
           <div className="flex items-center gap-3">
@@ -115,7 +139,7 @@ export default function PWAInstallPrompt() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setShowInstallBanner(false)}
+              onClick={dismissInstallBanner}
               className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition"
               aria-label="Close"
             >
@@ -128,6 +152,30 @@ export default function PWAInstallPrompt() {
               Install
             </button>
           </div>
+        </div>
+      )}
+
+      {/* iOS Safari Installation Guide Banner */}
+      {showIOSBanner && (
+        <div className="fixed bottom-20 left-4 right-4 max-w-md mx-auto z-40 bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border border-slate-700/60 backdrop-blur-lg flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-md">
+              <span className="material-symbols-outlined text-white text-xl">ios_share</span>
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm leading-tight text-slate-100">Install on iPhone</h4>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Tap <span className="font-bold">Share</span> <span className="material-symbols-outlined text-[14px] align-middle">ios_share</span> then select <span className="font-bold">Add to Home Screen</span>.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={dismissIOSBanner}
+            className="p-1.5 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition"
+            aria-label="Close"
+          >
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
         </div>
       )}
     </>

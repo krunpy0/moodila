@@ -1,10 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.jsx'
 import { NotificationsProvider, notifyError } from './components/Notifications.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+
+registerSW({ immediate: true })
 
 const queryClient = new QueryClient({
   defaultOptions: {
