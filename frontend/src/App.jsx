@@ -9,6 +9,7 @@ const Home = lazy(() => import('./pages/Home'))
 const Auth = lazy(() => import('./pages/Auth'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const ConfirmAccountDeletion = lazy(() => import('./pages/ConfirmAccountDeletion'))
 const AddEntry = lazy(() => import('./pages/AddEntry'))
 const Calendar = lazy(() => import('./pages/Calendar'))
 const Friends = lazy(() => import('./pages/Friends'))
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/login" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/account/confirm-delete" element={<ConfirmAccountDeletion />} />
             <Route
               path="/"
               element={

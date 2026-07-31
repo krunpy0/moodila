@@ -122,3 +122,156 @@ func (m Mailer) SendPasswordResetEmail(toEmail string, resetURL string, ttlMinut
 
 	return nil
 }
+
+func (m Mailer) SendAccountDeletionEmail(toEmail string, deleteURL string, ttlMinutes int) error {
+	if m.APIKey == "" {
+		log.Printf("[DEV MAIL] Account deletion confirmation link for %s: %s (expires in %d min)", toEmail, deleteURL, ttlMinutes)
+		return nil
+	}
+
+	subject := "Confirm account deletion — Moodila"
+	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm account deletion</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
+  <table width="100%%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 32px;">
+    <tr>
+      <td align="center" style="padding-bottom: 24px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%%; background-color: #ffdad6; display: inline-block; line-height: 56px; font-size: 28px;">
+          ⚠️
+        </div>
+        <h1 style="margin: 16px 0 8px 0; font-size: 24px; font-weight: 700; color: #1b1c1c;">Moodila</h1>
+        <p style="margin: 0; font-size: 14px; color: #4d4447;">Account Deletion Request</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size: 16px; line-height: 24px; color: #4d4447; padding-bottom: 24px;">
+        Hello,<br><br>
+        We received a request to permanently delete your Moodila account. 
+        <strong>WARNING: This action is permanent and cannot be undone.</strong>
+        If you wish to proceed with deleting your account, please click the button below:
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 24px;">
+        <a href="%s" target="_blank" style="display: inline-block; background-color: #ba1a1a; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 16px;">Confirm Account Deletion</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size: 13px; line-height: 20px; color: #7f7478; padding-bottom: 16px;">
+        This confirmation link will expire in <strong>%d minutes</strong>. If you did not initiate this deletion request, please secure your account immediately by changing your password.
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size: 12px; line-height: 18px; color: #7f7478; padding-top: 24px; word-break: break-all;">
+        Or copy and paste this link into your browser:<br>
+        <a href="%s" style="color: #6b5a60; text-decoration: underline;">%s</a>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`, deleteURL, ttlMinutes, deleteURL, deleteURL)
+
+	reqData := resendRequest{
+		From:    m.FromEmail,
+		To:      []string{toEmail},
+		Subject: subject,
+		HTML:    htmlBody,
+	}
+
+	payload, err := json.Marshal(reqData)
+	if err != nil {
+		return fmt.Errorf("marshal resend req: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("create resend req: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+m.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := m.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("send email via resend: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("resend API error (%d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}
+
+func (m Mailer) SendAccountDeletedConfirmationEmail(toEmail string) error {
+	if m.APIKey == "" {
+		log.Printf("[DEV MAIL] Account deletion completed notification for %s", toEmail)
+		return nil
+	}
+
+	subject := "Your Moodila account has been deleted"
+	htmlBody := `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Deleted</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 32px;">
+    <tr>
+      <td align="center" style="padding-bottom: 24px;">
+        <h1 style="margin: 16px 0 8px 0; font-size: 24px; font-weight: 700; color: #1b1c1c;">Moodila</h1>
+        <p style="margin: 0; font-size: 14px; color: #4d4447;">Account Deleted</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size: 15px; line-height: 22px; color: #4d4447; padding-bottom: 24px;">
+        Hello,<br><br>
+        Your Moodila account has been successfully deleted as requested. All your profile data, personal journal entries, and friend connections have been cleared.
+        <br><br>
+        Thank you for having been a part of Moodila.
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+
+	reqData := resendRequest{
+		From:    m.FromEmail,
+		To:      []string{toEmail},
+		Subject: subject,
+		HTML:    htmlBody,
+	}
+
+	payload, err := json.Marshal(reqData)
+	if err != nil {
+		return fmt.Errorf("marshal resend req: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("create resend req: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+m.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := m.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("send email via resend: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("resend API error (%d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}

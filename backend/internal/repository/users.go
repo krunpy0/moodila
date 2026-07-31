@@ -109,3 +109,66 @@ func (r Users) UpdateProfile(ctx context.Context, id string, displayName, avatar
 	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Username, &user.DisplayName, &user.AvatarURL, &user.IsAdmin, &user.CreatedAt)
 	return user, err
 }
+
+func (r Users) DeleteAccount(ctx context.Context, userID string) error {
+	if r.Pool == nil {
+		return errors.New("database pool unavailable")
+	}
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Soft delete and anonymize user record
+	cmd, err := tx.Exec(ctx, `
+		UPDATE users
+		SET email = 'deleted_' || id || '@deleted.local',
+		    username = 'deleted_' || id,
+		    display_name = 'Deleted User',
+		    avatar_url = NULL,
+		    password_hash = NULL,
+		    deleted_at = now()
+		WHERE id = $1 AND deleted_at IS NULL`,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("anonymize user: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return errors.New("user not found or already deleted")
+	}
+
+	// 2. Hide all entries belonging to the user
+	if _, err = tx.Exec(ctx, `UPDATE entries SET is_hidden = true WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("hide entries: %w", err)
+	}
+
+	// 3. Delete friendships involving the user
+	if _, err = tx.Exec(ctx, `DELETE FROM friendships WHERE requester_id = $1 OR addressee_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete friendships: %w", err)
+	}
+
+	// 4. Delete incoming notifications (where user is recipient)
+	if _, err = tx.Exec(ctx, `DELETE FROM notifications WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete incoming notifications: %w", err)
+	}
+
+	// 5. Delete outgoing friend notifications (where user is actor)
+	if _, err = tx.Exec(ctx, `DELETE FROM notifications WHERE actor_id = $1 AND type IN ('friend_request', 'friend_accept')`, userID); err != nil {
+		return fmt.Errorf("delete outgoing friend notifications: %w", err)
+	}
+
+	// 6. Invalidate active password reset tokens
+	if _, err = tx.Exec(ctx, `UPDATE password_reset_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL`, userID); err != nil {
+		return fmt.Errorf("invalidate password reset tokens: %w", err)
+	}
+
+	// 7. Invalidate active account deletion tokens
+	if _, err = tx.Exec(ctx, `UPDATE account_deletion_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL`, userID); err != nil {
+		return fmt.Errorf("invalidate deletion tokens: %w", err)
+	}
+
+	return tx.Commit(ctx)
+}

@@ -65,16 +65,18 @@ func main() {
 
 	router.GET("/health", healthLimiter, handlers.Health{Pool: pool}.Get)
 	auth := handlers.Auth{
-		Users:         repository.Users{Pool: pool},
-		PasswordReset: repository.PasswordReset{Pool: pool},
-		Mailer:        mailClient,
-		Config:        cfg,
-		JWTSecret:     cfg.JWTSecret,
+		Users:           repository.Users{Pool: pool},
+		PasswordReset:   repository.PasswordReset{Pool: pool},
+		AccountDeletion: repository.AccountDeletion{Pool: pool},
+		Mailer:          mailClient,
+		Config:          cfg,
+		JWTSecret:       cfg.JWTSecret,
 	}
 	router.POST("/auth/register", authLimiter, auth.Register)
 	router.POST("/auth/login", authLimiter, auth.Login)
 	router.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
 	router.POST("/auth/reset-password", authLimiter, auth.ResetPassword)
+	router.POST("/auth/account/delete-confirm", authLimiter, auth.DeleteAccountConfirm)
 	router.POST("/auth/logout", mutationLimiter, auth.Logout)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), readLimiter, auth.Session)
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
@@ -94,6 +96,7 @@ func main() {
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
 	authorized.PATCH("/auth/password", passwordChangeLimiter, auth.ChangePassword)
+	authorized.POST("/auth/account/delete-request", passwordChangeLimiter, auth.DeleteAccountRequest)
 	authorized.POST("/entries", mutationLimiter, entries.Save)
 	authorized.DELETE("/entries/:id", mutationLimiter, entries.Delete)
 	authorized.DELETE("/entries", mutationLimiter, entries.Delete)

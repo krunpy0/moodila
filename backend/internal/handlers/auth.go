@@ -27,11 +27,12 @@ import (
 var usernamePattern = regexp.MustCompile(`^[a-z0-9_]{3,24}$`)
 
 type Auth struct {
-	Users         repository.Users
-	PasswordReset repository.PasswordReset
-	Mailer        mailer.Mailer
-	Config        config.Config
-	JWTSecret     string
+	Users           repository.Users
+	PasswordReset   repository.PasswordReset
+	AccountDeletion repository.AccountDeletion
+	Mailer          mailer.Mailer
+	Config          config.Config
+	JWTSecret       string
 }
 
 type credentials struct {
@@ -53,6 +54,14 @@ type resetPasswordInput struct {
 type changePasswordInput struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
+}
+
+type deleteAccountRequestInput struct {
+	Password string `json:"password"`
+}
+
+type deleteAccountConfirmInput struct {
+	Token string `json:"token"`
 }
 
 func (h Auth) Register(c *gin.Context) {
@@ -324,4 +333,124 @@ func (h Auth) ChangePassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
+}
+
+func (h Auth) DeleteAccountRequest(c *gin.Context) {
+	if h.Users.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var input deleteAccountRequestInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
+		return
+	}
+
+	if input.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Password is required to request deletion"})
+		return
+	}
+
+	user, err := h.Users.ByID(c.Request.Context(), userID)
+	if err != nil || user.PasswordHash == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user session invalid or user not found"})
+		return
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(input.Password)) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Incorrect password"})
+		return
+	}
+
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		log.Printf("error generating random delete token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate deletion token"})
+		return
+	}
+	rawToken := base64.RawURLEncoding.EncodeToString(tokenBytes)
+
+	sum := sha256.Sum256([]byte(rawToken))
+	tokenHash := hex.EncodeToString(sum[:])
+
+	ttl := h.Config.AccountDeleteTokenTTLMinutes
+	if ttl <= 0 {
+		ttl = 30
+	}
+	expiresAt := time.Now().Add(time.Duration(ttl) * time.Minute)
+
+	_, err = h.AccountDeletion.Create(c.Request.Context(), user.ID, tokenHash, expiresAt)
+	if err != nil {
+		log.Printf("error saving account deletion token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not process deletion request"})
+		return
+	}
+
+	baseURL := h.Config.AppBaseURL
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+	deleteURL := fmt.Sprintf("%s/account/confirm-delete?token=%s", baseURL, rawToken)
+
+	if err := h.Mailer.SendAccountDeletionEmail(user.Email, deleteURL, ttl); err != nil {
+		log.Printf("error sending account deletion email: %v", err)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Deletion confirmation email sent. Please check your inbox."})
+}
+
+func (h Auth) DeleteAccountConfirm(c *gin.Context) {
+	if h.Users.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	var input deleteAccountConfirmInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
+		return
+	}
+
+	token := strings.TrimSpace(input.Token)
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token is required"})
+		return
+	}
+
+	sum := sha256.Sum256([]byte(token))
+	tokenHash := hex.EncodeToString(sum[:])
+
+	tok, err := h.AccountDeletion.GetValidByHash(c.Request.Context(), tokenHash)
+	if err != nil {
+		if errors.Is(err, repository.ErrInvalidOrExpiredDeleteToken) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired account deletion token"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify token"})
+		return
+	}
+
+	user, err := h.Users.ByID(c.Request.Context(), tok.UserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		return
+	}
+
+	if err := h.Users.DeleteAccount(c.Request.Context(), tok.UserID); err != nil {
+		log.Printf("error deleting account %s: %v", tok.UserID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete account"})
+		return
+	}
+
+	_ = h.AccountDeletion.MarkUsed(c.Request.Context(), tok.ID)
+	_ = h.Mailer.SendAccountDeletedConfirmationEmail(user.Email)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Account deleted successfully"})
 }

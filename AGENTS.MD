@@ -213,6 +213,13 @@ end-to-end:
 - [x] Frontend: общий компонент `PasswordFieldsForm` (переиспользован на `ResetPassword` без визуальных регрессий), обёртка API `changePassword` в `src/api/auth.js`, раскрываемая секция смены пароля `ChangePasswordForm` в настройках на экране `Profile` с инлайн-ошибками под `old_password` и успешным сообщением без редиректа.
 - [x] Тест: проверка работы смены с верным/неверным текущим паролем, 401 без JWT и инвалидация оставшихся reset-токенов.
 
+### Фича 14 — Удаление аккаунта (Account Deletion)
+
+- [x] Backend: миграция `0010_create_account_deletion_tokens.sql` (таблица `account_deletion_tokens` + колонка `deleted_at` в `users`), репозиторий `repository.AccountDeletion` и метод `DeleteAccount` в `repository.Users` (транзакционный soft delete/анонимизация, скрытие записей, hard delete дружб, удаление входящих уведомлений и очистка токенов), эндпоинты `POST /auth/account/delete-request` (JWT auth, проверка текущего пароля, генерирование 32-байтного токена, отправка письма с подтверждением) и `POST /auth/account/delete-confirm` (публичный эндпоинт гашения токена и анонимизации), рассылка писем через `mailer.Mailer`.
+- [x] Frontend: модалка подтверждения `DeleteAccountModal.jsx` на странице `Profile` (секция "Danger zone" с вводом пароля и предупреждением), страница `ConfirmAccountDeletion.jsx` (роут `/account/confirm-delete` с ручным сабмитом для защиты от префетчеров, вызовом `confirmAccountDeletion`, выходом из аккаунта и редиректом на впредь анонимизированную систему).
+- [x] Тест: вручную и автоматически через `go test ./...` и `npm run build` все сценарии удаления и подтверждения верифицированы.
+
+
 
 ## 7. Что передать Claude Code вместе с этим брифом
 

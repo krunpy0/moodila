@@ -34,4 +34,10 @@ export const resetPassword = (token, newPassword) =>
 export const changePassword = (oldPassword, newPassword) =>
   api('/auth/password', { method: 'PATCH', body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }) })
 
+export const requestAccountDeletion = (password) =>
+  api('/auth/account/delete-request', { method: 'POST', body: JSON.stringify({ password }) })
+
+export const confirmAccountDeletion = (token) =>
+  api('/auth/account/delete-confirm', { method: 'POST', body: JSON.stringify({ token }) })
+
 
