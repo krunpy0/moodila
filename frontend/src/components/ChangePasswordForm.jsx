@@ -19,17 +19,17 @@ export default function ChangePasswordForm() {
       setConfirmPassword('')
       setOldPasswordError('')
       setGeneralError('')
-      setSuccessMessage(data?.message || 'Пароль изменён')
+      setSuccessMessage(data?.message || 'Password changed successfully')
     },
     onError: (err) => {
       setSuccessMessage('')
       const msg = err.message || ''
       if (msg.includes('Текущий пароль') || msg.toLowerCase().includes('current password')) {
-        setOldPasswordError('Текущий пароль указан неверно')
+        setOldPasswordError('Current password is incorrect')
         setGeneralError('')
       } else {
         setOldPasswordError('')
-        setGeneralError(msg || 'Не удалось изменить пароль')
+        setGeneralError(msg || 'Could not change password')
       }
     },
   })
@@ -41,11 +41,11 @@ export default function ChangePasswordForm() {
     setSuccessMessage('')
 
     if (newPassword.length < 8) {
-      setGeneralError('Пароль должен быть от 8 до 72 символов')
+      setGeneralError('Password must be between 8 and 72 characters')
       return
     }
     if (newPassword !== confirmPassword) {
-      setGeneralError('Пароли не совпадают')
+      setGeneralError('Passwords do not match')
       return
     }
 
@@ -76,9 +76,9 @@ export default function ChangePasswordForm() {
         setNewPassword={setNewPassword}
         confirmPassword={confirmPassword}
         setConfirmPassword={setConfirmPassword}
-        oldPasswordLabel="Текущий пароль"
-        newPasswordLabel="Новый пароль"
-        confirmPasswordLabel="Подтверждение нового пароля"
+        oldPasswordLabel="Current password"
+        newPasswordLabel="New password"
+        confirmPasswordLabel="Confirm new password"
       />
 
       {generalError && (
@@ -95,7 +95,7 @@ export default function ChangePasswordForm() {
         disabled={mutation.isPending}
         className="mt-xs h-12 rounded-lg bg-primary text-on-primary text-label-lg font-label-lg disabled:opacity-60 transition-transform active:scale-[0.99]"
       >
-        {mutation.isPending ? 'Сохранение...' : 'Изменить пароль'}
+        {mutation.isPending ? 'Saving...' : 'Save password'}
       </button>
     </form>
   )

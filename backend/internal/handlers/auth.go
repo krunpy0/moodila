@@ -308,12 +308,12 @@ func (h Auth) ChangePassword(c *gin.Context) {
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(input.OldPassword)) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Текущий пароль указан неверно"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Current password is incorrect"})
 		return
 	}
 
 	if input.OldPassword == input.NewPassword {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Новый пароль совпадает со старым"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "New password must be different from current password"})
 		return
 	}
 
@@ -323,5 +323,5 @@ func (h Auth) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Пароль изменён"})
+	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
 }
