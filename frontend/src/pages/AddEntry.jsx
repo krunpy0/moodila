@@ -8,9 +8,7 @@ import { useNotifications } from '../components/Notifications'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
 import MoodIcon from '../components/MoodIcon'
-import { MOODS } from '../utils/moods'
-
-const availableTags = ['Calm', 'Chill', 'Motivated', 'Grateful', 'Inspired', 'Peaceful']
+import { MOODS, TAG_CATEGORIES } from '../utils/moods'
 
 export default function AddEntry() {
   const [params] = useSearchParams()
@@ -219,25 +217,34 @@ export default function AddEntry() {
               )
             })}
           </div>
-          <div className="flex flex-wrap gap-xs">
-            {availableTags.map((tag) => {
-              const selected = form.tags.includes(tag)
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => toggleTag(tag)}
-                  className={`rounded-full px-md py-xs text-label-sm font-label-sm ${
-                    selected
-                      ? 'bg-primary-container text-primary'
-                      : 'bg-surface-container-low text-on-surface-variant'
-                  }`}
-                >
-                  {tag}
-                </button>
-              )
-            })}
+          <div className="space-y-sm border-t border-surface-container pt-md">
+            {TAG_CATEGORIES.map((category) => (
+              <div key={category.key}>
+                <span className="mb-xs block text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60">
+                  {category.label}
+                </span>
+                <div className="flex flex-wrap gap-xs">
+                  {category.tags.map((tag) => {
+                    const selected = form.tags.includes(tag)
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => toggleTag(tag)}
+                        className={`rounded-full px-md py-xs text-label-sm font-label-sm transition-colors ${
+                          selected
+                            ? 'bg-primary-container text-primary font-semibold'
+                            : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
