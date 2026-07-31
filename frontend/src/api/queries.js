@@ -11,26 +11,34 @@ import { archiveAdminAnnouncement, createAdminAnnouncement, getAdminAnnouncement
 
 export { queryKeys }
 
-export const useSessionQuery = (enabled) => useQuery({ queryKey: queryKeys.session, queryFn: getSession, enabled, staleTime: 5 * 60_000, retry: false })
-export const useEntryQuery = (date, enabled = true) => useQuery({ queryKey: queryKeys.entry(date), queryFn: () => getEntry(date), enabled, staleTime: 2 * 60_000, retry: false, meta: { ignore404: true } })
-export const useEntriesQuery = (month, enabled = true) => useQuery({ queryKey: queryKeys.entries(month), queryFn: () => getEntriesByMonth(month), enabled: Boolean(month) && enabled, staleTime: 2 * 60_000 })
-export const useEntrySummaryQuery = (month) => useQuery({ queryKey: queryKeys.entrySummary(month), queryFn: () => getEntrySummary(month), staleTime: 60_000 })
-export const useFriendEntriesQuery = (friendId, month, enabled = true) => useQuery({ queryKey: queryKeys.friendEntries(friendId, month), queryFn: () => getFriendEntriesByMonth(friendId, month), enabled: Boolean(friendId) && Boolean(month) && enabled, staleTime: 2 * 60_000 })
-export const useFriendsQuery = () => useQuery({ queryKey: queryKeys.friends, queryFn: getFriends, staleTime: 5 * 60_000 })
-export const usePendingFriendsQuery = () => useQuery({ queryKey: queryKeys.pendingFriends, queryFn: getPendingFriends, staleTime: 30_000 })
-export const useFeedQuery = () => useQuery({ queryKey: queryKeys.feed, queryFn: getFeed, staleTime: 30_000 })
+export const STALE_TIMES = {
+  REALTIME: 10_000,      // 10s: fast updates (admin announcements)
+  DYNAMIC: 30_000,       // 30s: dynamic feeds, comments, search, pending lists
+  STANDARD: 60_000,      // 1m: summaries, profiles, announcements
+  STABLE: 2 * 60_000,    // 2m: specific journal entries & monthly entries
+  STATIC: 5 * 60_000,    // 5m: auth session, full friends list
+}
+
+export const useSessionQuery = (enabled) => useQuery({ queryKey: queryKeys.session, queryFn: getSession, enabled, staleTime: STALE_TIMES.STATIC, retry: false })
+export const useEntryQuery = (date, enabled = true) => useQuery({ queryKey: queryKeys.entry(date), queryFn: () => getEntry(date), enabled, staleTime: STALE_TIMES.STABLE, retry: false, meta: { ignore404: true } })
+export const useEntriesQuery = (month, enabled = true) => useQuery({ queryKey: queryKeys.entries(month), queryFn: () => getEntriesByMonth(month), enabled: Boolean(month) && enabled, staleTime: STALE_TIMES.STABLE })
+export const useEntrySummaryQuery = (month) => useQuery({ queryKey: queryKeys.entrySummary(month), queryFn: () => getEntrySummary(month), staleTime: STALE_TIMES.STANDARD })
+export const useFriendEntriesQuery = (friendId, month, enabled = true) => useQuery({ queryKey: queryKeys.friendEntries(friendId, month), queryFn: () => getFriendEntriesByMonth(friendId, month), enabled: Boolean(friendId) && Boolean(month) && enabled, staleTime: STALE_TIMES.STABLE })
+export const useFriendsQuery = () => useQuery({ queryKey: queryKeys.friends, queryFn: getFriends, staleTime: STALE_TIMES.STATIC })
+export const usePendingFriendsQuery = () => useQuery({ queryKey: queryKeys.pendingFriends, queryFn: getPendingFriends, staleTime: STALE_TIMES.DYNAMIC })
+export const useFeedQuery = () => useQuery({ queryKey: queryKeys.feed, queryFn: getFeed, staleTime: STALE_TIMES.DYNAMIC })
 export const useInfiniteFeedQuery = (limit = 10) =>
   useInfiniteQuery({
     queryKey: queryKeys.feed,
     queryFn: ({ pageParam }) => getFeed({ cursor: pageParam, limit }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.next_cursor || undefined,
-    staleTime: 30_000,
+    staleTime: STALE_TIMES.DYNAMIC,
   })
-export const useCommentsQuery = (entryId, enabled = true) => useQuery({ queryKey: queryKeys.comments(entryId), queryFn: () => getComments(entryId), enabled: Boolean(entryId) && enabled, staleTime: 30_000, retry: false, meta: { ignore404: true } })
-export const useProfileQuery = () => useQuery({ queryKey: queryKeys.profile, queryFn: getMyProfile, staleTime: 60_000 })
-export const useFriendProfileQuery = (friendId, enabled = true) => useQuery({ queryKey: queryKeys.friendProfile(friendId), queryFn: () => getFriendProfile(friendId), enabled: Boolean(friendId) && enabled, staleTime: 60_000, retry: false })
-export const useUserSearchQuery = (query) => useQuery({ queryKey: ['users', 'search', query], queryFn: () => searchUsers(query), enabled: Boolean(query), staleTime: 30_000 })
+export const useCommentsQuery = (entryId, enabled = true) => useQuery({ queryKey: queryKeys.comments(entryId), queryFn: () => getComments(entryId), enabled: Boolean(entryId) && enabled, staleTime: STALE_TIMES.DYNAMIC, retry: false, meta: { ignore404: true } })
+export const useProfileQuery = () => useQuery({ queryKey: queryKeys.profile, queryFn: getMyProfile, staleTime: STALE_TIMES.STANDARD })
+export const useFriendProfileQuery = (friendId, enabled = true) => useQuery({ queryKey: queryKeys.friendProfile(friendId), queryFn: () => getFriendProfile(friendId), enabled: Boolean(friendId) && enabled, staleTime: STALE_TIMES.STANDARD, retry: false })
+export const useUserSearchQuery = (query) => useQuery({ queryKey: ['users', 'search', query], queryFn: () => searchUsers(query), enabled: Boolean(query), staleTime: STALE_TIMES.DYNAMIC })
 
 export const useNotificationsQuery = (enabled = true) => useQuery({ queryKey: queryKeys.notifications, queryFn: () => fetchNotifications(), enabled, refetchInterval: 30_000 })
 export const useUnreadNotificationCountQuery = (enabled = true) => useQuery({ queryKey: queryKeys.unreadCount, queryFn: fetchUnreadNotificationCount, enabled, refetchInterval: 15_000 })
@@ -98,9 +106,17 @@ export function useAddCommentMutation() {
 export function useDeleteCommentMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: deleteComment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feed', 'comments'] })
+    mutationFn: (variables) => {
+      const commentId = typeof variables === 'object' ? variables.commentId : variables
+      return deleteComment(commentId)
+    },
+    onSuccess: (_, variables) => {
+      const entryId = typeof variables === 'object' ? variables.entryId : null
+      if (entryId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.comments(entryId) })
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['feed', 'comments'] })
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.feed })
     },
   })
@@ -142,10 +158,10 @@ export function useMarkNotificationsAsReadMutation() {
 }
 
 export const useUnreadAnnouncementsQuery = (enabled = true) =>
-  useQuery({ queryKey: queryKeys.unreadAnnouncements, queryFn: getUnreadAnnouncements, enabled, staleTime: 60_000 })
+  useQuery({ queryKey: queryKeys.unreadAnnouncements, queryFn: getUnreadAnnouncements, enabled, staleTime: STALE_TIMES.STANDARD })
 
 export const useAdminAnnouncementsQuery = (enabled = true) =>
-  useQuery({ queryKey: queryKeys.adminAnnouncements, queryFn: getAdminAnnouncements, enabled, staleTime: 10_000 })
+  useQuery({ queryKey: queryKeys.adminAnnouncements, queryFn: getAdminAnnouncements, enabled, staleTime: STALE_TIMES.REALTIME })
 
 export function useMarkAnnouncementReadMutation() {
   const queryClient = useQueryClient()
@@ -198,4 +214,3 @@ export function useArchiveAnnouncementMutation() {
     },
   })
 }
-

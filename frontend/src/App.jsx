@@ -1,68 +1,84 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useSessionQuery } from './api/queries'
-import Home from './pages/Home'
-import Auth from './pages/Auth'
-import AddEntry from './pages/AddEntry'
-import Calendar from './pages/Calendar'
-import Friends from './pages/Friends'
-import Feed from './pages/Feed'
-import Profile from './pages/Profile'
-import FriendProfile from './pages/FriendProfile'
-import Admin from './pages/Admin'
 import AnnouncementQueue from './components/AnnouncementQueue'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
+import ErrorBoundary from './components/ErrorBoundary'
+
+const Home = lazy(() => import('./pages/Home'))
+const Auth = lazy(() => import('./pages/Auth'))
+const AddEntry = lazy(() => import('./pages/AddEntry'))
+const Calendar = lazy(() => import('./pages/Calendar'))
+const Friends = lazy(() => import('./pages/Friends'))
+const Feed = lazy(() => import('./pages/Feed'))
+const Profile = lazy(() => import('./pages/Profile'))
+const FriendProfile = lazy(() => import('./pages/FriendProfile'))
+const Admin = lazy(() => import('./pages/Admin'))
+
+function PageFallback() {
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center text-on-surface-variant gap-sm">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <p className="text-body-sm font-medium">Loading page...</p>
+    </div>
+  )
+}
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Auth />} />
-        <Route
-          path="/"
-          element={
-            <RequireAuth>
-              <Home />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/entries/new"
-          element={
-            <RequireAuth>
-              <AddEntry />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/calendar"
-          element={
-            <RequireAuth>
-              <Calendar />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/friends"
-          element={
-            <RequireAuth>
-              <Friends />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/feed"
-          element={
-            <RequireAuth>
-              <Feed />
-            </RequireAuth>
-          }
-        />
-        <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-        <Route path="/profile/:id" element={<RequireAuth><FriendProfile /></RequireAuth>} />
-        <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/login" element={<Auth />} />
+            <Route
+              path="/"
+              element={
+                <RequireAuth>
+                  <Home />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/entries/new"
+              element={
+                <RequireAuth>
+                  <AddEntry />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/calendar"
+              element={
+                <RequireAuth>
+                  <Calendar />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/friends"
+              element={
+                <RequireAuth>
+                  <Friends />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/feed"
+              element={
+                <RequireAuth>
+                  <Feed />
+                </RequireAuth>
+              }
+            />
+            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+            <Route path="/profile/:id" element={<RequireAuth><FriendProfile /></RequireAuth>} />
+            <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 

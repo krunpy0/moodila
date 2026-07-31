@@ -31,19 +31,40 @@ export default function Feed() {
   const hasNextPage = feedQuery.hasNextPage
   const isFetchingNextPage = feedQuery.isFetchingNextPage
 
+  const fetchNextPageRef = useRef(fetchNextPage)
+  const canFetchRef = useRef(!isFetchingNextPage && hasNextPage)
+
   useEffect(() => {
-    if (!observerRef.current || !hasNextPage || isFetchingNextPage) return
+    fetchNextPageRef.current = fetchNextPage
+    canFetchRef.current = Boolean(!isFetchingNextPage && hasNextPage)
+  })
+
+  useEffect(() => {
+    const target = observerRef.current
+    if (!target || !hasNextPage) return
+
+    let debounceTimer = null
+
     const observer = new IntersectionObserver(
       (observerEntries) => {
-        if (observerEntries[0].isIntersecting && hasNextPage) {
-          fetchNextPage()
+        if (observerEntries[0]?.isIntersecting && canFetchRef.current) {
+          if (debounceTimer) clearTimeout(debounceTimer)
+          debounceTimer = setTimeout(() => {
+            if (canFetchRef.current) {
+              fetchNextPageRef.current()
+            }
+          }, 200)
         }
       },
       { threshold: 0.1 }
     )
-    observer.observe(observerRef.current)
-    return () => observer.disconnect()
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+    observer.observe(target)
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      observer.disconnect()
+    }
+  }, [hasNextPage])
 
   const handleReact = (entryId, reaction) => {
     if (!likeMutation.isPending) {
@@ -311,7 +332,7 @@ function CommentsSection({ entryId }) {
 
   const handleDelete = (commentId) => {
     if (!deleteMutation.isPending) {
-      deleteMutation.mutate(commentId)
+      deleteMutation.mutate({ commentId, entryId })
     }
   }
 
