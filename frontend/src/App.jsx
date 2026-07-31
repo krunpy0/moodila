@@ -7,6 +7,8 @@ import ErrorBoundary from './components/ErrorBoundary'
 
 const Home = lazy(() => import('./pages/Home'))
 const Auth = lazy(() => import('./pages/Auth'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const AddEntry = lazy(() => import('./pages/AddEntry'))
 const Calendar = lazy(() => import('./pages/Calendar'))
 const Friends = lazy(() => import('./pages/Friends'))
@@ -31,6 +33,8 @@ export default function App() {
         <Suspense fallback={<PageFallback />}>
           <Routes>
             <Route path="/login" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/"
               element={

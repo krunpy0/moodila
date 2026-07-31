@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { login, register } from "../api/auth";
 import { queryKeys, useSessionQuery } from "../api/queries";
 
@@ -12,6 +12,7 @@ export default function Auth() {
     username: "",
   });
   const [error, setError] = useState("");
+  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const sessionQuery = useSessionQuery(true);
@@ -42,6 +43,8 @@ export default function Auth() {
     setError("");
   };
 
+  const infoMessage = location.state?.message;
+
   return (
     <main className="min-h-screen bg-background text-on-background px-container-margin py-xl flex items-center justify-center">
       <section className="w-full max-w-md" aria-labelledby="auth-title">
@@ -61,6 +64,12 @@ export default function Auth() {
         </div>
 
         <div className="bg-white rounded-[24px] p-lg cloud-shadow">
+          {infoMessage && (
+            <div className="mb-md p-sm rounded-lg bg-primary-container/40 text-on-primary-container text-body-sm font-body-sm text-center">
+              {infoMessage}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-xs p-1 mb-lg bg-surface-container-low rounded-lg">
             {["login", "register"].map((item) => (
               <button
@@ -101,19 +110,31 @@ export default function Auth() {
               autoComplete="username"
               required
             />
-            <Field
-              label="Password"
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={update}
-              autoComplete={
-                mode === "login" ? "current-password" : "new-password"
-              }
-              minLength="8"
-              maxLength="72"
-              required
-            />
+            <div>
+              <Field
+                label="Password"
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={update}
+                autoComplete={
+                  mode === "login" ? "current-password" : "new-password"
+                }
+                minLength="8"
+                maxLength="72"
+                required
+              />
+              {mode === "login" && (
+                <div className="mt-xs text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-label-sm font-label-sm text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              )}
+            </div>
 
             {error && (
               <p

@@ -2,14 +2,59 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"moodshare/internal/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Users struct {
 	Pool *pgxpool.Pool
+}
+
+func (r Users) SetPassword(ctx context.Context, userID string, newPassword string) error {
+	if r.Pool == nil {
+		return errors.New("database pool unavailable")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("hash password: %w", err)
+	}
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	cmd, err := tx.Exec(ctx, `
+		UPDATE users
+		SET password_hash = $2
+		WHERE id = $1`,
+		userID, string(hash),
+	)
+	if err != nil {
+		return fmt.Errorf("update user password: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return errors.New("user not found")
+	}
+
+	_, err = tx.Exec(ctx, `
+		UPDATE password_reset_tokens
+		SET used_at = now()
+		WHERE user_id = $1 AND used_at IS NULL`,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("invalidate remaining tokens: %w", err)
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r Users) Create(ctx context.Context, email, username, displayName, passwordHash string) (models.User, error) {
@@ -28,6 +73,16 @@ func (r Users) ByEmail(ctx context.Context, email string) (models.User, error) {
 	err := r.Pool.QueryRow(ctx, `
 		SELECT id, email, password_hash, username, display_name, avatar_url, is_admin, created_at
 		FROM users WHERE email = $1 OR username = $1`,
+		email,
+	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Username, &user.DisplayName, &user.AvatarURL, &user.IsAdmin, &user.CreatedAt)
+	return user, err
+}
+
+func (r Users) ByExactEmail(ctx context.Context, email string) (models.User, error) {
+	var user models.User
+	err := r.Pool.QueryRow(ctx, `
+		SELECT id, email, password_hash, username, display_name, avatar_url, is_admin, created_at
+		FROM users WHERE LOWER(email) = LOWER($1)`,
 		email,
 	).Scan(&user.ID, &user.Email, &user.PasswordHash, &user.Username, &user.DisplayName, &user.AvatarURL, &user.IsAdmin, &user.CreatedAt)
 	return user, err

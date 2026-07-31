@@ -201,6 +201,19 @@ end-to-end:
 - [x] Frontend: бейдж с колокольчиком (`HeaderBell`) в шапках страниц с индикатором непрочитанных, модальное окно/слайдовер (`NotificationCenterModal`) со списком уведомлений, возможностью отметки "прочитано" и быстрыми переходами.
 - [x] Тест: действия друзей вызывают появление уведомлений, счётчик обновляется, отметка прочитанным убирает бейдж.
 
+### Фича 12 — Восстановление пароля (Password Reset)
+
+- [x] Backend: миграция `0009_create_password_reset_tokens.sql` (таблица `password_reset_tokens`), репозиторий `repository.PasswordReset` с атомарной транзакционной выемкой токена и сбросом пароля, эндпоинты `POST /auth/forgot-password` (rate limit 1/60s, защита от user enumeration) и `POST /auth/reset-password`, пакет `mailer.Mailer` для отправки через Resend API и graceful console logging fallback.
+- [x] Frontend: страницы `ForgotPassword` и `ResetPassword` (дизайн по `DESIGN.md`), обёртки API в `src/api/auth.js`, ссылка "Forgot password?" на экране входа.
+- [x] Тест: полный цикл запроса сброса, валидации и атомарной смены пароля проверен.
+
+### Фича 13 — Смена пароля (Change Password)
+
+- [x] Backend: эндпоинт `PATCH /auth/password` под JWT middleware, проверка `old_password` через bcrypt, защита от отсутствия пользователя в БД / недействительной сессии, переиспользование метода `SetPassword` в `repository.Users` с автоматической инвалидацией неиспользованных `password_reset_tokens`, базовый rate limit (5 запросов / мин).
+- [x] Frontend: общий компонент `PasswordFieldsForm` (переиспользован на `ResetPassword` без визуальных регрессий), обёртка API `changePassword` в `src/api/auth.js`, раскрываемая секция смены пароля `ChangePasswordForm` в настройках на экране `Profile` с инлайн-ошибками под `old_password` и успешным сообщением без редиректа.
+- [x] Тест: проверка работы смены с верным/неверным текущим паролем, 401 без JWT и инвалидация оставшихся reset-токенов.
+
+
 ## 7. Что передать Claude Code вместе с этим брифом
 
 1. Этот файл целиком.

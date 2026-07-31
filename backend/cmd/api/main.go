@@ -9,6 +9,7 @@ import (
 	"moodshare/internal/config"
 	"moodshare/internal/db"
 	"moodshare/internal/handlers"
+	"moodshare/internal/mailer"
 	"moodshare/internal/middleware"
 	"moodshare/internal/repository"
 	"moodshare/internal/storage"
@@ -53,18 +54,27 @@ func main() {
 
 	// Tier-based Rate Limiters
 	authLimiter := middleware.RateLimit(rate.Every(12*time.Second), 5, middleware.IPKey)
+	forgotLimiter := middleware.RateLimit(rate.Every(60*time.Second), 1, middleware.IPKey)
+	passwordChangeLimiter := middleware.RateLimit(rate.Every(60*time.Second), 5, middleware.UserOrIPKey)
 	uploadLimiter := middleware.RateLimit(rate.Every(4*time.Second), 10, middleware.UserOrIPKey)
 	mutationLimiter := middleware.RateLimit(rate.Every(2*time.Second), 15, middleware.UserOrIPKey)
 	readLimiter := middleware.RateLimit(rate.Every(600*time.Millisecond), 30, middleware.UserOrIPKey)
 	healthLimiter := middleware.RateLimit(rate.Every(200*time.Millisecond), 50, middleware.IPKey)
 
+	mailClient := mailer.New(cfg.ResendAPIKey, cfg.ResendFromEmail, cfg.AppEnv == "development")
+
 	router.GET("/health", healthLimiter, handlers.Health{Pool: pool}.Get)
 	auth := handlers.Auth{
-		Users:     repository.Users{Pool: pool},
-		JWTSecret: cfg.JWTSecret,
+		Users:         repository.Users{Pool: pool},
+		PasswordReset: repository.PasswordReset{Pool: pool},
+		Mailer:        mailClient,
+		Config:        cfg,
+		JWTSecret:     cfg.JWTSecret,
 	}
 	router.POST("/auth/register", authLimiter, auth.Register)
 	router.POST("/auth/login", authLimiter, auth.Login)
+	router.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
+	router.POST("/auth/reset-password", authLimiter, auth.ResetPassword)
 	router.POST("/auth/logout", mutationLimiter, auth.Logout)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), readLimiter, auth.Session)
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
@@ -83,6 +93,7 @@ func main() {
 	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}}
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
+	authorized.PATCH("/auth/password", passwordChangeLimiter, auth.ChangePassword)
 	authorized.POST("/entries", mutationLimiter, entries.Save)
 	authorized.DELETE("/entries/:id", mutationLimiter, entries.Delete)
 	authorized.DELETE("/entries", mutationLimiter, entries.Delete)
