@@ -157,7 +157,7 @@ function ScrollReveal({
           setIsVisible(false);
         }
       },
-      { threshold }
+      { threshold },
     );
 
     const currentRef = domRef.current;
@@ -172,10 +172,10 @@ function ScrollReveal({
     animation === "scale-up"
       ? "reveal-scale-up"
       : animation === "slide-left"
-      ? "reveal-slide-left"
-      : animation === "slide-right"
-      ? "reveal-slide-right"
-      : "reveal-fade-up";
+        ? "reveal-slide-left"
+        : animation === "slide-right"
+          ? "reveal-slide-right"
+          : "reveal-fade-up";
 
   return (
     <div
@@ -200,7 +200,8 @@ export default function Landing() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const totalHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
       if (totalHeight > 0) {
         setScrollProgress((window.scrollY / totalHeight) * 100);
       }
@@ -353,25 +354,24 @@ export default function Landing() {
         <div className="max-w-5xl mx-auto text-center flex flex-col items-center">
           <ScrollReveal animation="fade-up" delay={50}>
             <div className="inline-flex items-center gap-xs px-md py-xs rounded-full bg-surface-container-high text-on-surface-variant text-label-sm font-semibold mb-lg cloud-shadow transition-transform hover:scale-105">
-              <span>Your Digital Sanctuary for Mindful Living</span>
+              <span>A private mood diary for you and your friends</span>
             </div>
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={150}>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface max-w-3xl leading-tight">
-              Track your mood. <br className="hidden sm:inline" />
-              Share your world. <br className="hidden sm:inline" />
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface max-w-3xl leading-[1.2] md:leading-[1.2]">
+              Track your day. <br className="hidden sm:inline" />
               <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
-                Connect with care.
+                Share it with people who actually care.
               </span>
             </h1>
           </ScrollReveal>
 
           <ScrollReveal animation="fade-up" delay={250}>
             <p className="mt-md text-body-md md:text-lg text-on-surface-variant max-w-2xl leading-relaxed">
-              MoodShare is your gentle daily journal with a warm, private social
-              circle. Log your feelings, discover emotional trends, and keep close
-              with friends without algorithmic noise.
+              Log how you're feeling, see the patterns over time, and let a few
+              close friends see your day, no public feed, no followers, no
+              algorithm.
             </p>
           </ScrollReveal>
 
@@ -422,7 +422,7 @@ export default function Landing() {
               <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
                 Live Interactive Form Demo
               </span>
-              <h2 className="mt-xs text-headline-lg font-bold text-on-surface">
+              <h2 className="mt-md text-headline-lg font-bold text-on-surface">
                 Try "Record your day" Live
               </h2>
               <p className="mt-xs text-body-md text-on-surface-variant">
@@ -460,14 +460,14 @@ export default function Landing() {
                         key={val}
                         type="button"
                         onClick={() => setDemoMood(val)}
-                        className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-95 ${item.bg} ${
+                        className={`flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-all active:scale-95 ${item.bg} ${
                           isSelected
                             ? "ring-4 ring-primary/40 scale-110 shadow-md"
                             : "opacity-80 hover:opacity-100"
                         }`}
                       >
                         <span
-                          className={`material-symbols-outlined text-[28px] ${item.color}`}
+                          className={`material-symbols-outlined text-[22px] sm:text-[28px] ${item.color}`}
                           style={{
                             fontVariationSettings: isSelected
                               ? "'FILL' 1"
@@ -645,12 +645,12 @@ export default function Landing() {
             <span className="px-md py-xs rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-semibold inline-block">
               Not just a journal
             </span>
-            <h2 className="mt-xs text-3xl md:text-4xl font-bold text-on-surface">
+            <h2 className="mt-md text-3xl md:text-4xl font-bold text-on-surface">
               A journal that answers back
             </h2>
             <p className="mt-xs text-body-md text-on-surface-variant max-w-xl mx-auto leading-relaxed">
-              Your entries are visible only to accepted friends — zero algorithms,
-              zero public pressure, zero noise.
+              Your entries are visible only to accepted friends — zero
+              algorithms, zero public pressure, zero noise.
             </p>
           </div>
         </ScrollReveal>
@@ -658,7 +658,11 @@ export default function Landing() {
         {/* 4 Connected Nodes Container */}
         <div className="flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
           {/* NODE 1 — "You record your day" */}
-          <ScrollReveal animation="fade-up" delay={100} className="flex-1 flex flex-col">
+          <ScrollReveal
+            animation="fade-up"
+            delay={100}
+            className="flex-1 flex flex-col"
+          >
             <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
               <div>
                 {/* Header inside mockup 1 */}
@@ -721,8 +725,12 @@ export default function Landing() {
                 friends only
               </span>
               <div className="w-full flex items-center">
-                <div className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`} />
-                <span className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
+                <div
+                  className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`}
+                />
+                <span
+                  className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
+                >
                   chevron_right
                 </span>
               </div>
@@ -731,8 +739,12 @@ export default function Landing() {
             {/* Mobile Vertical Line */}
             <div className="flex md:hidden items-center gap-sm py-2">
               <div className="flex flex-col items-center">
-                <div className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`} />
-                <span className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
+                <div
+                  className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`}
+                />
+                <span
+                  className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
+                >
                   expand_more
                 </span>
               </div>
@@ -743,7 +755,11 @@ export default function Landing() {
           </div>
 
           {/* NODE 2 — "Friend sees in feed" */}
-          <ScrollReveal animation="fade-up" delay={250} className="flex-1 flex flex-col">
+          <ScrollReveal
+            animation="fade-up"
+            delay={250}
+            className="flex-1 flex flex-col"
+          >
             <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
               <div>
                 {/* Feed Card Mockup Header */}
@@ -792,8 +808,12 @@ export default function Landing() {
                 friend reacts
               </span>
               <div className="w-full flex items-center">
-                <div className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`} />
-                <span className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
+                <div
+                  className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`}
+                />
+                <span
+                  className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
+                >
                   chevron_right
                 </span>
               </div>
@@ -802,8 +822,12 @@ export default function Landing() {
             {/* Mobile Vertical Line */}
             <div className="flex md:hidden items-center gap-sm py-2">
               <div className="flex flex-col items-center">
-                <div className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`} />
-                <span className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
+                <div
+                  className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`}
+                />
+                <span
+                  className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
+                >
                   expand_more
                 </span>
               </div>
@@ -814,7 +838,11 @@ export default function Landing() {
           </div>
 
           {/* NODE 3 — "Friend leaves a like" */}
-          <ScrollReveal animation="fade-up" delay={400} className="flex-1 flex flex-col">
+          <ScrollReveal
+            animation="fade-up"
+            delay={400}
+            className="flex-1 flex flex-col"
+          >
             <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
               <div>
                 <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
@@ -861,8 +889,12 @@ export default function Landing() {
                 you find out
               </span>
               <div className="w-full flex items-center">
-                <div className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`} />
-                <span className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
+                <div
+                  className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`}
+                />
+                <span
+                  className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
+                >
                   chevron_right
                 </span>
               </div>
@@ -871,8 +903,12 @@ export default function Landing() {
             {/* Mobile Vertical Line */}
             <div className="flex md:hidden items-center gap-sm py-2">
               <div className="flex flex-col items-center">
-                <div className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`} />
-                <span className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
+                <div
+                  className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`}
+                />
+                <span
+                  className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
+                >
                   expand_more
                 </span>
               </div>
@@ -883,7 +919,11 @@ export default function Landing() {
           </div>
 
           {/* NODE 4 — "Notification to you" */}
-          <ScrollReveal animation="fade-up" delay={550} className="flex-1 flex flex-col">
+          <ScrollReveal
+            animation="fade-up"
+            delay={550}
+            className="flex-1 flex flex-col"
+          >
             <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
               <div>
                 {/* Header Bell with animated badge */}
@@ -901,7 +941,9 @@ export default function Landing() {
                     {/* Red Badge "1" — Fades in & scales up synchronously */}
                     <span
                       className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] font-bold text-on-error transition-all duration-500 ease-out ${
-                        hasLiked ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                        hasLiked
+                          ? "opacity-100 scale-100"
+                          : "opacity-0 scale-50"
                       }`}
                     >
                       1
@@ -923,7 +965,8 @@ export default function Landing() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] leading-tight text-on-surface font-medium">
-                        <span className="font-bold">Daniel</span> liked your entry
+                        <span className="font-bold">Daniel</span> liked your
+                        entry
                       </p>
                       <span className="text-[10px] text-on-surface-variant">
                         just now
@@ -958,7 +1001,7 @@ export default function Landing() {
             <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
               1:1 Mobile Interface Preview
             </span>
-            <h2 className="mt-xs text-3xl md:text-4xl font-bold text-on-surface">
+            <h2 className="mt-md text-3xl md:text-4xl font-bold text-on-surface">
               Explore the Real App Screens
             </h2>
             <p className="mt-xs text-body-md text-on-surface-variant max-w-lg mx-auto">
@@ -1007,612 +1050,626 @@ export default function Landing() {
           <ScrollReveal animation="scale-up" delay={250}>
             <div className="mx-auto max-w-md bg-background text-on-background rounded-[36px] border-[8px] border-surface-container-highest shadow-2xl overflow-hidden relative text-left transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)]">
               {/* 1:1 HOME SUMMARY VIEW */}
-            {/* 1:1 HOME SUMMARY VIEW */}
-            {activeTab === "home" && (
-              <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
-                <header className="flex items-center justify-between py-xs">
-                  <div className="flex items-center gap-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
-                      A
-                    </div>
-                    <h1 className="text-headline-lg-mobile font-headline-lg-mobile text-on-surface font-bold">
-                      Moodila
-                    </h1>
-                  </div>
-                  <div className="flex items-center gap-xs">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow">
-                      <span className="material-symbols-outlined text-[20px]">
-                        notifications
-                      </span>
-                    </div>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow">
-                      <span className="material-symbols-outlined text-[20px]">
-                        logout
-                      </span>
-                    </div>
-                  </div>
-                </header>
-
-                <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
-                  <div className="relative z-10 flex max-w-full flex-col items-start gap-md">
-                    <h2 className="text-headline-lg font-headline-lg text-on-primary-container font-bold">
-                      Good evening, Alex 🌸
-                    </h2>
-                    <div className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md">
-                      Journal today
-                      <span className="material-symbols-outlined text-[18px]">
-                        edit
-                      </span>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="space-y-md">
-                  <div className="flex items-end justify-between">
-                    <h2 className="text-label-lg font-label-lg text-on-surface-variant">
-                      This week's mood
-                    </h2>
-                    <span className="text-label-sm font-label-sm text-primary cursor-pointer hover:underline">
-                      See more
-                    </span>
-                  </div>
-                  <div className="flex justify-between gap-xs overflow-x-auto rounded-[24px] bg-white/40 p-md cloud-shadow">
-                    {[
-                      { day: "Mon", mood: 5 },
-                      { day: "Tue", mood: 4 },
-                      { day: "Wed", mood: 4 },
-                      { day: "Thu", mood: 3 },
-                      { day: "Fri", mood: 5, today: true },
-                      { day: "Sat", mood: null },
-                      { day: "Sun", mood: null },
-                    ].map((item, idx) => {
-                      const mInfo = item.mood ? APP_MOODS[item.mood] : null;
-                      return (
-                        <div
-                          key={idx}
-                          className="flex min-w-10 flex-col items-center gap-xs"
-                        >
-                          <span
-                            className={`flex h-11 w-11 items-center justify-center rounded-full ${
-                              mInfo ? mInfo.bg : "bg-surface-variant"
-                            } ${item.today ? "ring-2 ring-primary" : ""}`}
-                          >
-                            {mInfo ? (
-                              <span
-                                className={`material-symbols-outlined text-[24px] ${mInfo.color}`}
-                                style={{ fontVariationSettings: "'FILL' 1" }}
-                              >
-                                {mInfo.icon}
-                              </span>
-                            ) : (
-                              <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
-                                add
-                              </span>
-                            )}
-                          </span>
-                          <span
-                            className={`text-label-sm font-label-sm ${item.today ? "font-bold text-primary" : "text-on-surface-variant"}`}
-                          >
-                            {item.day}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-
-                <section className="grid grid-cols-2 gap-md">
-                  <div className="col-span-2 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
-                    <h2 className="text-headline-lg font-headline-lg text-on-surface">
-                      Mood summary
-                    </h2>
-                    <div className="mt-sm flex items-baseline gap-xs">
-                      <span className="text-headline-xl font-headline-xl text-on-surface font-bold">
-                        24
-                      </span>
-                      <span className="text-body-md font-body-md text-on-surface-variant">
-                        entries
-                      </span>
-                    </div>
-                    <p className="mt-1 text-body-sm font-body-sm text-on-surface-variant">
-                      Total moods logged this month
-                    </p>
-                  </div>
-                  <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-md">
-                    <span className="text-label-sm font-label-sm text-on-surface-variant">
-                      Dominant mood
-                    </span>
-                    <div className="flex items-center gap-xs">
-                      <span
-                        className="material-symbols-outlined text-[28px] text-primary"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        sentiment_satisfied
-                      </span>
-                      <span className="text-headline-lg font-headline-lg text-on-surface font-semibold">
-                        Good
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-md">
-                    <span className="text-label-sm font-label-sm text-on-surface-variant">
-                      Most used tag
-                    </span>
-                    <div className="flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-[24px] text-secondary">
-                        auto_awesome
-                      </span>
-                      <span className="text-headline-lg font-headline-lg text-on-surface font-semibold truncate">
-                        Coffee
-                      </span>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            )}
-
-            {/* 1:1 MONTHLY & WEEKLY CALENDAR VIEW */}
-            {activeTab === "calendar" && (
-              <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
-                <header className="py-xs">
-                  <div className="flex items-center justify-between rounded-[24px] bg-surface-container-lowest p-md text-left cloud-shadow">
-                    <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold">
-                      Your calendar
-                    </span>
-                    <span className="material-symbols-outlined text-primary">
-                      expand_more
-                    </span>
-                  </div>
-                </header>
-
-                <section aria-label="Calendar view">
-                  <div className="flex gap-1 rounded-full bg-surface-container-low p-1">
-                    <button
-                      type="button"
-                      onClick={() => setCalViewMode("week")}
-                      className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
-                        calViewMode === "week"
-                          ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
-                          : "text-on-surface-variant hover:text-on-surface"
-                      }`}
-                    >
-                      Week
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCalViewMode("month")}
-                      className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
-                        calViewMode === "month"
-                          ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
-                          : "text-on-surface-variant hover:text-on-surface"
-                      }`}
-                    >
-                      Month
-                    </button>
-                  </div>
-                </section>
-
-                <section className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95"
-                  >
-                    <span className="material-symbols-outlined">
-                      chevron_left
-                    </span>
-                  </button>
-                  <h2 className="text-headline-lg-mobile font-headline-lg-mobile font-bold">
-                    {calViewMode === "month"
-                      ? "August 2026"
-                      : "Aug 10 – Aug 16, 2026"}
-                  </h2>
-                  <button
-                    type="button"
-                    className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95"
-                  >
-                    <span className="material-symbols-outlined">
-                      chevron_right
-                    </span>
-                  </button>
-                </section>
-
-                {calViewMode === "month" ? (
-                  <section className="space-y-md">
-                    <div className="grid grid-cols-7 text-center select-none">
-                      {["MO", "TU", "WE", "TH", "FR", "SA", "SU"].map((day) => (
-                        <span
-                          key={day}
-                          className="pb-sm text-label-sm font-label-sm text-on-surface-variant/60"
-                        >
-                          {day}
-                        </span>
-                      ))}
-
-                      {[27, 28, 29, 30, 31].map((d) => (
-                        <span
-                          key={`prev-${d}`}
-                          className="flex h-[76px] items-start justify-center pt-1 text-body-md font-body-md text-on-surface-variant/20"
-                        >
-                          {d}
-                        </span>
-                      ))}
-
-                      {Array.from({ length: 31 }).map((_, i) => {
-                        const dayNum = i + 1;
-                        const entry = MOCK_CALENDAR_ENTRIES[dayNum];
-                        const mood = entry ? APP_MOODS[entry.mood] : null;
-                        const isSelected = selectedDay === dayNum;
-
-                        return (
-                          <div
-                            key={dayNum}
-                            onClick={() => setSelectedDay(dayNum)}
-                            className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md cursor-pointer select-none"
-                          >
-                            <span
-                              className={`flex items-center gap-0.5 ${isSelected ? "font-bold text-primary" : ""}`}
-                            >
-                              {dayNum}
-                            </span>
-                            <span
-                              className={`flex h-10 w-10 items-center justify-center rounded-full transition-all ${
-                                mood
-                                  ? `${mood.bg} ${isSelected ? "ring-2 ring-primary" : ""}`
-                                  : "border-2 border-dashed border-outline-variant text-outline-variant"
-                              }`}
-                            >
-                              {mood ? (
-                                <span
-                                  className={`material-symbols-outlined text-[20px] ${mood.color}`}
-                                  style={{ fontVariationSettings: "'FILL' 1" }}
-                                >
-                                  {mood.icon}
-                                </span>
-                              ) : (
-                                <span className="material-symbols-outlined text-[20px]">
-                                  add
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        );
-                      })}
-
-                      {[1, 2, 3, 4, 5, 6].map((d) => (
-                        <span
-                          key={`next-${d}`}
-                          className="flex h-[76px] items-start justify-center pt-1 text-body-md font-body-md text-on-surface-variant/20"
-                        >
-                          {d}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="rounded-[24px] bg-surface-container-lowest p-md cloud-shadow space-y-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-label-sm font-bold text-primary">
-                          August {selectedDay}, 2026
-                        </span>
-                        {MOCK_CALENDAR_ENTRIES[selectedDay] ? (
-                          <span
-                            className={`px-sm py-0.5 rounded-full text-label-sm font-medium ${APP_MOODS[MOCK_CALENDAR_ENTRIES[selectedDay].mood].bg} ${APP_MOODS[MOCK_CALENDAR_ENTRIES[selectedDay].mood].color}`}
-                          >
-                            {
-                              APP_MOODS[MOCK_CALENDAR_ENTRIES[selectedDay].mood]
-                                .label
-                            }
-                          </span>
-                        ) : (
-                          <span className="text-label-sm text-on-surface-variant">
-                            No entry logged
-                          </span>
-                        )}
+              {/* 1:1 HOME SUMMARY VIEW */}
+              {activeTab === "home" && (
+                <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
+                  <header className="flex items-center justify-between py-xs">
+                    <div className="flex items-center gap-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
+                        A
                       </div>
-                      <p className="text-body-sm text-on-surface">
-                        {MOCK_CALENDAR_ENTRIES[selectedDay]
-                          ? `"${MOCK_CALENDAR_ENTRIES[selectedDay].note}"`
-                          : "Tap + on any day to create a new mood journal entry."}
-                      </p>
-                      {MOCK_CALENDAR_ENTRIES[selectedDay]?.tags && (
-                        <div className="flex flex-wrap gap-xs pt-xs">
-                          {MOCK_CALENDAR_ENTRIES[selectedDay].tags.map((t) => (
-                            <span
-                              key={t}
-                              className="rounded-full bg-surface-container px-sm py-xs text-label-sm text-on-surface-variant"
-                            >
-                              #{t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      <h1 className="text-headline-lg-mobile font-headline-lg-mobile text-on-surface font-bold">
+                        Moodila
+                      </h1>
+                    </div>
+                    <div className="flex items-center gap-xs">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow">
+                        <span className="material-symbols-outlined text-[20px]">
+                          notifications
+                        </span>
+                      </div>
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow">
+                        <span className="material-symbols-outlined text-[20px]">
+                          logout
+                        </span>
+                      </div>
+                    </div>
+                  </header>
+
+                  <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
+                    <div className="relative z-10 flex max-w-full flex-col items-start gap-md">
+                      <h2 className="text-headline-lg font-headline-lg text-on-primary-container font-bold">
+                        Good evening, Alex 🌸
+                      </h2>
+                      <div className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md">
+                        Journal today
+                        <span className="material-symbols-outlined text-[18px]">
+                          edit
+                        </span>
+                      </div>
                     </div>
                   </section>
-                ) : (
-                  <section className="space-y-sm select-none">
-                    <div className="flex items-center justify-between px-1 pb-xs">
-                      <h3 className="text-label-lg font-bold text-on-surface flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[18px] text-primary">
-                          view_day
-                        </span>
-                        Weekly Flow
-                      </h3>
-                      <span className="text-label-sm text-on-surface-variant/60">
-                        Aug 10 - Aug 16
+
+                  <section className="space-y-md">
+                    <div className="flex items-end justify-between">
+                      <h2 className="text-label-lg font-label-lg text-on-surface-variant">
+                        This week's mood
+                      </h2>
+                      <span className="text-label-sm font-label-sm text-primary cursor-pointer hover:underline">
+                        See more
                       </span>
                     </div>
-
-                    {[
-                      {
-                        day: "Mon",
-                        num: 10,
-                        mood: 3,
-                        text: "Routine Monday, steady work.",
-                        tag: "Focused",
-                      },
-                      {
-                        day: "Tue",
-                        num: 11,
-                        mood: null,
-                        text: "No entry logged",
-                        tag: null,
-                      },
-                      {
-                        day: "Wed",
-                        num: 12,
-                        mood: 1,
-                        text: "Overwhelmed with tasks.",
-                        tag: "Overwhelmed",
-                      },
-                      {
-                        day: "Thu",
-                        num: 13,
-                        mood: 4,
-                        text: "Felt much better after chatting.",
-                        tag: "Peaceful",
-                      },
-                      {
-                        day: "Fri",
-                        num: 14,
-                        mood: 2,
-                        text: "Felt rainy and quiet.",
-                        tag: "Rainy Vibe",
-                      },
-                      {
-                        day: "Sat",
-                        num: 15,
-                        mood: 5,
-                        text: "Had an inspiring session!",
-                        tag: "Breakthrough",
-                        selected: true,
-                      },
-                      {
-                        day: "Sun",
-                        num: 16,
-                        mood: null,
-                        text: "No entry logged",
-                        tag: null,
-                      },
-                    ].map((item, idx) => {
-                      const mInfo = item.mood ? APP_MOODS[item.mood] : null;
-                      return (
-                        <div
-                          key={idx}
-                          className={`flex items-center justify-between rounded-[24px] p-md transition-all ${
-                            item.selected
-                              ? "bg-surface-container-lowest ring-2 ring-primary cloud-shadow"
-                              : "bg-surface-container-lowest cloud-shadow"
-                          }`}
-                        >
-                          <div className="flex items-center gap-md flex-1 min-w-0">
-                            <div
-                              className={`flex flex-col items-center justify-center rounded-2xl px-3 py-2 min-w-[54px] shrink-0 ${
-                                item.selected
-                                  ? "bg-primary text-on-primary font-bold cloud-shadow"
-                                  : "bg-surface-container-low text-on-surface"
-                              }`}
+                    <div className="flex justify-between gap-xs overflow-x-auto rounded-[24px] bg-white/40 p-md cloud-shadow">
+                      {[
+                        { day: "Mon", mood: 5 },
+                        { day: "Tue", mood: 4 },
+                        { day: "Wed", mood: 4 },
+                        { day: "Thu", mood: 3 },
+                        { day: "Fri", mood: 5, today: true },
+                        { day: "Sat", mood: null },
+                        { day: "Sun", mood: null },
+                      ].map((item, idx) => {
+                        const mInfo = item.mood ? APP_MOODS[item.mood] : null;
+                        return (
+                          <div
+                            key={idx}
+                            className="flex min-w-10 flex-col items-center gap-xs"
+                          >
+                            <span
+                              className={`flex h-11 w-11 items-center justify-center rounded-full ${
+                                mInfo ? mInfo.bg : "bg-surface-variant"
+                              } ${item.today ? "ring-2 ring-primary" : ""}`}
                             >
-                              <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">
-                                {item.day}
-                              </span>
-                              <span className="text-xl font-bold leading-none mt-0.5">
-                                {item.num}
-                              </span>
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <p className="text-body-sm text-on-surface truncate font-medium">
-                                {item.text}
-                              </p>
-                              {item.tag && (
-                                <span className="inline-block mt-xs rounded-full bg-surface-container-low px-xs py-0.5 text-[11px] text-on-surface-variant">
-                                  #{item.tag}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="ml-md shrink-0">
-                            {mInfo ? (
-                              <span
-                                className={`flex h-11 w-11 items-center justify-center rounded-full ${mInfo.bg}`}
-                              >
+                              {mInfo ? (
                                 <span
                                   className={`material-symbols-outlined text-[24px] ${mInfo.color}`}
                                   style={{ fontVariationSettings: "'FILL' 1" }}
                                 >
                                   {mInfo.icon}
                                 </span>
-                              </span>
-                            ) : (
-                              <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-outline-variant text-outline-variant">
-                                <span className="material-symbols-outlined text-[18px]">
+                              ) : (
+                                <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
                                   add
                                 </span>
+                              )}
+                            </span>
+                            <span
+                              className={`text-label-sm font-label-sm ${item.today ? "font-bold text-primary" : "text-on-surface-variant"}`}
+                            >
+                              {item.day}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="grid grid-cols-2 gap-md">
+                    <div className="col-span-2 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
+                      <h2 className="text-headline-lg font-headline-lg text-on-surface">
+                        Mood summary
+                      </h2>
+                      <div className="mt-sm flex items-baseline gap-xs">
+                        <span className="text-headline-xl font-headline-xl text-on-surface font-bold">
+                          24
+                        </span>
+                        <span className="text-body-md font-body-md text-on-surface-variant">
+                          entries
+                        </span>
+                      </div>
+                      <p className="mt-1 text-body-sm font-body-sm text-on-surface-variant">
+                        Total moods logged this month
+                      </p>
+                    </div>
+                    <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-md">
+                      <span className="text-label-sm font-label-sm text-on-surface-variant">
+                        Dominant mood
+                      </span>
+                      <div className="flex items-center gap-xs">
+                        <span
+                          className="material-symbols-outlined text-[28px] text-primary"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          sentiment_satisfied
+                        </span>
+                        <span className="text-headline-lg font-headline-lg text-on-surface font-semibold">
+                          Good
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-md">
+                      <span className="text-label-sm font-label-sm text-on-surface-variant">
+                        Most used tag
+                      </span>
+                      <div className="flex items-center gap-xs">
+                        <span className="material-symbols-outlined text-[24px] text-secondary">
+                          auto_awesome
+                        </span>
+                        <span className="text-headline-lg font-headline-lg text-on-surface font-semibold truncate">
+                          Coffee
+                        </span>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {/* 1:1 MONTHLY & WEEKLY CALENDAR VIEW */}
+              {activeTab === "calendar" && (
+                <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
+                  <header className="py-xs">
+                    <div className="flex items-center justify-between rounded-[24px] bg-surface-container-lowest p-md text-left cloud-shadow">
+                      <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold">
+                        Your calendar
+                      </span>
+                      <span className="material-symbols-outlined text-primary">
+                        expand_more
+                      </span>
+                    </div>
+                  </header>
+
+                  <section aria-label="Calendar view">
+                    <div className="flex gap-1 rounded-full bg-surface-container-low p-1">
+                      <button
+                        type="button"
+                        onClick={() => setCalViewMode("week")}
+                        className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
+                          calViewMode === "week"
+                            ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
+                            : "text-on-surface-variant hover:text-on-surface"
+                        }`}
+                      >
+                        Week
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCalViewMode("month")}
+                        className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
+                          calViewMode === "month"
+                            ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
+                            : "text-on-surface-variant hover:text-on-surface"
+                        }`}
+                      >
+                        Month
+                      </button>
+                    </div>
+                  </section>
+
+                  <section className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95"
+                    >
+                      <span className="material-symbols-outlined">
+                        chevron_left
+                      </span>
+                    </button>
+                    <h2 className="text-headline-lg-mobile font-headline-lg-mobile font-bold">
+                      {calViewMode === "month"
+                        ? "August 2026"
+                        : "Aug 10 – Aug 16, 2026"}
+                    </h2>
+                    <button
+                      type="button"
+                      className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95"
+                    >
+                      <span className="material-symbols-outlined">
+                        chevron_right
+                      </span>
+                    </button>
+                  </section>
+
+                  {calViewMode === "month" ? (
+                    <section className="space-y-md">
+                      <div className="grid grid-cols-7 text-center select-none">
+                        {["MO", "TU", "WE", "TH", "FR", "SA", "SU"].map(
+                          (day) => (
+                            <span
+                              key={day}
+                              className="pb-sm text-label-sm font-label-sm text-on-surface-variant/60"
+                            >
+                              {day}
+                            </span>
+                          ),
+                        )}
+
+                        {[27, 28, 29, 30, 31].map((d) => (
+                          <span
+                            key={`prev-${d}`}
+                            className="flex h-[76px] items-start justify-center pt-1 text-body-md font-body-md text-on-surface-variant/20"
+                          >
+                            {d}
+                          </span>
+                        ))}
+
+                        {Array.from({ length: 31 }).map((_, i) => {
+                          const dayNum = i + 1;
+                          const entry = MOCK_CALENDAR_ENTRIES[dayNum];
+                          const mood = entry ? APP_MOODS[entry.mood] : null;
+                          const isSelected = selectedDay === dayNum;
+
+                          return (
+                            <div
+                              key={dayNum}
+                              onClick={() => setSelectedDay(dayNum)}
+                              className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md cursor-pointer select-none"
+                            >
+                              <span
+                                className={`flex items-center gap-0.5 ${isSelected ? "font-bold text-primary" : ""}`}
+                              >
+                                {dayNum}
                               </span>
+                              <span
+                                className={`flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full transition-all ${
+                                  mood
+                                    ? `${mood.bg} ${isSelected ? "ring-2 ring-primary" : ""}`
+                                    : "border-2 border-dashed border-outline-variant text-outline-variant"
+                                }`}
+                              >
+                                {mood ? (
+                                  <span
+                                    className={`material-symbols-outlined text-[16px] sm:text-[20px] ${mood.color}`}
+                                    style={{
+                                      fontVariationSettings: "'FILL' 1",
+                                    }}
+                                  >
+                                    {mood.icon}
+                                  </span>
+                                ) : (
+                                  <span className="material-symbols-outlined text-[16px] sm:text-[20px]">
+                                    add
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                          );
+                        })}
+
+                        {[1, 2, 3, 4, 5, 6].map((d) => (
+                          <span
+                            key={`next-${d}`}
+                            className="flex h-[76px] items-start justify-center pt-1 text-body-md font-body-md text-on-surface-variant/20"
+                          >
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="rounded-[24px] bg-surface-container-lowest p-md cloud-shadow space-y-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-label-sm font-bold text-primary">
+                            August {selectedDay}, 2026
+                          </span>
+                          {MOCK_CALENDAR_ENTRIES[selectedDay] ? (
+                            <span
+                              className={`px-sm py-0.5 rounded-full text-label-sm font-medium ${APP_MOODS[MOCK_CALENDAR_ENTRIES[selectedDay].mood].bg} ${APP_MOODS[MOCK_CALENDAR_ENTRIES[selectedDay].mood].color}`}
+                            >
+                              {
+                                APP_MOODS[
+                                  MOCK_CALENDAR_ENTRIES[selectedDay].mood
+                                ].label
+                              }
+                            </span>
+                          ) : (
+                            <span className="text-label-sm text-on-surface-variant">
+                              No entry logged
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-body-sm text-on-surface">
+                          {MOCK_CALENDAR_ENTRIES[selectedDay]
+                            ? `"${MOCK_CALENDAR_ENTRIES[selectedDay].note}"`
+                            : "Tap + on any day to create a new mood journal entry."}
+                        </p>
+                        {MOCK_CALENDAR_ENTRIES[selectedDay]?.tags && (
+                          <div className="flex flex-wrap gap-xs pt-xs">
+                            {MOCK_CALENDAR_ENTRIES[selectedDay].tags.map(
+                              (t) => (
+                                <span
+                                  key={t}
+                                  className="rounded-full bg-surface-container px-sm py-xs text-label-sm text-on-surface-variant"
+                                >
+                                  #{t}
+                                </span>
+                              ),
                             )}
                           </div>
+                        )}
+                      </div>
+                    </section>
+                  ) : (
+                    <section className="space-y-sm select-none">
+                      <div className="flex items-center justify-between px-1 pb-xs">
+                        <h3 className="text-label-lg font-bold text-on-surface flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[18px] text-primary">
+                            view_day
+                          </span>
+                          Weekly Flow
+                        </h3>
+                        <span className="text-label-sm text-on-surface-variant/60">
+                          Aug 10 - Aug 16
+                        </span>
+                      </div>
+
+                      {[
+                        {
+                          day: "Mon",
+                          num: 10,
+                          mood: 3,
+                          text: "Routine Monday, steady work.",
+                          tag: "Focused",
+                        },
+                        {
+                          day: "Tue",
+                          num: 11,
+                          mood: null,
+                          text: "No entry logged",
+                          tag: null,
+                        },
+                        {
+                          day: "Wed",
+                          num: 12,
+                          mood: 1,
+                          text: "Overwhelmed with tasks.",
+                          tag: "Overwhelmed",
+                        },
+                        {
+                          day: "Thu",
+                          num: 13,
+                          mood: 4,
+                          text: "Felt much better after chatting.",
+                          tag: "Peaceful",
+                        },
+                        {
+                          day: "Fri",
+                          num: 14,
+                          mood: 2,
+                          text: "Felt rainy and quiet.",
+                          tag: "Rainy Vibe",
+                        },
+                        {
+                          day: "Sat",
+                          num: 15,
+                          mood: 5,
+                          text: "Had an inspiring session!",
+                          tag: "Breakthrough",
+                          selected: true,
+                        },
+                        {
+                          day: "Sun",
+                          num: 16,
+                          mood: null,
+                          text: "No entry logged",
+                          tag: null,
+                        },
+                      ].map((item, idx) => {
+                        const mInfo = item.mood ? APP_MOODS[item.mood] : null;
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex items-center justify-between rounded-[24px] p-md transition-all ${
+                              item.selected
+                                ? "bg-surface-container-lowest ring-2 ring-primary cloud-shadow"
+                                : "bg-surface-container-lowest cloud-shadow"
+                            }`}
+                          >
+                            <div className="flex items-center gap-md flex-1 min-w-0">
+                              <div
+                                className={`flex flex-col items-center justify-center rounded-2xl px-3 py-2 min-w-[54px] shrink-0 ${
+                                  item.selected
+                                    ? "bg-primary text-on-primary font-bold cloud-shadow"
+                                    : "bg-surface-container-low text-on-surface"
+                                }`}
+                              >
+                                <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">
+                                  {item.day}
+                                </span>
+                                <span className="text-xl font-bold leading-none mt-0.5">
+                                  {item.num}
+                                </span>
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p className="text-body-sm text-on-surface truncate font-medium">
+                                  {item.text}
+                                </p>
+                                {item.tag && (
+                                  <span className="inline-block mt-xs rounded-full bg-surface-container-low px-xs py-0.5 text-[11px] text-on-surface-variant">
+                                    #{item.tag}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="ml-md shrink-0">
+                              {mInfo ? (
+                                <span
+                                  className={`flex h-11 w-11 items-center justify-center rounded-full ${mInfo.bg}`}
+                                >
+                                  <span
+                                    className={`material-symbols-outlined text-[24px] ${mInfo.color}`}
+                                    style={{
+                                      fontVariationSettings: "'FILL' 1",
+                                    }}
+                                  >
+                                    {mInfo.icon}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-outline-variant text-outline-variant">
+                                  <span className="material-symbols-outlined text-[18px]">
+                                    add
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </section>
+                  )}
+                </div>
+              )}
+
+              {/* 1:1 FRIENDS FEED VIEW */}
+              {activeTab === "feed" && (
+                <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
+                  <header className="py-xs">
+                    <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">
+                      Your circle
+                    </p>
+                    <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface font-bold">
+                      Friend feed
+                    </h1>
+                    <p className="mt-xs text-body-sm text-on-surface-variant">
+                      A gentle look at how everyone’s doing.
+                    </p>
+                  </header>
+
+                  <div className="rounded-[24px] bg-white p-md cloud-shadow space-y-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-xs">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-tertiary-container text-tertiary font-bold">
+                          M
                         </div>
-                      );
-                    })}
-                  </section>
-                )}
-              </div>
-            )}
-
-            {/* 1:1 FRIENDS FEED VIEW */}
-            {activeTab === "feed" && (
-              <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
-                <header className="py-xs">
-                  <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">
-                    Your circle
-                  </p>
-                  <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface font-bold">
-                    Friend feed
-                  </h1>
-                  <p className="mt-xs text-body-sm text-on-surface-variant">
-                    A gentle look at how everyone’s doing.
-                  </p>
-                </header>
-
-                <div className="rounded-[24px] bg-white p-md cloud-shadow space-y-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-xs">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-tertiary-container text-tertiary font-bold">
-                        M
+                        <div>
+                          <h4 className="text-label-lg font-label-lg text-on-surface font-bold">
+                            Maria Chen
+                          </h4>
+                          <p className="text-body-sm text-on-surface-variant">
+                            2 hours ago
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-label-lg font-label-lg text-on-surface font-bold">
-                          Maria Chen
-                        </h4>
-                        <p className="text-body-sm text-on-surface-variant">
-                          2 hours ago
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className="material-symbols-outlined text-[28px] text-tertiary"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      sentiment_very_satisfied
-                    </span>
-                  </div>
-
-                  <p className="text-body-md text-on-surface">
-                    Finished my morning run! The fresh air was just what I
-                    needed to start the weekend.
-                  </p>
-
-                  <div className="flex flex-wrap gap-xs">
-                    <span className="px-sm py-0.5 rounded-full bg-primary-container/40 text-label-sm text-on-primary-container">
-                      #Peaceful
-                    </span>
-                    <span className="px-sm py-0.5 rounded-full bg-secondary-container/40 text-label-sm text-on-secondary-container">
-                      #FreshAir
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-xs border-t border-outline-variant/20">
-                    <div className="flex items-center gap-xs text-label-sm text-primary font-semibold">
                       <span
-                        className="material-symbols-outlined text-[18px]"
+                        className="material-symbols-outlined text-[28px] text-tertiary"
                         style={{ fontVariationSettings: "'FILL' 1" }}
                       >
-                        favorite
+                        sentiment_very_satisfied
                       </span>
-                      <span>5 Likes</span>
                     </div>
-                    <span className="text-label-sm text-on-surface-variant">
-                      2 comments
-                    </span>
+
+                    <p className="text-body-md text-on-surface">
+                      Finished my morning run! The fresh air was just what I
+                      needed to start the weekend.
+                    </p>
+
+                    <div className="flex flex-wrap gap-xs">
+                      <span className="px-sm py-0.5 rounded-full bg-primary-container/40 text-label-sm text-on-primary-container">
+                        #Peaceful
+                      </span>
+                      <span className="px-sm py-0.5 rounded-full bg-secondary-container/40 text-label-sm text-on-secondary-container">
+                        #FreshAir
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-xs border-t border-outline-variant/20">
+                      <div className="flex items-center gap-xs text-label-sm text-primary font-semibold">
+                        <span
+                          className="material-symbols-outlined text-[18px]"
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          favorite
+                        </span>
+                        <span>5 Likes</span>
+                      </div>
+                      <span className="text-label-sm text-on-surface-variant">
+                        2 comments
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[24px] bg-white p-md cloud-shadow space-y-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-xs">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-secondary font-bold">
+                          D
+                        </div>
+                        <div>
+                          <h4 className="text-label-lg font-label-lg text-on-surface font-bold">
+                            Daniel Kim
+                          </h4>
+                          <p className="text-body-sm text-on-surface-variant">
+                            Yesterday at 9:15 PM
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className="material-symbols-outlined text-[28px] text-primary"
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        sentiment_satisfied
+                      </span>
+                    </div>
+
+                    <p className="text-body-md text-on-surface">
+                      Quiet evening with herbal tea and music. Taking things
+                      slow.
+                    </p>
+
+                    <div className="flex items-center justify-between pt-xs border-t border-outline-variant/20">
+                      <div className="flex items-center gap-xs text-label-sm text-primary font-semibold">
+                        <span className="material-symbols-outlined text-[18px]">
+                          favorite
+                        </span>
+                        <span>3 Likes</span>
+                      </div>
+                      <span className="text-label-sm text-on-surface-variant">
+                        1 comment
+                      </span>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <div className="rounded-[24px] bg-white p-md cloud-shadow space-y-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-xs">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-secondary font-bold">
-                        D
-                      </div>
-                      <div>
-                        <h4 className="text-label-lg font-label-lg text-on-surface font-bold">
-                          Daniel Kim
-                        </h4>
-                        <p className="text-body-sm text-on-surface-variant">
-                          Yesterday at 9:15 PM
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className="material-symbols-outlined text-[28px] text-primary"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      sentiment_satisfied
-                    </span>
-                  </div>
-
-                  <p className="text-body-md text-on-surface">
-                    Quiet evening with herbal tea and music. Taking things slow.
-                  </p>
-
-                  <div className="flex items-center justify-between pt-xs border-t border-outline-variant/20">
-                    <div className="flex items-center gap-xs text-label-sm text-primary font-semibold">
-                      <span className="material-symbols-outlined text-[18px]">
-                        favorite
-                      </span>
-                      <span>3 Likes</span>
-                    </div>
-                    <span className="text-label-sm text-on-surface-variant">
-                      1 comment
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 1:1 BOTTOM NAV BAR */}
-            <nav className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex w-[calc(100%-32px)] items-center justify-around rounded-full bg-surface/90 px-3 py-1.5 cloud-shadow backdrop-blur-xl border border-outline-variant/20">
-              {[
-                { key: "home", icon: "home", label: "Home" },
-                { key: "calendar", icon: "calendar_today", label: "Calendar" },
-                { key: "add", icon: "add", label: "Add" },
-                { key: "feed", icon: "grid_view", label: "Feed" },
-                { key: "profile", icon: "person", label: "Profile" },
-              ].map((item) => {
-                const active = activeTab === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() =>
-                      item.key !== "add" &&
-                      item.key !== "profile" &&
-                      setActiveTab(item.key)
-                    }
-                    className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-                      item.icon === "add"
-                        ? "h-11 w-11 bg-on-background text-background shadow-md"
-                        : active
-                          ? "bg-primary-container text-on-primary-container"
-                          : "text-on-surface-variant hover:text-on-surface"
-                    }`}
-                  >
-                    <span
-                      className="material-symbols-outlined text-[20px]"
-                      style={
-                        active
-                          ? { fontVariationSettings: "'FILL' 1" }
-                          : undefined
+              {/* 1:1 BOTTOM NAV BAR */}
+              <nav className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex w-[calc(100%-32px)] items-center justify-around rounded-full bg-surface/90 px-3 py-1.5 cloud-shadow backdrop-blur-xl border border-outline-variant/20">
+                {[
+                  { key: "home", icon: "home", label: "Home" },
+                  {
+                    key: "calendar",
+                    icon: "calendar_today",
+                    label: "Calendar",
+                  },
+                  { key: "add", icon: "add", label: "Add" },
+                  { key: "feed", icon: "grid_view", label: "Feed" },
+                  { key: "profile", icon: "person", label: "Profile" },
+                ].map((item) => {
+                  const active = activeTab === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() =>
+                        item.key !== "add" &&
+                        item.key !== "profile" &&
+                        setActiveTab(item.key)
                       }
+                      className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+                        item.icon === "add"
+                          ? "h-11 w-11 bg-on-background text-background shadow-md"
+                          : active
+                            ? "bg-primary-container text-on-primary-container"
+                            : "text-on-surface-variant hover:text-on-surface"
+                      }`}
                     >
-                      {item.icon}
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </ScrollReveal>
-      </div>
-    </section>
+                      <span
+                        className="material-symbols-outlined text-[20px]"
+                        style={
+                          active
+                            ? { fontVariationSettings: "'FILL' 1" }
+                            : undefined
+                        }
+                      >
+                        {item.icon}
+                      </span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </ScrollReveal>
+        </div>
+      </section>
 
       {/* FAQ SECTION */}
       <section
@@ -1635,9 +1692,7 @@ export default function Landing() {
             const isOpen = openFaq === index;
             return (
               <ScrollReveal key={index} animation="fade-up" delay={index * 100}>
-                <div
-                  className="bg-white rounded-2xl border border-outline-variant/30 cloud-shadow overflow-hidden transition-all duration-300 hover:border-outline-variant/60"
-                >
+                <div className="bg-white rounded-2xl border border-outline-variant/30 cloud-shadow overflow-hidden transition-all duration-300 hover:border-outline-variant/60">
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : index)}
                     className="w-full p-md text-left flex items-center justify-between font-bold text-on-surface text-body-md md:text-lg hover:bg-surface-container-low transition-colors"
@@ -1663,7 +1718,9 @@ export default function Landing() {
       <section className="px-container-margin py-20 bg-gradient-to-r from-primary-container/50 via-secondary-container/50 to-tertiary-container/50 text-center relative overflow-hidden">
         <ScrollReveal animation="scale-up">
           <div className="max-w-3xl mx-auto relative z-10">
-            <span className="text-4xl mb-sm block animate-bounce duration-1000">🌸</span>
+            <span className="text-4xl mb-sm block animate-bounce duration-1000">
+              🌸
+            </span>
             <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
               Ready for a calm, mindful routine?
             </h2>
