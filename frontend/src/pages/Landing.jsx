@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 
 // Mood definitions matching utils/moods.js 1:1
@@ -29,36 +29,7 @@ const TAG_CATEGORIES = [
   },
 ]
 
-const FEATURES = [
-  {
-    icon: '🌸',
-    title: 'Gentle Daily Check-Ins',
-    description:
-      'Log how you feel in seconds with expressive mood icons, categorized tags (Positive, Neutral, Difficult), and personal notes.',
-    highlight: 'Quick & Intuitive',
-  },
-  {
-    icon: '📅',
-    title: 'Visual Monthly Analytics',
-    description:
-      'Discover emotional patterns with an aesthetic calendar heatmap, dominant mood summaries, and resilience tracking.',
-    highlight: 'Insightful Patterns',
-  },
-  {
-    icon: '💛',
-    title: 'Algorithmic-Free Social Feed',
-    description:
-      'Share days with a tight circle of accepted friends. Support each other with warm likes away from noisy public feeds.',
-    highlight: 'Zero Social Pressure',
-  },
-  {
-    icon: '🔒',
-    title: 'Privacy You Control',
-    description:
-      'Hide individual entries with a single toggle. Your journal is a digital sanctuary meant for your peace of mind.',
-    highlight: '100% Private & Safe',
-  },
-]
+const SHARED_ENTRY_TEXT = 'Quiet evening with warm tea. So glad to unwind.'
 
 const FAQS = [
   {
@@ -106,6 +77,30 @@ const MOCK_CALENDAR_ENTRIES = {
 export default function Landing() {
   const [activeTab, setActiveTab] = useState('home')
   const [openFaq, setOpenFaq] = useState(null)
+
+  // Closed loop signature animation state
+  const [hasLiked, setHasLiked] = useState(false)
+  const loopSectionRef = useRef(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          const timer = setTimeout(() => {
+            setHasLiked(true)
+          }, 700)
+          return () => clearTimeout(timer)
+        }
+      },
+      { threshold: 0.35 }
+    )
+
+    if (loopSectionRef.current) {
+      observer.observe(loopSectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
 
   // Demo Calendar interactive states
   const [calViewMode, setCalViewMode] = useState('month')
@@ -408,40 +403,271 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CORE FEATURES GRID */}
-      <section id="features" className="px-container-margin py-20 max-w-6xl mx-auto w-full">
-        <div className="text-center mb-xl">
-          <span className="px-md py-xs rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-semibold">
-            Built for Emotional Wellbeing
+      {/* THE CLOSED LOOP SECTION */}
+      <section id="features" ref={loopSectionRef} className="px-container-margin py-20 max-w-6xl mx-auto w-full">
+        {/* Header (Eyebrow + H2 + Subtitle) */}
+        <div className="text-center mb-16">
+          <span className="px-md py-xs rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-semibold inline-block">
+            Not just a journal
           </span>
-          <h2 className="mt-sm text-3xl md:text-4xl font-bold text-on-surface">
-            Everything you need for daily reflection
+          <h2 className="mt-xs text-3xl md:text-4xl font-bold text-on-surface">
+            A journal that answers back
           </h2>
-          <p className="mt-xs text-body-md text-on-surface-variant max-w-xl mx-auto">
-            Designed around soft minimalist aesthetics to reduce cognitive strain and inspire warm habits.
+          <p className="mt-xs text-body-md text-on-surface-variant max-w-xl mx-auto leading-relaxed">
+            Your entries are visible only to accepted friends — zero algorithms, zero public pressure, zero noise.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-          {FEATURES.map((feat, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-3xl p-lg md:p-xl cloud-shadow border border-outline-variant/30 flex flex-col justify-between hover:shadow-md transition-shadow"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-md">
-                  <div className="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center text-3xl">
-                    {feat.icon}
+        {/* 4 Connected Nodes Container */}
+        <div className="flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
+          
+          {/* NODE 1 — "You record your day" */}
+          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
+            <div>
+              {/* Header inside mockup 1 */}
+              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                <span className="text-label-sm font-semibold text-on-surface-variant">My Entry</span>
+                <span className="text-[11px] text-on-surface-variant/60">Today</span>
+              </div>
+
+              {/* Entry Content Mockup */}
+              <div className="space-y-xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-xs">
+                    <span
+                      className={`flex h-8 w-8 items-center justify-center rounded-full ${APP_MOODS[4].bg}`}
+                    >
+                      <span
+                        className={`material-symbols-outlined text-[18px] ${APP_MOODS[4].color}`}
+                        style={{ fontVariationSettings: "'FILL' 1" }}
+                      >
+                        {APP_MOODS[4].icon}
+                      </span>
+                    </span>
+                    <span className="px-sm py-0.5 rounded-full bg-primary-container/40 text-[11px] font-semibold text-primary">
+                      #Grateful
+                    </span>
                   </div>
-                  <span className="px-sm py-xs rounded-full bg-primary-container/60 text-on-primary-container text-label-sm font-semibold">
-                    {feat.highlight}
-                  </span>
+
+                  {/* Photo preview placeholder 32x32 */}
+                  <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0 border border-outline-variant/20">
+                    <span className="material-symbols-outlined text-[16px]">image</span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-on-surface mb-xs">{feat.title}</h3>
-                <p className="text-body-md text-on-surface-variant leading-relaxed">{feat.description}</p>
+
+                <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
+                  “{SHARED_ENTRY_TEXT}”
+                </p>
               </div>
             </div>
-          ))}
+
+            {/* Caption under Node 1 */}
+            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+              <p className="text-label-md font-bold text-on-surface">You record your day</p>
+            </div>
+          </div>
+
+          {/* CONNECTOR 1 -> 2 */}
+          <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
+            {/* Desktop Horizontal Line */}
+            <div className="hidden md:flex flex-col items-center w-full">
+              <span className="text-[9px] lg:text-[10px] font-medium text-on-surface-variant/80 whitespace-nowrap mb-1 px-1.5 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/20">
+                friends only
+              </span>
+              <div className="w-full flex items-center">
+                <div className="h-[2px] w-full bg-outline-variant/40 border-b border-dashed border-outline-variant" />
+                <span className="material-symbols-outlined text-[14px] text-outline-variant/80 -ml-1 shrink-0">
+                  chevron_right
+                </span>
+              </div>
+            </div>
+
+            {/* Mobile Vertical Line */}
+            <div className="flex md:hidden items-center gap-sm py-2">
+              <div className="flex flex-col items-center">
+                <div className="w-[2px] h-8 bg-outline-variant/40 border-r border-dashed border-outline-variant" />
+                <span className="material-symbols-outlined text-[16px] text-outline-variant/80 -mt-1">
+                  expand_more
+                </span>
+              </div>
+              <span className="text-label-sm font-medium text-on-surface-variant/80 px-md py-xs rounded-full bg-surface-container-low border border-outline-variant/20">
+                friends only
+              </span>
+            </div>
+          </div>
+
+          {/* NODE 2 — "Friend sees in feed" */}
+          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
+            <div>
+              {/* Feed Card Mockup Header */}
+              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                <div className="flex items-center gap-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-container text-secondary text-label-sm font-bold">
+                    D
+                  </div>
+                  <div>
+                    <h4 className="text-label-sm font-bold text-on-surface leading-none">Daniel Kim</h4>
+                    <span className="text-[10px] text-on-surface-variant">10m ago</span>
+                  </div>
+                </div>
+                <span
+                  className={`material-symbols-outlined text-[20px] ${APP_MOODS[4].color}`}
+                  style={{ fontVariationSettings: "'FILL' 1" }}
+                >
+                  {APP_MOODS[4].icon}
+                </span>
+              </div>
+
+              {/* Feed Card Text (Exact same entry text as Node 1!) */}
+              <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
+                “{SHARED_ENTRY_TEXT}”
+              </p>
+            </div>
+
+            {/* Caption under Node 2 */}
+            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+              <p className="text-label-md font-bold text-on-surface">Friend sees in feed</p>
+            </div>
+          </div>
+
+          {/* CONNECTOR 2 -> 3 */}
+          <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
+            {/* Desktop Horizontal Line */}
+            <div className="hidden md:flex flex-col items-center w-full">
+              <span className="text-[9px] lg:text-[10px] font-medium text-on-surface-variant/80 whitespace-nowrap mb-1 px-1.5 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/20">
+                friend reacts
+              </span>
+              <div className="w-full flex items-center">
+                <div className="h-[2px] w-full bg-outline-variant/40 border-b border-dashed border-outline-variant" />
+                <span className="material-symbols-outlined text-[14px] text-outline-variant/80 -ml-1 shrink-0">
+                  chevron_right
+                </span>
+              </div>
+            </div>
+
+            {/* Mobile Vertical Line */}
+            <div className="flex md:hidden items-center gap-sm py-2">
+              <div className="flex flex-col items-center">
+                <div className="w-[2px] h-8 bg-outline-variant/40 border-r border-dashed border-outline-variant" />
+                <span className="material-symbols-outlined text-[16px] text-outline-variant/80 -mt-1">
+                  expand_more
+                </span>
+              </div>
+              <span className="text-label-sm font-medium text-on-surface-variant/80 px-md py-xs rounded-full bg-surface-container-low border border-outline-variant/20">
+                friend reacts
+              </span>
+            </div>
+          </div>
+
+          {/* NODE 3 — "Friend leaves a like" */}
+          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
+            <div>
+              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                <span className="text-label-sm font-semibold text-on-surface-variant">Reaction</span>
+                <span className="text-[11px] text-on-surface-variant/60">Feed</span>
+              </div>
+
+              {/* Heart reaction mockup */}
+              <div className="flex flex-col items-center justify-center py-xs space-y-xs bg-primary-container/20 rounded-xl border border-primary-container/30">
+                <div className={`transition-transform duration-300 ${hasLiked ? 'scale-125' : 'scale-100'}`}>
+                  <span
+                    className="material-symbols-outlined text-[28px] text-primary"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    favorite
+                  </span>
+                </div>
+                <div className="text-label-md font-bold text-primary transition-all duration-300">
+                  {hasLiked ? '4 Likes' : '3 Likes'}
+                </div>
+              </div>
+            </div>
+
+            {/* Caption under Node 3 */}
+            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+              <p className="text-label-md font-bold text-on-surface">Friend leaves a like</p>
+            </div>
+          </div>
+
+          {/* CONNECTOR 3 -> 4 */}
+          <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
+            {/* Desktop Horizontal Line */}
+            <div className="hidden md:flex flex-col items-center w-full">
+              <span className="text-[9px] lg:text-[10px] font-medium text-on-surface-variant/80 whitespace-nowrap mb-1 px-1.5 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/20">
+                you find out
+              </span>
+              <div className="w-full flex items-center">
+                <div className="h-[2px] w-full bg-outline-variant/40 border-b border-dashed border-outline-variant" />
+                <span className="material-symbols-outlined text-[14px] text-outline-variant/80 -ml-1 shrink-0">
+                  chevron_right
+                </span>
+              </div>
+            </div>
+
+            {/* Mobile Vertical Line */}
+            <div className="flex md:hidden items-center gap-sm py-2">
+              <div className="flex flex-col items-center">
+                <div className="w-[2px] h-8 bg-outline-variant/40 border-r border-dashed border-outline-variant" />
+                <span className="material-symbols-outlined text-[16px] text-outline-variant/80 -mt-1">
+                  expand_more
+                </span>
+              </div>
+              <span className="text-label-sm font-medium text-on-surface-variant/80 px-md py-xs rounded-full bg-surface-container-low border border-outline-variant/20">
+                you find out
+              </span>
+            </div>
+          </div>
+
+          {/* NODE 4 — "Notification to you" */}
+          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
+            <div>
+              {/* Header Bell with animated badge */}
+              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                <span className="text-label-sm font-semibold text-on-surface-variant">Notifications</span>
+                
+                {/* HeaderBell Icon with red badge */}
+                <div className="relative flex items-center justify-center w-7 h-7 rounded-full bg-surface-container-low">
+                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
+                    notifications
+                  </span>
+
+                  {/* Red Badge "1" — Fades in & scales up synchronously */}
+                  <span
+                    className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] font-bold text-on-error transition-all duration-500 ease-out ${
+                      hasLiked ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+                    }`}
+                  >
+                    1
+                  </span>
+                </div>
+              </div>
+
+              {/* Notification Card — Fades in & scales up synchronously */}
+              <div
+                className={`rounded-xl bg-surface-container-low p-xs border border-outline-variant/20 transition-all duration-500 ease-out ${
+                  hasLiked ? 'opacity-100 translate-y-0 scale-100' : 'opacity-40 translate-y-1 scale-95'
+                }`}
+              >
+                <div className="flex items-start gap-xs">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary text-[11px] font-bold mt-0.5">
+                    D
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] leading-tight text-on-surface font-medium">
+                      <span className="font-bold">Daniel</span> liked your entry
+                    </p>
+                    <span className="text-[10px] text-on-surface-variant">just now</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Caption under Node 4 */}
+            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+              <p className="text-label-md font-bold text-on-surface">Notification to you</p>
+            </div>
+          </div>
+
         </div>
       </section>
 
