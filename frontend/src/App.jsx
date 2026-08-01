@@ -17,6 +17,7 @@ const Feed = lazy(() => import('./pages/Feed'))
 const Profile = lazy(() => import('./pages/Profile'))
 const FriendProfile = lazy(() => import('./pages/FriendProfile'))
 const Admin = lazy(() => import('./pages/Admin'))
+const Landing = lazy(() => import('./pages/Landing'))
 
 function PageFallback() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
       <BrowserRouter>
         <Suspense fallback={<PageFallback />}>
           <Routes>
+            <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />

@@ -27,7 +27,8 @@ export default function Auth() {
     onError: (requestError) => setError(requestError.message),
   });
 
-  if (sessionQuery.data && !sessionQuery.isError) return <Navigate to="/" replace />;
+  if (sessionQuery.data && !sessionQuery.isError)
+    return <Navigate to="/" replace />;
 
   const update = ({ target }) =>
     setForm((current) => ({ ...current, [target.name]: target.value }));
