@@ -54,7 +54,7 @@ export default function Admin() {
           You do not have administrator permissions to view this page.
         </p>
         <Link
-          to="/"
+          to="/home"
           className="rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md"
         >
           Back to Home
@@ -110,7 +110,7 @@ export default function Admin() {
       <header className="flex items-center justify-between py-md mb-md">
         <div className="flex items-center gap-xs">
           <Link
-            to="/"
+            to="/home"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
             aria-label="Back"
           >

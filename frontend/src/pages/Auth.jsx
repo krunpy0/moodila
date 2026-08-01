@@ -22,13 +22,13 @@ export default function Auth() {
     onSuccess: () => {
       queryClient.removeQueries();
       queryClient.invalidateQueries({ queryKey: queryKeys.session });
-      navigate("/", { replace: true });
+      navigate("/home", { replace: true });
     },
     onError: (requestError) => setError(requestError.message),
   });
 
   if (sessionQuery.data && !sessionQuery.isError)
-    return <Navigate to="/" replace />;
+    return <Navigate to="/home" replace />;
 
   const update = ({ target }) =>
     setForm((current) => ({ ...current, [target.name]: target.value }));

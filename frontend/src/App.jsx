@@ -18,6 +18,7 @@ const Profile = lazy(() => import('./pages/Profile'))
 const FriendProfile = lazy(() => import('./pages/FriendProfile'))
 const Admin = lazy(() => import('./pages/Admin'))
 const Landing = lazy(() => import('./pages/Landing'))
+const RootRoute = lazy(() => import('./pages/RootRoute'))
 
 function PageFallback() {
   return (
@@ -39,8 +40,9 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/account/confirm-delete" element={<ConfirmAccountDeletion />} />
+            <Route path="/" element={<RootRoute />} />
             <Route
-              path="/"
+              path="/home"
               element={
                 <RequireAuth>
                   <Home />

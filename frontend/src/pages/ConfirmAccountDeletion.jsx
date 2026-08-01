@@ -88,7 +88,7 @@ export default function ConfirmAccountDeletion() {
                   {isPending ? 'Deleting account...' : 'Confirm Account Deletion'}
                 </button>
                 <Link
-                  to="/"
+                  to="/home"
                   className="flex h-12 items-center justify-center rounded-full bg-surface-container-highest text-label-lg font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high"
                 >
                   Cancel and keep my account

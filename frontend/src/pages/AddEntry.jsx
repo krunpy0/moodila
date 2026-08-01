@@ -183,7 +183,7 @@ export default function AddEntry() {
     <div className="min-h-screen bg-background text-on-surface pb-32">
       <header className="fixed top-0 z-40 flex w-full items-center justify-between bg-background/80 px-container-margin py-md backdrop-blur-md">
         <Link
-          to="/"
+          to="/home"
           aria-label="Back"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container"
         >
