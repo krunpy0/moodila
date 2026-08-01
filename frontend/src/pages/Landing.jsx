@@ -361,9 +361,8 @@ export default function Landing() {
           <ScrollReveal animation="fade-up" delay={150}>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface max-w-3xl leading-[1.2] md:leading-[1.2]">
               Track your day. <br className="hidden sm:inline" />
-              <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
-                Share it with people who actually care.
-              </span>
+              Share it with people who{" "}
+              <span className="text-[#fce4ec]">actually care.</span>
             </h1>
           </ScrollReveal>
 
