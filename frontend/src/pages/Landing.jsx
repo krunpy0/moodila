@@ -135,9 +135,92 @@ const MOCK_CALENDAR_ENTRIES = {
   30: { mood: 5, note: "Wonderful weekend getaway!", tags: ["Grateful"] },
 };
 
+// Scroll reveal wrapper component
+function ScrollReveal({
+  children,
+  animation = "fade-up", // 'fade-up' | 'scale-up' | 'slide-left' | 'slide-right'
+  delay = 0,
+  className = "",
+  threshold = 0.15,
+  once = true,
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const domRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          if (once && domRef.current) observer.unobserve(domRef.current);
+        } else if (!once) {
+          setIsVisible(false);
+        }
+      },
+      { threshold }
+    );
+
+    const currentRef = domRef.current;
+    if (currentRef) observer.observe(currentRef);
+
+    return () => {
+      if (currentRef) observer.unobserve(currentRef);
+    };
+  }, [threshold, once]);
+
+  const animationClass =
+    animation === "scale-up"
+      ? "reveal-scale-up"
+      : animation === "slide-left"
+      ? "reveal-slide-left"
+      : animation === "slide-right"
+      ? "reveal-slide-right"
+      : "reveal-fade-up";
+
+  return (
+    <div
+      ref={domRef}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`reveal-base ${animationClass} ${
+        isVisible ? "reveal-active" : ""
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function Landing() {
   const [activeTab, setActiveTab] = useState("home");
   const [openFaq, setOpenFaq] = useState(null);
+
+  // Scroll Progress and Scroll Spy State
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeSection, setActiveSection] = useState("");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalHeight > 0) {
+        setScrollProgress((window.scrollY / totalHeight) * 100);
+      }
+
+      const sections = ["demo", "features", "showcase", "faq"];
+      const scrollPos = window.scrollY + 220;
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const sec = document.getElementById(sections[i]);
+        if (sec && sec.offsetTop <= scrollPos) {
+          setActiveSection(sections[i]);
+          break;
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Closed loop signature animation state
   const [hasLiked, setHasLiked] = useState(false);
@@ -189,37 +272,57 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col font-sans transition-colors duration-300">
-      {/* HEADER / NAVIGATION */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 px-container-margin py-md">
+    <div className="min-h-screen bg-background text-on-surface flex flex-col font-sans transition-colors duration-300 relative overflow-x-hidden">
+      {/* HEADER / NAVIGATION WITH TOP SCROLL PROGRESS BAR */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 px-container-margin py-md relative">
+        {/* Top Scroll Progress Bar */}
+        <div
+          className="absolute top-0 left-0 h-[3px] bg-gradient-to-r from-primary via-secondary to-tertiary transition-all duration-150 ease-out z-50 rounded-r-full"
+          style={{ width: `${scrollProgress}%` }}
+        />
+
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link
             to="/landing"
-            className="flex items-center gap-xs text-headline-lg font-bold text-on-surface"
+            className="flex items-center gap-xs text-headline-lg font-bold text-on-surface hover:opacity-90 transition-opacity"
           >
-            <span className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-xl cloud-shadow">
+            <span className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-xl cloud-shadow transition-transform hover:scale-105">
               🌸
             </span>
             <span className="tracking-tight">MoodShare</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-lg text-label-lg font-medium text-on-surface-variant">
-            <a href="#demo" className="hover:text-primary transition-colors">
+            <a
+              href="#demo"
+              className={`transition-colors hover:text-primary ${
+                activeSection === "demo" ? "text-primary font-bold" : ""
+              }`}
+            >
               Interactive Demo
             </a>
             <a
               href="#features"
-              className="hover:text-primary transition-colors"
+              className={`transition-colors hover:text-primary ${
+                activeSection === "features" ? "text-primary font-bold" : ""
+              }`}
             >
               Features
             </a>
             <a
               href="#showcase"
-              className="hover:text-primary transition-colors"
+              className={`transition-colors hover:text-primary ${
+                activeSection === "showcase" ? "text-primary font-bold" : ""
+              }`}
             >
               App Showcase
             </a>
-            <a href="#faq" className="hover:text-primary transition-colors">
+            <a
+              href="#faq"
+              className={`transition-colors hover:text-primary ${
+                activeSection === "faq" ? "text-primary font-bold" : ""
+              }`}
+            >
               FAQ
             </a>
           </nav>
@@ -233,7 +336,7 @@ export default function Landing() {
             </Link>
             <Link
               to="/login"
-              className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-lg font-semibold hover:opacity-90 transition-opacity shadow-sm"
+              className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-lg font-semibold hover:opacity-90 transition-opacity shadow-sm hover:shadow-md active:scale-95 transform"
             >
               Get Started
             </Link>
@@ -243,271 +346,290 @@ export default function Landing() {
 
       {/* HERO SECTION */}
       <section className="relative px-container-margin pt-xl pb-20 overflow-hidden">
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-r from-primary-container/40 via-secondary-container/40 to-tertiary-container/40 blur-3xl pointer-events-none -z-10 rounded-full" />
+        {/* Animated Background Glowing Orbs */}
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[650px] h-[340px] bg-gradient-to-r from-primary-container/50 via-secondary-container/50 to-tertiary-container/50 blur-3xl pointer-events-none -z-10 rounded-full animate-pulse-glow animate-float-slow" />
+        <div className="absolute top-40 right-10 w-72 h-72 bg-tertiary-container/30 blur-3xl pointer-events-none -z-10 rounded-full animate-float-reverse" />
 
         <div className="max-w-5xl mx-auto text-center flex flex-col items-center">
-          <div className="inline-flex items-center gap-xs px-md py-xs rounded-full bg-surface-container-high text-on-surface-variant text-label-sm font-semibold mb-lg cloud-shadow">
-            <span>Your Digital Sanctuary for Mindful Living</span>
-          </div>
+          <ScrollReveal animation="fade-up" delay={50}>
+            <div className="inline-flex items-center gap-xs px-md py-xs rounded-full bg-surface-container-high text-on-surface-variant text-label-sm font-semibold mb-lg cloud-shadow transition-transform hover:scale-105">
+              <span>Your Digital Sanctuary for Mindful Living</span>
+            </div>
+          </ScrollReveal>
 
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface max-w-3xl leading-tight">
-            Track your mood. <br className="hidden sm:inline" />
-            Share your world. <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
-              Connect with care.
-            </span>
-          </h1>
+          <ScrollReveal animation="fade-up" delay={150}>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface max-w-3xl leading-tight">
+              Track your mood. <br className="hidden sm:inline" />
+              Share your world. <br className="hidden sm:inline" />
+              <span className="bg-gradient-to-r from-primary via-secondary to-tertiary bg-clip-text text-transparent">
+                Connect with care.
+              </span>
+            </h1>
+          </ScrollReveal>
 
-          <p className="mt-md text-body-md md:text-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            MoodShare is your gentle daily journal with a warm, private social
-            circle. Log your feelings, discover emotional trends, and keep close
-            with friends without algorithmic noise.
-          </p>
+          <ScrollReveal animation="fade-up" delay={250}>
+            <p className="mt-md text-body-md md:text-lg text-on-surface-variant max-w-2xl leading-relaxed">
+              MoodShare is your gentle daily journal with a warm, private social
+              circle. Log your feelings, discover emotional trends, and keep close
+              with friends without algorithmic noise.
+            </p>
+          </ScrollReveal>
 
-          <div className="mt-lg flex flex-wrap items-center justify-center gap-md">
-            <Link
-              to="/login"
-              className="px-xl py-md rounded-full bg-primary-container text-on-primary-container text-label-lg font-bold hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-            >
-              Start Journaling — Free
-            </Link>
-            <a
-              href="#demo"
-              className="px-xl py-md rounded-full bg-surface-container text-on-surface text-label-lg font-semibold hover:bg-surface-container-high transition-colors"
-            >
-              Try Interactive Demo
-            </a>
-          </div>
+          <ScrollReveal animation="scale-up" delay={350}>
+            <div className="mt-lg flex flex-wrap items-center justify-center gap-md">
+              <Link
+                to="/login"
+                className="px-xl py-md rounded-full bg-primary-container text-on-primary-container text-label-lg font-bold hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95"
+              >
+                Start Journaling — Free
+              </Link>
+              <a
+                href="#demo"
+                className="px-xl py-md rounded-full bg-surface-container text-on-surface text-label-lg font-semibold hover:bg-surface-container-high transition-colors active:scale-95"
+              >
+                Try Interactive Demo
+              </a>
+            </div>
+          </ScrollReveal>
 
-          <div className="mt-xl flex flex-wrap justify-center items-center gap-md text-body-sm text-on-surface-variant">
-            <span className="flex items-center gap-xs">
-              ✓ 30-Second Daily Check-in
-            </span>
-            <span className="flex items-center gap-xs">
-              ✓ 100% Private Entries
-            </span>
-            <span className="flex items-center gap-xs">
-              ✓ iOS & Android PWA
-            </span>
-          </div>
+          <ScrollReveal animation="fade-up" delay={450}>
+            <div className="mt-xl flex flex-wrap justify-center items-center gap-md text-body-sm text-on-surface-variant">
+              <span className="flex items-center gap-xs">
+                ✓ 30-Second Daily Check-in
+              </span>
+              <span className="flex items-center gap-xs">
+                ✓ 100% Private Entries
+              </span>
+              <span className="flex items-center gap-xs">
+                ✓ iOS & Android PWA
+              </span>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* 1:1 INTERACTIVE DEMO WIDGET (EXACT ADAPTATION OF "Record your day" / AddEntry.jsx) */}
       <section
         id="demo"
-        className="px-container-margin py-xl bg-surface-container-low/60 border-y border-outline-variant/20"
+        className="px-container-margin py-xl bg-surface-container-low/60 border-y border-outline-variant/20 relative"
       >
-        <div className="max-w-xl mx-auto">
-          <div className="text-center mb-lg">
-            <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
-              Live Interactive Form Demo
-            </span>
-            <h2 className="mt-xs text-headline-lg font-bold text-on-surface">
-              Try "Record your day" Live
-            </h2>
-            <p className="mt-xs text-body-md text-on-surface-variant">
-              This interactive widget matches MoodShare’s exact entry creation
-              interface 1:1.
-            </p>
-          </div>
+        {/* Soft Ambient Background Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-container/20 blur-3xl pointer-events-none rounded-full animate-pulse-glow" />
+
+        <div className="max-w-xl mx-auto relative z-10">
+          <ScrollReveal animation="fade-up">
+            <div className="text-center mb-lg">
+              <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
+                Live Interactive Form Demo
+              </span>
+              <h2 className="mt-xs text-headline-lg font-bold text-on-surface">
+                Try "Record your day" Live
+              </h2>
+              <p className="mt-xs text-body-md text-on-surface-variant">
+                This interactive widget matches MoodShare’s exact entry creation
+                interface 1:1.
+              </p>
+            </div>
+          </ScrollReveal>
 
           {/* 1:1 AddEntry Form Mockup Container */}
-          <div className="rounded-[32px] bg-background p-md sm:p-lg border border-outline-variant/30 cloud-shadow space-y-md text-left">
-            <div className="flex items-center justify-between pb-xs border-b border-surface-container">
-              <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold text-on-surface">
-                Record your day
-              </span>
-              <span className="px-sm py-1 rounded-full bg-surface-container text-label-sm text-on-surface-variant font-medium">
-                Today
-              </span>
-            </div>
+          <ScrollReveal animation="scale-up" delay={150}>
+            <div className="rounded-[32px] bg-background p-md sm:p-lg border border-outline-variant/30 cloud-shadow space-y-md text-left transition-all duration-300 hover:shadow-xl">
+              <div className="flex items-center justify-between pb-xs border-b border-surface-container">
+                <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold text-on-surface">
+                  Record your day
+                </span>
+                <span className="px-sm py-1 rounded-full bg-surface-container text-label-sm text-on-surface-variant font-medium">
+                  Today
+                </span>
+              </div>
 
-            {/* Mood Selector Card (1:1 with AddEntry.jsx) */}
-            <section className="rounded-[24px] bg-white p-lg cloud-shadow">
-              <h3 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
-                How are you feeling today?
-              </h3>
+              {/* Mood Selector Card (1:1 with AddEntry.jsx) */}
+              <section className="rounded-[24px] bg-white p-lg cloud-shadow">
+                <h3 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
+                  How are you feeling today?
+                </h3>
 
-              {/* Mood Buttons Row */}
-              <div className="mb-lg flex items-center justify-between">
-                {[1, 2, 3, 4, 5].map((val) => {
-                  const item = APP_MOODS[val];
-                  const isSelected = demoMood === val;
-                  return (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setDemoMood(val)}
-                      className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-95 ${item.bg} ${
-                        isSelected
-                          ? "ring-4 ring-primary/40 scale-110 shadow-md"
-                          : "opacity-80 hover:opacity-100"
-                      }`}
-                    >
-                      <span
-                        className={`material-symbols-outlined text-[28px] ${item.color}`}
-                        style={{
-                          fontVariationSettings: isSelected
-                            ? "'FILL' 1"
-                            : undefined,
-                        }}
+                {/* Mood Buttons Row */}
+                <div className="mb-lg flex items-center justify-between">
+                  {[1, 2, 3, 4, 5].map((val) => {
+                    const item = APP_MOODS[val];
+                    const isSelected = demoMood === val;
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setDemoMood(val)}
+                        className={`flex h-12 w-12 items-center justify-center rounded-full transition-all active:scale-95 ${item.bg} ${
+                          isSelected
+                            ? "ring-4 ring-primary/40 scale-110 shadow-md"
+                            : "opacity-80 hover:opacity-100"
+                        }`}
                       >
-                        {item.icon}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                        <span
+                          className={`material-symbols-outlined text-[28px] ${item.color}`}
+                          style={{
+                            fontVariationSettings: isSelected
+                              ? "'FILL' 1"
+                              : undefined,
+                          }}
+                        >
+                          {item.icon}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-              {/* Selected Mood Badge Indicator */}
-              <div className="flex items-center justify-center pb-xs">
-                <span
-                  className={`px-md py-xs rounded-full text-label-lg font-bold ${APP_MOODS[demoMood].bg} ${APP_MOODS[demoMood].color}`}
-                >
-                  Feeling {APP_MOODS[demoMood].label}
-                </span>
-              </div>
-
-              {/* Categorized Tag Chips (1:1 with AddEntry.jsx) */}
-              <div className="space-y-sm border-t border-surface-container pt-md">
-                {TAG_CATEGORIES.map((category) => (
-                  <div key={category.key}>
-                    <span className="mb-xs block text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60">
-                      {category.label}
-                    </span>
-                    <div className="flex flex-wrap gap-xs">
-                      {category.tags.map((tag) => {
-                        const selected = demoTags.includes(tag);
-                        return (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => toggleDemoTag(tag)}
-                            className={`rounded-full px-md py-xs text-label-sm font-label-sm transition-colors ${
-                              selected
-                                ? "bg-primary-container text-primary font-semibold shadow-xs"
-                                : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
-                            }`}
-                          >
-                            {tag}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Summary Textarea Card (1:1 with AddEntry.jsx) */}
-            <section className="rounded-[24px] bg-white p-lg cloud-shadow">
-              <label
-                htmlFor="demo-entry-text"
-                className="mb-md block text-label-lg font-label-lg text-on-surface-variant"
-              >
-                Write a summary of your day
-              </label>
-              <textarea
-                id="demo-entry-text"
-                value={demoText}
-                onChange={(e) => setDemoText(e.target.value)}
-                placeholder="Start writing..."
-                className="min-h-[140px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
-              />
-
-              {/* Attachments Toolbar */}
-              <div className="mt-md flex items-center gap-md border-t border-surface-container pt-md">
-                <button
-                  type="button"
-                  title="Add photo"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    image
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  title="Record voice note"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    mic
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  title="Attach file"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant opacity-60"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    attach_file
-                  </span>
-                </button>
-              </div>
-            </section>
-
-            {/* Privacy Switch Section (1:1 with AddEntry.jsx) */}
-            <section className="flex items-center justify-between rounded-[24px] bg-white p-lg cloud-shadow">
-              <div className="flex items-center gap-md">
-                <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
-                  {demoIsHidden ? "lock" : "public"}
-                </span>
-                <div>
-                  <span className="block text-body-md font-label-lg text-on-surface font-semibold">
-                    Hide entry from friends
-                  </span>
-                  <span className="block text-body-sm text-on-surface-variant">
-                    {demoIsHidden
-                      ? "Visible only to you"
-                      : "Visible to friends"}
+                {/* Selected Mood Badge Indicator */}
+                <div className="flex items-center justify-center pb-xs">
+                  <span
+                    className={`px-md py-xs rounded-full text-label-lg font-bold ${APP_MOODS[demoMood].bg} ${APP_MOODS[demoMood].color}`}
+                  >
+                    Feeling {APP_MOODS[demoMood].label}
                   </span>
                 </div>
-              </div>
 
-              <button
-                type="button"
-                role="switch"
-                aria-checked={demoIsHidden}
-                onClick={() => setDemoIsHidden(!demoIsHidden)}
-                className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ${
-                  demoIsHidden ? "bg-primary" : "bg-surface-container-highest"
-                }`}
-              >
-                <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ${
-                    demoIsHidden
-                      ? "translate-x-6 text-on-primary-container"
-                      : "translate-x-0 text-on-surface-variant"
-                  }`}
+                {/* Categorized Tag Chips (1:1 with AddEntry.jsx) */}
+                <div className="space-y-sm border-t border-surface-container pt-md">
+                  {TAG_CATEGORIES.map((category) => (
+                    <div key={category.key}>
+                      <span className="mb-xs block text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60">
+                        {category.label}
+                      </span>
+                      <div className="flex flex-wrap gap-xs">
+                        {category.tags.map((tag) => {
+                          const selected = demoTags.includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => toggleDemoTag(tag)}
+                              className={`rounded-full px-md py-xs text-label-sm font-label-sm transition-colors ${
+                                selected
+                                  ? "bg-primary-container text-primary font-semibold shadow-xs"
+                                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Summary Textarea Card (1:1 with AddEntry.jsx) */}
+              <section className="rounded-[24px] bg-white p-lg cloud-shadow">
+                <label
+                  htmlFor="demo-entry-text"
+                  className="mb-md block text-label-lg font-label-lg text-on-surface-variant"
                 >
-                  <span className="material-symbols-outlined text-[16px]">
+                  Write a summary of your day
+                </label>
+                <textarea
+                  id="demo-entry-text"
+                  value={demoText}
+                  onChange={(e) => setDemoText(e.target.value)}
+                  placeholder="Start writing..."
+                  className="min-h-[140px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
+                />
+
+                {/* Attachments Toolbar */}
+                <div className="mt-md flex items-center gap-md border-t border-surface-container pt-md">
+                  <button
+                    type="button"
+                    title="Add photo"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      image
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    title="Record voice note"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      mic
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    title="Attach file"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant opacity-60"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">
+                      attach_file
+                    </span>
+                  </button>
+                </div>
+              </section>
+
+              {/* Privacy Switch Section (1:1 with AddEntry.jsx) */}
+              <section className="flex items-center justify-between rounded-[24px] bg-white p-lg cloud-shadow">
+                <div className="flex items-center gap-md">
+                  <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
                     {demoIsHidden ? "lock" : "public"}
                   </span>
-                </span>
-              </button>
-            </section>
+                  <div>
+                    <span className="block text-body-md font-label-lg text-on-surface font-semibold">
+                      Hide entry from friends
+                    </span>
+                    <span className="block text-body-sm text-on-surface-variant">
+                      {demoIsHidden
+                        ? "Visible only to you"
+                        : "Visible to friends"}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Save Entry Action Button */}
-            <form onSubmit={handleDemoSave}>
-              <button
-                type="submit"
-                className="w-full h-12 rounded-full bg-primary text-on-primary text-label-lg font-label-lg font-bold shadow-md hover:bg-primary/90 transition-all active:scale-[0.99]"
-              >
-                Save entry
-              </button>
-            </form>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={demoIsHidden}
+                  onClick={() => setDemoIsHidden(!demoIsHidden)}
+                  className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ${
+                    demoIsHidden ? "bg-primary" : "bg-surface-container-highest"
+                  }`}
+                >
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ${
+                      demoIsHidden
+                        ? "translate-x-6 text-on-primary-container"
+                        : "translate-x-0 text-on-surface-variant"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      {demoIsHidden ? "lock" : "public"}
+                    </span>
+                  </span>
+                </button>
+              </section>
 
-            {/* Live Save Notification */}
-            {demoSaveNotice && (
-              <div className="p-md rounded-2xl bg-primary-container text-on-primary-container text-label-lg font-semibold text-center animate-in fade-in zoom-in-95">
-                Your entry has been saved
-              </div>
-            )}
-          </div>
+              {/* Save Entry Action Button */}
+              <form onSubmit={handleDemoSave}>
+                <button
+                  type="submit"
+                  className="w-full h-12 rounded-full bg-primary text-on-primary text-label-lg font-label-lg font-bold shadow-md hover:bg-primary/90 transition-all active:scale-[0.99]"
+                >
+                  Save entry
+                </button>
+              </form>
+
+              {/* Live Save Notification */}
+              {demoSaveNotice && (
+                <div className="p-md rounded-2xl bg-primary-container text-on-primary-container text-label-lg font-semibold text-center animate-in fade-in zoom-in-95">
+                  Your entry has been saved
+                </div>
+              )}
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
@@ -515,77 +637,81 @@ export default function Landing() {
       <section
         id="features"
         ref={loopSectionRef}
-        className="px-container-margin py-20 max-w-6xl mx-auto w-full"
+        className="px-container-margin py-20 max-w-6xl mx-auto w-full relative"
       >
         {/* Header (Eyebrow + H2 + Subtitle) */}
-        <div className="text-center mb-16">
-          <span className="px-md py-xs rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-semibold inline-block">
-            Not just a journal
-          </span>
-          <h2 className="mt-xs text-3xl md:text-4xl font-bold text-on-surface">
-            A journal that answers back
-          </h2>
-          <p className="mt-xs text-body-md text-on-surface-variant max-w-xl mx-auto leading-relaxed">
-            Your entries are visible only to accepted friends — zero algorithms,
-            zero public pressure, zero noise.
-          </p>
-        </div>
+        <ScrollReveal animation="fade-up">
+          <div className="text-center mb-16">
+            <span className="px-md py-xs rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-semibold inline-block">
+              Not just a journal
+            </span>
+            <h2 className="mt-xs text-3xl md:text-4xl font-bold text-on-surface">
+              A journal that answers back
+            </h2>
+            <p className="mt-xs text-body-md text-on-surface-variant max-w-xl mx-auto leading-relaxed">
+              Your entries are visible only to accepted friends — zero algorithms,
+              zero public pressure, zero noise.
+            </p>
+          </div>
+        </ScrollReveal>
 
         {/* 4 Connected Nodes Container */}
         <div className="flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
           {/* NODE 1 — "You record your day" */}
-          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
-            <div>
-              {/* Header inside mockup 1 */}
-              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                <span className="text-label-sm font-semibold text-on-surface-variant">
-                  My Entry
-                </span>
-                <span className="text-[11px] text-on-surface-variant/60">
-                  Today
-                </span>
-              </div>
-
-              {/* Entry Content Mockup */}
-              <div className="space-y-xs">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-xs">
-                    <span
-                      className={`flex h-8 w-8 items-center justify-center rounded-full ${APP_MOODS[4].bg}`}
-                    >
-                      <span
-                        className={`material-symbols-outlined text-[18px] ${APP_MOODS[4].color}`}
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        {APP_MOODS[4].icon}
-                      </span>
-                    </span>
-                    <span className="px-sm py-0.5 rounded-full bg-primary-container/40 text-[11px] font-semibold text-primary">
-                      #Grateful
-                    </span>
-                  </div>
-
-                  {/* Photo preview placeholder 32x32 */}
-                  <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0 border border-outline-variant/20">
-                    <span className="material-symbols-outlined text-[16px]">
-                      image
-                    </span>
-                  </div>
+          <ScrollReveal animation="fade-up" delay={100} className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div>
+                {/* Header inside mockup 1 */}
+                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                  <span className="text-label-sm font-semibold text-on-surface-variant">
+                    My Entry
+                  </span>
+                  <span className="text-[11px] text-on-surface-variant/60">
+                    Today
+                  </span>
                 </div>
 
-                <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
-                  “{SHARED_ENTRY_TEXT}”
+                {/* Entry Content Mockup */}
+                <div className="space-y-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-xs">
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${APP_MOODS[4].bg}`}
+                      >
+                        <span
+                          className={`material-symbols-outlined text-[18px] ${APP_MOODS[4].color}`}
+                          style={{ fontVariationSettings: "'FILL' 1" }}
+                        >
+                          {APP_MOODS[4].icon}
+                        </span>
+                      </span>
+                      <span className="px-sm py-0.5 rounded-full bg-primary-container/40 text-[11px] font-semibold text-primary">
+                        #Grateful
+                      </span>
+                    </div>
+
+                    {/* Photo preview placeholder 32x32 */}
+                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0 border border-outline-variant/20">
+                      <span className="material-symbols-outlined text-[16px]">
+                        image
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
+                    “{SHARED_ENTRY_TEXT}”
+                  </p>
+                </div>
+              </div>
+
+              {/* Caption under Node 1 */}
+              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+                <p className="text-label-md font-bold text-on-surface">
+                  You record your day
                 </p>
               </div>
             </div>
-
-            {/* Caption under Node 1 */}
-            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-              <p className="text-label-md font-bold text-on-surface">
-                You record your day
-              </p>
-            </div>
-          </div>
+          </ScrollReveal>
 
           {/* CONNECTOR 1 -> 2 */}
           <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
@@ -595,8 +721,8 @@ export default function Landing() {
                 friends only
               </span>
               <div className="w-full flex items-center">
-                <div className="h-[2px] w-full bg-outline-variant/40 border-b border-dashed border-outline-variant" />
-                <span className="material-symbols-outlined text-[14px] text-outline-variant/80 -ml-1 shrink-0">
+                <div className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`} />
+                <span className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
                   chevron_right
                 </span>
               </div>
@@ -605,8 +731,8 @@ export default function Landing() {
             {/* Mobile Vertical Line */}
             <div className="flex md:hidden items-center gap-sm py-2">
               <div className="flex flex-col items-center">
-                <div className="w-[2px] h-8 bg-outline-variant/40 border-r border-dashed border-outline-variant" />
-                <span className="material-symbols-outlined text-[16px] text-outline-variant/80 -mt-1">
+                <div className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`} />
+                <span className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
                   expand_more
                 </span>
               </div>
@@ -617,44 +743,46 @@ export default function Landing() {
           </div>
 
           {/* NODE 2 — "Friend sees in feed" */}
-          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
-            <div>
-              {/* Feed Card Mockup Header */}
-              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                <div className="flex items-center gap-xs">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-container text-secondary text-label-sm font-bold">
-                    D
+          <ScrollReveal animation="fade-up" delay={250} className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div>
+                {/* Feed Card Mockup Header */}
+                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                  <div className="flex items-center gap-xs">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-container text-secondary text-label-sm font-bold">
+                      D
+                    </div>
+                    <div>
+                      <h4 className="text-label-sm font-bold text-on-surface leading-none">
+                        Daniel Kim
+                      </h4>
+                      <span className="text-[10px] text-on-surface-variant">
+                        10m ago
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-label-sm font-bold text-on-surface leading-none">
-                      Daniel Kim
-                    </h4>
-                    <span className="text-[10px] text-on-surface-variant">
-                      10m ago
-                    </span>
-                  </div>
+                  <span
+                    className={`material-symbols-outlined text-[20px] ${APP_MOODS[4].color}`}
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    {APP_MOODS[4].icon}
+                  </span>
                 </div>
-                <span
-                  className={`material-symbols-outlined text-[20px] ${APP_MOODS[4].color}`}
-                  style={{ fontVariationSettings: "'FILL' 1" }}
-                >
-                  {APP_MOODS[4].icon}
-                </span>
+
+                {/* Feed Card Text (Exact same entry text as Node 1!) */}
+                <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
+                  “{SHARED_ENTRY_TEXT}”
+                </p>
               </div>
 
-              {/* Feed Card Text (Exact same entry text as Node 1!) */}
-              <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
-                “{SHARED_ENTRY_TEXT}”
-              </p>
+              {/* Caption under Node 2 */}
+              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+                <p className="text-label-md font-bold text-on-surface">
+                  Friend sees in feed
+                </p>
+              </div>
             </div>
-
-            {/* Caption under Node 2 */}
-            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-              <p className="text-label-md font-bold text-on-surface">
-                Friend sees in feed
-              </p>
-            </div>
-          </div>
+          </ScrollReveal>
 
           {/* CONNECTOR 2 -> 3 */}
           <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
@@ -664,8 +792,8 @@ export default function Landing() {
                 friend reacts
               </span>
               <div className="w-full flex items-center">
-                <div className="h-[2px] w-full bg-outline-variant/40 border-b border-dashed border-outline-variant" />
-                <span className="material-symbols-outlined text-[14px] text-outline-variant/80 -ml-1 shrink-0">
+                <div className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`} />
+                <span className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
                   chevron_right
                 </span>
               </div>
@@ -674,8 +802,8 @@ export default function Landing() {
             {/* Mobile Vertical Line */}
             <div className="flex md:hidden items-center gap-sm py-2">
               <div className="flex flex-col items-center">
-                <div className="w-[2px] h-8 bg-outline-variant/40 border-r border-dashed border-outline-variant" />
-                <span className="material-symbols-outlined text-[16px] text-outline-variant/80 -mt-1">
+                <div className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`} />
+                <span className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
                   expand_more
                 </span>
               </div>
@@ -686,42 +814,44 @@ export default function Landing() {
           </div>
 
           {/* NODE 3 — "Friend leaves a like" */}
-          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
-            <div>
-              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                <span className="text-label-sm font-semibold text-on-surface-variant">
-                  Reaction
-                </span>
-                <span className="text-[11px] text-on-surface-variant/60">
-                  Feed
-                </span>
-              </div>
-
-              {/* Heart reaction mockup */}
-              <div className="flex flex-col items-center justify-center py-xs space-y-xs bg-primary-container/20 rounded-xl border border-primary-container/30">
-                <div
-                  className={`transition-transform duration-300 ${hasLiked ? "scale-125" : "scale-100"}`}
-                >
-                  <span
-                    className="material-symbols-outlined text-[28px] text-primary"
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    favorite
+          <ScrollReveal animation="fade-up" delay={400} className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div>
+                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                  <span className="text-label-sm font-semibold text-on-surface-variant">
+                    Reaction
+                  </span>
+                  <span className="text-[11px] text-on-surface-variant/60">
+                    Feed
                   </span>
                 </div>
-                <div className="text-label-md font-bold text-primary transition-all duration-300">
-                  {hasLiked ? "4 Likes" : "3 Likes"}
+
+                {/* Heart reaction mockup */}
+                <div className="flex flex-col items-center justify-center py-xs space-y-xs bg-primary-container/20 rounded-xl border border-primary-container/30">
+                  <div
+                    className={`transition-transform duration-300 ${hasLiked ? "scale-125" : "scale-100"}`}
+                  >
+                    <span
+                      className="material-symbols-outlined text-[28px] text-primary"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                    >
+                      favorite
+                    </span>
+                  </div>
+                  <div className="text-label-md font-bold text-primary transition-all duration-300">
+                    {hasLiked ? "4 Likes" : "3 Likes"}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Caption under Node 3 */}
-            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-              <p className="text-label-md font-bold text-on-surface">
-                Friend leaves a like
-              </p>
+              {/* Caption under Node 3 */}
+              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+                <p className="text-label-md font-bold text-on-surface">
+                  Friend leaves a like
+                </p>
+              </div>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* CONNECTOR 3 -> 4 */}
           <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
@@ -731,8 +861,8 @@ export default function Landing() {
                 you find out
               </span>
               <div className="w-full flex items-center">
-                <div className="h-[2px] w-full bg-outline-variant/40 border-b border-dashed border-outline-variant" />
-                <span className="material-symbols-outlined text-[14px] text-outline-variant/80 -ml-1 shrink-0">
+                <div className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`} />
+                <span className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
                   chevron_right
                 </span>
               </div>
@@ -741,8 +871,8 @@ export default function Landing() {
             {/* Mobile Vertical Line */}
             <div className="flex md:hidden items-center gap-sm py-2">
               <div className="flex flex-col items-center">
-                <div className="w-[2px] h-8 bg-outline-variant/40 border-r border-dashed border-outline-variant" />
-                <span className="material-symbols-outlined text-[16px] text-outline-variant/80 -mt-1">
+                <div className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`} />
+                <span className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}>
                   expand_more
                 </span>
               </div>
@@ -753,118 +883,130 @@ export default function Landing() {
           </div>
 
           {/* NODE 4 — "Notification to you" */}
-          <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all hover:shadow-md">
-            <div>
-              {/* Header Bell with animated badge */}
-              <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                <span className="text-label-sm font-semibold text-on-surface-variant">
-                  Notifications
-                </span>
-
-                {/* HeaderBell Icon with red badge */}
-                <div className="relative flex items-center justify-center w-7 h-7 rounded-full bg-surface-container-low">
-                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
-                    notifications
+          <ScrollReveal animation="fade-up" delay={550} className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+              <div>
+                {/* Header Bell with animated badge */}
+                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
+                  <span className="text-label-sm font-semibold text-on-surface-variant">
+                    Notifications
                   </span>
 
-                  {/* Red Badge "1" — Fades in & scales up synchronously */}
-                  <span
-                    className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] font-bold text-on-error transition-all duration-500 ease-out ${
-                      hasLiked ? "opacity-100 scale-100" : "opacity-0 scale-50"
-                    }`}
-                  >
-                    1
-                  </span>
-                </div>
-              </div>
+                  {/* HeaderBell Icon with red badge */}
+                  <div className="relative flex items-center justify-center w-7 h-7 rounded-full bg-surface-container-low">
+                    <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
+                      notifications
+                    </span>
 
-              {/* Notification Card — Fades in & scales up synchronously */}
-              <div
-                className={`rounded-xl bg-surface-container-low p-xs border border-outline-variant/20 transition-all duration-500 ease-out ${
-                  hasLiked
-                    ? "opacity-100 translate-y-0 scale-100"
-                    : "opacity-40 translate-y-1 scale-95"
-                }`}
-              >
-                <div className="flex items-start gap-xs">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary text-[11px] font-bold mt-0.5">
-                    D
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] leading-tight text-on-surface font-medium">
-                      <span className="font-bold">Daniel</span> liked your entry
-                    </p>
-                    <span className="text-[10px] text-on-surface-variant">
-                      just now
+                    {/* Red Badge "1" — Fades in & scales up synchronously */}
+                    <span
+                      className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] font-bold text-on-error transition-all duration-500 ease-out ${
+                        hasLiked ? "opacity-100 scale-100" : "opacity-0 scale-50"
+                      }`}
+                    >
+                      1
                     </span>
                   </div>
                 </div>
+
+                {/* Notification Card — Fades in & scales up synchronously */}
+                <div
+                  className={`rounded-xl bg-surface-container-low p-xs border border-outline-variant/20 transition-all duration-500 ease-out ${
+                    hasLiked
+                      ? "opacity-100 translate-y-0 scale-100"
+                      : "opacity-40 translate-y-1 scale-95"
+                  }`}
+                >
+                  <div className="flex items-start gap-xs">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary text-[11px] font-bold mt-0.5">
+                      D
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] leading-tight text-on-surface font-medium">
+                        <span className="font-bold">Daniel</span> liked your entry
+                      </p>
+                      <span className="text-[10px] text-on-surface-variant">
+                        just now
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Caption under Node 4 */}
+              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
+                <p className="text-label-md font-bold text-on-surface">
+                  Notification to you
+                </p>
               </div>
             </div>
-
-            {/* Caption under Node 4 */}
-            <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-              <p className="text-label-md font-bold text-on-surface">
-                Notification to you
-              </p>
-            </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* APP SHOWCASE - 1:1 EXACT APPLICATION VIEWS */}
       <section
         id="showcase"
-        className="px-container-margin py-20 bg-surface-container-low/80 border-t border-outline-variant/20"
+        className="px-container-margin py-20 bg-surface-container-low/80 border-t border-outline-variant/20 relative overflow-hidden"
       >
-        <div className="max-w-5xl mx-auto text-center">
-          <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
-            1:1 Mobile Interface Preview
-          </span>
-          <h2 className="mt-xs text-3xl md:text-4xl font-bold text-on-surface">
-            Explore the Real App Screens
-          </h2>
-          <p className="mt-xs text-body-md text-on-surface-variant max-w-lg mx-auto">
-            Experience MoodShare’s exact layouts — adapted directly from the
-            live application components.
-          </p>
+        {/* Ambient Glowing Orbs */}
+        <div className="absolute top-1/3 left-10 w-80 h-80 bg-secondary-container/30 blur-3xl pointer-events-none rounded-full animate-float-slow" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 bg-tertiary-container/30 blur-3xl pointer-events-none rounded-full animate-float-reverse" />
+
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <ScrollReveal animation="fade-up">
+            <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
+              1:1 Mobile Interface Preview
+            </span>
+            <h2 className="mt-xs text-3xl md:text-4xl font-bold text-on-surface">
+              Explore the Real App Screens
+            </h2>
+            <p className="mt-xs text-body-md text-on-surface-variant max-w-lg mx-auto">
+              Experience MoodShare’s exact layouts — adapted directly from the
+              live application components.
+            </p>
+          </ScrollReveal>
 
           {/* View Switcher Tabs */}
-          <div className="mt-md inline-flex p-1 rounded-2xl bg-surface-container cloud-shadow mb-lg">
-            <button
-              onClick={() => setActiveTab("home")}
-              className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
-                activeTab === "home"
-                  ? "bg-white text-on-surface shadow-xs"
-                  : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              Home Summary
-            </button>
-            <button
-              onClick={() => setActiveTab("calendar")}
-              className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
-                activeTab === "calendar"
-                  ? "bg-white text-on-surface shadow-xs"
-                  : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              Monthly & Weekly Calendar
-            </button>
-            <button
-              onClick={() => setActiveTab("feed")}
-              className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
-                activeTab === "feed"
-                  ? "bg-white text-on-surface shadow-xs"
-                  : "text-on-surface-variant hover:text-on-surface"
-              }`}
-            >
-              Friend Feed
-            </button>
-          </div>
+          <ScrollReveal animation="scale-up" delay={150}>
+            <div className="mt-md inline-flex p-1 rounded-2xl bg-surface-container cloud-shadow mb-lg">
+              <button
+                onClick={() => setActiveTab("home")}
+                className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
+                  activeTab === "home"
+                    ? "bg-white text-on-surface shadow-xs scale-105"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}
+              >
+                Home Summary
+              </button>
+              <button
+                onClick={() => setActiveTab("calendar")}
+                className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
+                  activeTab === "calendar"
+                    ? "bg-white text-on-surface shadow-xs scale-105"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}
+              >
+                Monthly & Weekly Calendar
+              </button>
+              <button
+                onClick={() => setActiveTab("feed")}
+                className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
+                  activeTab === "feed"
+                    ? "bg-white text-on-surface shadow-xs scale-105"
+                    : "text-on-surface-variant hover:text-on-surface"
+                }`}
+              >
+                Friend Feed
+              </button>
+            </div>
+          </ScrollReveal>
 
           {/* Device Mockup Shell */}
-          <div className="mx-auto max-w-md bg-background text-on-background rounded-[36px] border-[8px] border-surface-container-highest shadow-2xl overflow-hidden relative text-left">
+          <ScrollReveal animation="scale-up" delay={250}>
+            <div className="mx-auto max-w-md bg-background text-on-background rounded-[36px] border-[8px] border-surface-container-highest shadow-2xl overflow-hidden relative text-left transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)]">
+              {/* 1:1 HOME SUMMARY VIEW */}
             {/* 1:1 HOME SUMMARY VIEW */}
             {activeTab === "home" && (
               <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
@@ -1468,97 +1610,105 @@ export default function Landing() {
               })}
             </nav>
           </div>
-        </div>
-      </section>
+        </ScrollReveal>
+      </div>
+    </section>
 
       {/* FAQ SECTION */}
       <section
         id="faq"
         className="px-container-margin py-20 max-w-4xl mx-auto w-full"
       >
-        <div className="text-center mb-xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
-            Frequently Asked Questions
-          </h2>
-          <p className="mt-xs text-body-md text-on-surface-variant">
-            Everything you need to know about MoodShare.
-          </p>
-        </div>
+        <ScrollReveal animation="fade-up">
+          <div className="text-center mb-xl">
+            <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-xs text-body-md text-on-surface-variant">
+              Everything you need to know about MoodShare.
+            </p>
+          </div>
+        </ScrollReveal>
 
         <div className="space-y-md">
           {FAQS.map((faq, index) => {
             const isOpen = openFaq === index;
             return (
-              <div
-                key={index}
-                className="bg-white rounded-2xl border border-outline-variant/30 cloud-shadow overflow-hidden transition-all"
-              >
-                <button
-                  onClick={() => setOpenFaq(isOpen ? null : index)}
-                  className="w-full p-md text-left flex items-center justify-between font-bold text-on-surface text-body-md md:text-lg hover:bg-surface-container-low transition-colors"
+              <ScrollReveal key={index} animation="fade-up" delay={index * 100}>
+                <div
+                  className="bg-white rounded-2xl border border-outline-variant/30 cloud-shadow overflow-hidden transition-all duration-300 hover:border-outline-variant/60"
                 >
-                  <span>{faq.q}</span>
-                  <span className="text-xl font-normal text-on-surface-variant ml-xs">
-                    {isOpen ? "−" : "+"}
-                  </span>
-                </button>
-                {isOpen && (
-                  <div className="px-md pb-md text-body-md text-on-surface-variant leading-relaxed border-t border-outline-variant/10 pt-sm">
-                    {faq.a}
-                  </div>
-                )}
-              </div>
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    className="w-full p-md text-left flex items-center justify-between font-bold text-on-surface text-body-md md:text-lg hover:bg-surface-container-low transition-colors"
+                  >
+                    <span>{faq.q}</span>
+                    <span className="text-xl font-normal text-on-surface-variant ml-xs transition-transform duration-300">
+                      {isOpen ? "−" : "+"}
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-md pb-md text-body-md text-on-surface-variant leading-relaxed border-t border-outline-variant/10 pt-sm animate-in fade-in duration-200">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              </ScrollReveal>
             );
           })}
         </div>
       </section>
 
       {/* FINAL CALL TO ACTION */}
-      <section className="px-container-margin py-20 bg-gradient-to-r from-primary-container/50 via-secondary-container/50 to-tertiary-container/50 text-center">
-        <div className="max-w-3xl mx-auto">
-          <span className="text-4xl mb-sm block">🌸</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
-            Ready for a calm, mindful routine?
-          </h2>
-          <p className="mt-xs text-body-md md:text-lg text-on-surface-variant max-w-xl mx-auto">
-            Join MoodShare today and take your first step toward gentle
-            self-reflection.
-          </p>
-          <div className="mt-lg">
-            <Link
-              to="/login"
-              className="inline-block px-xl py-md rounded-full bg-primary-container text-on-primary-container text-label-lg font-bold hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-            >
-              Get Started for Free
-            </Link>
+      <section className="px-container-margin py-20 bg-gradient-to-r from-primary-container/50 via-secondary-container/50 to-tertiary-container/50 text-center relative overflow-hidden">
+        <ScrollReveal animation="scale-up">
+          <div className="max-w-3xl mx-auto relative z-10">
+            <span className="text-4xl mb-sm block animate-bounce duration-1000">🌸</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
+              Ready for a calm, mindful routine?
+            </h2>
+            <p className="mt-xs text-body-md md:text-lg text-on-surface-variant max-w-xl mx-auto">
+              Join MoodShare today and take your first step toward gentle
+              self-reflection.
+            </p>
+            <div className="mt-lg">
+              <Link
+                to="/login"
+                className="inline-block px-xl py-md rounded-full bg-primary-container text-on-primary-container text-label-lg font-bold hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95"
+              >
+                Get Started for Free
+              </Link>
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
 
       {/* FOOTER */}
       <footer className="px-container-margin py-lg border-t border-outline-variant/20 bg-background text-on-surface-variant text-body-sm">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-md">
-          <div className="flex items-center gap-xs font-bold text-on-surface">
-            <span className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-xs">
-              🌸
-            </span>
-            <span>MoodShare</span>
-          </div>
+        <ScrollReveal animation="fade-up">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-md">
+            <div className="flex items-center gap-xs font-bold text-on-surface">
+              <span className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-xs">
+                🌸
+              </span>
+              <span>MoodShare</span>
+            </div>
 
-          <div className="flex gap-md text-label-sm">
-            <Link to="/login" className="hover:underline">
-              Log in
-            </Link>
-            <a href="#features" className="hover:underline">
-              Features
-            </a>
-            <a href="#faq" className="hover:underline">
-              FAQ
-            </a>
-          </div>
+            <div className="flex gap-md text-label-sm">
+              <Link to="/login" className="hover:underline">
+                Log in
+              </Link>
+              <a href="#features" className="hover:underline">
+                Features
+              </a>
+              <a href="#faq" className="hover:underline">
+                FAQ
+              </a>
+            </div>
 
-          <p>© {new Date().getFullYear()} MoodShare.</p>
-        </div>
+            <p>© {new Date().getFullYear()} MoodShare.</p>
+          </div>
+        </ScrollReveal>
       </footer>
     </div>
   );

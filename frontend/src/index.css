@@ -104,7 +104,9 @@
 }
 
 @layer base {
-  html,
+  html {
+    scroll-behavior: smooth;
+  }
   body {
     font-family: "Plus Jakarta Sans", "Manrope", sans-serif;
     -webkit-tap-highlight-color: transparent;
@@ -142,4 +144,68 @@
 .skeleton {
   @apply animate-pulse bg-surface-container-high;
 }
+
+/* Animations for scroll reveal & glowing background orbs */
+@keyframes floatOrb {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-16px) scale(1.06);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.35;
+    filter: blur(40px);
+  }
+  50% {
+    opacity: 0.65;
+    filter: blur(55px);
+  }
+}
+
+.animate-float-slow {
+  animation: floatOrb 8s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatOrb 10s ease-in-out infinite reverse;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 6s ease-in-out infinite;
+}
+
+/* Scroll reveal utility transitions */
+.reveal-base {
+  opacity: 0;
+  will-change: transform, opacity;
+  transition-property: opacity, transform;
+  transition-duration: 800ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-fade-up {
+  transform: translateY(36px);
+}
+
+.reveal-scale-up {
+  transform: scale(0.93) translateY(24px);
+}
+
+.reveal-slide-left {
+  transform: translateX(-40px);
+}
+
+.reveal-slide-right {
+  transform: translateX(40px);
+}
+
+.reveal-active {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1);
+}
+
 
