@@ -428,7 +428,7 @@ function ThemeToggle() {
 
 function Avatar({ user, large = false }) {
   const classes = large
-    ? 'h-[112px] w-[112px] text-headline-lg border-4 border-surface-container-highest cloud-shadow'
+    ? 'h-[112px] w-[112px] text-headline-lg cloud-shadow'
     : 'h-10 w-10 text-body-md'
   const initials = (user.display_name || user.username)
     .split(/\s+/)
@@ -439,7 +439,7 @@ function Avatar({ user, large = false }) {
 
   if (user.avatar_url) {
     return (
-      <span className={`${classes} shrink-0 overflow-hidden rounded-full`}>
+      <span className={`inline-block ${classes} shrink-0 overflow-hidden rounded-full`}>
         <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
       </span>
     )
