@@ -37,8 +37,10 @@ func (h Feed) List(c *gin.Context) {
 		}
 	}
 	cursor := strings.TrimSpace(c.Query("cursor"))
+	includeSelfParam := strings.TrimSpace(c.Query("include_self"))
+	includeSelf := includeSelfParam == "true" || includeSelfParam == "1"
 
-	entries, nextCursor, err := h.Feed.List(c.Request.Context(), c.GetString("userID"), limit, cursor)
+	entries, nextCursor, err := h.Feed.List(c.Request.Context(), c.GetString("userID"), limit, cursor, includeSelf)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load feed"})
 		return

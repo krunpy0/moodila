@@ -21,10 +21,30 @@ import { getLocalDate } from '../api/client'
 const emojiReactions = ['❤️', '🫂', '👏', '💡', '😁']
 
 export default function Feed() {
-  const feedQuery = useInfiniteFeedQuery(10)
+  const [includeSelf, setIncludeSelf] = useState(() => {
+    try {
+      return localStorage.getItem('moodshare_feed_include_self') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const feedQuery = useInfiniteFeedQuery(10, includeSelf)
   const likeMutation = useLikeEntryMutation()
   const observerRef = useRef(null)
   const { t } = useLanguage()
+
+  const handleToggleIncludeSelf = () => {
+    setIncludeSelf((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem('moodshare_feed_include_self', String(next))
+      } catch {
+        // Storage restriction fallback
+      }
+      return next
+    })
+  }
 
   const entries = feedQuery.data
     ? feedQuery.data.pages.flatMap((page) => page.items || page.entries || [])
@@ -85,6 +105,44 @@ export default function Feed() {
         </div>
         <HeaderBell />
       </header>
+
+      <section className="px-container-margin pb-xs">
+        <div className="flex items-center justify-between rounded-[20px] bg-surface-container-lowest p-md cloud-shadow">
+          <div className="flex items-center gap-sm">
+            <span className="material-symbols-outlined text-[22px] text-primary">
+              {includeSelf ? 'person' : 'group'}
+            </span>
+            <div>
+              <span className="block text-body-sm font-semibold text-on-surface">
+                {t('feed.includeMyPosts')}
+              </span>
+              <span className="block text-label-sm text-on-surface-variant">
+                {t('feed.includeMyPostsDesc')}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={includeSelf}
+            aria-label={t('feed.includeMyPosts')}
+            onClick={handleToggleIncludeSelf}
+            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+              includeSelf ? 'bg-primary' : 'bg-surface-container-highest'
+            }`}
+          >
+            <span
+              className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
+                includeSelf ? 'translate-x-5 text-on-primary-container' : 'translate-x-0 text-on-surface-variant'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[14px]">
+                {includeSelf ? 'check' : 'close'}
+              </span>
+            </span>
+          </button>
+        </div>
+      </section>
 
       <section className="space-y-md px-container-margin pt-sm" aria-live="polite">
         {feedQuery.isLoading ? (

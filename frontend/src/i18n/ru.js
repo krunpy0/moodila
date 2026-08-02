@@ -145,6 +145,8 @@ export const ru = {
     commentsCount: '{count} комментарий(ев)',
     addComment: 'Написать комментарий...',
     sendComment: 'Отправить',
+    includeMyPosts: 'Мои записи в ленте',
+    includeMyPostsDesc: 'Показывать свои посты вместе с постами друзей',
   },
 
   // Friends & Profile Pages

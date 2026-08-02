@@ -17,7 +17,7 @@ type Feed struct {
 	Pool *pgxpool.Pool
 }
 
-func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor string) ([]models.FeedEntry, string, error) {
+func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor string, includeSelf bool) ([]models.FeedEntry, string, error) {
 	if limit <= 0 {
 		limit = 10
 	}
@@ -54,11 +54,21 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 		       COALESCE((SELECT reaction FROM likes l WHERE l.entry_id = e.id AND l.user_id = $1 LIMIT 1), '') AS my_reaction,
 		       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id) AS comment_count
 		FROM entries e
-		JOIN users u ON u.id = e.user_id
+		JOIN users u ON u.id = e.user_id`
+
+	if includeSelf {
+		query += `
+		LEFT JOIN friendships f ON f.status = 'accepted'
+			AND ((f.requester_id = $2 AND f.addressee_id = e.user_id)
+				OR (f.addressee_id = $2 AND f.requester_id = e.user_id))
+		WHERE (e.user_id = $2 OR (f.id IS NOT NULL AND e.is_hidden = false))`
+	} else {
+		query += `
 		JOIN friendships f ON f.status = 'accepted'
 			AND ((f.requester_id = $2 AND f.addressee_id = e.user_id)
 				OR (f.addressee_id = $2 AND f.requester_id = e.user_id))
 		WHERE e.is_hidden = false`
+	}
 
 	var args []any
 	args = append(args, viewerID, viewerID)

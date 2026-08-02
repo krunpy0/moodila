@@ -1,9 +1,12 @@
 import { api } from './client'
 
-export const getFeed = ({ limit, cursor } = {}) => {
+export const getFeed = ({ limit, cursor, includeSelf } = {}) => {
   const params = new URLSearchParams()
   if (limit) params.set('limit', limit)
   if (cursor) params.set('cursor', cursor)
+  if (includeSelf !== undefined && includeSelf !== null) {
+    params.set('include_self', includeSelf ? 'true' : 'false')
+  }
   const queryString = params.toString()
   return api(`/feed${queryString ? `?${queryString}` : ''}`)
 }

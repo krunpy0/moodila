@@ -26,11 +26,11 @@ export const useEntrySummaryQuery = (month) => useQuery({ queryKey: queryKeys.en
 export const useFriendEntriesQuery = (friendId, month, enabled = true) => useQuery({ queryKey: queryKeys.friendEntries(friendId, month), queryFn: () => getFriendEntriesByMonth(friendId, month), enabled: Boolean(friendId) && Boolean(month) && enabled, staleTime: STALE_TIMES.STABLE })
 export const useFriendsQuery = () => useQuery({ queryKey: queryKeys.friends, queryFn: getFriends, staleTime: STALE_TIMES.STATIC })
 export const usePendingFriendsQuery = () => useQuery({ queryKey: queryKeys.pendingFriends, queryFn: getPendingFriends, staleTime: STALE_TIMES.DYNAMIC })
-export const useFeedQuery = () => useQuery({ queryKey: queryKeys.feed, queryFn: getFeed, staleTime: STALE_TIMES.DYNAMIC })
-export const useInfiniteFeedQuery = (limit = 10) =>
+export const useFeedQuery = (includeSelf = false) => useQuery({ queryKey: queryKeys.feed(includeSelf), queryFn: () => getFeed({ includeSelf }), staleTime: STALE_TIMES.DYNAMIC })
+export const useInfiniteFeedQuery = (limit = 10, includeSelf = false) =>
   useInfiniteQuery({
-    queryKey: queryKeys.feed,
-    queryFn: ({ pageParam }) => getFeed({ cursor: pageParam, limit }),
+    queryKey: queryKeys.feed(includeSelf),
+    queryFn: ({ pageParam }) => getFeed({ cursor: pageParam, limit, includeSelf }),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) => lastPage.next_cursor || undefined,
     staleTime: STALE_TIMES.DYNAMIC,

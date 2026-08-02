@@ -89,8 +89,8 @@ func TestHiddenEntriesE2E(t *testing.T) {
 		t.Fatalf("expected only public entry1 for friend, got %#v", friendEntries)
 	}
 
-	// 2. Friend B views Feed -> should see Entry 1, but NOT Entry 2
-	feedList, _, err := feedRepo.List(ctx, userB.ID, 10, "")
+	// 2. Friend B views Feed (includeSelf = false) -> should see Entry 1, but NOT Entry 2
+	feedList, _, err := feedRepo.List(ctx, userB.ID, 10, "", false)
 	if err != nil {
 		t.Fatalf("Feed.List: %v", err)
 	}
@@ -102,6 +102,21 @@ func TestHiddenEntriesE2E(t *testing.T) {
 	}
 	if bSeesEntry2 {
 		t.Fatalf("friend B should not see hidden entry2 in feed")
+	}
+
+	// 2b. User A views Feed with includeSelf = true -> should see User A's entries
+	feedListA, _, err := feedRepo.List(ctx, userA.ID, 10, "", true)
+	if err != nil {
+		t.Fatalf("Feed.List for owner with includeSelf=true: %v", err)
+	}
+	var aSeesEntry1 bool
+	for _, fe := range feedListA {
+		if fe.ID == entry1.ID {
+			aSeesEntry1 = true
+		}
+	}
+	if !aSeesEntry1 {
+		t.Fatalf("user A should see own entry1 in feed when includeSelf=true")
 	}
 
 	// 3. User A views own calendar -> sees BOTH Entry 1 and Entry 2

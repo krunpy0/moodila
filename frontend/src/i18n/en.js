@@ -145,6 +145,8 @@ export const en = {
     commentsCount: '{count} comments',
     addComment: 'Write a comment...',
     sendComment: 'Post',
+    includeMyPosts: 'Include my posts',
+    includeMyPostsDesc: 'Show your own entries in the feed',
   },
 
   // Friends & Profile Pages
