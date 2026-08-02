@@ -131,6 +131,11 @@ export const en = {
     noEntriesMonth: 'No entries for this month.',
     entryDetails: 'Entry details',
     editEntry: 'Edit entry',
+    inspectorDate: 'Selected Date',
+    myEntry: 'My Entry',
+    noEntryForDate: 'No entry for this day',
+    clickToAddNote: 'Click below to journal your mood and thoughts.',
+    futureDateInfo: 'You cannot log entries for future dates.',
   },
 
   // Feed Page

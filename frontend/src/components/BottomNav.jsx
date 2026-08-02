@@ -16,7 +16,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label={t('nav.home')}
-      className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-40px)] max-w-md -translate-x-1/2 items-center justify-around rounded-full bg-surface/90 px-4 py-2 cloud-shadow backdrop-blur-xl"
+      className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-40px)] max-w-md -translate-x-1/2 items-center justify-around rounded-full bg-surface/90 px-4 py-2 cloud-shadow backdrop-blur-xl lg:hidden"
     >
       {items.map(([to, icon, labelKey]) => {
         const active = to && pathname === to

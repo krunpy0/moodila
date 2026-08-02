@@ -7,7 +7,9 @@ import {
   useAddCommentMutation,
   useDeleteCommentMutation,
   useProfileQuery,
+  useFriendsQuery,
 } from '../api/queries'
+import AppLayout from '../components/AppLayout'
 import BottomNav from '../components/BottomNav'
 import HeaderBell from '../components/HeaderBell'
 import { FeedSkeleton } from '../components/skeleton/PageSkeletons'
@@ -30,9 +32,12 @@ export default function Feed() {
   })
 
   const feedQuery = useInfiniteFeedQuery(10, includeSelf)
+  const friendsQuery = useFriendsQuery()
   const likeMutation = useLikeEntryMutation()
   const observerRef = useRef(null)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+
+  const friends = friendsQuery.data || []
 
   const handleToggleIncludeSelf = () => {
     setIncludeSelf((prev) => {
@@ -96,93 +101,168 @@ export default function Feed() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
-      <header className="flex items-center justify-between px-container-margin py-md">
-        <div>
-          <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">{t('feed.title')}</p>
-          <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface">{t('feed.title')}</h1>
-          <p className="mt-xs text-body-sm text-on-surface-variant">{t('feed.emptySubtitle')}</p>
-        </div>
-        <HeaderBell />
-      </header>
-
-      <section className="px-container-margin pb-xs">
-        <div className="flex items-center justify-between rounded-[20px] bg-surface-container-lowest p-md cloud-shadow">
-          <div className="flex items-center gap-sm">
-            <span className="material-symbols-outlined text-[22px] text-primary">
-              {includeSelf ? 'person' : 'group'}
-            </span>
-            <div>
-              <span className="block text-body-sm font-semibold text-on-surface">
-                {t('feed.includeMyPosts')}
-              </span>
-              <span className="block text-label-sm text-on-surface-variant">
-                {t('feed.includeMyPostsDesc')}
-              </span>
-            </div>
+    <AppLayout>
+      <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl bg-background pb-32 lg:pb-12 text-on-background px-0 lg:px-6 py-0 lg:py-6">
+        <header className="flex items-center justify-between px-container-margin py-md lg:px-0">
+          <div>
+            <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">{t('feed.title')}</p>
+            <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface">{t('feed.title')}</h1>
+            <p className="mt-xs text-body-sm text-on-surface-variant">{t('feed.emptySubtitle')}</p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={includeSelf}
-            aria-label={t('feed.includeMyPosts')}
-            onClick={handleToggleIncludeSelf}
-            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-              includeSelf ? 'bg-primary' : 'bg-surface-container-highest'
-            }`}
-          >
-            <span
-              className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
-                includeSelf ? 'translate-x-5 text-on-primary-container' : 'translate-x-0 text-on-surface-variant'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[14px]">
-                {includeSelf ? 'check' : 'close'}
-              </span>
-            </span>
-          </button>
-        </div>
-      </section>
+          <div className="lg:hidden">
+            <HeaderBell />
+          </div>
+        </header>
 
-      <section className="space-y-md px-container-margin pt-sm" aria-live="polite">
-        {feedQuery.isLoading ? (
-          <FeedSkeleton />
-        ) : (
-          <>
-            {entries.map((entry) => (
-              <FeedCard
-                key={entry.id}
-                entry={entry}
-                busy={likeMutation.isPending && likeMutation.variables?.entryId === entry.id}
-                onReact={handleReact}
-              />
-            ))}
-
-            {hasNextPage && (
-              <div ref={observerRef} className="py-md text-center">
-                <p className="text-body-sm text-on-surface-variant">
-                  {isFetchingNextPage ? t('common.loading') : t('common.seeMore')}
-                </p>
+        <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+          {/* Main Feed Column */}
+          <div className="lg:col-span-8 space-y-md">
+            <section className="px-container-margin lg:px-0 pb-xs">
+              <div className="flex items-center justify-between rounded-[20px] bg-surface-container-lowest p-md cloud-shadow border border-outline-variant/15">
+                <div className="flex items-center gap-sm">
+                  <span className="material-symbols-outlined text-[22px] text-primary">
+                    {includeSelf ? 'person' : 'group'}
+                  </span>
+                  <div>
+                    <span className="block text-body-sm font-semibold text-on-surface">
+                      {t('feed.includeMyPosts')}
+                    </span>
+                    <span className="block text-label-sm text-on-surface-variant">
+                      {t('feed.includeMyPostsDesc')}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={includeSelf}
+                  aria-label={t('feed.includeMyPosts')}
+                  onClick={handleToggleIncludeSelf}
+                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                    includeSelf ? 'bg-primary' : 'bg-surface-container-highest'
+                  }`}
+                >
+                  <span
+                    className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
+                      includeSelf ? 'translate-x-5 text-on-primary-container' : 'translate-x-0 text-on-surface-variant'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[14px]">
+                      {includeSelf ? 'check' : 'close'}
+                    </span>
+                  </span>
+                </button>
               </div>
-            )}
+            </section>
 
-            {!feedQuery.isLoading && !feedQuery.isError && entries.length === 0 && (
-              <div className="rounded-[24px] bg-surface-container-low p-lg text-center">
-                <span className="material-symbols-outlined text-[32px] text-primary">diversity_1</span>
-                <h2 className="mt-sm text-body-md font-semibold text-on-surface">{t('feed.emptyTitle')}</h2>
-                <p className="mt-xs text-body-sm text-on-surface-variant">{t('feed.emptySubtitle')}</p>
-                <Link to="/friends" className="mt-md inline-block rounded-full bg-primary px-lg py-sm text-label-lg font-semibold text-on-primary">
-                  {t('feed.addFriendsBtn')}
+            <section className="space-y-md px-container-margin lg:px-0 pt-sm" aria-live="polite">
+              {feedQuery.isLoading ? (
+                <FeedSkeleton />
+              ) : (
+                <>
+                  {entries.map((entry) => (
+                    <FeedCard
+                      key={entry.id}
+                      entry={entry}
+                      busy={likeMutation.isPending && likeMutation.variables?.entryId === entry.id}
+                      onReact={handleReact}
+                    />
+                  ))}
+
+                  {hasNextPage && (
+                    <div ref={observerRef} className="py-md text-center">
+                      <p className="text-body-sm text-on-surface-variant">
+                        {isFetchingNextPage ? t('common.loading') : t('common.seeMore')}
+                      </p>
+                    </div>
+                  )}
+
+                  {!feedQuery.isLoading && !feedQuery.isError && entries.length === 0 && (
+                    <div className="rounded-[24px] bg-surface-container-low p-lg text-center border border-outline-variant/15">
+                      <span className="material-symbols-outlined text-[32px] text-primary">diversity_1</span>
+                      <h2 className="mt-sm text-body-md font-semibold text-on-surface">{t('feed.emptyTitle')}</h2>
+                      <p className="mt-xs text-body-sm text-on-surface-variant">{t('feed.emptySubtitle')}</p>
+                      <Link to="/friends" className="mt-md inline-block rounded-full bg-primary px-lg py-sm text-label-lg font-semibold text-on-primary">
+                        {t('feed.addFriendsBtn')}
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+              {feedQuery.isError && <p role="alert" className="py-lg text-center text-body-sm text-error">{feedQuery.error.message}</p>}
+              {likeMutation.isError && <p role="alert" className="py-lg text-center text-body-sm text-error">{likeMutation.error.message}</p>}
+            </section>
+          </div>
+
+          {/* Right Sidebar Column on Desktop */}
+          <div className="hidden lg:block lg:col-span-4 space-y-md">
+            <div className="sticky top-6 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md border border-outline-variant/15">
+              <div className="flex items-center justify-between border-b border-outline-variant/15 pb-sm">
+                <h3 className="text-headline-lg font-bold text-on-surface">
+                  {language === 'ru' ? 'Друзья' : 'Friends'}
+                </h3>
+                <Link
+                  to="/friends"
+                  className="text-label-sm font-semibold text-primary hover:underline"
+                >
+                  {t('common.seeAll')}
                 </Link>
               </div>
-            )}
-          </>
-        )}
-        {feedQuery.isError && <p role="alert" className="py-lg text-center text-body-sm text-error">{feedQuery.error.message}</p>}
-        {likeMutation.isError && <p role="alert" className="py-lg text-center text-body-sm text-error">{likeMutation.error.message}</p>}
-      </section>
-      <BottomNav />
-    </main>
+
+              {friends.length > 0 ? (
+                <div className="space-y-sm">
+                  {friends.slice(0, 5).map((friend) => (
+                    <Link
+                      key={friend.id}
+                      to={`/calendar?friend=${friend.id}`}
+                      className="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container transition-colors group"
+                    >
+                      <div className="flex items-center gap-sm min-w-0">
+                        {friend.avatar_url ? (
+                          <img
+                            src={friend.avatar_url}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-primary/20"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-sm">
+                            {(friend.display_name || friend.username)[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-body-sm font-semibold text-on-surface truncate">
+                            {friend.display_name || friend.username}
+                          </p>
+                          <p className="text-label-sm text-on-surface-variant truncate">
+                            @{friend.username}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant/40 group-hover:text-primary transition-colors">
+                        calendar_month
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-4 text-center">
+                  <p className="text-body-sm text-on-surface-variant">
+                    {language === 'ru' ? 'У вас пока нет друзей' : 'No friends added yet'}
+                  </p>
+                  <Link
+                    to="/friends"
+                    className="mt-xs inline-block text-label-sm font-semibold text-primary hover:underline"
+                  >
+                    {language === 'ru' ? 'Найти друзей' : 'Find friends'}
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <BottomNav />
+      </main>
+    </AppLayout>
   )
 }
 
@@ -305,7 +385,7 @@ function FeedCard({ entry, busy, onReact }) {
           <ImageWithSkeleton
             src={entry.photo_url}
             alt={`Photo from ${authorName}'s day`}
-            className="max-h-96 w-full rounded-2xl object-cover"
+            className="w-full h-auto rounded-2xl object-contain"
             skeletonHeightClass="h-64 sm:h-80"
             loading="lazy"
           />

@@ -106,24 +106,25 @@ export default function Admin() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-2xl bg-background px-container-margin py-lg pb-32 text-on-background">
-      <header className="flex items-center justify-between py-md mb-md">
-        <div className="flex items-center gap-xs">
-          <Link
-            to="/home"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
-            aria-label="Back"
-          >
-            <span className="material-symbols-outlined text-[20px]">arrow_back</span>
-          </Link>
-          <h1 className="text-headline-lg font-headline-lg text-on-surface font-bold">
-            Administration
-          </h1>
-        </div>
-        <span className="rounded-full bg-primary-container px-sm py-xs text-label-sm font-label-sm text-on-primary-container font-semibold">
-          Admin Mode
-        </span>
-      </header>
+    <AppLayout>
+      <main className="mx-auto min-h-screen w-full max-w-2xl lg:max-w-6xl xl:max-w-7xl bg-background px-container-margin lg:px-6 py-lg pb-32 lg:pb-12 text-on-background">
+        <header className="flex items-center justify-between py-md mb-md">
+          <div className="flex items-center gap-xs">
+            <Link
+              to="/home"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
+              aria-label="Back"
+            >
+              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+            </Link>
+            <h1 className="text-headline-lg font-headline-lg text-on-surface font-bold">
+              Administration
+            </h1>
+          </div>
+          <span className="rounded-full bg-primary-container px-sm py-xs text-label-sm font-label-sm text-on-primary-container font-semibold">
+            Admin Mode
+          </span>
+        </header>
 
       <section className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md mb-lg">
         <h2 className="text-headline-lg font-headline-lg text-on-surface">Create Announcement</h2>
@@ -350,7 +351,8 @@ export default function Admin() {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </AppLayout>
   )
 }
 

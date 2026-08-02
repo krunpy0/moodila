@@ -50,23 +50,52 @@ export default function Auth() {
 
   return (
     <main className="min-h-screen bg-background text-on-background px-container-margin py-xl flex items-center justify-center">
-      <section className="w-full max-w-md" aria-labelledby="auth-title">
-        <div className="mb-xl text-center">
-          <div className="mx-auto mb-md w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-[30px]">
-            <span aria-hidden="true">🌸</span>
+      <section className="w-full max-w-md lg:max-w-4xl lg:grid lg:grid-cols-2 bg-surface-container-lowest rounded-[32px] cloud-shadow overflow-hidden" aria-labelledby="auth-title">
+        {/* Left Side Branding Card (Desktop) */}
+        <div className="hidden lg:flex flex-col justify-between p-10 bg-primary-container/30 border-r border-outline-variant/15 select-none">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary-container flex items-center justify-center text-[28px] shadow-xs">
+              <span>🌸</span>
+            </div>
+            <div>
+              <h1 className="text-headline-lg font-bold text-on-surface">Moodila</h1>
+              <span className="text-label-sm text-on-surface-variant font-medium">Mood & Social Journal</span>
+            </div>
           </div>
-          <h1
-            id="auth-title"
-            className="text-headline-xl font-headline-xl text-on-surface"
-          >
-            Moodila
-          </h1>
-          <p className="mt-xs text-body-sm font-body-sm text-on-surface-variant">
-            Keep your days close. Share them gently.
-          </p>
+          
+          <div className="space-y-4">
+            <h2 className="text-headline-xl font-bold text-on-surface leading-tight">
+              Keep your days close.<br />Share them gently.
+            </h2>
+            <p className="text-body-md text-on-surface-variant/80">
+              Track your emotional wellness, share memories with friends, and reflect on your personal journey.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-label-sm text-on-surface-variant/70 font-semibold">
+            <span className="material-symbols-outlined text-[18px]">verified_user</span>
+            <span>Private & Encrypted Journal</span>
+          </div>
         </div>
 
-        <div className="bg-white rounded-[24px] p-lg cloud-shadow">
+        {/* Right Side Auth Form */}
+        <div className="p-6 lg:p-10 flex flex-col justify-center">
+          <div className="mb-lg text-center lg:hidden">
+            <div className="mx-auto mb-md w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-[30px]">
+              <span aria-hidden="true">🌸</span>
+            </div>
+            <h1
+              id="auth-title"
+              className="text-headline-xl font-headline-xl text-on-surface"
+            >
+              Moodila
+            </h1>
+            <p className="mt-xs text-body-sm font-body-sm text-on-surface-variant">
+              Keep your days close. Share them gently.
+            </p>
+          </div>
+
+          <div>
           {infoMessage && (
             <div className="mb-md p-sm rounded-lg bg-primary-container/40 text-on-primary-container text-body-sm font-body-sm text-center">
               {infoMessage}
@@ -160,6 +189,7 @@ export default function Auth() {
                   : t("auth.createAccount")}
             </button>
           </form>
+        </div>
         </div>
       </section>
     </main>

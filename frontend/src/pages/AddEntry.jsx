@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
 import { useDeleteEntryMutation, useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
 import { uploadEntryPhoto, uploadEntryAudio } from '../api/entries'
-import BottomNav from '../components/BottomNav'
+import AppLayout from '../components/AppLayout'
 import { useNotifications } from '../components/Notifications'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
@@ -193,22 +193,23 @@ export default function AddEntry() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-on-surface pb-32">
-      <header className="fixed top-0 z-40 flex w-full items-center justify-between bg-background/80 px-container-margin py-md backdrop-blur-md">
-        <Link
-          to="/home"
-          aria-label={t('common.back')}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container"
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-        </Link>
-        <h1 className="text-headline-lg-mobile font-headline-lg-mobile">
-          {entryQuery.data ? t('addEntry.editTitle') : t('addEntry.title')}
-        </h1>
-        <div className="w-10" />
-      </header>
+    <AppLayout>
+      <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-4xl xl:max-w-5xl bg-background pb-32 lg:pb-12 text-on-surface px-0 lg:px-6 py-0 lg:py-6">
+        <header className="flex items-center justify-between px-container-margin py-md lg:px-0">
+          <Link
+            to="/home"
+            aria-label={t('common.back')}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors"
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </Link>
+          <h1 className="text-headline-lg font-headline-lg">
+            {entryQuery.data ? t('addEntry.editTitle') : t('addEntry.title')}
+          </h1>
+          <div className="w-10" />
+        </header>
 
-      <form onSubmit={submit} className="mx-auto mt-20 max-w-md space-y-lg px-container-margin">
+        <form onSubmit={submit} className="space-y-lg px-container-margin lg:px-0 mt-4">
         <section className="rounded-[24px] bg-white p-lg cloud-shadow">
           <h2 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
             {t('addEntry.title')}
@@ -282,7 +283,7 @@ export default function AddEntry() {
               <ImageWithSkeleton
                 src={form.photo_url}
                 alt="Selected entry photo"
-                className="max-h-64 w-full object-cover rounded-2xl"
+                className="w-full h-auto rounded-2xl object-contain"
                 skeletonHeightClass="h-56 sm:h-64"
                 isUploading={isUploadingPhoto}
                 uploadingText={t('common.uploading')}
@@ -471,7 +472,7 @@ export default function AddEntry() {
         </div>
       )}
 
-      <BottomNav />
-    </div>
+      </main>
+    </AppLayout>
   )
 }

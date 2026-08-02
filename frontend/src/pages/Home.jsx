@@ -8,7 +8,7 @@ import {
   useEntrySummaryQuery,
   useProfileQuery,
 } from "../api/queries";
-import BottomNav from "../components/BottomNav";
+import AppLayout from "../components/AppLayout";
 import HeaderBell from "../components/HeaderBell";
 import { HomeSkeleton } from "../components/skeleton/PageSkeletons";
 import MoodIcon from "../components/MoodIcon";
@@ -65,7 +65,7 @@ export default function Home() {
     [allEntries],
   );
   const recent = useMemo(
-    () => [...monthEntries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2),
+    () => [...monthEntries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3),
     [monthEntries],
   );
   const dominantMood = summary.dominant_mood
@@ -98,259 +98,268 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
-      <header className="flex items-center justify-between px-container-margin py-md">
-        <div className="flex items-center gap-sm">
-          <Link
-            to="/profile"
-            className="block shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40"
-            title={t("nav.profile")}
-          >
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={displayName || t("nav.profile")}
-                className="h-10 w-10 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
-                {initials || (
-                  <span className="material-symbols-outlined text-[20px]">
-                    person
-                  </span>
-                )}
-              </div>
-            )}
-          </Link>
-          <h1 className="text-headline-lg-mobile font-headline-lg-mobile">
-            Moodila
-          </h1>
-        </div>
-        <div className="flex items-center gap-xs">
-          <HeaderBell />
-          <button
-            type="button"
-            aria-label={t("common.logout")}
-            title={t("common.logout")}
-            onClick={async () => {
-              await logout().catch(() => {});
-              queryClient.clear();
-              navigate("/login", { replace: true });
-            }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              logout
-            </span>
-          </button>
-        </div>
-      </header>
+    <AppLayout>
+      <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl bg-background pb-32 lg:pb-12 text-on-background px-0 lg:px-6 py-0 lg:py-6">
+        <header className="flex items-center justify-between px-container-margin py-md lg:hidden">
+          <div className="flex items-center gap-sm">
+            <Link
+              to="/profile"
+              className="block shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40"
+              title={t("nav.profile")}
+            >
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={displayName || t("nav.profile")}
+                  className="h-10 w-10 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
+                  {initials || (
+                    <span className="material-symbols-outlined text-[20px]">
+                      person
+                    </span>
+                  )}
+                </div>
+              )}
+            </Link>
+            <h1 className="text-headline-lg-mobile font-headline-lg-mobile">
+              Moodila
+            </h1>
+          </div>
+          <div className="flex items-center gap-xs">
+            <HeaderBell />
+            <button
+              type="button"
+              aria-label={t("common.logout")}
+              title={t("common.logout")}
+              onClick={async () => {
+                await logout().catch(() => {});
+                queryClient.clear();
+                navigate("/login", { replace: true });
+              }}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                logout
+              </span>
+            </button>
+          </div>
+        </header>
 
-      <div className="space-y-lg px-container-margin">
-        {isLoading ? (
-          <HomeSkeleton />
-        ) : (
-          <>
-            <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
-              <div className="relative z-10 flex max-w-full flex-col items-start gap-md">
-                <h2 className="text-headline-lg font-headline-lg text-on-primary-container">
-                  {greetingText()}
-                  {displayName ? `, ${displayName}` : ""}
-                </h2>
-                <Link
-                  to="/entries/new"
-                  className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md"
-                >
-                  {t("home.journalToday")}
-                  <span className="material-symbols-outlined text-[18px]">
-                    edit
-                  </span>
-                </Link>
-              </div>
-            </section>
-
-            <section className="space-y-md">
-              <div className="flex items-end justify-between">
-                <h2 className="text-label-lg font-label-lg text-on-surface-variant">
-                  {t("home.thisWeekMood")}
-                </h2>
-                <Link
-                  to="/calendar"
-                  className="text-label-sm font-label-sm text-primary"
-                >
-                  {t("common.seeMore")}
-                </Link>
-              </div>
-              <div className="flex justify-between gap-sm overflow-x-auto rounded-[24px] bg-white/40 p-md cloud-shadow">
-                {week.map((date) => {
-                  const key = formatDate(date);
-                  const entry = entriesByDate[key];
-                  const mood = entry && getMoodInfo(entry.mood, t);
-                  const isToday = key === getLocalDate();
-                  const isFuture = key > getLocalDate();
-                  return (
+        <div className="space-y-lg px-container-margin lg:px-0">
+          {isLoading ? (
+            <HomeSkeleton />
+          ) : (
+            <div className="space-y-lg lg:grid lg:grid-cols-12 lg:gap-8 lg:space-y-0 lg:items-stretch">
+              {/* Left Column: Hero Greeting, Week Mood, Recent Logs */}
+              <div className="lg:col-span-7 space-y-lg flex flex-col justify-between">
+                <section className="relative overflow-hidden rounded-[24px] lg:rounded-[32px] bg-primary-container p-lg lg:p-8 xl:p-10 cloud-shadow">
+                  <div className="relative z-10 flex max-w-full flex-col items-start gap-md lg:gap-lg">
+                    <h2 className="text-headline-lg font-headline-lg lg:text-3xl xl:text-4xl lg:leading-tight font-bold text-on-primary-container">
+                      {greetingText()}
+                      {displayName ? `, ${displayName}` : ""}
+                    </h2>
                     <Link
-                      key={key}
-                      to={isFuture ? "#" : `/entries/new?date=${key}`}
-                      aria-disabled={isFuture}
-                      onClick={(event) => isFuture && event.preventDefault()}
-                      className={`flex min-w-12 flex-col items-center gap-xs ${isFuture ? "opacity-40" : ""}`}
+                      to="/entries/new"
+                      className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm lg:px-8 lg:py-4 text-label-lg font-label-lg lg:text-body-lg lg:font-bold text-on-primary shadow-md hover:opacity-90 transition-all hover:scale-[1.02]"
                     >
-                      <span
-                        className={`flex h-12 w-12 items-center justify-center rounded-full ${
-                          mood ? mood.bg : "bg-surface-variant"
-                        } ${isToday ? "ring-2 ring-primary" : ""}`}
-                      >
-                        {entry ? (
-                          <MoodIcon mood={entry.mood} className="text-[26px]" />
-                        ) : (
-                          <span className="material-symbols-outlined text-[20px] text-on-surface-variant">
-                            add
-                          </span>
-                        )}
-                      </span>
-                      <span
-                        className={`text-label-sm font-label-sm flex items-center gap-0.5 ${isToday ? "font-bold text-primary" : "text-on-surface-variant"}`}
-                      >
-                        {date.toLocaleDateString(dateLocale, { weekday: "short" })}
-                        {entry?.is_hidden && (
-                          <span
-                            className="material-symbols-outlined text-[12px]"
-                            title={t("common.hiddenFromFriends")}
-                          >
-                            lock
-                          </span>
-                        )}
+                      {t("home.journalToday")}
+                      <span className="material-symbols-outlined text-[18px] lg:text-[22px]">
+                        edit
                       </span>
                     </Link>
-                  );
-                })}
-              </div>
-            </section>
+                  </div>
+                </section>
 
-            <section
-              className="grid grid-cols-2 gap-md"
-              aria-labelledby="summary-title"
-            >
-              <div className="col-span-2 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
-                <h2
-                  id="summary-title"
-                  className="text-headline-lg font-headline-lg text-on-surface"
-                >
-                  {t("home.moodSummary")}
-                </h2>
-                <div className="mt-sm flex items-baseline gap-xs">
-                  <span className="text-headline-xl font-headline-xl text-on-surface">
-                    {summary.entry_count}
-                  </span>
-                  <span className="text-body-md font-body-md text-on-surface-variant">
-                    {t("home.entries")}
-                  </span>
-                </div>
-                <p className="mt-1 text-body-sm font-body-sm text-on-surface-variant">
-                  {t("home.totalLoggedMonth")}
-                </p>
-              </div>
-              <div className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-lg">
-                <span className="text-label-sm font-label-sm text-on-surface-variant">
-                  {t("home.dominantMood")}
-                </span>
-                <div className="flex items-center gap-xs">
-                  {dominantMood ? (
-                    <MoodIcon mood={summary.dominant_mood} className="text-[32px]" />
-                  ) : (
-                    <span className="text-body-md text-on-surface-variant">—</span>
-                  )}
-                  <span className="text-headline-lg font-headline-lg text-on-surface">
-                    {dominantMood ? dominantMood.label : t("common.none")}
-                  </span>
-                </div>
-              </div>
-              <div className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-lg">
-                <span className="text-label-sm font-label-sm text-on-surface-variant">
-                  {t("home.mostUsedTag")}
-                </span>
-                <div className="flex items-center gap-xs">
-                  <span className="material-symbols-outlined text-[28px] text-secondary">
-                    auto_awesome
-                  </span>
-                  <span className="min-w-0 break-words text-headline-lg font-headline-lg text-on-surface">
-                    {summary.top_tag ? getLocalizedTag(summary.top_tag, t) : t("common.none")}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            <section className="space-y-md">
-              <div className="flex items-center justify-between">
-                <h2 className="text-label-lg font-label-lg uppercase text-on-surface-variant">
-                  {t("home.recentLogs")}
-                </h2>
-                <span className="rounded-full bg-surface-container px-sm py-xs text-label-sm font-label-sm text-on-surface-variant">
-                  {t("home.thisMonth")}
-                </span>
-              </div>
-              <div className="space-y-sm">
-                {recent.map((entry) => {
-                  const mood = getMoodInfo(entry.mood, t);
-                  return (
+                <section className="space-y-md">
+                  <div className="flex items-end justify-between">
+                    <h2 className="text-label-lg font-label-lg lg:text-body-lg lg:font-bold text-on-surface-variant">
+                      {t("home.thisWeekMood")}
+                    </h2>
                     <Link
-                      key={entry.date}
-                      to={`/entries/new?date=${entry.date}`}
-                      className="flex items-center gap-md rounded-[24px] bg-white p-md cloud-shadow"
+                      to="/calendar"
+                      className="text-label-sm font-label-sm lg:text-body-md text-primary hover:underline font-medium"
                     >
-                      <span
-                        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] ${mood.bg}`}
-                      >
-                        <MoodIcon mood={entry.mood} className="text-[32px]" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-start justify-between gap-xs">
-                          <strong className="truncate text-body-md text-on-surface">
-                            {getLocalizedTag(entry.tags[0], t) || mood.label}
-                          </strong>
-                          <span className="flex shrink-0 items-center gap-1 text-label-sm font-label-sm text-on-surface-variant/60">
-                            {entry.is_hidden && (
+                      {t("common.seeMore")}
+                    </Link>
+                  </div>
+                  <div className="flex justify-between gap-sm overflow-x-auto rounded-[24px] lg:rounded-[32px] bg-white/40 p-md lg:p-6 cloud-shadow">
+                    {week.map((date) => {
+                      const key = formatDate(date);
+                      const entry = entriesByDate[key];
+                      const mood = entry && getMoodInfo(entry.mood, t);
+                      const isToday = key === getLocalDate();
+                      const isFuture = key > getLocalDate();
+                      return (
+                        <Link
+                          key={key}
+                          to={isFuture ? "#" : `/entries/new?date=${key}`}
+                          aria-disabled={isFuture}
+                          onClick={(event) => isFuture && event.preventDefault()}
+                          className={`flex min-w-12 lg:min-w-16 flex-1 flex-col items-center gap-xs lg:gap-sm transition-transform hover:scale-105 ${isFuture ? "opacity-40" : ""}`}
+                        >
+                          <span
+                            className={`flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-full ${
+                              mood ? mood.bg : "bg-surface-variant"
+                            } ${isToday ? "ring-2 lg:ring-4 ring-primary" : ""}`}
+                          >
+                            {entry ? (
+                              <MoodIcon mood={entry.mood} className="text-[26px] lg:text-[34px]" />
+                            ) : (
+                              <span className="material-symbols-outlined text-[20px] lg:text-[26px] text-on-surface-variant">
+                                add
+                              </span>
+                            )}
+                          </span>
+                          <span
+                            className={`text-label-sm font-label-sm lg:text-body-md flex items-center gap-0.5 ${isToday ? "font-bold text-primary" : "text-on-surface-variant"}`}
+                          >
+                            {date.toLocaleDateString(dateLocale, { weekday: "short" })}
+                            {entry?.is_hidden && (
                               <span
-                                className="material-symbols-outlined text-[13px]"
+                                className="material-symbols-outlined text-[12px] lg:text-[14px]"
                                 title={t("common.hiddenFromFriends")}
                               >
                                 lock
                               </span>
                             )}
-                            {relativeDate(entry.date)}
                           </span>
-                        </span>
-                        <span className="block truncate text-body-sm text-on-surface-variant">
-                          {entry.text || t("home.noNote")}
-                        </span>
-                      </span>
-                    </Link>
-                  );
-                })}
-                {!isLoading && !error && recent.length === 0 && (
-                  <Link
-                    to="/entries/new"
-                    className="flex min-h-24 items-center justify-center rounded-[24px] bg-white p-md text-body-sm text-on-surface-variant cloud-shadow"
-                  >
-                    {t("home.emptyRecent")}
-                  </Link>
-                )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="space-y-md flex-1 flex flex-col justify-end">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-label-lg font-label-lg lg:text-body-lg lg:font-bold uppercase text-on-surface-variant">
+                      {t("home.recentLogs")}
+                    </h2>
+                    <span className="rounded-full bg-surface-container px-sm py-xs lg:px-md lg:py-sm text-label-sm font-label-sm lg:text-body-sm text-on-surface-variant font-medium">
+                      {t("home.thisMonth")}
+                    </span>
+                  </div>
+                  <div className="space-y-sm lg:space-y-md">
+                    {recent.map((entry) => {
+                      const mood = getMoodInfo(entry.mood, t);
+                      return (
+                        <Link
+                          key={entry.date}
+                          to={`/entries/new?date=${entry.date}`}
+                          className="flex items-center gap-md lg:gap-lg rounded-[24px] lg:rounded-[28px] bg-white p-md lg:p-6 cloud-shadow hover:shadow-md transition-all hover:scale-[1.01]"
+                        >
+                          <span
+                            className={`flex h-14 w-14 lg:h-16 lg:w-16 shrink-0 items-center justify-center rounded-[20px] lg:rounded-[24px] ${mood.bg}`}
+                          >
+                            <MoodIcon mood={entry.mood} className="text-[32px] lg:text-[38px]" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-start justify-between gap-xs">
+                              <strong className="truncate text-body-md lg:text-headline-sm text-on-surface font-bold">
+                                {getLocalizedTag(entry.tags[0], t) || mood.label}
+                              </strong>
+                              <span className="flex shrink-0 items-center gap-1 text-label-sm font-label-sm lg:text-body-sm text-on-surface-variant/60">
+                                {entry.is_hidden && (
+                                  <span
+                                    className="material-symbols-outlined text-[13px] lg:text-[15px]"
+                                    title={t("common.hiddenFromFriends")}
+                                  >
+                                    lock
+                                  </span>
+                                )}
+                                {relativeDate(entry.date)}
+                              </span>
+                            </span>
+                            <span className="block truncate text-body-sm lg:text-body-md text-on-surface-variant mt-0.5">
+                              {entry.text || t("home.noNote")}
+                            </span>
+                          </span>
+                        </Link>
+                      );
+                    })}
+                    {!isLoading && !error && recent.length === 0 && (
+                      <Link
+                        to="/entries/new"
+                        className="flex min-h-24 lg:min-h-32 items-center justify-center rounded-[24px] lg:rounded-[28px] bg-white p-md lg:p-6 text-body-sm lg:text-body-md text-on-surface-variant cloud-shadow"
+                      >
+                        {t("home.emptyRecent")}
+                      </Link>
+                    )}
+                  </div>
+                </section>
               </div>
-            </section>
-          </>
-        )}
-        {error && (
-          <p
-            role="alert"
-            className="text-center text-body-sm font-body-sm text-error"
-          >
-            {error.message}
-          </p>
-        )}
-      </div>
-      <BottomNav />
-    </main>
+
+              {/* Right Column: Mood Summary Stats */}
+              <div className="lg:col-span-5 space-y-lg flex flex-col">
+                <section
+                  className="grid grid-cols-2 gap-md lg:gap-lg flex-1"
+                  aria-labelledby="summary-title"
+                >
+                  <div className="col-span-2 rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-lg lg:p-8 cloud-shadow flex flex-col justify-between">
+                    <div>
+                      <h2
+                        id="summary-title"
+                        className="text-headline-lg font-headline-lg lg:text-2xl font-bold text-on-surface"
+                      >
+                        {t("home.moodSummary")}
+                      </h2>
+                      <p className="mt-1 text-body-sm font-body-sm lg:text-body-md text-on-surface-variant">
+                        {t("home.totalLoggedMonth")}
+                      </p>
+                    </div>
+                    <div className="mt-md lg:mt-lg flex items-baseline gap-xs">
+                      <span className="text-headline-xl font-headline-xl lg:text-5xl xl:text-6xl font-bold text-on-surface leading-none">
+                        {summary.entry_count}
+                      </span>
+                      <span className="text-body-md font-body-md lg:text-headline-sm text-on-surface-variant font-medium">
+                        {t("home.entries")}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-[24px] lg:rounded-[32px] bg-primary-container/30 p-lg lg:p-8 cloud-shadow">
+                    <span className="text-label-sm font-label-sm lg:text-body-sm font-medium text-on-surface-variant">
+                      {t("home.dominantMood")}
+                    </span>
+                    <div className="flex items-center gap-xs lg:gap-sm mt-2">
+                      {dominantMood ? (
+                        <MoodIcon mood={summary.dominant_mood} className="text-[32px] lg:text-[42px]" />
+                      ) : (
+                        <span className="text-body-md text-on-surface-variant">—</span>
+                      )}
+                      <span className="text-headline-lg font-headline-lg lg:text-2xl xl:text-3xl font-bold text-on-surface truncate">
+                        {dominantMood ? dominantMood.label : t("common.none")}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-[24px] lg:rounded-[32px] bg-secondary-container/30 p-lg lg:p-8 cloud-shadow">
+                    <span className="text-label-sm font-label-sm lg:text-body-sm font-medium text-on-surface-variant">
+                      {t("home.mostUsedTag")}
+                    </span>
+                    <div className="flex items-center gap-xs lg:gap-sm mt-2">
+                      <span className="material-symbols-outlined text-[28px] lg:text-[36px] text-secondary">
+                        auto_awesome
+                      </span>
+                      <span className="min-w-0 break-words text-headline-lg font-headline-lg lg:text-2xl xl:text-3xl font-bold text-on-surface truncate">
+                        {summary.top_tag ? getLocalizedTag(summary.top_tag, t) : t("common.none")}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          )}
+          {error && (
+            <p
+              role="alert"
+              className="text-center text-body-sm font-body-sm text-error"
+            >
+              {error.message}
+            </p>
+          )}
+        </div>
+      </main>
+    </AppLayout>
   );
 }
 

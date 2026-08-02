@@ -131,6 +131,11 @@ export const ru = {
     noEntriesMonth: 'В этом месяце пока нет записей.',
     entryDetails: 'Детали записи',
     editEntry: 'Редактировать',
+    inspectorDate: 'Выбранная дата',
+    myEntry: 'Моя запись',
+    noEntryForDate: 'Нет записи за этот день',
+    clickToAddNote: 'Нажмите ниже, чтобы записать настроение и мысли.',
+    futureDateInfo: 'Нельзя создавать записи для будущих дат.',
   },
 
   // Feed Page

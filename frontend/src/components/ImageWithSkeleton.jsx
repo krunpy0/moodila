@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 export default function ImageWithSkeleton({
   src,
   alt = '',
-  className = 'w-full object-cover',
+  className = 'w-full h-auto object-contain',
   containerClassName = '',
   skeletonHeightClass = 'h-48 sm:h-64',
   isUploading = false,

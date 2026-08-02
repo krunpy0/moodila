@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useEntriesQuery, useFriendEntriesQuery, useFriendsQuery } from "../api/queries";
 import { getLocalDate } from "../api/client";
-import BottomNav from "../components/BottomNav";
+import AppLayout from "../components/AppLayout";
 import { CalendarSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
@@ -19,6 +19,7 @@ export default function Calendar() {
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedFriendEntry, setSelectedFriendEntry] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(getLocalDate());
   const [friendMenuOpen, setFriendMenuOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
 
@@ -107,7 +108,8 @@ export default function Calendar() {
   };
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 text-on-surface">
+    <AppLayout>
+      <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl bg-background pb-28 lg:pb-12 text-on-surface px-0 lg:px-6 py-0 lg:py-6">
       <header className="px-container-margin py-md">
         {selectedFriend ? (
           <div className="rounded-[24px] bg-surface-container-lowest p-md cloud-shadow">
@@ -264,101 +266,267 @@ export default function Calendar() {
 
       {viewMode === "month" ? (
         <section
-          className="px-container-margin touch-pan-y"
+          className="px-container-margin touch-pan-y lg:px-0"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="grid grid-cols-7 text-center select-none">
-            {weekdays.map((day) => (
-              <span
-                key={day}
-                className="pb-sm text-label-sm font-label-sm text-on-surface-variant/60"
-              >
-                {day}
-              </span>
-            ))}
-            {days.map(({ date, currentMonth }) => {
-              const dateKey = formatDate(date);
-              const entry = entriesByDate[dateKey];
-              const mood = entry && getMoodInfo(entry.mood, t);
-              const todayKey = getLocalDate();
-              const today = dateKey === todayKey;
-              const future = dateKey > todayKey;
-
-              if (!currentMonth) {
-                return (
+          <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
+            {/* Left 7 columns: Month Calendar Grid */}
+            <div className="lg:col-span-7 bg-surface-container-lowest lg:p-6 lg:rounded-[32px] lg:cloud-shadow">
+              <div className="grid grid-cols-7 text-center select-none">
+                {weekdays.map((day) => (
                   <span
-                    key={dateKey}
-                    className="flex h-[76px] items-start justify-center pt-1 text-body-md font-body-md text-on-surface-variant/20"
+                    key={day}
+                    className="pb-sm text-label-sm font-label-sm lg:text-body-md lg:font-bold text-on-surface-variant/60"
                   >
-                    {date.getDate()}
+                    {day}
                   </span>
-                );
-              }
+                ))}
+                {days.map(({ date, currentMonth }) => {
+                  const dateKey = formatDate(date);
+                  const entry = entriesByDate[dateKey];
+                  const mood = entry && getMoodInfo(entry.mood, t);
+                  const todayKey = getLocalDate();
+                  const today = dateKey === todayKey;
+                  const future = dateKey > todayKey;
+                  const isSelected = selectedDate === dateKey;
 
-              if (future) {
-                return (
-                  <span
-                    key={dateKey}
-                    aria-label={`${date.toLocaleDateString(dateLocale, {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}`}
-                    className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md text-on-surface-variant/30"
-                  >
-                    <span>{date.getDate()}</span>
-                    <span className="h-10 w-10 rounded-full bg-surface-container-low" />
-                  </span>
-                );
-              }
-
-              const content = (
-                <>
-                  <span className={`flex items-center gap-0.5 ${today ? "font-bold" : ""}`}>
-                    {date.getDate()}
-                    {!selectedFriend && entry?.is_hidden && (
-                      <span className="material-symbols-outlined text-[13px] text-on-surface-variant/80" title={t('common.hiddenFromFriends')}>
-                        lock
+                  if (!currentMonth) {
+                    return (
+                      <span
+                        key={dateKey}
+                        className="flex h-[76px] lg:h-28 xl:h-32 items-start justify-center pt-1 lg:pt-3 text-body-md lg:text-body-lg font-body-md text-on-surface-variant/20"
+                      >
+                        {date.getDate()}
                       </span>
-                    )}
-                  </span>
-                  <span className={`flex h-10 w-10 items-center justify-center rounded-full ${mood ? `${mood.bg} ${today ? "ring-2 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
-                    {entry ? (
-                      <MoodIcon mood={entry.mood} className="text-[20px]" />
-                    ) : (
-                      <span className="material-symbols-outlined text-[20px]">add</span>
-                    )}
-                  </span>
-                </>
-              );
-              if (selectedFriend) {
-                if (!entry) {
-                  return <span key={dateKey} className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md">{content}</span>;
-                }
+                    );
+                  }
+
+                  if (future) {
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        onClick={() => setSelectedDate(dateKey)}
+                        aria-label={`${date.toLocaleDateString(dateLocale, {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}`}
+                        className={`flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 rounded-2xl transition-all text-body-md font-body-md text-on-surface-variant/30 ${
+                          isSelected ? "bg-primary-container/20 ring-2 ring-primary" : ""
+                        }`}
+                      >
+                        <span className="lg:text-body-lg lg:font-semibold">{date.getDate()}</span>
+                        <span className="h-10 w-10 lg:h-12 lg:w-12 rounded-full bg-surface-container-low" />
+                      </button>
+                    );
+                  }
+
+                  const cellInner = (
+                    <>
+                      <span className={`flex items-center gap-0.5 lg:text-body-lg ${today ? "font-bold text-primary" : ""}`}>
+                        {date.getDate()}
+                        {!selectedFriend && entry?.is_hidden && (
+                          <span className="material-symbols-outlined text-[13px] lg:text-[15px] text-on-surface-variant/80" title={t('common.hiddenFromFriends')}>
+                            lock
+                          </span>
+                        )}
+                      </span>
+                      <span className={`flex h-10 w-10 lg:h-12 lg:w-12 items-center justify-center rounded-full transition-transform group-hover:scale-105 ${mood ? `${mood.bg} ${today ? "ring-2 lg:ring-4 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
+                        {entry ? (
+                          <MoodIcon mood={entry.mood} className="text-[20px] lg:text-[26px]" />
+                        ) : (
+                          <span className="material-symbols-outlined text-[20px] lg:text-[24px]">add</span>
+                        )}
+                      </span>
+                    </>
+                  );
+
+                  if (selectedFriend) {
+                    if (!entry) {
+                      return (
+                        <button
+                          key={dateKey}
+                          type="button"
+                          onClick={() => setSelectedDate(dateKey)}
+                          className={`flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 rounded-2xl transition-all text-body-md font-body-md ${
+                            isSelected ? "bg-primary-container/20 ring-2 ring-primary" : ""
+                          }`}
+                        >
+                          {cellInner}
+                        </button>
+                      );
+                    }
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        onClick={() => {
+                          setSelectedDate(dateKey);
+                          setSelectedFriendEntry(entry);
+                        }}
+                        aria-label={`${friendName(selectedFriend)}`}
+                        className={`group flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 rounded-2xl transition-all text-body-md font-body-md active:scale-95 ${
+                          isSelected ? "bg-primary-container/20 ring-2 ring-primary" : ""
+                        }`}
+                      >
+                        {cellInner}
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <div key={dateKey} className="relative">
+                      {/* Mobile link flow (< lg) */}
+                      <Link
+                        to={`/entries/new?date=${dateKey}`}
+                        className="flex lg:hidden h-[76px] flex-col items-center gap-1 text-body-md font-body-md"
+                      >
+                        {cellInner}
+                      </Link>
+                      {/* Desktop inspector selection flow (>= lg) */}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate(dateKey)}
+                        className={`hidden lg:flex group w-full h-28 xl:h-32 flex-col items-center gap-2 p-2 rounded-2xl transition-all text-body-md font-body-md hover:bg-surface-container-low/60 ${
+                          isSelected ? "bg-primary-container/30 ring-2 ring-primary" : ""
+                        }`}
+                      >
+                        {cellInner}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right 5 columns: Day Detail Inspector (Desktop Only) */}
+            <div className="hidden lg:block lg:col-span-5 bg-surface-container-lowest p-8 rounded-[32px] cloud-shadow min-h-[480px]">
+              {(() => {
+                const activeDateStr = selectedDate || getLocalDate();
+                const activeEntry = entriesByDate[activeDateStr];
+                const activeMood = activeEntry && getMoodInfo(activeEntry.mood, t);
+                const isFutureDate = activeDateStr > getLocalDate();
+                const isTodayDate = activeDateStr === getLocalDate();
+                const formattedDateStr = formatDateLocale(activeDateStr);
+
                 return (
-                  <button
-                    key={dateKey}
-                    type="button"
-                    onClick={() => setSelectedFriendEntry(entry)}
-                    aria-label={`${friendName(selectedFriend)}`}
-                    className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md active:scale-95"
-                  >
-                    {content}
-                  </button>
+                  <div className="flex flex-col h-full justify-between space-y-6">
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between pb-4 border-b border-outline-variant/40">
+                        <div>
+                          <span className="text-label-sm font-label-sm uppercase tracking-wider text-on-surface-variant/70">
+                            {isTodayDate ? t('common.today') : t('calendar.inspectorDate')}
+                          </span>
+                          <h3 className="text-2xl font-bold text-on-surface">
+                            {formattedDateStr}
+                          </h3>
+                        </div>
+                        {activeEntry?.is_hidden && !selectedFriend && (
+                          <span className="flex items-center gap-1 rounded-full bg-surface-container px-3 py-1 text-label-sm font-medium text-on-surface-variant">
+                            <span className="material-symbols-outlined text-[16px]">lock</span>
+                            {t('common.hiddenFromFriends')}
+                          </span>
+                        )}
+                      </div>
+
+                      {activeEntry ? (
+                        <div className="space-y-6 animate-in fade-in duration-200">
+                          {/* Mood & Tag Header */}
+                          <div className="flex items-center gap-4">
+                            <span className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl ${activeMood.bg}`}>
+                              <MoodIcon mood={activeEntry.mood} className="text-[36px]" />
+                            </span>
+                            <div>
+                              <h4 className="text-xl font-bold text-on-surface">
+                                {activeMood.label}
+                              </h4>
+                              <p className="text-body-sm text-on-surface-variant">
+                                {selectedFriend ? friendName(selectedFriend) : t('calendar.myEntry')}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Text Note */}
+                          <div className="rounded-2xl bg-surface-container-low/50 p-5">
+                            <p className="whitespace-pre-wrap text-body-md text-on-surface leading-relaxed">
+                              {activeEntry.text || <span className="italic text-on-surface-variant/60">{t('home.noNote')}</span>}
+                            </p>
+                          </div>
+
+                          {/* Badges & Media */}
+                          {activeEntry.tags?.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {activeEntry.tags.map((tag) => (
+                                <span key={tag} className="rounded-xl bg-primary-container/60 px-3 py-1 text-label-md font-semibold text-primary">
+                                  #{getLocalizedTag(tag, t)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {activeEntry.photo_url && (
+                            <div className="overflow-hidden rounded-2xl">
+                              <ImageWithSkeleton
+                                src={activeEntry.photo_url}
+                                alt={`Photo for ${formattedDateStr}`}
+                                className="w-full h-auto rounded-2xl object-contain"
+                                skeletonHeightClass="h-48"
+                              />
+                            </div>
+                          )}
+
+                          {activeEntry.audio_url && (
+                            <VoiceNotePlayer audioUrl={activeEntry.audio_url} duration={activeEntry.audio_duration} />
+                          )}
+                        </div>
+                      ) : isFutureDate ? (
+                        <div className="flex flex-col items-center justify-center py-12 text-center text-on-surface-variant/50 space-y-3">
+                          <span className="material-symbols-outlined text-[48px]">event_busy</span>
+                          <p className="text-body-md font-medium">
+                            {t('calendar.futureDateInfo')}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant/40">
+                            <span className="material-symbols-outlined text-[32px]">edit_calendar</span>
+                          </span>
+                          <div className="space-y-1">
+                            <p className="text-body-lg font-semibold text-on-surface">
+                              {t('calendar.noEntryForDate')}
+                            </p>
+                            <p className="text-body-sm text-on-surface-variant">
+                              {t('calendar.clickToAddNote')}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Action for inspect panel */}
+                    {!selectedFriend && !isFutureDate && (
+                      <div className="pt-4 border-t border-outline-variant/40">
+                        <Link
+                          to={`/entries/new?date=${activeDateStr}`}
+                          className="flex items-center justify-center gap-2 w-full rounded-2xl bg-primary py-3.5 px-6 text-label-lg font-bold text-on-primary shadow-sm hover:opacity-95 transition-opacity"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">
+                            {activeEntry ? "edit" : "add"}
+                          </span>
+                          <span>
+                            {activeEntry ? t('common.edit') : t('home.journalToday')}
+                          </span>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 );
-              }
-              return (
-                <Link
-                  key={dateKey}
-                  to={`/entries/new?date=${dateKey}`}
-                  className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md"
-                >
-                  {content}
-                </Link>
-              );
-            })}
+              })()}
+            </div>
           </div>
+
           {error && (
             <p role="alert" className="mt-md text-center text-xl font-body-sm text-error">
               {error.message}
@@ -600,7 +768,7 @@ export default function Calendar() {
                 <ImageWithSkeleton
                   src={selectedFriendEntry.photo_url}
                   alt={`Photo from ${friendName(selectedFriend)}'s day`}
-                  className="max-h-72 w-full rounded-2xl object-cover"
+                  className="w-full h-auto rounded-2xl object-contain"
                   skeletonHeightClass="h-48 sm:h-64"
                 />
               </div>
@@ -610,8 +778,8 @@ export default function Calendar() {
         </div>
       )}
 
-      <BottomNav />
-    </main>
+      </main>
+    </AppLayout>
   );
 }
 
