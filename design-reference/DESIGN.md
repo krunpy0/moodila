@@ -121,7 +121,7 @@ This design system utilizes a foundation of soft, descriptive pastels. The prima
 
 ## Typography
 
-The system uses **Plus Jakarta Sans** across all roles to maintain a cohesive, friendly, and modern character. The rounded terminals of this typeface echo the rounded corners of the UI components.
+The system uses **Plus Jakarta Sans** for English/Latin text and **Manrope** as the primary font for Russian/Cyrillic text (specified via CSS font stack `font-family: "Plus Jakarta Sans", "Manrope", sans-serif`). Since Plus Jakarta Sans lacks Cyrillic glyphs, Cyrillic characters seamlessly fall back to Manrope while retaining Plus Jakarta Sans for Latin characters.
 
 **Headlines** are set with tight letter-spacing and bold weights to feel impactful yet approachable. The "Greetings" header is the primary focal point of the home screen, using `headline-xl` to establish a personal connection immediately.
 

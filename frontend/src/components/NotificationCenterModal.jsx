@@ -1,19 +1,20 @@
 import { useNavigate } from 'react-router-dom'
 import { useNotificationsQuery, useMarkNotificationsAsReadMutation } from '../api/queries'
+import { useLanguage } from '../context/LanguageContext'
 
-function formatRelativeTime(dateString) {
+function formatRelativeTime(dateString, t) {
   if (!dateString) return ''
   const date = new Date(dateString)
   const now = new Date()
   const seconds = Math.floor((now - date) / 1000)
 
-  if (seconds < 60) return 'just now'
+  if (seconds < 60) return t('notifications.justNow')
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return t('notifications.minutesAgo', { m: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return t('notifications.hoursAgo', { h: hours })
   const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
+  if (days < 30) return t('notifications.daysAgo', { d: days })
   return date.toLocaleDateString()
 }
 
@@ -21,6 +22,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   const navigate = useNavigate()
   const { data: notifications = [], isLoading } = useNotificationsQuery(isOpen)
   const markReadMutation = useMarkNotificationsAsReadMutation()
+  const { t } = useLanguage()
 
   if (!isOpen) return null
 
@@ -45,29 +47,33 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
       case 'friend_request':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span> sent you a friend request.
+            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            {t('notifications.friendRequestSent', { name: '' }).trim()}
           </>
         )
       case 'friend_accept':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span> accepted your friend request.
+            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            {t('notifications.friendRequestAccepted', { name: '' }).trim()}
           </>
         )
       case 'like':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span> reacted {item.content || '❤️'} to your entry.
+            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            {t('notifications.likedEntry', { name: '' }).trim()}
           </>
         )
       case 'comment':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span> commented: &quot;{item.content}&quot;
+            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            {t('notifications.commentedEntry', { name: '' }).trim()} &quot;{item.content}&quot;
           </>
         )
       default:
-        return item.content || 'New notification'
+        return item.content || t('notifications.title')
     }
   }
 
@@ -95,10 +101,12 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
         <div className="flex items-center justify-between border-b border-outline-variant/30 px-lg py-md">
           <div className="flex items-center gap-sm">
             <span className="material-symbols-outlined text-primary">notifications</span>
-            <h2 className="text-title-medium font-title-medium text-on-surface">Notifications</h2>
+            <h2 className="text-title-medium font-title-medium text-on-surface">
+              {t('notifications.title')}
+            </h2>
             {unreadCount > 0 && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-label-small font-bold text-primary">
-                {unreadCount} new
+                {unreadCount}
               </span>
             )}
           </div>
@@ -110,12 +118,12 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
                 disabled={markReadMutation.isPending}
                 className="text-label-medium font-label-medium text-primary hover:underline"
               >
-                Mark all read
+                {t('notifications.markAllRead')}
               </button>
             )}
             <button
               type="button"
-              aria-label="Close"
+              aria-label={t('common.close')}
               onClick={onClose}
               className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high"
             >
@@ -128,13 +136,16 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
         <div className="flex-1 overflow-y-auto p-md space-y-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-xl text-on-surface-variant text-body-medium">
-              Loading notifications...
+              {t('common.loading')}
             </div>
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-xl text-center">
-              <span className="material-symbols-outlined text-[48px] text-outline-variant mb-sm">notifications_off</span>
-              <p className="text-body-medium font-body-medium text-on-surface-variant">No notifications yet</p>
-              <p className="text-body-small text-outline">You will see friend requests, likes, and comments here.</p>
+              <span className="material-symbols-outlined text-[48px] text-outline-variant mb-sm">
+                notifications_off
+              </span>
+              <p className="text-body-medium font-body-medium text-on-surface-variant">
+                {t('notifications.empty')}
+              </p>
             </div>
           ) : (
             notifications.map((item) => (
@@ -162,7 +173,9 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
                     </div>
                   )}
                   <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-surface-container-lowest shadow-xs text-primary">
-                    <span className="material-symbols-outlined text-[12px]">{getTypeIcon(item.type)}</span>
+                    <span className="material-symbols-outlined text-[12px]">
+                      {getTypeIcon(item.type)}
+                    </span>
                   </span>
                 </div>
 
@@ -172,13 +185,13 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
                     {renderContent(item)}
                   </p>
                   <span className="mt-1 block text-label-small text-outline">
-                    {formatRelativeTime(item.created_at)}
+                    {formatRelativeTime(item.created_at, t)}
                   </span>
                 </div>
 
                 {/* Unread indicator */}
                 {!item.is_read && (
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary mt-2" title="Unread" />
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary mt-2" />
                 )}
               </button>
             ))

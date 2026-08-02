@@ -7,6 +7,8 @@ import App from './App.jsx'
 import { NotificationsProvider, notifyError } from './components/Notifications.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 
+import { LanguageProvider } from './context/LanguageContext.jsx'
+
 registerSW({ immediate: true })
 
 const queryClient = new QueryClient({
@@ -27,9 +29,11 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <NotificationsProvider>
-          <App />
-        </NotificationsProvider>
+        <LanguageProvider>
+          <NotificationsProvider>
+            <App />
+          </NotificationsProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

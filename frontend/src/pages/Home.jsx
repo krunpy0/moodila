@@ -12,13 +12,15 @@ import BottomNav from "../components/BottomNav";
 import HeaderBell from "../components/HeaderBell";
 import { HomeSkeleton } from "../components/skeleton/PageSkeletons";
 import MoodIcon from "../components/MoodIcon";
-import { getMoodInfo } from "../utils/moods";
+import { getMoodInfo, getLocalizedTag } from "../utils/moods";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), []);
   const month = formatMonth(today);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, dateLocale, formatDate: formatDateLocale } = useLanguage();
   const profileQuery = useProfileQuery();
   const entriesQuery = useEntriesQuery(month);
   const summaryQuery = useEntrySummaryQuery(month);
@@ -44,7 +46,7 @@ export default function Home() {
     [entries],
   );
   const dominantMood = summary.dominant_mood
-    ? getMoodInfo(summary.dominant_mood)
+    ? getMoodInfo(summary.dominant_mood, t)
     : null;
 
   const initials = displayName
@@ -56,6 +58,22 @@ export default function Home() {
         .toUpperCase()
     : "";
 
+  function greetingText() {
+    const hour = new Date().getHours();
+    if (hour < 12) return t("greetings.morning");
+    if (hour < 18) return t("greetings.afternoon");
+    return t("greetings.evening");
+  }
+
+  function relativeDate(dateStr) {
+    const todayStr = getLocalDate();
+    if (dateStr === todayStr) return t("common.today");
+    const yesterday = new Date(`${todayStr}T12:00:00`);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (dateStr === formatDate(yesterday)) return t("common.yesterday");
+    return formatDateLocale(dateStr);
+  }
+
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
       <header className="flex items-center justify-between px-container-margin py-md">
@@ -63,12 +81,12 @@ export default function Home() {
           <Link
             to="/profile"
             className="block shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40"
-            title="Profile"
+            title={t("nav.profile")}
           >
             {user?.avatar_url ? (
               <img
                 src={user.avatar_url}
-                alt={displayName || "Profile"}
+                alt={displayName || t("nav.profile")}
                 className="h-10 w-10 shrink-0 rounded-full object-cover"
               />
             ) : (
@@ -89,8 +107,8 @@ export default function Home() {
           <HeaderBell />
           <button
             type="button"
-            aria-label="Log out"
-            title="Log out"
+            aria-label={t("common.logout")}
+            title={t("common.logout")}
             onClick={async () => {
               await logout().catch(() => {});
               queryClient.clear();
@@ -113,14 +131,14 @@ export default function Home() {
             <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
               <div className="relative z-10 flex max-w-full flex-col items-start gap-md">
                 <h2 className="text-headline-lg font-headline-lg text-on-primary-container">
-                  {greeting()}
+                  {greetingText()}
                   {displayName ? `, ${displayName}` : ""}
                 </h2>
                 <Link
                   to="/entries/new"
                   className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md"
                 >
-                  Journal today
+                  {t("home.journalToday")}
                   <span className="material-symbols-outlined text-[18px]">
                     edit
                   </span>
@@ -131,20 +149,20 @@ export default function Home() {
             <section className="space-y-md">
               <div className="flex items-end justify-between">
                 <h2 className="text-label-lg font-label-lg text-on-surface-variant">
-                  This week's mood
+                  {t("home.thisWeekMood")}
                 </h2>
                 <Link
                   to="/calendar"
                   className="text-label-sm font-label-sm text-primary"
                 >
-                  See more
+                  {t("common.seeMore")}
                 </Link>
               </div>
               <div className="flex justify-between gap-sm overflow-x-auto rounded-[24px] bg-white/40 p-md cloud-shadow">
                 {week.map((date) => {
                   const key = formatDate(date);
                   const entry = entriesByDate[key];
-                  const mood = entry && getMoodInfo(entry.mood);
+                  const mood = entry && getMoodInfo(entry.mood, t);
                   const isToday = key === getLocalDate();
                   const isFuture = key > getLocalDate();
                   return (
@@ -171,11 +189,11 @@ export default function Home() {
                       <span
                         className={`text-label-sm font-label-sm flex items-center gap-0.5 ${isToday ? "font-bold text-primary" : "text-on-surface-variant"}`}
                       >
-                        {date.toLocaleDateString("en-US", { weekday: "short" })}
+                        {date.toLocaleDateString(dateLocale, { weekday: "short" })}
                         {entry?.is_hidden && (
                           <span
                             className="material-symbols-outlined text-[12px]"
-                            title="Hidden from friends"
+                            title={t("common.hiddenFromFriends")}
                           >
                             lock
                           </span>
@@ -196,23 +214,23 @@ export default function Home() {
                   id="summary-title"
                   className="text-headline-lg font-headline-lg text-on-surface"
                 >
-                  Mood summary
+                  {t("home.moodSummary")}
                 </h2>
                 <div className="mt-sm flex items-baseline gap-xs">
                   <span className="text-headline-xl font-headline-xl text-on-surface">
                     {summary.entry_count}
                   </span>
                   <span className="text-body-md font-body-md text-on-surface-variant">
-                    entries
+                    {t("home.entries")}
                   </span>
                 </div>
                 <p className="mt-1 text-body-sm font-body-sm text-on-surface-variant">
-                  Total moods logged this month
+                  {t("home.totalLoggedMonth")}
                 </p>
               </div>
               <div className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-lg">
                 <span className="text-label-sm font-label-sm text-on-surface-variant">
-                  Dominant mood
+                  {t("home.dominantMood")}
                 </span>
                 <div className="flex items-center gap-xs">
                   {dominantMood ? (
@@ -221,20 +239,20 @@ export default function Home() {
                     <span className="text-body-md text-on-surface-variant">—</span>
                   )}
                   <span className="text-headline-lg font-headline-lg text-on-surface">
-                    {dominantMood ? dominantMood.label : "None"}
+                    {dominantMood ? dominantMood.label : t("common.none")}
                   </span>
                 </div>
               </div>
               <div className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-lg">
                 <span className="text-label-sm font-label-sm text-on-surface-variant">
-                  Most used tag
+                  {t("home.mostUsedTag")}
                 </span>
                 <div className="flex items-center gap-xs">
                   <span className="material-symbols-outlined text-[28px] text-secondary">
                     auto_awesome
                   </span>
                   <span className="min-w-0 break-words text-headline-lg font-headline-lg text-on-surface">
-                    {summary.top_tag || "None"}
+                    {summary.top_tag ? getLocalizedTag(summary.top_tag, t) : t("common.none")}
                   </span>
                 </div>
               </div>
@@ -243,15 +261,15 @@ export default function Home() {
             <section className="space-y-md">
               <div className="flex items-center justify-between">
                 <h2 className="text-label-lg font-label-lg uppercase text-on-surface-variant">
-                  Recent logs
+                  {t("home.recentLogs")}
                 </h2>
                 <span className="rounded-full bg-surface-container px-sm py-xs text-label-sm font-label-sm text-on-surface-variant">
-                  This month
+                  {t("home.thisMonth")}
                 </span>
               </div>
               <div className="space-y-sm">
                 {recent.map((entry) => {
-                  const mood = getMoodInfo(entry.mood);
+                  const mood = getMoodInfo(entry.mood, t);
                   return (
                     <Link
                       key={entry.date}
@@ -266,13 +284,13 @@ export default function Home() {
                       <span className="min-w-0 flex-1">
                         <span className="flex items-start justify-between gap-xs">
                           <strong className="truncate text-body-md text-on-surface">
-                            {entry.tags[0] || mood.label}
+                            {getLocalizedTag(entry.tags[0], t) || mood.label}
                           </strong>
                           <span className="flex shrink-0 items-center gap-1 text-label-sm font-label-sm text-on-surface-variant/60">
                             {entry.is_hidden && (
                               <span
                                 className="material-symbols-outlined text-[13px]"
-                                title="Hidden from friends"
+                                title={t("common.hiddenFromFriends")}
                               >
                                 lock
                               </span>
@@ -281,7 +299,7 @@ export default function Home() {
                           </span>
                         </span>
                         <span className="block truncate text-body-sm text-on-surface-variant">
-                          {entry.text || "No note for this day."}
+                          {entry.text || t("home.noNote")}
                         </span>
                       </span>
                     </Link>
@@ -292,7 +310,7 @@ export default function Home() {
                     to="/entries/new"
                     className="flex min-h-24 items-center justify-center rounded-[24px] bg-white p-md text-body-sm text-on-surface-variant cloud-shadow"
                   >
-                    Your recent entries will appear here.
+                    {t("home.emptyRecent")}
                   </Link>
                 )}
               </div>
@@ -313,13 +331,6 @@ export default function Home() {
   );
 }
 
-function greeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
-
 function weekDays(today) {
   const mondayOffset = (today.getDay() + 6) % 7;
   const monday = new Date(
@@ -336,18 +347,6 @@ function weekDays(today) {
         monday.getDate() + index,
       ),
   );
-}
-
-function relativeDate(date) {
-  const today = getLocalDate();
-  if (date === today) return "Today";
-  const yesterday = new Date(`${today}T12:00:00`);
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (date === formatDate(yesterday)) return "Yesterday";
-  return new Date(`${date}T12:00:00`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
 }
 
 function formatMonth(date) {

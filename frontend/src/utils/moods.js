@@ -46,8 +46,14 @@ export const MOODS = {
   },
 };
 
-export function getMoodInfo(mood) {
-  return MOODS[mood] || MOODS[3];
+export function getMoodInfo(mood, t) {
+  const base = MOODS[mood] || MOODS[3];
+  if (!t) return base;
+  return {
+    ...base,
+    label: t(`moods.${base.value}`, base.label),
+    shortLabel: t(`moods.short${base.value}`, base.shortLabel),
+  };
 }
 
 export const TAG_CATEGORIES = [
@@ -82,4 +88,10 @@ export const DEFAULT_TAGS = ALL_TAGS;
 
 export function getTagsForMood() {
   return ALL_TAGS;
+}
+
+export function getLocalizedTag(tag, t) {
+  if (!tag) return "";
+  if (!t) return tag;
+  return t(`moods.tags.${tag}`, tag);
 }

@@ -14,7 +14,8 @@ import { FeedSkeleton } from '../components/skeleton/PageSkeletons'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
 import MoodIcon from '../components/MoodIcon'
-import { getMoodInfo } from '../utils/moods'
+import { getMoodInfo, getLocalizedTag } from '../utils/moods'
+import { useLanguage } from '../context/LanguageContext'
 
 const emojiReactions = ['❤️', '🫂', '👏', '💡', '😁']
 
@@ -22,6 +23,7 @@ export default function Feed() {
   const feedQuery = useInfiniteFeedQuery(10)
   const likeMutation = useLikeEntryMutation()
   const observerRef = useRef(null)
+  const { t } = useLanguage()
 
   const entries = feedQuery.data
     ? feedQuery.data.pages.flatMap((page) => page.items || page.entries || [])
@@ -76,9 +78,9 @@ export default function Feed() {
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
       <header className="flex items-center justify-between px-container-margin py-md">
         <div>
-          <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">Your circle</p>
-          <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface">Friend feed</h1>
-          <p className="mt-xs text-body-sm text-on-surface-variant">A gentle look at how everyone’s doing.</p>
+          <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">{t('feed.title')}</p>
+          <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface">{t('feed.title')}</h1>
+          <p className="mt-xs text-body-sm text-on-surface-variant">{t('feed.emptySubtitle')}</p>
         </div>
         <HeaderBell />
       </header>
@@ -100,7 +102,7 @@ export default function Feed() {
             {hasNextPage && (
               <div ref={observerRef} className="py-md text-center">
                 <p className="text-body-sm text-on-surface-variant">
-                  {isFetchingNextPage ? 'Loading more...' : 'Scroll down for more'}
+                  {isFetchingNextPage ? t('common.loading') : t('common.seeMore')}
                 </p>
               </div>
             )}
@@ -108,8 +110,11 @@ export default function Feed() {
             {!feedQuery.isLoading && !feedQuery.isError && entries.length === 0 && (
               <div className="rounded-[24px] bg-surface-container-low p-lg text-center">
                 <span className="material-symbols-outlined text-[32px] text-primary">diversity_1</span>
-                <h2 className="mt-sm text-body-md font-semibold text-on-surface">Your feed is quiet</h2>
-                <p className="mt-xs text-body-sm text-on-surface-variant">Friends’ visible journal entries will appear here.</p>
+                <h2 className="mt-sm text-body-md font-semibold text-on-surface">{t('feed.emptyTitle')}</h2>
+                <p className="mt-xs text-body-sm text-on-surface-variant">{t('feed.emptySubtitle')}</p>
+                <Link to="/friends" className="mt-md inline-block rounded-full bg-primary px-lg py-sm text-label-lg font-semibold text-on-primary">
+                  {t('feed.addFriendsBtn')}
+                </Link>
               </div>
             )}
           </>
@@ -122,8 +127,6 @@ export default function Feed() {
   )
 }
 
-
-/** Mood-specific tint backgrounds for mood-only cards */
 const moodTintBg = {
   1: 'bg-error-container/30',
   2: 'bg-primary-container/40',
@@ -135,7 +138,8 @@ const moodTintBg = {
 function FeedCard({ entry, busy, onReact }) {
   const [showComments, setShowComments] = useState(false)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
-  const moodInfo = getMoodInfo(entry.mood)
+  const { t } = useLanguage()
+  const moodInfo = getMoodInfo(entry.mood, t)
   const authorName = entry.author.display_name || entry.author.username
 
   const hasText = !!entry.text
@@ -144,7 +148,6 @@ function FeedCard({ entry, busy, onReact }) {
   const hasTags = entry.tags && entry.tags.length > 0
   const isMoodOnly = !hasText && !hasPhoto && !hasAudio
 
-  /* ── Mood-only card: compact, centered, tinted ── */
   if (isMoodOnly) {
     return (
       <article className={`rounded-[24px] p-lg cloud-shadow ${moodTintBg[entry.mood] || 'bg-surface-container-high/50'}`}>
@@ -153,7 +156,7 @@ function FeedCard({ entry, busy, onReact }) {
             <Avatar author={entry.author} />
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
-              <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date)}</p>
+              <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date, t)}</p>
             </div>
           </Link>
         </header>
@@ -166,7 +169,7 @@ function FeedCard({ entry, busy, onReact }) {
           {hasTags && (
             <div className="mt-xs flex flex-wrap justify-center gap-xs">
               {entry.tags.map((tag) => (
-                <span key={tag} className="rounded-full bg-surface-container-lowest/60 px-sm py-xs text-label-sm text-on-surface-variant">{tag}</span>
+                <span key={tag} className="rounded-full bg-surface-container-lowest/60 px-sm py-xs text-label-sm text-on-surface-variant">{getLocalizedTag(tag, t)}</span>
               ))}
             </div>
           )}
@@ -204,7 +207,7 @@ function FeedCard({ entry, busy, onReact }) {
               className="flex items-center gap-xs rounded-full bg-surface-container-lowest/60 px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container-lowest"
             >
               <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
-              <span>{entry.comment_count || 0} {entry.comment_count === 1 ? 'comment' : 'comments'}</span>
+              <span>{t('feed.commentsCount', { count: entry.comment_count || 0 })}</span>
             </button>
           </div>
         </footer>
@@ -214,7 +217,6 @@ function FeedCard({ entry, busy, onReact }) {
     )
   }
 
-  /* ── Standard card (has text / photo / audio) ── */
   return (
     <article className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
       <header className="flex items-center gap-sm">
@@ -222,7 +224,7 @@ function FeedCard({ entry, busy, onReact }) {
           <Avatar author={entry.author} />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
-            <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date)}</p>
+            <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date, t)}</p>
           </div>
         </Link>
         <span className={`flex h-11 w-11 items-center justify-center rounded-full ${moodInfo.bg}`} title={moodInfo.label}>
@@ -234,7 +236,7 @@ function FeedCard({ entry, busy, onReact }) {
         <div className="flex flex-wrap gap-xs">
           <span className={`rounded-full px-sm py-xs text-label-sm font-label-sm ${moodInfo.bg} ${moodInfo.color}`}>{moodInfo.label}</span>
           {entry.tags.map((tag) => (
-            <span key={tag} className="rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant">{tag}</span>
+            <span key={tag} className="rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant">{getLocalizedTag(tag, t)}</span>
           ))}
         </div>
         {hasText && (
@@ -255,7 +257,6 @@ function FeedCard({ entry, busy, onReact }) {
       </div>
 
       <footer className="relative mt-md border-t border-surface-container pt-sm">
-        {/* Emoji picker popup */}
         {emojiPickerOpen && (
           <div className="absolute -top-12 left-0 z-20 flex items-center gap-xs rounded-full bg-surface-container-high p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
             {emojiReactions.map((reac) => (
@@ -298,12 +299,11 @@ function FeedCard({ entry, busy, onReact }) {
             className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container"
           >
             <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
-            <span>{entry.comment_count || 0} {entry.comment_count === 1 ? 'comment' : 'comments'}</span>
+            <span>{t('feed.commentsCount', { count: entry.comment_count || 0 })}</span>
           </button>
         </div>
       </footer>
 
-      {/* Expandable Comments Drawer */}
       {showComments && <CommentsSection entryId={entry.id} />}
     </article>
   )
@@ -315,6 +315,7 @@ function CommentsSection({ entryId }) {
   const addMutation = useAddCommentMutation()
   const deleteMutation = useDeleteCommentMutation()
   const profileQuery = useProfileQuery()
+  const { t } = useLanguage()
   const currentUserId = profileQuery.data?.user?.id
   const comments = commentsQuery.data || []
 
@@ -339,7 +340,7 @@ function CommentsSection({ entryId }) {
   return (
     <div className="mt-md border-t border-surface-container-low pt-md">
       {commentsQuery.isLoading ? (
-        <p className="py-sm text-center text-body-sm text-on-surface-variant">Loading comments...</p>
+        <p className="py-sm text-center text-body-sm text-on-surface-variant">{t('common.loading')}</p>
       ) : (
         <div className="space-y-md">
           {comments.map((comment) => {
@@ -351,7 +352,7 @@ function CommentsSection({ entryId }) {
                 <div className="min-w-0 flex-1 rounded-2xl bg-surface-container-low p-sm">
                   <div className="flex items-center justify-between">
                     <span className="truncate text-label-sm font-semibold text-on-surface">{commentAuthor}</span>
-                    <span className="text-label-sm text-on-surface-variant/60">{formatFeedDate(comment.created_at)}</span>
+                    <span className="text-label-sm text-on-surface-variant/60">{formatFeedDate(comment.created_at, null, t)}</span>
                   </div>
                   <p className="mt-xs whitespace-pre-wrap text-body-sm text-on-surface">{comment.text}</p>
                 </div>
@@ -359,7 +360,7 @@ function CommentsSection({ entryId }) {
                   <button
                     type="button"
                     onClick={() => handleDelete(comment.id)}
-                    aria-label="Delete comment"
+                    aria-label={t('common.delete')}
                     className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant/40 hover:bg-error-container/20 hover:text-error"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -370,19 +371,18 @@ function CommentsSection({ entryId }) {
           })}
 
           {comments.length === 0 && (
-            <p className="py-xs text-center text-body-sm text-on-surface-variant/70">No comments yet. Be the first to reply!</p>
+            <p className="py-xs text-center text-body-sm text-on-surface-variant/70">{t('feed.addComment')}</p>
           )}
         </div>
       )}
 
-      {/* Add comment form */}
       <form onSubmit={handleSend} className="mt-md flex items-center gap-xs">
         <input
           type="text"
           value={commentText}
           maxLength={500}
           onChange={(e) => setCommentText(e.target.value)}
-          placeholder="Write a comment..."
+          placeholder={t('feed.addComment')}
           className="flex-1 rounded-full bg-surface-container-low px-md py-xs text-body-sm text-on-surface outline-none placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
         />
         <button
@@ -404,7 +404,7 @@ function Avatar({ author, small = false }) {
   return <span className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary`}>{initials}</span>
 }
 
-function formatFeedDate(createdAt, fallbackDate) {
+function formatFeedDate(createdAt, fallbackDate, t) {
   if (!createdAt && !fallbackDate) return ''
   const date = createdAt ? new Date(createdAt) : new Date(`${fallbackDate}T12:00:00`)
   if (isNaN(date.getTime())) return fallbackDate || ''
@@ -428,11 +428,11 @@ function formatFeedDate(createdAt, fallbackDate) {
 
   let dateStr = ''
   if (isToday) {
-    dateStr = 'Today'
+    dateStr = t ? t('common.today') : 'Today'
   } else if (isYesterday) {
-    dateStr = 'Yesterday'
+    dateStr = t ? t('common.yesterday') : 'Yesterday'
   } else {
-    dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    dateStr = date.toLocaleDateString()
   }
 
   return createdAt ? `${dateStr}, ${timeStr}` : dateStr

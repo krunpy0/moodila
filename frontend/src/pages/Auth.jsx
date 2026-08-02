@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { login, register } from "../api/auth";
 import { queryKeys, useSessionQuery } from "../api/queries";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Auth() {
   const [mode, setMode] = useState("login");
@@ -15,6 +16,7 @@ export default function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useLanguage();
   const sessionQuery = useSessionQuery(true);
 
   const authMutation = useMutation({
@@ -83,7 +85,7 @@ export default function Auth() {
                     : "text-on-surface-variant"
                 }`}
               >
-                {item === "login" ? "Log in" : "Sign up"}
+                {item === "login" ? t("auth.loginBtn") : t("auth.registerBtn")}
               </button>
             ))}
           </div>
@@ -91,7 +93,7 @@ export default function Auth() {
           <form onSubmit={submit} className="flex flex-col gap-md">
             {mode === "register" && (
               <Field
-                label="Username"
+                label={t("auth.username")}
                 name="username"
                 value={form.username}
                 onChange={update}
@@ -103,7 +105,7 @@ export default function Auth() {
               />
             )}
             <Field
-              label="Email or Username"
+              label={t("auth.email")}
               name="email"
               type="text"
               value={form.email}
@@ -113,7 +115,7 @@ export default function Auth() {
             />
             <div>
               <Field
-                label="Password"
+                label={t("auth.password")}
                 name="password"
                 type="password"
                 value={form.password}
@@ -131,7 +133,7 @@ export default function Auth() {
                     to="/forgot-password"
                     className="text-label-sm font-label-sm text-primary hover:underline"
                   >
-                    Forgot password?
+                    {t("auth.forgotPassword")}
                   </Link>
                 </div>
               )}
@@ -152,10 +154,10 @@ export default function Auth() {
               className="mt-xs h-12 rounded-lg bg-primary-container text-on-primary-container text-label-lg font-label-lg disabled:opacity-60"
             >
               {authMutation.isPending
-                ? "Please wait..."
+                ? t("common.loading")
                 : mode === "login"
-                  ? "Log in"
-                  : "Create account"}
+                  ? t("auth.loginBtn")
+                  : t("auth.createAccount")}
             </button>
           </form>
         </div>

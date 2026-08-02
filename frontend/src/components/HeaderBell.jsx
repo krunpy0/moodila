@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { useUnreadNotificationCountQuery } from '../api/queries'
 import NotificationCenterModal from './NotificationCenterModal'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function HeaderBell() {
   const [isOpen, setIsOpen] = useState(false)
   const { data } = useUnreadNotificationCountQuery()
+  const { t } = useLanguage()
   const unreadCount = data?.unread_count || 0
 
   return (
     <>
       <button
         type="button"
-        aria-label="Notifications"
-        title="Notifications"
+        aria-label={t('notifications.title')}
+        title={t('notifications.title')}
         onClick={() => setIsOpen(true)}
         className="relative flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow transition-transform active:scale-95"
       >

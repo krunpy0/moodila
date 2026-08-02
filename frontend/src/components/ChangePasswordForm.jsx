@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { changePassword } from '../api/auth'
 import PasswordFieldsForm from './PasswordFieldsForm'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function ChangePasswordForm() {
+  const { t } = useLanguage()
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -13,23 +15,23 @@ export default function ChangePasswordForm() {
 
   const mutation = useMutation({
     mutationFn: () => changePassword(oldPassword, newPassword),
-    onSuccess: (data) => {
+    onSuccess: () => {
       setOldPassword('')
       setNewPassword('')
       setConfirmPassword('')
       setOldPasswordError('')
       setGeneralError('')
-      setSuccessMessage(data?.message || 'Password changed successfully')
+      setSuccessMessage(t('changePassword.success'))
     },
     onError: (err) => {
       setSuccessMessage('')
       const msg = err.message || ''
       if (msg.includes('Текущий пароль') || msg.toLowerCase().includes('current password')) {
-        setOldPasswordError('Current password is incorrect')
+        setOldPasswordError(t('auth.password'))
         setGeneralError('')
       } else {
         setOldPasswordError('')
-        setGeneralError(msg || 'Could not change password')
+        setGeneralError(msg || t('common.error'))
       }
     },
   })
@@ -41,11 +43,11 @@ export default function ChangePasswordForm() {
     setSuccessMessage('')
 
     if (newPassword.length < 8) {
-      setGeneralError('Password must be between 8 and 72 characters')
+      setGeneralError(t('changePassword.tooShort'))
       return
     }
     if (newPassword !== confirmPassword) {
-      setGeneralError('Passwords do not match')
+      setGeneralError(t('changePassword.mismatch'))
       return
     }
 
@@ -76,9 +78,9 @@ export default function ChangePasswordForm() {
         setNewPassword={setNewPassword}
         confirmPassword={confirmPassword}
         setConfirmPassword={setConfirmPassword}
-        oldPasswordLabel="Current password"
-        newPasswordLabel="New password"
-        confirmPasswordLabel="Confirm new password"
+        oldPasswordLabel={t('changePassword.oldPassword')}
+        newPasswordLabel={t('changePassword.newPassword')}
+        confirmPasswordLabel={t('changePassword.confirmPassword')}
       />
 
       {generalError && (
@@ -95,7 +97,7 @@ export default function ChangePasswordForm() {
         disabled={mutation.isPending}
         className="mt-xs h-12 rounded-lg bg-primary text-on-primary text-label-lg font-label-lg disabled:opacity-60 transition-transform active:scale-[0.99]"
       >
-        {mutation.isPending ? 'Saving...' : 'Save password'}
+        {mutation.isPending ? t('changePassword.updating') : t('changePassword.submit')}
       </button>
     </form>
   )

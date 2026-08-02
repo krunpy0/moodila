@@ -5,31 +5,33 @@ import { ProfileSkeleton } from '../components/skeleton/PageSkeletons'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
 import MoodIcon from '../components/MoodIcon'
-import { getMoodInfo } from '../utils/moods'
+import { getMoodInfo, getLocalizedTag } from '../utils/moods'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function FriendProfile() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { t, formatDate } = useLanguage()
   const profileQuery = useFriendProfileQuery(id)
   const profile = profileQuery.data
   const user = profile?.user
   const entries = profile?.entries || []
   const summary = profile?.summary || { entry_count: 0, dominant_mood: null, top_tag: null }
-  const dominantMood = summary.dominant_mood ? getMoodInfo(summary.dominant_mood) : null
+  const dominantMood = summary.dominant_mood ? getMoodInfo(summary.dominant_mood, t) : null
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-md bg-background pb-32 text-on-background">
       <header className="flex items-center justify-between px-container-margin py-md">
         <button
           type="button"
-          aria-label="Go back"
+          aria-label={t('common.back')}
           onClick={() => navigate(-1)}
           className="flex h-10 w-10 items-center justify-center rounded-full text-primary"
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </button>
         <h1 className="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">
-          {user ? user.display_name || user.username : 'Friend Profile'}
+          {user ? user.display_name || user.username : t('profile.title')}
         </h1>
         <div className="w-10" />
       </header>
@@ -42,15 +44,15 @@ export default function FriendProfile() {
             <span className="material-symbols-outlined text-[48px] text-error">lock</span>
             <p role="alert" className="text-body-md text-on-surface">
               {profileQuery.error.status === 403
-                ? 'You can only view profiles of accepted friends.'
-                : profileQuery.error.message || 'Could not load friend profile.'}
+                ? t('common.error')
+                : profileQuery.error.message || t('common.error')}
             </p>
             <button
               type="button"
               onClick={() => navigate(-1)}
               className="rounded-full bg-primary px-lg py-sm text-label-lg text-on-primary"
             >
-              Go back
+              {t('common.back')}
             </button>
           </div>
         )}
@@ -72,23 +74,23 @@ export default function FriendProfile() {
             <section className="grid grid-cols-2 gap-md" aria-labelledby="friend-summary-title">
               <div className="col-span-2 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
                 <h2 id="friend-summary-title" className="text-headline-lg font-headline-lg text-on-surface">
-                  Mood summary
+                  {t('home.moodSummary')}
                 </h2>
                 <div className="mt-sm flex items-baseline gap-xs">
                   <span className="text-headline-xl font-headline-xl text-on-surface">
                     {summary.entry_count}
                   </span>
                   <span className="text-body-md font-body-md text-on-surface-variant">
-                    entries
+                    {t('home.entries')}
                   </span>
                 </div>
                 <p className="mt-1 text-body-sm font-body-sm text-on-surface-variant">
-                  Total moods logged this month
+                  {t('home.totalLoggedMonth')}
                 </p>
               </div>
               <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-lg">
                 <span className="text-label-sm font-label-sm text-on-surface-variant">
-                  Dominant mood
+                  {t('home.dominantMood')}
                 </span>
                 <div className="flex items-center gap-xs">
                   {dominantMood ? (
@@ -97,20 +99,20 @@ export default function FriendProfile() {
                     <span className="text-body-md text-on-surface-variant">—</span>
                   )}
                   <span className="text-headline-lg font-headline-lg text-on-surface">
-                    {dominantMood ? dominantMood.label : 'None'}
+                    {dominantMood ? dominantMood.label : t('common.none')}
                   </span>
                 </div>
               </div>
               <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-lg">
                 <span className="text-label-sm font-label-sm text-on-surface-variant">
-                  Most used tag
+                  {t('home.mostUsedTag')}
                 </span>
                 <div className="flex items-center gap-xs">
                   <span className="material-symbols-outlined text-[28px] text-secondary">
                     auto_awesome
                   </span>
                   <span className="min-w-0 break-words text-headline-lg font-headline-lg text-on-surface">
-                    {summary.top_tag || 'None'}
+                    {summary.top_tag ? getLocalizedTag(summary.top_tag, t) : t('common.none')}
                   </span>
                 </div>
               </div>
@@ -119,9 +121,9 @@ export default function FriendProfile() {
             {/* Recent Entries */}
             <section>
               <div className="mb-md flex items-center justify-between">
-                <h2 className="text-headline-lg font-headline-lg text-on-surface">Recent entries</h2>
+                <h2 className="text-headline-lg font-headline-lg text-on-surface">{t('profile.recentEntries')}</h2>
                 <Link to="/calendar" className="text-label-lg text-primary">
-                  Calendar
+                  {t('nav.calendar')}
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-md">
@@ -134,7 +136,7 @@ export default function FriendProfile() {
                       <span className="text-label-sm text-on-surface-variant">
                         {formatDate(entry.date)}
                       </span>
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood).bg}`}>
+                      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood, t).bg}`}>
                         <MoodIcon mood={entry.mood} className="text-[20px]" />
                       </span>
                     </div>
@@ -155,14 +157,14 @@ export default function FriendProfile() {
                       </div>
                     )}
                     <p className="line-clamp-2 text-body-sm text-on-surface">
-                      {entry.text || entry.tags?.[0] || 'No note for this day.'}
+                      {entry.text || getLocalizedTag(entry.tags?.[0], t) || t('home.noNote')}
                     </p>
                   </div>
                 ))}
               </div>
               {entries.length === 0 && (
                 <p className="rounded-[24px] bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant">
-                  No public entries yet.
+                  {t('home.emptyRecent')}
                 </p>
               )}
             </section>
@@ -200,11 +202,4 @@ function Avatar({ user, large = false }) {
       {initials}
     </span>
   )
-}
-
-function formatDate(value) {
-  return new Date(`${value}T12:00:00`).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })
 }

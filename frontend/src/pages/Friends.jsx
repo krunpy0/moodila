@@ -4,10 +4,12 @@ import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useDecl
 import BottomNav from '../components/BottomNav'
 import HeaderBell from '../components/HeaderBell'
 import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function Friends() {
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const searchTerm = useDeferredValue(query.trim().toLowerCase())
   const friendsQuery = useFriendsQuery()
   const pendingQuery = usePendingFriendsQuery()
@@ -29,14 +31,14 @@ export default function Friends() {
         <div className="flex items-center gap-sm">
           <button
             type="button"
-            aria-label="Go back"
+            aria-label={t('common.back')}
             onClick={() => navigate(-1)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-primary"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
           <h1 className="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">
-            Add Friends
+            {t('friends.title')}
           </h1>
         </div>
         <div className="flex items-center gap-xs">
@@ -46,7 +48,7 @@ export default function Friends() {
 
       <div className="space-y-lg px-container-margin pt-md">
         <label className="relative block">
-          <span className="sr-only">Find friends by username</span>
+          <span className="sr-only">{t('friends.searchPlaceholder')}</span>
           <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
             <span className="material-symbols-outlined text-[20px] text-outline">search</span>
           </span>
@@ -55,13 +57,13 @@ export default function Friends() {
             value={query}
             maxLength={24}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Find friends by username"
+            placeholder={t('friends.searchPlaceholder')}
             className="w-full rounded-full border-0 bg-surface-container-low py-4 pl-12 pr-4 text-body-md text-on-surface outline-none cloud-shadow placeholder:text-outline focus:ring-2 focus:ring-primary/20"
           />
         </label>
 
         {!isLoading && query.trim() && (
-          <UserSection title="Search results">
+          <UserSection title={t('common.seeAll')}>
             {results.map((user) => (
               <UserCard key={user.id} user={user}>
                 <SearchAction
@@ -75,24 +77,24 @@ export default function Friends() {
                 />
               </UserCard>
             ))}
-            {results.length === 0 && <Empty text="No users found." />}
+            {results.length === 0 && <Empty text={t('friends.noFriends')} />}
           </UserSection>
         )}
 
         {isLoading ? <FriendsSkeleton /> : <>
-        <UserSection title="Pending requests" count={pending.length}>
+        <UserSection title={t('friends.pendingRequests')} count={pending.length}>
           {pending.map((user) => (
             <UserCard key={user.friendship_id} user={user}>
               <div className="flex gap-xs">
                 <CircleButton
-                  label={`Decline request from ${user.display_name}`}
+                  label={t('friends.decline')}
                   icon="close"
                   disabled={declineRequest.isPending}
                   onClick={() => declineRequest.mutate(user.friendship_id)}
                 />
                 <CircleButton
                   primary
-                  label={`Accept request from ${user.display_name}`}
+                  label={t('friends.accept')}
                   icon="check"
                   disabled={acceptRequest.isPending}
                   onClick={() => acceptRequest.mutate(user.friendship_id)}
@@ -100,21 +102,21 @@ export default function Friends() {
               </div>
             </UserCard>
           ))}
-          {pending.length === 0 && <Empty text="No pending requests." />}
+          {pending.length === 0 && <Empty text={t('friends.noPending')} />}
         </UserSection>
 
-        <UserSection title="My friends">
+        <UserSection title={t('friends.myFriends')}>
           {friends.map((user) => (
             <UserCard key={user.id} user={user}>
               <CircleButton
-                label={`Remove ${user.display_name || user.username} from friends`}
+                label={t('friends.removeFriend')}
                 icon="person_remove"
                 disabled={unfriend.isPending}
                 onClick={() => unfriend.mutate(user.id)}
               />
             </UserCard>
           ))}
-          {friends.length === 0 && <Empty text="Your friends will appear here." />}
+          {friends.length === 0 && <Empty text={t('friends.noFriends')} />}
         </UserSection>
 
         </>}
@@ -130,12 +132,13 @@ export default function Friends() {
 }
 
 function UserSection({ title, count, children }) {
+  const { t } = useLanguage()
   return (
     <section className="space-y-sm">
       <div className="flex items-center justify-between">
         <h2 className="text-label-lg font-label-lg text-on-surface-variant">{title}</h2>
         {count > 0 && (
-          <span className="text-label-sm font-label-sm text-primary">See all ({count})</span>
+          <span className="text-label-sm font-label-sm text-primary">{t('common.seeAll')} ({count})</span>
         )}
       </div>
       <div className="space-y-sm">{children}</div>
@@ -197,10 +200,11 @@ function Avatar({ user }) {
 }
 
 function SearchAction({ user, busy, onSend, onCancel, onUnfriend, unfriendBusy, cancelBusy }) {
+  const { t } = useLanguage()
   if (user.status === 'accepted') {
     return (
       <CircleButton
-        label={`Unfriend ${user.display_name || user.username}`}
+        label={t('friends.removeFriend')}
         icon="person_remove"
         disabled={unfriendBusy}
         onClick={onUnfriend}
@@ -211,7 +215,7 @@ function SearchAction({ user, busy, onSend, onCancel, onUnfriend, unfriendBusy, 
     if (user.requester_is_me) {
       return (
         <CircleButton
-          label={`Cancel friend request to ${user.display_name || user.username}`}
+          label={t('common.cancel')}
           icon="close"
           disabled={cancelBusy}
           onClick={onCancel}
@@ -220,7 +224,7 @@ function SearchAction({ user, busy, onSend, onCancel, onUnfriend, unfriendBusy, 
     }
     return (
       <CircleButton
-        label="Request received"
+        label={t('friends.pendingRequests')}
         icon="mail"
         disabled
       />
@@ -229,14 +233,13 @@ function SearchAction({ user, busy, onSend, onCancel, onUnfriend, unfriendBusy, 
   return (
     <CircleButton
       primary
-      label={`Send friend request to ${user.display_name || user.username}`}
+      label={t('friends.sendRequest')}
       icon="person_add"
       disabled={busy}
       onClick={onSend}
     />
   )
 }
-
 
 function CircleButton({ label, icon, primary = false, ...props }) {
   return (

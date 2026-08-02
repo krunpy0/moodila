@@ -53,7 +53,7 @@ func (m Mailer) SendPasswordResetEmail(toEmail string, resetURL string, ttlMinut
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reset your password</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
+<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
   <table width="100%%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 32px;">
     <tr>
       <td align="center" style="padding-bottom: 24px;">
@@ -137,7 +137,7 @@ func (m Mailer) SendAccountDeletionEmail(toEmail string, deleteURL string, ttlMi
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Confirm account deletion</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
+<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
   <table width="100%%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 32px;">
     <tr>
       <td align="center" style="padding-bottom: 24px;">
@@ -223,7 +223,7 @@ func (m Mailer) SendAccountDeletedConfirmationEmail(toEmail string) error {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Account Deleted</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
+<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
   <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 32px;">
     <tr>
       <td align="center" style="padding-bottom: 24px;">

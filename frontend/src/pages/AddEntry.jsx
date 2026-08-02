@@ -8,12 +8,14 @@ import { useNotifications } from '../components/Notifications'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
 import MoodIcon from '../components/MoodIcon'
-import { MOODS, TAG_CATEGORIES } from '../utils/moods'
+import { MOODS, TAG_CATEGORIES, getLocalizedTag, getMoodInfo } from '../utils/moods'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function AddEntry() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { notify } = useNotifications()
+  const { t } = useLanguage()
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
   const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
@@ -31,15 +33,25 @@ export default function AddEntry() {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    if (!file.type.startsWith('image/')) { setStatus('Choose an image file.'); notify('Choose an image file.', 'error'); return }
-    if (file.size > 10 * 1024 * 1024) { setStatus('Image must be 10 MB or smaller.'); notify('Image must be 10 MB or smaller.', 'error'); return }
-    setStatus('Uploading photo...')
+    if (!file.type.startsWith('image/')) {
+      const msg = t('addEntry.maxPhotoSize')
+      setStatus(msg)
+      notify(msg, 'error')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      const msg = t('addEntry.maxPhotoSize')
+      setStatus(msg)
+      notify(msg, 'error')
+      return
+    }
+    setStatus(t('common.uploading'))
     setIsUploadingPhoto(true)
     try {
       const photoURL = await uploadEntryPhoto(file)
       setForm((current) => ({ ...current, photo_url: photoURL }))
-      setStatus('Photo attached. Save your entry to publish it.')
-      notify('Photo attached. Save your entry to publish it.')
+      setStatus(t('addEntry.photoUploaded'))
+      notify(t('addEntry.photoUploaded'))
     } catch (error) {
       setStatus(error.message)
       notify(error.message, 'error')
@@ -47,6 +59,7 @@ export default function AddEntry() {
       setIsUploadingPhoto(false)
     }
   }
+
   const [recordingTime, setRecordingTime] = useState(0)
   const [audioBlob, setAudioBlob] = useState(null)
   const [audioDuration, setAudioDuration] = useState(null)
@@ -56,7 +69,7 @@ export default function AddEntry() {
 
   useEffect(() => {
     if (futureDate) {
-      setStatus('Future entries are not available.')
+      setStatus(t('common.error'))
       return
     }
     if (entryQuery.data) {
@@ -69,7 +82,7 @@ export default function AddEntry() {
     } else if (!entryQuery.isLoading) {
       setForm({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
     }
-  }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error])
+  }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error, t])
 
   const toggleTag = (tag) =>
     setForm((current) => ({
@@ -144,20 +157,20 @@ export default function AddEntry() {
   const submit = async (event) => {
     event.preventDefault()
     if (futureDate) {
-      setStatus('Future entries are not available.')
       notify('Future entries are not available.', 'error')
       return
     }
     if (!form.mood) {
-      setStatus('Choose a mood first.')
-      notify('Choose a mood first.', 'error')
+      const msg = t('addEntry.selectMood')
+      setStatus(msg)
+      notify(msg, 'error')
       return
     }
 
     let payload = { ...form }
 
     if (audioBlob) {
-      setStatus('Uploading voice note...')
+      setStatus(t('common.uploading'))
       try {
         const uploadedAudioUrl = await uploadEntryAudio(audioBlob)
         payload.audio_url = uploadedAudioUrl
@@ -169,10 +182,10 @@ export default function AddEntry() {
       }
     }
 
-    setStatus('Saving entry...')
+    setStatus(t('addEntry.savingEntry'))
     saveMutation.mutate(payload, {
       onSuccess: (saved) => {
-        notify('Your entry has been saved.')
+        notify(t('common.success'))
         navigate(`/calendar?month=${saved.date.slice(0, 7)}`, { replace: true })
       },
       onError: (error) => setStatus(error.message),
@@ -184,28 +197,32 @@ export default function AddEntry() {
       <header className="fixed top-0 z-40 flex w-full items-center justify-between bg-background/80 px-container-margin py-md backdrop-blur-md">
         <Link
           to="/home"
-          aria-label="Back"
+          aria-label={t('common.back')}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container"
         >
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
-        <h1 className="text-headline-lg-mobile font-headline-lg-mobile">Record your day</h1>
+        <h1 className="text-headline-lg-mobile font-headline-lg-mobile">
+          {entryQuery.data ? t('addEntry.editTitle') : t('addEntry.title')}
+        </h1>
         <div className="w-10" />
       </header>
 
       <form onSubmit={submit} className="mx-auto mt-20 max-w-md space-y-lg px-container-margin">
         <section className="rounded-[24px] bg-white p-lg cloud-shadow">
           <h2 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
-            How are you feeling today?
+            {t('addEntry.title')}
           </h2>
           <div className="mb-lg flex items-center justify-between">
             {Object.values(MOODS).map((item) => {
               const selected = form.mood === item.value
+              const moodInfo = getMoodInfo(item.value, t)
               return (
                 <button
                   key={item.value}
                   type="button"
-                  aria-label={`Mood ${item.value} of 5 (${item.label})`}
+                  aria-label={`${moodInfo.label}`}
+                  title={moodInfo.label}
                   aria-pressed={selected}
                   onClick={() => setForm((current) => ({ ...current, mood: item.value }))}
                   className={`flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-95 ${item.bg} ${
@@ -221,7 +238,7 @@ export default function AddEntry() {
             {TAG_CATEGORIES.map((category) => (
               <div key={category.key}>
                 <span className="mb-xs block text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60">
-                  {category.label}
+                  {t(`moods.categories.${category.key}`, category.label)}
                 </span>
                 <div className="flex flex-wrap gap-xs">
                   {category.tags.map((tag) => {
@@ -238,7 +255,7 @@ export default function AddEntry() {
                             : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                         }`}
                       >
-                        {tag}
+                        {getLocalizedTag(tag, t)}
                       </button>
                     )
                   })}
@@ -250,14 +267,14 @@ export default function AddEntry() {
 
         <section className="rounded-[24px] bg-white p-lg cloud-shadow">
           <label htmlFor="entry-text" className="mb-md block text-label-lg font-label-lg text-on-surface-variant">
-            Write a summary of your day
+            {t('addEntry.optionalNote')}
           </label>
           <textarea
             id="entry-text"
             value={form.text}
             maxLength={5000}
             onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
-            placeholder="Start writing..."
+            placeholder={t('addEntry.notePlaceholder')}
             className="min-h-[210px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
           />
           {(form.photo_url || isUploadingPhoto) && (
@@ -268,13 +285,13 @@ export default function AddEntry() {
                 className="max-h-64 w-full object-cover rounded-2xl"
                 skeletonHeightClass="h-56 sm:h-64"
                 isUploading={isUploadingPhoto}
-                uploadingText="Uploading photo..."
+                uploadingText={t('common.uploading')}
               >
                 {form.photo_url && !isUploadingPhoto && (
                   <button
                     type="button"
                     onClick={() => setForm((current) => ({ ...current, photo_url: null }))}
-                    aria-label="Remove photo"
+                    aria-label={t('addEntry.removePhoto')}
                     className="absolute right-sm top-sm z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm hover:bg-background"
                   >
                     <span className="material-symbols-outlined text-[20px]">close</span>
@@ -290,7 +307,7 @@ export default function AddEntry() {
               <div className="flex items-center gap-sm">
                 <span className="h-3 w-3 rounded-full bg-error animate-pulse" />
                 <span className="text-label-lg font-medium text-error">
-                  Recording... 0:{recordingTime < 10 ? '0' : ''}{recordingTime} / 0:30
+                  0:{recordingTime < 10 ? '0' : ''}{recordingTime} / 0:30
                 </span>
               </div>
               <button
@@ -299,7 +316,7 @@ export default function AddEntry() {
                 className="flex h-9 px-md items-center gap-1 rounded-full bg-error text-on-error text-label-sm font-semibold shadow-sm hover:bg-error/90"
               >
                 <span className="material-symbols-outlined text-[18px]">stop</span>
-                Done
+                {t('addEntry.stopRecording')}
               </button>
             </div>
           ) : (audioBlob || form.audio_url) ? (
@@ -317,15 +334,15 @@ export default function AddEntry() {
             <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">
               <span className="material-symbols-outlined text-[20px]">image</span>
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={selectPhoto} className="sr-only" />
-              <span className="sr-only">Add image</span>
+              <span className="sr-only">{t('addEntry.addPhoto')}</span>
             </label>
 
             {/* Active Mic Button */}
             <button
               type="button"
               onClick={isRecording ? stopRecording : startRecording}
-              title={isRecording ? 'Stop recording' : 'Record voice note'}
-              aria-label={isRecording ? 'Stop recording' : 'Record voice note'}
+              title={isRecording ? t('addEntry.stopRecording') : t('addEntry.recordVoice')}
+              aria-label={isRecording ? t('addEntry.stopRecording') : t('addEntry.recordVoice')}
               className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
                 isRecording
                   ? 'bg-error text-on-error animate-pulse'
@@ -335,16 +352,6 @@ export default function AddEntry() {
               }`}
             >
               <span className="material-symbols-outlined text-[20px]">{isRecording ? 'stop' : 'mic'}</span>
-            </button>
-
-            <button
-              type="button"
-              disabled
-              title="Attach file (coming later)"
-              aria-label="Attach file (coming later)"
-              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant opacity-60"
-            >
-              <span className="material-symbols-outlined text-[20px]">attach_file</span>
             </button>
           </div>
         </section>
@@ -356,10 +363,10 @@ export default function AddEntry() {
             </span>
             <div>
               <span className="block text-body-md font-label-lg text-on-surface">
-                Hide entry from friends
+                {t('addEntry.hideFromFriends')}
               </span>
               <span className="block text-body-sm text-on-surface-variant">
-                {form.is_hidden ? 'Visible only to you' : 'Visible to friends'}
+                {t('addEntry.hideDescription')}
               </span>
             </div>
           </div>
@@ -367,13 +374,13 @@ export default function AddEntry() {
             type="button"
             role="switch"
             aria-checked={form.is_hidden}
-            aria-label="Hide entry from friends"
+            aria-label={t('addEntry.hideFromFriends')}
             onClick={() => {
               const nextHidden = !form.is_hidden
               setForm((current) => ({ ...current, is_hidden: nextHidden }))
               if (entryQuery.data?.id) {
                 visibilityMutation.mutate({ entryId: entryQuery.data.id, isHidden: nextHidden }, {
-                  onSuccess: () => notify(nextHidden ? 'Entry hidden from friends' : 'Entry visible to friends'),
+                  onSuccess: () => notify(nextHidden ? t('common.hiddenFromFriends') : t('common.success')),
                   onError: (err) => notify(err.message, 'error'),
                 })
               }
@@ -398,7 +405,7 @@ export default function AddEntry() {
           <p
             role="status"
             className={`text-center text-body-sm font-body-sm ${
-              status === 'Entry saved.' ? 'text-primary' : 'text-error'
+              status === t('common.success') ? 'text-primary' : 'text-error'
             }`}
           >
             {status}
@@ -409,7 +416,7 @@ export default function AddEntry() {
           disabled={futureDate || saveMutation.isPending}
           className="h-14 w-full rounded-full bg-primary text-label-lg font-label-lg text-on-primary disabled:opacity-60"
         >
-          {saveMutation.isPending ? 'Saving...' : 'Save Entry'}
+          {saveMutation.isPending ? t('addEntry.savingEntry') : t('addEntry.saveEntry')}
         </button>
 
         {entryQuery.data && (
@@ -419,7 +426,7 @@ export default function AddEntry() {
             className="flex h-14 w-full items-center justify-center gap-xs rounded-full border border-error/30 bg-error-container/20 text-label-lg font-label-lg text-error hover:bg-error-container/40"
           >
             <span className="material-symbols-outlined text-[20px]">delete</span>
-            <span>Delete Entry</span>
+            <span>{t('common.delete')}</span>
           </button>
         )}
       </form>
@@ -430,17 +437,14 @@ export default function AddEntry() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error-container/40 text-error">
               <span className="material-symbols-outlined text-[28px]">delete</span>
             </div>
-            <h2 className="text-headline-lg font-headline-lg text-on-surface">Delete this entry?</h2>
-            <p className="text-body-sm text-on-surface-variant">
-              This will permanently remove your mood log for {date}. This action cannot be undone.
-            </p>
+            <h2 className="text-headline-lg font-headline-lg text-on-surface">{t('common.delete')}?</h2>
             <div className="flex gap-sm pt-xs">
               <button
                 type="button"
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 rounded-full bg-surface-container-high py-3 text-label-lg font-label-lg text-on-surface"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -449,7 +453,7 @@ export default function AddEntry() {
                   const targetId = entryQuery.data?.id || date
                   deleteMutation.mutate(targetId, {
                     onSuccess: () => {
-                      notify('Entry deleted.')
+                      notify(t('common.success'))
                       navigate('/calendar', { replace: true })
                     },
                     onError: (err) => {
@@ -460,7 +464,7 @@ export default function AddEntry() {
                 }}
                 className="flex-1 rounded-full bg-error py-3 text-label-lg font-label-lg text-on-error disabled:opacity-60"
               >
-                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                {deleteMutation.isPending ? t('common.loading') : t('common.delete')}
               </button>
             </div>
           </div>
@@ -471,4 +475,3 @@ export default function AddEntry() {
     </div>
   )
 }
-
