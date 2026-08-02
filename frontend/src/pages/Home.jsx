@@ -27,23 +27,46 @@ export default function Home() {
 
   const user = profileQuery.data?.user;
   const displayName = user?.display_name || user?.username;
-  const entries = entriesQuery.data || [];
+  const week = useMemo(() => weekDays(today), [today]);
+
+  const weekStartMonthKey = formatMonth(week[0]);
+  const weekEndMonthKey = formatMonth(week[6]);
+  const isMultiMonthWeek = weekStartMonthKey !== weekEndMonthKey;
+  const otherMonthKey = weekStartMonthKey !== month ? weekStartMonthKey : weekEndMonthKey;
+
+  const secondaryEntriesQuery = useEntriesQuery(
+    isMultiMonthWeek ? otherMonthKey : null,
+    isMultiMonthWeek,
+  );
+
+  const monthEntries = entriesQuery.data || [];
+  const secondaryEntries = isMultiMonthWeek ? secondaryEntriesQuery.data || [] : [];
+  const allEntries = useMemo(
+    () => [...monthEntries, ...secondaryEntries],
+    [monthEntries, secondaryEntries],
+  );
+
   const summary = summaryQuery.data || {
     entry_count: 0,
     dominant_mood: null,
     top_tag: null,
   };
-  const isLoading = entriesQuery.isLoading || summaryQuery.isLoading;
-  const error = entriesQuery.error || summaryQuery.error;
+  const isLoading =
+    entriesQuery.isLoading ||
+    summaryQuery.isLoading ||
+    (isMultiMonthWeek && secondaryEntriesQuery.isLoading);
+  const error =
+    entriesQuery.error ||
+    summaryQuery.error ||
+    (isMultiMonthWeek ? secondaryEntriesQuery.error : null);
 
   const entriesByDate = useMemo(
-    () => Object.fromEntries(entries.map((entry) => [entry.date, entry])),
-    [entries],
+    () => Object.fromEntries(allEntries.map((entry) => [entry.date, entry])),
+    [allEntries],
   );
-  const week = useMemo(() => weekDays(today), [today]);
   const recent = useMemo(
-    () => [...entries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2),
-    [entries],
+    () => [...monthEntries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 2),
+    [monthEntries],
   );
   const dominantMood = summary.dominant_mood
     ? getMoodInfo(summary.dominant_mood, t)
