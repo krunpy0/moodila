@@ -70,7 +70,7 @@ const SHARED_ENTRY_TEXT = "Quiet evening with warm tea. So glad to unwind.";
 
 const FAQS = [
   {
-    q: "How is MoodShare different from typical social media?",
+    q: "How is Moodila different from typical social media?",
     a: "There's no public follower count, no ads, and no algorithm deciding what you see. Only friends you've added can see your entries, and only if you haven't hidden them.",
   },
   {
@@ -78,12 +78,12 @@ const FAQS = [
     a: "Yes. Every entry has a 'Hide entry' toggle. When it's on, only you can see that entry.",
   },
   {
-    q: "Is MoodShare free to use?",
+    q: "Is Moodila free to use?",
     a: "Yes. Mood tracking, friend feeds, and monthly summaries are all free.",
   },
   {
-    q: "Can I install MoodShare as an app on my phone?",
-    a: "You can add MoodShare to your home screen on iPhone or Android and use it just like a regular app.",
+    q: "Can I install Moodila as an app on my phone?",
+    a: "You can add Moodila to your home screen on iPhone or Android and use it just like a regular app.",
   },
 ];
 
@@ -290,7 +290,7 @@ export default function Landing() {
             <span className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-xl cloud-shadow transition-transform hover:scale-105">
               🌸
             </span>
-            <span className="tracking-tight">MoodShare</span>
+            <span className="tracking-tight">Moodila</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-lg text-label-lg font-medium text-on-surface-variant">
@@ -425,7 +425,7 @@ export default function Landing() {
                 Try "Record your day" Live
               </h2>
               <p className="mt-xs text-body-md text-on-surface-variant">
-                This interactive widget matches MoodShare’s exact entry creation
+                This interactive widget matches Moodila’s exact entry creation
                 interface 1:1.
               </p>
             </div>
@@ -1004,7 +1004,7 @@ export default function Landing() {
               Explore the Real App Screens
             </h2>
             <p className="mt-xs text-body-md text-on-surface-variant max-w-lg mx-auto">
-              Experience MoodShare’s exact layouts — adapted directly from the
+              Experience Moodila’s exact layouts — adapted directly from the
               live application components.
             </p>
           </ScrollReveal>
@@ -1681,7 +1681,7 @@ export default function Landing() {
               Frequently Asked Questions
             </h2>
             <p className="mt-xs text-body-md text-on-surface-variant">
-              Everything you need to know about MoodShare.
+              Everything you need to know about Moodila.
             </p>
           </div>
         </ScrollReveal>
@@ -1724,7 +1724,7 @@ export default function Landing() {
               Ready for a calm, mindful routine?
             </h2>
             <p className="mt-xs text-body-md md:text-lg text-on-surface-variant max-w-xl mx-auto">
-              Join MoodShare today and take your first step toward gentle
+              Join Moodila today and take your first step toward gentle
               self-reflection.
             </p>
             <div className="mt-lg">
@@ -1747,7 +1747,7 @@ export default function Landing() {
               <span className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-xs">
                 🌸
               </span>
-              <span>MoodShare</span>
+              <span>Moodila</span>
             </div>
 
             <div className="flex gap-md text-label-sm">
@@ -1762,7 +1762,7 @@ export default function Landing() {
               </a>
             </div>
 
-            <p>© {new Date().getFullYear()} MoodShare.</p>
+            <p>© {new Date().getFullYear()} Moodila.</p>
           </div>
         </ScrollReveal>
       </footer>
