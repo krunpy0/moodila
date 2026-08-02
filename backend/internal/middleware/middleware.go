@@ -3,19 +3,33 @@ package middleware
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CORS allows the configured frontend origin and answers preflight requests.
-func CORS(origin string) gin.HandlerFunc {
+// CORS allows the configured frontend origins (comma-separated) and answers preflight requests.
+func CORS(allowedOriginsStr string) gin.HandlerFunc {
+	origins := strings.Split(allowedOriginsStr, ",")
+	allowedOrigins := make(map[string]bool)
+	for _, o := range origins {
+		trimmed := strings.TrimSpace(o)
+		if trimmed != "" {
+			allowedOrigins[trimmed] = true
+		}
+	}
+
 	return func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", origin)
-		c.Header("Access-Control-Allow-Credentials", "true")
-		c.Header("Vary", "Origin")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Time-Zone")
+		reqOrigin := c.Request.Header.Get("Origin")
+		if reqOrigin != "" && allowedOrigins[reqOrigin] {
+			c.Header("Access-Control-Allow-Origin", reqOrigin)
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.Header("Vary", "Origin")
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Time-Zone")
+		}
+
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
