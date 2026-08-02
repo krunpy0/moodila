@@ -16,6 +16,7 @@ import ImageWithSkeleton from '../components/ImageWithSkeleton'
 import MoodIcon from '../components/MoodIcon'
 import { getMoodInfo, getLocalizedTag } from '../utils/moods'
 import { useLanguage } from '../context/LanguageContext'
+import { getLocalDate } from '../api/client'
 
 const emojiReactions = ['❤️', '🫂', '👏', '💡', '😁']
 
@@ -138,7 +139,7 @@ const moodTintBg = {
 function FeedCard({ entry, busy, onReact }) {
   const [showComments, setShowComments] = useState(false)
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false)
-  const { t } = useLanguage()
+  const { t, dateLocale } = useLanguage()
   const moodInfo = getMoodInfo(entry.mood, t)
   const authorName = entry.author.display_name || entry.author.username
 
@@ -156,7 +157,7 @@ function FeedCard({ entry, busy, onReact }) {
             <Avatar author={entry.author} />
             <div className="min-w-0 flex-1">
               <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
-              <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date, t)}</p>
+              <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date, t, dateLocale)}</p>
             </div>
           </Link>
         </header>
@@ -224,7 +225,7 @@ function FeedCard({ entry, busy, onReact }) {
           <Avatar author={entry.author} />
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-body-md font-semibold text-on-surface">{authorName}</h2>
-            <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date, t)}</p>
+            <p className="text-label-sm text-on-surface-variant">@{entry.author.username} · {formatFeedDate(entry.created_at, entry.date, t, dateLocale)}</p>
           </div>
         </Link>
         <span className={`flex h-11 w-11 items-center justify-center rounded-full ${moodInfo.bg}`} title={moodInfo.label}>
@@ -315,7 +316,7 @@ function CommentsSection({ entryId }) {
   const addMutation = useAddCommentMutation()
   const deleteMutation = useDeleteCommentMutation()
   const profileQuery = useProfileQuery()
-  const { t } = useLanguage()
+  const { t, dateLocale } = useLanguage()
   const currentUserId = profileQuery.data?.user?.id
   const comments = commentsQuery.data || []
 
@@ -352,7 +353,7 @@ function CommentsSection({ entryId }) {
                 <div className="min-w-0 flex-1 rounded-2xl bg-surface-container-low p-sm">
                   <div className="flex items-center justify-between">
                     <span className="truncate text-label-sm font-semibold text-on-surface">{commentAuthor}</span>
-                    <span className="text-label-sm text-on-surface-variant/60">{formatFeedDate(comment.created_at, null, t)}</span>
+                    <span className="text-label-sm text-on-surface-variant/60">{formatFeedDate(comment.created_at, null, t, dateLocale)}</span>
                   </div>
                   <p className="mt-xs whitespace-pre-wrap text-body-sm text-on-surface">{comment.text}</p>
                 </div>
@@ -404,36 +405,63 @@ function Avatar({ author, small = false }) {
   return <span className={`flex ${sizeClass} shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary`}>{initials}</span>
 }
 
-function formatFeedDate(createdAt, fallbackDate, t) {
+function parseISO(str) {
+  if (!str) return null
+  let s = String(str).trim()
+  if (!s.includes('T')) s = s.replace(' ', 'T')
+  s = s.replace(/([+-]\d{2})$/, '$1:00')
+  const d = new Date(s)
+  return isNaN(d.getTime()) ? null : d
+}
+
+function getYesterdayDate() {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
+function formatFeedDate(createdAt, fallbackDate, t, dateLocale) {
   if (!createdAt && !fallbackDate) return ''
-  const date = createdAt ? new Date(createdAt) : new Date(`${fallbackDate}T12:00:00`)
-  if (isNaN(date.getTime())) return fallbackDate || ''
 
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const timeStr = `${hours}:${minutes}`
-
-  const today = new Date()
-  const isToday =
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-
-  const yesterday = new Date(today)
-  yesterday.setDate(today.getDate() - 1)
-  const isYesterday =
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear()
-
-  let dateStr = ''
-  if (isToday) {
-    dateStr = t ? t('common.today') : 'Today'
-  } else if (isYesterday) {
-    dateStr = t ? t('common.yesterday') : 'Yesterday'
-  } else {
-    dateStr = date.toLocaleDateString()
+  const createdDate = parseISO(createdAt)
+  let timeStr = ''
+  if (createdDate) {
+    const hours = String(createdDate.getHours()).padStart(2, '0')
+    const minutes = String(createdDate.getMinutes()).padStart(2, '0')
+    timeStr = `${hours}:${minutes}`
   }
 
-  return createdAt ? `${dateStr}, ${timeStr}` : dateStr
+  let dateKey = ''
+  if (fallbackDate && typeof fallbackDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(fallbackDate)) {
+    dateKey = fallbackDate
+  } else if (createdDate) {
+    dateKey = [
+      createdDate.getFullYear(),
+      String(createdDate.getMonth() + 1).padStart(2, '0'),
+      String(createdDate.getDate()).padStart(2, '0'),
+    ].join('-')
+  }
+
+  if (!dateKey) return fallbackDate || createdAt || ''
+
+  const todayStr = getLocalDate()
+  const yesterdayStr = getYesterdayDate()
+
+  let dateStr = ''
+  if (dateKey === todayStr) {
+    dateStr = t ? t('common.today') : 'Today'
+  } else if (dateKey === yesterdayStr) {
+    dateStr = t ? t('common.yesterday') : 'Yesterday'
+  } else {
+    const [y, m, d] = dateKey.split('-').map(Number)
+    const localObj = new Date(y, m - 1, d)
+    const locale = dateLocale || (t && t('common.today') === 'Сегодня' ? 'ru-RU' : 'en-US')
+    dateStr = localObj.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
+  }
+
+  return timeStr ? `${dateStr}, ${timeStr}` : dateStr
 }
