@@ -40,7 +40,7 @@ func Load() Config {
 	return Config{
 		Port:                         getenv("PORT", "8080"),
 		DatabaseURL:                  os.Getenv("DATABASE_URL"),
-		JWTSecret:                    getenv("JWT_SECRET", "dev-secret-change-me"),
+		JWTSecret:                    os.Getenv("JWT_SECRET"),
 		CORSOrigin:                   getenv("CORS_ORIGIN", "http://localhost:5173"),
 		APIPublicURL:                 strings.TrimRight(getenv("API_PUBLIC_URL", "http://localhost:8080"), "/"),
 		AppEnv:                       getenv("APP_ENV", "development"),

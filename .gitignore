@@ -35,6 +35,7 @@ dist/
 *.dll
 *.so
 *.dylib
+*.gocache
 
 # Test
 *.test
