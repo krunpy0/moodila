@@ -272,7 +272,7 @@ export default function Calendar() {
         >
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
             {/* Left 7 columns: Month Calendar Grid */}
-            <div className="lg:col-span-7 bg-surface-container-lowest lg:p-6 lg:rounded-[32px] lg:cloud-shadow">
+            <div className="lg:col-span-7 lg:bg-surface-container-lowest lg:p-6 lg:rounded-[32px] lg:cloud-shadow">
               <div className="grid grid-cols-7 text-center select-none">
                 {weekdays.map((day) => (
                   <span
