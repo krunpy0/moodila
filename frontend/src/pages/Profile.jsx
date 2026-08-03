@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useProfileQuery, useUpdateProfileMutation } from "../api/queries";
-import { uploadEntryPhoto } from "../api/entries";
+import { uploadEntryPhoto, deleteStorageObject } from "../api/entries";
 import AppLayout from "../components/AppLayout";
 import HeaderBell from "../components/HeaderBell";
 import { ProfileSkeleton } from "../components/skeleton/PageSkeletons";
@@ -23,34 +23,68 @@ export default function Profile() {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [form, setForm] = useState(null);
+  const [initialAvatarUrl, setInitialAvatarUrl] = useState("");
   const [avatarStatus, setAvatarStatus] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const profile = profileQuery.data;
   const user = profile?.user;
 
   const beginEdit = () => {
+    const currentAvatar = user?.avatar_url || "";
+    setInitialAvatarUrl(currentAvatar);
     setForm({
-      display_name: user.display_name || "",
-      avatar_url: user.avatar_url || "",
+      display_name: user?.display_name || "",
+      avatar_url: currentAvatar,
     });
     setAvatarStatus("");
     setEditing(true);
   };
 
-  const cancelEdit = () => {
+  const cancelEdit = async () => {
+    const tempUrl = form?.avatar_url;
     setEditing(false);
     setAvatarStatus("");
+    if (tempUrl && tempUrl !== initialAvatarUrl) {
+      try {
+        await deleteStorageObject(tempUrl);
+      } catch (err) {
+        console.warn("Could not delete temporary avatar on cancel:", err);
+      }
+    }
   };
 
   const save = (event) => {
     event.preventDefault();
+    const newAvatar = form?.avatar_url || "";
+    const oldAvatar = initialAvatarUrl;
     update.mutate(form, {
       onSuccess: () => {
         setEditing(false);
         setAvatarStatus("");
         notify(t("common.success"));
+        if (oldAvatar && oldAvatar !== newAvatar) {
+          deleteStorageObject(oldAvatar).catch((err) =>
+            console.warn("Could not delete old avatar from storage:", err)
+          );
+        }
       },
     });
+  };
+
+  const removeAvatar = async () => {
+    const currentAvatar = form?.avatar_url;
+    setForm((current) => ({
+      ...current,
+      avatar_url: "",
+    }));
+    setAvatarStatus(t("profile.photoRemoved"));
+    if (currentAvatar && currentAvatar !== initialAvatarUrl) {
+      try {
+        await deleteStorageObject(currentAvatar);
+      } catch (err) {
+        console.warn("Could not delete removed temp avatar:", err);
+      }
+    }
   };
 
   const selectAvatar = async (event) => {
@@ -74,6 +108,12 @@ export default function Profile() {
     setAvatarStatus(t("common.uploading"));
     try {
       const avatarURL = await uploadEntryPhoto(file);
+      const prevTemp = form?.avatar_url;
+      if (prevTemp && prevTemp !== initialAvatarUrl) {
+        deleteStorageObject(prevTemp).catch((err) =>
+          console.warn("Could not delete previous temporary avatar:", err)
+        );
+      }
       setForm((current) => ({ ...current, avatar_url: avatarURL }));
       const readyMsg = t("profile.photoReady");
       setAvatarStatus(readyMsg);
@@ -85,6 +125,7 @@ export default function Profile() {
       setIsUploadingAvatar(false);
     }
   };
+
 
   return (
     <AppLayout>
@@ -188,13 +229,7 @@ export default function Profile() {
                     {form.avatar_url && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setForm((current) => ({
-                            ...current,
-                            avatar_url: "",
-                          }));
-                          setAvatarStatus(t("profile.photoRemoved"));
-                        }}
+                        onClick={removeAvatar}
                         disabled={isUploadingAvatar}
                         className="mt-sm text-label-lg text-primary disabled:opacity-50"
                       >
