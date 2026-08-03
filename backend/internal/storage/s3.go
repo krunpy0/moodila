@@ -127,7 +127,87 @@ func (s S3) Put(ctx context.Context, objectKey, contentType string, body io.Read
 	return nil
 }
 
+// Delete removes an object from S3. It is idempotent (HTTP 200, 204, and 404 are treated as success).
+func (s S3) Delete(ctx context.Context, objectKey string) error {
+	if s.Bucket == "" || s.AccessKeyID == "" || s.SecretAccessKey == "" {
+		return fmt.Errorf("storage is not configured")
+	}
+	deleteURL, err := s.presignDelete(objectKey, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, deleteURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("delete from S3: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		message, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return fmt.Errorf("S3 returned %s: %s", resp.Status, strings.TrimSpace(string(message)))
+	}
+	return nil
+}
+
+// ExtractObjectKey parses a full photo/file URL or key and verifies it belongs to userID.
+func (s S3) ExtractObjectKey(rawTarget, userID string) (string, error) {
+	rawTarget = strings.TrimSpace(rawTarget)
+	userID = strings.TrimSpace(userID)
+	if rawTarget == "" || userID == "" {
+		return "", fmt.Errorf("invalid target or user ID")
+	}
+
+	var key string
+	if strings.HasPrefix(rawTarget, "http://") || strings.HasPrefix(rawTarget, "https://") {
+		pubBase := strings.TrimRight(s.PublicBaseURL, "/")
+		if pubBase != "" && strings.HasPrefix(rawTarget, pubBase+"/") {
+			key = strings.TrimPrefix(rawTarget, pubBase+"/")
+		} else {
+			u, err := url.Parse(rawTarget)
+			if err != nil {
+				return "", fmt.Errorf("invalid URL: %w", err)
+			}
+			pathStr := u.Path
+			prefix := "/" + userID + "/"
+			idx := strings.Index(pathStr, prefix)
+			if idx != -1 {
+				key = pathStr[idx+1:]
+			} else if strings.HasPrefix(strings.TrimPrefix(pathStr, "/"), userID+"/") {
+				key = strings.TrimPrefix(pathStr, "/")
+			} else {
+				return "", fmt.Errorf("URL does not belong to user")
+			}
+		}
+	} else {
+		key = strings.TrimPrefix(rawTarget, "/")
+	}
+
+	unescapedKey, err := url.PathUnescape(key)
+	if err != nil {
+		unescapedKey = key
+	}
+
+	if !strings.HasPrefix(unescapedKey, userID+"/") {
+		return "", fmt.Errorf("object key does not belong to user")
+	}
+	return unescapedKey, nil
+}
+
 func (s S3) presignPut(objectKey, contentType string, now time.Time) (string, error) {
+	return s.presign("PUT", objectKey, contentType, now)
+}
+
+func (s S3) presignDelete(objectKey string, now time.Time) (string, error) {
+	return s.presign("DELETE", objectKey, "", now)
+}
+
+func (s S3) presign(method, objectKey, contentType string, now time.Time) (string, error) {
 	endpoint, err := s.endpointURL()
 	if err != nil {
 		return "", err
@@ -140,9 +220,9 @@ func (s S3) presignPut(objectKey, contentType string, now time.Time) (string, er
 	basePath := strings.TrimRight(endpoint.Path, "/")
 	canonicalURI := basePath + "/" + escapeObjectKey(objectKey)
 	if pathStyle {
-			canonicalURI = basePath + "/" + url.PathEscape(s.Bucket) + "/" + escapeObjectKey(objectKey)
+		canonicalURI = basePath + "/" + url.PathEscape(s.Bucket) + "/" + escapeObjectKey(objectKey)
 	} else {
-			endpoint.Host = s.Bucket + "." + endpoint.Host
+		endpoint.Host = s.Bucket + "." + endpoint.Host
 	}
 	endpoint.Path = canonicalURI
 	endpoint.RawPath = canonicalURI
@@ -150,19 +230,27 @@ func (s S3) presignPut(objectKey, contentType string, now time.Time) (string, er
 	amzDate := now.Format("20060102T150405Z")
 	dateStamp := now.Format("20060102")
 	credentialScope := dateStamp + "/" + region + "/s3/aws4_request"
+
+	signedHeaders := "host"
+	canonicalHeaders := "host:" + endpoint.Host + "\n"
+	if contentType != "" {
+		signedHeaders = "content-type;host"
+		canonicalHeaders = "content-type:" + strings.TrimSpace(contentType) + "\n" + canonicalHeaders
+	}
+
 	query := url.Values{
 		"X-Amz-Algorithm":     {"AWS4-HMAC-SHA256"},
 		"X-Amz-Credential":    {s.AccessKeyID + "/" + credentialScope},
 		"X-Amz-Date":          {amzDate},
 		"X-Amz-Expires":       {fmt.Sprintf("%d", int(uploadURLLifetime.Seconds()))},
-		"X-Amz-SignedHeaders": {"content-type;host"},
+		"X-Amz-SignedHeaders": {signedHeaders},
 	}
 	if s.SessionToken != "" {
 		query.Set("X-Amz-Security-Token", s.SessionToken)
 	}
-	canonicalHeaders := "content-type:" + strings.TrimSpace(contentType) + "\n" + "host:" + endpoint.Host + "\n"
+
 	canonicalRequest := strings.Join([]string{
-		"PUT", canonicalURI, query.Encode(), canonicalHeaders, "content-type;host", "UNSIGNED-PAYLOAD",
+		method, canonicalURI, query.Encode(), canonicalHeaders, signedHeaders, "UNSIGNED-PAYLOAD",
 	}, "\n")
 	stringToSign := strings.Join([]string{
 		"AWS4-HMAC-SHA256", amzDate, credentialScope, sha256Hex(canonicalRequest),

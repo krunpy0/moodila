@@ -47,3 +47,75 @@ func TestCreateUploadRejectsUnsupportedType(t *testing.T) {
 		t.Fatalf("CreateUpload() error = %v, want unsupported image type", err)
 	}
 }
+
+func TestExtractObjectKey(t *testing.T) {
+	s := S3{
+		PublicBaseURL: "https://xyz.supabase.co/storage/v1/object/public/entries",
+	}
+	userID := "user-123"
+
+	t.Run("Valid Public Base URL", func(t *testing.T) {
+		urlStr := "https://xyz.supabase.co/storage/v1/object/public/entries/user-123/2026/08/abc.jpg"
+		key, err := s.ExtractObjectKey(urlStr, userID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if key != "user-123/2026/08/abc.jpg" {
+			t.Errorf("got key %q, want %q", key, "user-123/2026/08/abc.jpg")
+		}
+	})
+
+	t.Run("Valid Generic URL with User Path", func(t *testing.T) {
+		sNoBase := S3{}
+		urlStr := "https://s3.us-east-1.amazonaws.com/bucket/user-123/2026/08/file%20name.jpg"
+		key, err := sNoBase.ExtractObjectKey(urlStr, userID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if key != "user-123/2026/08/file name.jpg" {
+			t.Errorf("got key %q, want %q", key, "user-123/2026/08/file name.jpg")
+		}
+	})
+
+	t.Run("Raw Key Input", func(t *testing.T) {
+		key, err := s.ExtractObjectKey("user-123/2026/08/abc.jpg", userID)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if key != "user-123/2026/08/abc.jpg" {
+			t.Errorf("got key %q, want %q", key, "user-123/2026/08/abc.jpg")
+		}
+	})
+
+	t.Run("Cross-User Rejection", func(t *testing.T) {
+		urlStr := "https://xyz.supabase.co/storage/v1/object/public/entries/other-user/2026/08/abc.jpg"
+		_, err := s.ExtractObjectKey(urlStr, userID)
+		if err == nil {
+			t.Fatal("expected error for cross-user object deletion, got nil")
+		}
+	})
+}
+
+func TestPresignDelete(t *testing.T) {
+	s := S3{
+		Endpoint:        "https://s3.example.test",
+		Bucket:          "photos",
+		AccessKeyID:     "access-key",
+		SecretAccessKey: "secret-key",
+	}
+	deleteURL, err := s.presignDelete("user-1/photo.jpg", time.Date(2026, 8, 3, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatalf("presignDelete() error = %v", err)
+	}
+	parsed, err := url.Parse(deleteURL)
+	if err != nil {
+		t.Fatalf("parse delete URL: %v", err)
+	}
+	if parsed.Query().Get("X-Amz-SignedHeaders") != "host" {
+		t.Errorf("signed headers = %q, want host", parsed.Query().Get("X-Amz-SignedHeaders"))
+	}
+	if parsed.Query().Get("X-Amz-Signature") == "" {
+		t.Error("delete URL has no signature")
+	}
+}
+

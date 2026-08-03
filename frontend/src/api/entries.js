@@ -47,7 +47,14 @@ export const deleteEntry = (entryIdOrDate) => {
   return api(`/entries?date=${encodeURIComponent(entryIdOrDate)}`, { method: 'DELETE' })
 }
 
+export const deleteStorageObject = (photoUrl) =>
+  api('/storage/delete', {
+    method: 'POST',
+    body: JSON.stringify({ photo_url: photoUrl }),
+  })
+
 export const requestPhotoUpload = (file) =>
+
   api('/storage/entry-photos/upload-url', {
     method: 'POST',
     body: JSON.stringify({ filename: file.name, content_type: file.type, size: file.size }),

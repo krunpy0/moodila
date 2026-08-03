@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"context"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"moodshare/internal/repository"
+	"moodshare/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -14,7 +17,9 @@ import (
 
 type Entries struct {
 	Entries repository.Entries
+	Storage storage.S3
 }
+
 
 type entryInput struct {
 	Date          string   `json:"date"`
@@ -259,6 +264,25 @@ func (h Entries) Visibility(c *gin.Context) {
 	c.JSON(http.StatusOK, entry)
 }
 
+func (h Entries) cleanupAttachments(ctx context.Context, userID string, attachments []repository.AttachmentURLs) {
+	for _, att := range attachments {
+		if att.PhotoURL != nil && *att.PhotoURL != "" {
+			if key, err := h.Storage.ExtractObjectKey(*att.PhotoURL, userID); err == nil {
+				if err := h.Storage.Delete(ctx, key); err != nil {
+					log.Printf("warning: failed to delete entry photo from storage (%s): %v", key, err)
+				}
+			}
+		}
+		if att.AudioURL != nil && *att.AudioURL != "" {
+			if key, err := h.Storage.ExtractObjectKey(*att.AudioURL, userID); err == nil {
+				if err := h.Storage.Delete(ctx, key); err != nil {
+					log.Printf("warning: failed to delete entry audio from storage (%s): %v", key, err)
+				}
+			}
+		}
+	}
+}
+
 func (h Entries) Delete(c *gin.Context) {
 	if h.Entries.Pool == nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
@@ -273,7 +297,7 @@ func (h Entries) Delete(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "id must be a valid UUID"})
 			return
 		}
-		err := h.Entries.Delete(c.Request.Context(), entryID, userID)
+		attachments, err := h.Entries.Delete(c.Request.Context(), entryID, userID)
 		if errors.Is(err, repository.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "entry not found"})
 			return
@@ -282,6 +306,7 @@ func (h Entries) Delete(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete entry"})
 			return
 		}
+		h.cleanupAttachments(c.Request.Context(), userID, attachments)
 		c.JSON(http.StatusOK, gin.H{"message": "entry deleted"})
 		return
 	}
@@ -291,7 +316,7 @@ func (h Entries) Delete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "id or date YYYY-MM-DD is required"})
 		return
 	}
-	err := h.Entries.DeleteByDate(c.Request.Context(), userID, date)
+	attachments, err := h.Entries.DeleteByDate(c.Request.Context(), userID, date)
 	if errors.Is(err, repository.ErrNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "entry not found"})
 		return
@@ -300,8 +325,10 @@ func (h Entries) Delete(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete entry"})
 		return
 	}
+	h.cleanupAttachments(c.Request.Context(), userID, attachments)
 	c.JSON(http.StatusOK, gin.H{"message": "entry deleted"})
 }
+
 
 
 func monthBounds(month string) (string, string, error) {

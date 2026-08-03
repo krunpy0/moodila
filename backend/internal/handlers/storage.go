@@ -493,3 +493,48 @@ func (h Storage) SignAudioUpload(c *gin.Context) {
 	})
 }
 
+type deleteObjectInput struct {
+	PhotoURL  string `json:"photo_url"`
+	URL       string `json:"url"`
+	ObjectKey string `json:"object_key"`
+}
+
+func (h Storage) DeleteObject(c *gin.Context) {
+	var input deleteObjectInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
+		return
+	}
+	target := strings.TrimSpace(input.PhotoURL)
+	if target == "" {
+		target = strings.TrimSpace(input.URL)
+	}
+	if target == "" {
+		target = strings.TrimSpace(input.ObjectKey)
+	}
+	if target == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "photo_url, url or object_key is required"})
+		return
+	}
+
+	userID := c.GetString("userID")
+	objectKey, err := h.Storage.ExtractObjectKey(target, userID)
+	if err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "unauthorized object deletion"})
+		return
+	}
+
+	if err := h.Storage.Delete(c.Request.Context(), objectKey); err != nil {
+		if err.Error() == "storage is not configured" {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "photo storage is not configured"})
+			return
+		}
+		log.Printf("s3 delete failed for key %q: %v", objectKey, err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "could not delete object"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "object deleted"})
+}
+
+

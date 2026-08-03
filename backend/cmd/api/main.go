@@ -79,13 +79,14 @@ func main() {
 	router.POST("/auth/account/delete-confirm", authLimiter, auth.DeleteAccountConfirm)
 	router.POST("/auth/logout", mutationLimiter, auth.Logout)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), readLimiter, auth.Session)
-	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}}
-	storageHandler := handlers.Storage{Storage: storage.S3{
+	storageS3 := storage.S3{
 		Endpoint: cfg.S3Endpoint, Region: cfg.S3Region, Bucket: cfg.S3Bucket,
 		AccessKeyID: cfg.S3AccessKeyID, SecretAccessKey: cfg.S3SecretAccessKey,
 		SessionToken: cfg.S3SessionToken, PublicBaseURL: cfg.S3PublicBaseURL,
 		ForcePathStyle: cfg.S3ForcePathStyle,
-	}, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
+	}
+	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}, Storage: storageS3}
+	storageHandler := handlers.Storage{Storage: storageS3, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
 	notificationsRepo := repository.Notifications{Pool: pool}
 	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo}
 	announcementsRepo := repository.Announcements{Pool: pool}
@@ -104,6 +105,8 @@ func main() {
 	authorized.POST("/storage/entry-photos/upload-url", uploadLimiter, storageHandler.SignUpload)
 	authorized.POST("/storage/entry-audio/upload-url", uploadLimiter, storageHandler.SignAudioUpload)
 	authorized.PUT("/storage/entry-photos/upload/:token", uploadLimiter, storageHandler.Upload)
+	authorized.POST("/storage/delete", mutationLimiter, storageHandler.DeleteObject)
+
 	authorized.GET("/entries/me", readLimiter, entries.Me)
 	authorized.GET("/entries/friend/:friend_id", readLimiter, entries.Friend)
 	authorized.GET("/entries/summary", readLimiter, entries.Summary)

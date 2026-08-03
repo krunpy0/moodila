@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
 import { useDeleteEntryMutation, useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
-import { uploadEntryPhoto, uploadEntryAudio } from '../api/entries'
+import { uploadEntryPhoto, uploadEntryAudio, deleteStorageObject } from '../api/entries'
 import AppLayout from '../components/AppLayout'
 import { useNotifications } from '../components/Notifications'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
@@ -192,6 +192,18 @@ export default function AddEntry() {
     })
   }
 
+  const removePhoto = async () => {
+    const urlToRemove = form.photo_url
+    setForm((current) => ({ ...current, photo_url: null }))
+    if (urlToRemove) {
+      try {
+        await deleteStorageObject(urlToRemove)
+      } catch (err) {
+        console.warn('Could not delete photo from storage:', err)
+      }
+    }
+  }
+
   return (
     <AppLayout>
       <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-4xl xl:max-w-5xl bg-background pb-32 lg:pb-12 text-on-surface px-0 lg:px-6 py-0 lg:py-6">
@@ -291,7 +303,7 @@ export default function AddEntry() {
                 {form.photo_url && !isUploadingPhoto && (
                   <button
                     type="button"
-                    onClick={() => setForm((current) => ({ ...current, photo_url: null }))}
+                    onClick={removePhoto}
                     aria-label={t('addEntry.removePhoto')}
                     className="absolute right-sm top-sm z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm hover:bg-background"
                   >
@@ -301,6 +313,7 @@ export default function AddEntry() {
               </ImageWithSkeleton>
             </div>
           )}
+
 
           {/* Voice Note Preview or Live Recording */}
           {isRecording ? (

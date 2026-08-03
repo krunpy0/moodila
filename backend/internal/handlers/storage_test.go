@@ -227,3 +227,66 @@ func TestUploadHandler_CompressionAndShortCircuit(t *testing.T) {
 		}
 	})
 }
+
+func TestDeleteObjectHandler(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Storage{
+		Storage: storage.S3{
+			Bucket:          "photos",
+			AccessKeyID:     "key",
+			SecretAccessKey: "secret",
+		},
+	}
+
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("userID", "user-123")
+		c.Next()
+	})
+	r.POST("/storage/delete", h.DeleteObject)
+
+	t.Run("Cross user deletion rejected with 403", func(t *testing.T) {
+		body := bytes.NewBufferString(`{"photo_url":"https://storage.test/other-user/2026/08/pic.jpg"}`)
+		req := httptest.NewRequest("POST", "/storage/delete", body)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusForbidden {
+			t.Errorf("expected 403 Forbidden, got %d", w.Code)
+		}
+	})
+
+	t.Run("Missing target parameter rejected with 400", func(t *testing.T) {
+		body := bytes.NewBufferString(`{}`)
+		req := httptest.NewRequest("POST", "/storage/delete", body)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("expected 400 Bad Request, got %d", w.Code)
+		}
+	})
+
+	t.Run("Unconfigured storage returns 503", func(t *testing.T) {
+		unconfiguredH := Storage{Storage: storage.S3{}}
+		rUnconf := gin.New()
+		rUnconf.Use(func(c *gin.Context) {
+			c.Set("userID", "user-123")
+			c.Next()
+		})
+		rUnconf.POST("/storage/delete", unconfiguredH.DeleteObject)
+
+		body := bytes.NewBufferString(`{"photo_url":"user-123/2026/08/pic.jpg"}`)
+		req := httptest.NewRequest("POST", "/storage/delete", body)
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+
+		rUnconf.ServeHTTP(w, req)
+		if w.Code != http.StatusServiceUnavailable {
+			t.Errorf("expected 503 Service Unavailable, got %d", w.Code)
+		}
+	})
+}
+

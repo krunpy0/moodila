@@ -343,27 +343,63 @@ func (r Entries) UpdateVisibility(ctx context.Context, entryID, userID string, i
 	return entry, err
 }
 
-func (r Entries) Delete(ctx context.Context, entryID, userID string) error {
-	commandTag, err := r.Pool.Exec(ctx, `DELETE FROM entries WHERE id = $1 AND user_id = $2`, entryID, userID)
-	if err != nil {
-		return err
-	}
-	if commandTag.RowsAffected() == 0 {
-		return ErrNotFound
-	}
-	r.getCache().InvalidateUser(userID)
-	return nil
+type AttachmentURLs struct {
+	PhotoURL *string
+	AudioURL *string
 }
 
-func (r Entries) DeleteByDate(ctx context.Context, userID, date string) error {
-	commandTag, err := r.Pool.Exec(ctx, `DELETE FROM entries WHERE user_id = $1 AND date = $2`, userID, date)
+func (r Entries) Delete(ctx context.Context, entryID, userID string) ([]AttachmentURLs, error) {
+	rows, err := r.Pool.Query(ctx, `
+		DELETE FROM entries WHERE id = $1 AND user_id = $2
+		RETURNING photo_url, audio_url`, entryID, userID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if commandTag.RowsAffected() == 0 {
-		return ErrNotFound
+	defer rows.Close()
+
+	var attachments []AttachmentURLs
+	for rows.Next() {
+		var att AttachmentURLs
+		if err := rows.Scan(&att.PhotoURL, &att.AudioURL); err != nil {
+			return nil, err
+		}
+		attachments = append(attachments, att)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(attachments) == 0 {
+		return nil, ErrNotFound
 	}
 	r.getCache().InvalidateUser(userID)
-	return nil
+	return attachments, nil
 }
+
+func (r Entries) DeleteByDate(ctx context.Context, userID, date string) ([]AttachmentURLs, error) {
+	rows, err := r.Pool.Query(ctx, `
+		DELETE FROM entries WHERE user_id = $1 AND date = $2
+		RETURNING photo_url, audio_url`, userID, date)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var attachments []AttachmentURLs
+	for rows.Next() {
+		var att AttachmentURLs
+		if err := rows.Scan(&att.PhotoURL, &att.AudioURL); err != nil {
+			return nil, err
+		}
+		attachments = append(attachments, att)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(attachments) == 0 {
+		return nil, ErrNotFound
+	}
+	r.getCache().InvalidateUser(userID)
+	return attachments, nil
+}
+
 
