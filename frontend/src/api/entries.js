@@ -65,7 +65,16 @@ export async function uploadEntryPhoto(file) {
     },
     body: file,
   })
-  if (!response.ok) throw new Error('Could not upload photo. Please try again.')
+  if (!response.ok) {
+    let msg = 'Could not upload photo. Please try again.'
+    try {
+      const data = await response.json()
+      if (data && data.error) {
+        msg = data.error
+      }
+    } catch (_) {}
+    throw new Error(msg)
+  }
   return photoURL
 }
 
@@ -88,7 +97,16 @@ export async function uploadEntryAudio(audioBlob) {
     },
     body: file,
   })
-  if (!response.ok) throw new Error('Could not upload voice note. Please try again.')
+  if (!response.ok) {
+    let msg = 'Could not upload voice note. Please try again.'
+    try {
+      const data = await response.json()
+      if (data && data.error) {
+        msg = data.error
+      }
+    } catch (_) {}
+    throw new Error(msg)
+  }
   return audioURL
 }
 
