@@ -16,6 +16,7 @@ export const ru = {
     save: 'Сохранить',
     saving: 'Сохранение...',
     cancel: 'Отмена',
+    apply: 'Применить',
     edit: 'Редактировать',
     delete: 'Удалить',
     remove: 'Убрать',
@@ -174,6 +175,7 @@ export const ru = {
   profile: {
     title: 'Профиль',
     editProfile: 'Редактировать профиль',
+    cropAvatar: 'Обрезка аватара',
     photoPrompt: 'Нажмите на карандаш на фото, чтобы выбрать изображение.',
     displayName: 'Отображаемое имя',
     saveChanges: 'Сохранить изменения',

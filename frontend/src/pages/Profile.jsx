@@ -12,6 +12,7 @@ import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import DeleteAccountModal from "../components/DeleteAccountModal";
+import AvatarCropModal from "../components/AvatarCropModal";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState(null);
   const [form, setForm] = useState(null);
   const [initialAvatarUrl, setInitialAvatarUrl] = useState("");
   const [avatarStatus, setAvatarStatus] = useState("");
@@ -87,7 +89,7 @@ export default function Profile() {
     }
   };
 
-  const selectAvatar = async (event) => {
+  const selectAvatar = (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
@@ -104,10 +106,23 @@ export default function Profile() {
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageSrc(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropCancel = () => {
+    setCropImageSrc(null);
+  };
+
+  const handleCropComplete = async (croppedFile) => {
+    setCropImageSrc(null);
     setIsUploadingAvatar(true);
     setAvatarStatus(t("common.uploading"));
     try {
-      const avatarURL = await uploadEntryPhoto(file);
+      const avatarURL = await uploadEntryPhoto(croppedFile);
       const prevTemp = form?.avatar_url;
       if (prevTemp && prevTemp !== initialAvatarUrl) {
         deleteStorageObject(prevTemp).catch((err) =>
@@ -431,6 +446,11 @@ export default function Profile() {
               <DeleteAccountModal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
+              />
+              <AvatarCropModal
+                imageSrc={cropImageSrc}
+                onCropComplete={handleCropComplete}
+                onCancel={handleCropCancel}
               />
             </>
           )}

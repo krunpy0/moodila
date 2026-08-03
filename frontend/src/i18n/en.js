@@ -16,6 +16,7 @@ export const en = {
     save: 'Save',
     saving: 'Saving...',
     cancel: 'Cancel',
+    apply: 'Apply',
     edit: 'Edit',
     delete: 'Delete',
     remove: 'Remove',
@@ -174,6 +175,7 @@ export const en = {
   profile: {
     title: 'Profile',
     editProfile: 'Edit profile',
+    cropAvatar: 'Crop avatar',
     photoPrompt: 'Tap the pencil on your photo to choose an image.',
     displayName: 'Display name',
     saveChanges: 'Save changes',
