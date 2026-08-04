@@ -109,18 +109,18 @@ export default function FriendProfile() {
                   <span className="text-label-sm font-label-sm text-on-surface-variant">
                     {t("home.dominantMood")}
                   </span>
-                  <div className="flex items-center gap-xs">
+                  <div className="flex items-center gap-xs mt-2 min-w-0">
                     {dominantMood ? (
                       <MoodIcon
                         mood={summary.dominant_mood}
-                        className="text-[32px]"
+                        className="text-[28px] sm:text-[32px] shrink-0"
                       />
                     ) : (
-                      <span className="text-body-md text-on-surface-variant">
+                      <span className="text-body-md text-on-surface-variant shrink-0">
                         —
                       </span>
                     )}
-                    <span className="text-headline-lg font-headline-lg text-on-surface">
+                    <span className="min-w-0 text-lg sm:text-xl font-bold text-on-surface leading-tight tracking-tight break-words line-clamp-2">
                       {dominantMood ? dominantMood.label : t("common.none")}
                     </span>
                   </div>
@@ -129,11 +129,11 @@ export default function FriendProfile() {
                   <span className="text-label-sm font-label-sm text-on-surface-variant">
                     {t("home.mostUsedTag")}
                   </span>
-                  <div className="flex items-center gap-xs">
-                    <span className="material-symbols-outlined text-[28px] text-secondary">
+                  <div className="flex items-center gap-xs mt-2 min-w-0">
+                    <span className="material-symbols-outlined text-[26px] sm:text-[28px] text-secondary shrink-0">
                       auto_awesome
                     </span>
-                    <span className="min-w-0 break-words text-headline-lg font-headline-lg text-on-surface">
+                    <span className="min-w-0 text-lg sm:text-xl font-bold text-on-surface leading-tight tracking-tight break-words line-clamp-2">
                       {summary.top_tag
                         ? getLocalizedTag(summary.top_tag, t)
                         : t("common.none")}

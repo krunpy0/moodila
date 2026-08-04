@@ -1164,14 +1164,14 @@ export default function Landing() {
                       <span className="text-label-sm font-label-sm text-on-surface-variant">
                         Dominant mood
                       </span>
-                      <div className="flex items-center gap-xs">
+                      <div className="flex items-center gap-xs mt-2 min-w-0">
                         <span
-                          className="material-symbols-outlined text-[28px] text-primary"
+                          className="material-symbols-outlined text-[28px] text-primary shrink-0"
                           style={{ fontVariationSettings: "'FILL' 1" }}
                         >
                           sentiment_satisfied
                         </span>
-                        <span className="text-headline-lg font-headline-lg text-on-surface font-semibold">
+                        <span className="min-w-0 text-lg sm:text-xl font-bold text-on-surface leading-tight tracking-tight break-words line-clamp-2">
                           Good
                         </span>
                       </div>
@@ -1180,11 +1180,11 @@ export default function Landing() {
                       <span className="text-label-sm font-label-sm text-on-surface-variant">
                         Most used tag
                       </span>
-                      <div className="flex items-center gap-xs">
-                        <span className="material-symbols-outlined text-[24px] text-secondary">
+                      <div className="flex items-center gap-xs mt-2 min-w-0">
+                        <span className="material-symbols-outlined text-[24px] text-secondary shrink-0">
                           auto_awesome
                         </span>
-                        <span className="text-headline-lg font-headline-lg text-on-surface font-semibold truncate">
+                        <span className="min-w-0 text-lg sm:text-xl font-bold text-on-surface leading-tight tracking-tight break-words line-clamp-2">
                           Coffee
                         </span>
                       </div>
