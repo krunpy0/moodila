@@ -28,6 +28,9 @@ func (h Notifications) List(c *gin.Context) {
 			limit = val
 		}
 	}
+	if limit > 50 {
+		limit = 50
+	}
 
 	list, err := h.Notifications.List(c.Request.Context(), c.GetString("userID"), limit)
 	if err != nil {
@@ -55,6 +58,13 @@ func (h Notifications) MarkRead(c *gin.Context) {
 	}
 	var input markReadInput
 	_ = c.ShouldBindJSON(&input)
+
+	for _, id := range input.IDs {
+		if !validUUID(id) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid notification ID format"})
+			return
+		}
+	}
 
 	if err := h.Notifications.MarkAsRead(c.Request.Context(), c.GetString("userID"), input.IDs); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not mark notifications as read"})

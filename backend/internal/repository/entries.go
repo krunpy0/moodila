@@ -22,9 +22,11 @@ var (
 // SummaryCache provides thread-safe in-memory caching for month summaries.
 // Assumes single-instance deployment.
 type SummaryCache struct {
-	mu    sync.RWMutex
-	items map[string]summaryCacheItem
-	ttl   time.Duration
+	mu       sync.RWMutex
+	items    map[string]summaryCacheItem
+	ttl      time.Duration
+	maxItems int
+	stopChan chan struct{}
 }
 
 type summaryCacheItem struct {
@@ -36,9 +38,49 @@ func NewSummaryCache(ttl time.Duration) *SummaryCache {
 	if ttl <= 0 {
 		ttl = 5 * time.Minute
 	}
-	return &SummaryCache{
-		items: make(map[string]summaryCacheItem),
-		ttl:   ttl,
+	c := &SummaryCache{
+		items:    make(map[string]summaryCacheItem),
+		ttl:      ttl,
+		maxItems: 5000,
+		stopChan: make(chan struct{}),
+	}
+	go c.startCleanup()
+	return c
+}
+
+func (c *SummaryCache) startCleanup() {
+	ticker := time.NewTicker(c.ttl / 2)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			c.cleanupExpired()
+		case <-c.stopChan:
+			return
+		}
+	}
+}
+
+func (c *SummaryCache) cleanupExpired() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	now := time.Now()
+	for k, item := range c.items {
+		if now.After(item.expiresAt) {
+			delete(c.items, k)
+		}
+	}
+}
+
+func (c *SummaryCache) Stop() {
+	if c == nil || c.stopChan == nil {
+		return
+	}
+	select {
+	case <-c.stopChan:
+		// already closed
+	default:
+		close(c.stopChan)
 	}
 }
 
@@ -61,11 +103,19 @@ func (c *SummaryCache) Set(key string, summary models.EntrySummary) {
 		return
 	}
 	c.mu.Lock()
+	defer c.mu.Unlock()
+	now := time.Now()
 	c.items[key] = summaryCacheItem{
 		summary:   summary,
-		expiresAt: time.Now().Add(c.ttl),
+		expiresAt: now.Add(c.ttl),
 	}
-	c.mu.Unlock()
+	if len(c.items) > c.maxItems {
+		for k, item := range c.items {
+			if now.After(item.expiresAt) {
+				delete(c.items, k)
+			}
+		}
+	}
 }
 
 func (c *SummaryCache) InvalidateUser(userID string) {

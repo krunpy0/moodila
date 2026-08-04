@@ -16,6 +16,7 @@ import (
 
 	"moodshare/internal/config"
 	"moodshare/internal/mailer"
+	"moodshare/internal/models"
 	"moodshare/internal/repository"
 
 	"github.com/gin-gonic/gin"
@@ -166,7 +167,14 @@ func (h Auth) Refresh(c *gin.Context) {
 		return
 	}
 
-	csrfToken, err := h.setAuthCookies(c, claims.Subject)
+	user, err := h.Users.ByID(c.Request.Context(), claims.Subject)
+	if err != nil || (claims.TokenVersion > 0 && claims.TokenVersion != user.TokenVersion) {
+		h.clearAuthCookies(c)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "session invalidated or user not found"})
+		return
+	}
+
+	csrfToken, err := h.setAuthCookies(c, claims.Subject, user.TokenVersion)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not rotate tokens"})
 		return
@@ -185,12 +193,19 @@ func (h Auth) Logout(c *gin.Context) {
 
 type CustomClaims struct {
 	jwt.RegisteredClaims
-	TokenType string `json:"type,omitempty"`
-	CSRF      string `json:"csrf,omitempty"`
+	TokenType    string `json:"type,omitempty"`
+	CSRF         string `json:"csrf,omitempty"`
+	TokenVersion int    `json:"token_version,omitempty"`
 }
 
 func (h Auth) respondWithCookies(c *gin.Context, status int, userID string, user any) {
-	csrfToken, err := h.setAuthCookies(c, userID)
+	tokenVersion := 1
+	if u, ok := user.(models.User); ok && u.TokenVersion > 0 {
+		tokenVersion = u.TokenVersion
+	} else if uPtr, ok := user.(*models.User); ok && uPtr != nil && uPtr.TokenVersion > 0 {
+		tokenVersion = uPtr.TokenVersion
+	}
+	csrfToken, err := h.setAuthCookies(c, userID, tokenVersion)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not set auth cookies"})
 		return
@@ -231,7 +246,7 @@ func (h Auth) getCookieSecure(c *gin.Context) bool {
 	return h.Config.CookieSecure
 }
 
-func (h Auth) setAuthCookies(c *gin.Context, userID string) (string, error) {
+func (h Auth) setAuthCookies(c *gin.Context, userID string, tokenVersion int) (string, error) {
 	csrfToken, err := generateRandomHex(16)
 	if err != nil {
 		return "", err
@@ -245,8 +260,9 @@ func (h Auth) setAuthCookies(c *gin.Context, userID string) (string, error) {
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute)),
 		},
-		TokenType: "access",
-		CSRF:      csrfToken,
+		TokenType:    "access",
+		CSRF:         csrfToken,
+		TokenVersion: tokenVersion,
 	}
 
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
@@ -262,7 +278,8 @@ func (h Auth) setAuthCookies(c *gin.Context, userID string) (string, error) {
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(30 * 24 * time.Hour)),
 		},
-		TokenType: "refresh",
+		TokenType:    "refresh",
+		TokenVersion: tokenVersion,
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
@@ -518,7 +535,16 @@ func (h Auth) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
+	csrfToken, err := h.setAuthCookies(c, userID, user.TokenVersion+1)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "Password changed successfully",
+		"csrf_token": csrfToken,
+	})
 }
 
 func (h Auth) DeleteAccountRequest(c *gin.Context) {

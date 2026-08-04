@@ -13,5 +13,6 @@ type User struct {
 	DisplayName  string    `json:"display_name"`
 	AvatarURL    *string   `json:"avatar_url"`
 	IsAdmin      bool      `json:"is_admin"`
+	TokenVersion int       `json:"-"`
 	CreatedAt    time.Time `json:"created_at"`
 }

@@ -36,6 +36,9 @@ func (h Feed) List(c *gin.Context) {
 			limit = l
 		}
 	}
+	if limit > 50 {
+		limit = 50
+	}
 	cursor := strings.TrimSpace(c.Query("cursor"))
 	includeSelfParam := strings.TrimSpace(c.Query("include_self"))
 	includeSelf := includeSelfParam == "true" || includeSelfParam == "1"
