@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"moodshare/internal/db"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"moodshare/internal/db"
-
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -192,8 +192,8 @@ func dumpGoNative(ctx context.Context, dbURL string, w io.Writer) error {
 
 	// Fetch all table names in public schema
 	rows, err := pool.Query(ctx, `
-		SELECT table_name 
-		FROM information_schema.tables 
+		SELECT table_name
+		FROM information_schema.tables
 		WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
 		ORDER BY table_name;
 	`)
@@ -265,15 +265,40 @@ func formatSQLValue(val interface{}) string {
 	case time.Time:
 		return fmt.Sprintf("'%s'", v.Format(time.RFC3339Nano))
 	case []byte:
-		escaped := strings.ReplaceAll(string(v), "'", "''")
-		return fmt.Sprintf("'%s'", escaped)
+		// real byte slices (e.g. bytea columns) -> hex literal
+		return fmt.Sprintf("'\\x%x'", v)
+	case [16]byte:
+		// pgx returns UUID columns as [16]byte
+		u, err := uuid.FromBytes(v[:])
+		if err != nil {
+			return "NULL"
+		}
+		return fmt.Sprintf("'%s'", u.String())
 	case bool:
 		if v {
 			return "TRUE"
 		}
 		return "FALSE"
-	default:
+	case []string:
+		// text[] etc.
+		var quoted []string
+		for _, s := range v {
+			esc := strings.ReplaceAll(s, `"`, `\"`)
+			quoted = append(quoted, fmt.Sprintf(`"%s"`, esc))
+		}
+		return fmt.Sprintf("'{%s}'", strings.Join(quoted, ","))
+	case []interface{}:
+		var parts []string
+		for _, item := range v {
+			parts = append(parts, fmt.Sprintf("%v", item))
+		}
+		return fmt.Sprintf("'{%s}'", strings.Join(parts, ","))
+	case int16, int32, int64, float32, float64, int:
 		return fmt.Sprintf("%v", v)
+	default:
+		// last resort: stringify and quote, better than a bare Go-syntax literal
+		escaped := strings.ReplaceAll(fmt.Sprintf("%v", v), "'", "''")
+		return fmt.Sprintf("'%s'", escaped)
 	}
 }
 
