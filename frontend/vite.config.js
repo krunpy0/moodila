@@ -28,8 +28,8 @@ export default defineConfig({
       },
       includeAssets: ['favicon.svg', 'icons.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'MoodShare — Mood & Day Journal',
-        short_name: 'MoodShare',
+        name: 'Moodila — Mood & Day Journal',
+        short_name: 'Moodila',
         description: 'Mobile mood and day journal with friends',
         theme_color: '#0f172a',
         background_color: '#0f172a',
