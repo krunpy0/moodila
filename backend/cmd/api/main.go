@@ -74,6 +74,7 @@ func main() {
 	}
 	router.POST("/auth/register", authLimiter, auth.Register)
 	router.POST("/auth/login", authLimiter, auth.Login)
+	router.POST("/auth/refresh", authLimiter, auth.Refresh)
 	router.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
 	router.POST("/auth/reset-password", authLimiter, auth.ResetPassword)
 	router.POST("/auth/account/delete-confirm", authLimiter, auth.DeleteAccountConfirm)
@@ -95,7 +96,7 @@ func main() {
 	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Notifications: notificationsRepo}
 	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}}
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo}
-	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret))
+	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret), middleware.CSRF())
 	authorized.PATCH("/auth/password", passwordChangeLimiter, auth.ChangePassword)
 	authorized.POST("/auth/account/delete-request", passwordChangeLimiter, auth.DeleteAccountRequest)
 	authorized.POST("/entries", mutationLimiter, entries.Save)
@@ -145,8 +146,15 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	log.Printf("MoodShare API listening on :%s (env=%s)", cfg.Port, cfg.AppEnv)
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server error: %v", err)
+	if cfg.TLSCert != "" && cfg.TLSKey != "" {
+		log.Printf("MoodShare API listening on HTTPS :%s (env=%s)", cfg.Port, cfg.AppEnv)
+		if err := srv.ListenAndServeTLS(cfg.TLSCert, cfg.TLSKey); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	} else {
+		log.Printf("MoodShare API listening on HTTP :%s (env=%s)", cfg.Port, cfg.AppEnv)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
 	}
 }

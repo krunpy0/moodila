@@ -9,13 +9,16 @@ import (
 
 const jwtIssuer = "moodshare"
 
+type CustomClaims struct {
+	jwt.RegisteredClaims
+	TokenType string `json:"type,omitempty"`
+	CSRF      string `json:"csrf,omitempty"`
+}
+
 func Auth(secret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var raw string
-		header := c.GetHeader("Authorization")
-		if strings.HasPrefix(header, "Bearer ") {
-			raw = strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))
-		} else if cookieToken, err := c.Cookie("token"); err == nil && strings.TrimSpace(cookieToken) != "" {
+		if cookieToken, err := c.Cookie("access_token"); err == nil && strings.TrimSpace(cookieToken) != "" {
 			raw = strings.TrimSpace(cookieToken)
 		}
 
@@ -23,7 +26,7 @@ func Auth(secret string) gin.HandlerFunc {
 			c.AbortWithStatusJSON(401, gin.H{"error": "missing token"})
 			return
 		}
-		claims := &jwt.RegisteredClaims{}
+		claims := &CustomClaims{}
 		token, err := jwt.ParseWithClaims(raw, claims, func(token *jwt.Token) (any, error) {
 			if token.Method != jwt.SigningMethodHS256 {
 				return nil, jwt.ErrSignatureInvalid
@@ -34,7 +37,12 @@ func Auth(secret string) gin.HandlerFunc {
 			c.AbortWithStatusJSON(401, gin.H{"error": "invalid or expired token"})
 			return
 		}
+		if claims.TokenType != "access" {
+			c.AbortWithStatusJSON(401, gin.H{"error": "invalid token type"})
+			return
+		}
 		c.Set("userID", claims.Subject)
+		c.Set("csrfToken", claims.CSRF)
 		c.Next()
 	}
 }

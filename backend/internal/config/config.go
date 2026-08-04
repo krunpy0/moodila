@@ -30,6 +30,8 @@ type Config struct {
 	ResendAPIKey                 string
 	ResendFromEmail              string
 	AppBaseURL                   string
+	TLSCert                      string
+	TLSKey                       string
 }
 
 // Load reads configuration, loading backend/.env first (if present) so local
@@ -57,6 +59,8 @@ func Load() Config {
 		ResendAPIKey:                 os.Getenv("RESEND_API_KEY"),
 		ResendFromEmail:              getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev"),
 		AppBaseURL:                   strings.TrimRight(getenv("APP_BASE_URL", "http://localhost:5173"), "/"),
+		TLSCert:                      os.Getenv("TLS_CERT"),
+		TLSKey:                       os.Getenv("TLS_KEY"),
 	}
 }
 

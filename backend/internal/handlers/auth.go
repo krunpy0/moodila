@@ -101,7 +101,7 @@ func (h Auth) Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create account"})
 		return
 	}
-	h.respondWithToken(c, http.StatusCreated, user.ID, user)
+	h.respondWithCookies(c, http.StatusCreated, user.ID, user)
 }
 
 func (h Auth) Login(c *gin.Context) {
@@ -127,7 +127,7 @@ func (h Auth) Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid email or password"})
 		return
 	}
-	h.respondWithToken(c, http.StatusOK, user.ID, user)
+	h.respondWithCookies(c, http.StatusOK, user.ID, user)
 }
 
 func (h Auth) Session(c *gin.Context) {
@@ -136,28 +136,159 @@ func (h Auth) Session(c *gin.Context) {
 	})
 }
 
+func (h Auth) Refresh(c *gin.Context) {
+	cookieToken, err := c.Cookie("refresh_token")
+	if err != nil || strings.TrimSpace(cookieToken) == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing refresh token"})
+		return
+	}
+
+	claims := &CustomClaims{}
+	token, err := jwt.ParseWithClaims(strings.TrimSpace(cookieToken), claims, func(token *jwt.Token) (any, error) {
+		if token.Method != jwt.SigningMethodHS256 {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(h.JWTSecret), nil
+	}, jwt.WithIssuer("moodshare"))
+
+	if err != nil || !token.Valid || claims.Subject == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired refresh token"})
+		return
+	}
+
+	if claims.TokenType != "refresh" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token type"})
+		return
+	}
+
+	if err := h.setAuthCookies(c, claims.Subject); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not rotate tokens"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "refreshed"})
+}
+
 func (h Auth) Logout(c *gin.Context) {
+	clearAuthCookies(c)
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
 
-func (h Auth) respondWithToken(c *gin.Context, status int, userID string, user any) {
-	now := time.Now()
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Subject:   userID,
-		Issuer:    "moodshare",
-		IssuedAt:  jwt.NewNumericDate(now),
-		ExpiresAt: jwt.NewNumericDate(now.Add(7 * 24 * time.Hour)),
-	})
-	signed, err := token.SignedString([]byte(h.JWTSecret))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create token"})
+type CustomClaims struct {
+	jwt.RegisteredClaims
+	TokenType string `json:"type,omitempty"`
+	CSRF      string `json:"csrf,omitempty"`
+}
+
+func (h Auth) respondWithCookies(c *gin.Context, status int, userID string, user any) {
+	if err := h.setAuthCookies(c, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not set auth cookies"})
 		return
 	}
 
 	c.JSON(status, gin.H{
-		"token": signed,
-		"user":  user,
+		"user": user,
 	})
+}
+
+func generateRandomHex(bytesLen int) (string, error) {
+	b := make([]byte, bytesLen)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+func (h Auth) setAuthCookies(c *gin.Context, userID string) error {
+	csrfToken, err := generateRandomHex(16)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	accessClaims := CustomClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			Issuer:    "moodshare",
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute)),
+		},
+		TokenType: "access",
+		CSRF:      csrfToken,
+	}
+
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
+	signedAccess, err := accessToken.SignedString([]byte(h.JWTSecret))
+	if err != nil {
+		return err
+	}
+
+	refreshClaims := CustomClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   userID,
+			Issuer:    "moodshare",
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(30 * 24 * time.Hour)),
+		},
+		TokenType: "refresh",
+	}
+
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	signedRefresh, err := refreshToken.SignedString([]byte(h.JWTSecret))
+	if err != nil {
+		return err
+	}
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    signedAccess,
+		Path:     "/",
+		Expires:  now.Add(15 * time.Minute),
+		MaxAge:   15 * 60,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    signedRefresh,
+		Path:     "/",
+		Expires:  now.Add(30 * 24 * time.Hour),
+		MaxAge:   30 * 24 * 3600,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "csrf_token",
+		Value:    csrfToken,
+		Path:     "/",
+		Expires:  now.Add(30 * 24 * time.Hour),
+		MaxAge:   30 * 24 * 3600,
+		Secure:   true,
+		HttpOnly: false,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	return nil
+}
+
+func clearAuthCookies(c *gin.Context) {
+	past := time.Unix(0, 0)
+	for _, name := range []string{"access_token", "refresh_token", "csrf_token", "token"} {
+		http.SetCookie(c.Writer, &http.Cookie{
+			Name:     name,
+			Value:    "",
+			Path:     "/",
+			Expires:  past,
+			MaxAge:   -1,
+			Secure:   true,
+			HttpOnly: name != "csrf_token",
+			SameSite: http.SameSiteNoneMode,
+		})
+	}
 }
 
 func validateRegistration(input credentials) error {

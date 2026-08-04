@@ -1,9 +1,24 @@
+import fs from 'fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const certFile = process.env.TLS_CERT || 'C:/Users/maksi/local-frontend.com+1.pem'
+const keyFile = process.env.TLS_KEY || 'C:/Users/maksi/local-frontend.com+1-key.pem'
+const hasHttps = fs.existsSync(certFile) && fs.existsSync(keyFile)
+
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    host: 'local-frontend.com',
+    port: 5173,
+    https: hasHttps
+      ? {
+          cert: fs.readFileSync(certFile),
+          key: fs.readFileSync(keyFile),
+        }
+      : undefined,
+  },
   plugins: [
     react(),
     VitePWA({
