@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"moodshare/internal/backup"
 	"moodshare/internal/config"
 	"moodshare/internal/db"
 	"moodshare/internal/handlers"
@@ -21,6 +22,22 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	// Start Google Drive database backup background scheduler (every 3 hours)
+	backupCtx, backupCancel := context.WithCancel(context.Background())
+	defer backupCancel()
+	backup.StartScheduler(backupCtx, backup.Config{
+		DatabaseURL:       cfg.DatabaseURL,
+		CredentialsJSON:   cfg.GDriveCredentialsJSON,
+		CredentialsFile:   cfg.GDriveCredentialsFile,
+		OAuthClientID:     cfg.GoogleClientID,
+		OAuthClientSecret: cfg.GoogleClientSecret,
+		OAuthRefreshToken: cfg.GDriveRefreshToken,
+		FolderID:          cfg.GDriveFolderID,
+		IntervalHours:     cfg.BackupIntervalHours,
+		RetentionDays:     cfg.BackupRetentionDays,
+		Enabled:           cfg.EnableAutoBackup,
+	})
 
 	// Connect to Postgres (Supabase). The server still starts if the DB is
 	// unreachable so the rest of the app can be developed/tested; /health

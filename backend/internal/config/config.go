@@ -32,6 +32,15 @@ type Config struct {
 	AppBaseURL                   string
 	TLSCert                      string
 	TLSKey                       string
+	GDriveCredentialsJSON        string
+	GDriveCredentialsFile        string
+	GDriveRefreshToken           string
+	GoogleClientID               string
+	GoogleClientSecret           string
+	GDriveFolderID               string
+	BackupIntervalHours          int
+	BackupRetentionDays          int
+	EnableAutoBackup             bool
 }
 
 // Load reads configuration, loading backend/.env first (if present) so local
@@ -61,6 +70,15 @@ func Load() Config {
 		AppBaseURL:                   strings.TrimRight(getenv("APP_BASE_URL", "http://localhost:5173"), "/"),
 		TLSCert:                      os.Getenv("TLS_CERT"),
 		TLSKey:                       os.Getenv("TLS_KEY"),
+		GDriveCredentialsJSON:        os.Getenv("GDRIVE_CREDENTIALS_JSON"),
+		GDriveCredentialsFile:        os.Getenv("GDRIVE_CREDENTIALS_FILE"),
+		GDriveRefreshToken:           getenv("GDRIVE_REFRESH_TOKEN", os.Getenv("GOOGLE_REFRESH_TOKEN")),
+		GoogleClientID:               getenv("GDRIVE_CLIENT_ID", os.Getenv("GOOGLE_CLIENT_ID")),
+		GoogleClientSecret:           getenv("GDRIVE_CLIENT_SECRET", os.Getenv("GOOGLE_CLIENT_SECRET")),
+		GDriveFolderID:               os.Getenv("GDRIVE_FOLDER_ID"),
+		BackupIntervalHours:          parseInt(getenv("BACKUP_INTERVAL_HOURS", "3"), 3),
+		BackupRetentionDays:          parseInt(getenv("BACKUP_RETENTION_DAYS", "7"), 7),
+		EnableAutoBackup:             parseBool(getenv("ENABLE_AUTO_BACKUP", "true")),
 	}
 }
 

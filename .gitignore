@@ -12,11 +12,14 @@ Thumbs.db
 *.swp
 
 # =========================
-# Environment
+# Environment & Secrets
 # =========================
 .env
 .env.*
 !.env.example
+credentials*.json
+*.json.key
+secrets/
 
 # =========================
 # Logs
