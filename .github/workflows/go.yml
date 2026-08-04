@@ -30,6 +30,12 @@ jobs:
 
       - name: Build
         run: go build -v ./...
-
+        
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-binary
+          path: backend/bin/api
+          retention-days: 7
       - name: Test
         run: go test -v ./...
