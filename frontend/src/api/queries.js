@@ -19,7 +19,14 @@ export const STALE_TIMES = {
   STATIC: 5 * 60_000,    // 5m: auth session, full friends list
 }
 
-export const useSessionQuery = (enabled) => useQuery({ queryKey: queryKeys.session, queryFn: getSession, enabled, staleTime: STALE_TIMES.STATIC, retry: false })
+export const useSessionQuery = (enabled) =>
+  useQuery({
+    queryKey: queryKeys.session,
+    queryFn: getSession,
+    enabled,
+    staleTime: STALE_TIMES.STANDARD,
+    retry: false,
+  })
 export const useEntryQuery = (date, enabled = true) => useQuery({ queryKey: queryKeys.entry(date), queryFn: () => getEntry(date), enabled, staleTime: STALE_TIMES.STABLE, retry: false, meta: { ignore404: true } })
 export const useEntriesQuery = (month, enabled = true) => useQuery({ queryKey: queryKeys.entries(month), queryFn: () => getEntriesByMonth(month), enabled: Boolean(month) && enabled, staleTime: STALE_TIMES.STABLE })
 export const useEntrySummaryQuery = (month) => useQuery({ queryKey: queryKeys.entrySummary(month), queryFn: () => getEntrySummary(month), staleTime: STALE_TIMES.STANDARD })

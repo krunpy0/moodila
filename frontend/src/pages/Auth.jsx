@@ -21,8 +21,10 @@ export default function Auth() {
 
   const authMutation = useMutation({
     mutationFn: (data) => (mode === "login" ? login(data) : register(data)),
-    onSuccess: () => {
-      queryClient.removeQueries();
+    onSuccess: (data) => {
+      if (data?.user) {
+        queryClient.setQueryData(queryKeys.session, { user_id: data.user.id });
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.session });
       navigate("/home", { replace: true });
     },

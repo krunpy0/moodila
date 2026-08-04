@@ -23,6 +23,13 @@ func Auth(secret string) gin.HandlerFunc {
 		}
 
 		if raw == "" {
+			authHeader := c.GetHeader("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				raw = strings.TrimPrefix(authHeader, "Bearer ")
+			}
+		}
+
+		if raw == "" {
 			c.AbortWithStatusJSON(401, gin.H{"error": "missing token"})
 			return
 		}
