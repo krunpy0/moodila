@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { confirmAccountDeletion, logout } from '../api/auth'
+import { queryKeys } from '../api/queries'
 import { useQueryClient } from '@tanstack/react-query'
 
 export default function ConfirmAccountDeletion() {
@@ -24,6 +25,8 @@ export default function ConfirmAccountDeletion() {
     try {
       await confirmAccountDeletion(token)
       await logout()
+      queryClient.setQueryData(queryKeys.session, null)
+      queryClient.removeQueries({ queryKey: queryKeys.session })
       queryClient.clear()
       navigate('/login', {
         replace: true,

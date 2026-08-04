@@ -1,15 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { logout } from "../api/auth";
-import { useProfileQuery } from "../api/queries";
+import { queryKeys, useProfileQuery } from "../api/queries";
 import { useLanguage } from "../context/LanguageContext";
 import HeaderBell from "./HeaderBell";
 
 const navItems = [
   ["/home", "home", "nav.home"],
   ["/calendar", "calendar_today", "nav.calendar"],
-  ["/feed", "grid_view", "nav.feed"],
-  ["/friends", "group", "friends.title"],
+  ["/friends", "group", "nav.friends"],
+  ["/feed", "rss_feed", "nav.feed"],
   ["/profile", "person", "nav.profile"],
 ];
 
@@ -33,6 +33,8 @@ export default function DesktopSidebar() {
 
   const handleLogout = async () => {
     await logout().catch(() => {});
+    queryClient.setQueryData(queryKeys.session, null);
+    queryClient.removeQueries({ queryKey: queryKeys.session });
     queryClient.clear();
     navigate("/login", { replace: true });
   };

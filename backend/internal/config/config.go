@@ -41,6 +41,9 @@ type Config struct {
 	BackupIntervalHours          int
 	BackupRetentionDays          int
 	EnableAutoBackup             bool
+	CookieSecure                 bool
+	CookieSameSite               string
+	CookieDomain                 string
 }
 
 // Load reads configuration, loading backend/.env first (if present) so local
@@ -48,13 +51,19 @@ type Config struct {
 func Load() Config {
 	loadDotEnv(".env")
 
+	appEnv := getenv("APP_ENV", "development")
+	defaultSecure := strings.EqualFold(appEnv, "production")
+	if secEnv := os.Getenv("COOKIE_SECURE"); secEnv != "" {
+		defaultSecure = parseBool(secEnv)
+	}
+
 	return Config{
 		Port:                         getenv("PORT", "8080"),
 		DatabaseURL:                  os.Getenv("DATABASE_URL"),
 		JWTSecret:                    os.Getenv("JWT_SECRET"),
 		CORSOrigin:                   getenv("CORS_ORIGIN", "http://localhost:5173"),
 		APIPublicURL:                 strings.TrimRight(getenv("API_PUBLIC_URL", "http://localhost:8080"), "/"),
-		AppEnv:                       getenv("APP_ENV", "development"),
+		AppEnv:                       appEnv,
 		S3Endpoint:                   strings.TrimRight(os.Getenv("S3_ENDPOINT"), "/"),
 		S3Region:                     getenv("S3_REGION", "us-east-1"),
 		S3Bucket:                     getenv("S3_BUCKET", "entry-photos"),
@@ -79,6 +88,9 @@ func Load() Config {
 		BackupIntervalHours:          parseInt(getenv("BACKUP_INTERVAL_HOURS", "3"), 3),
 		BackupRetentionDays:          parseInt(getenv("BACKUP_RETENTION_DAYS", "7"), 7),
 		EnableAutoBackup:             parseBool(getenv("ENABLE_AUTO_BACKUP", "true")),
+		CookieSecure:                 defaultSecure,
+		CookieSameSite:               getenv("COOKIE_SAMESITE", "none"),
+		CookieDomain:                 os.Getenv("COOKIE_DOMAIN"),
 	}
 }
 

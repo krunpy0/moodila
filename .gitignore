@@ -39,6 +39,7 @@ dist/
 *.so
 *.dylib
 *.gocache
+.gocache/
 
 # Test
 *.test

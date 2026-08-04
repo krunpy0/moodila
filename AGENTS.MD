@@ -1,235 +1,181 @@
-# MoodShare — бриф для разработки (Claude Code)
+# MOODSHARE — FULL PROJECT CONTEXT FOR AI AGENTS (LLM CONTEXT GUIDE)
 
-## 1. Что это за проект
+Этот документ предоставляет полный архитектурный, технический и функциональный контекст проекта **MoodShare**. Используй его, чтобы понимать структуру кодовой базы, стек технологий, конвенции разработки и взаимосвязи компонентов.
 
-**MoodShare** — мобильное веб-приложение (React, работает как сайт/PWA) для ведения
-дневника настроения и дня, с социальной частью: можно добавлять друзей и смотреть,
-как прошёл их день.
+---
 
-Аналог DailyBean, но с друзьями:
+## 1. Обзор проекта (Project Overview)
 
-- Каждый день пользователь делает запись: выбирает эмодзи настроения, теги в интерфейсе (сгруппированы по категориям Positive, Neutral, Difficult, доступные для выбора независимо от выбранного эмодзи), пишет текстовую заметку, может прикрепить фото.
-- Все записи ложатся в календарь (по дням), у месяца собирается mood summary
-  (доминирующее настроение, самый частый тег, количество записей).
-- Можно добавить человека в друзья (заявка → подтверждение, как в соцсетях).
-- У друзей можно смотреть их календарь настроений и их заметки (если запись не
-  скрыта) и их ленту записей (Feed) с лайками.
-- Есть профиль пользователя со списком последних записей и списком друзей.
+**MoodShare** — это мобильное веб-приложение (PWA на React + Vite + Tailwind CSS) для ведения дневника настроения и дня с социальной составляющей.
 
-Дизайн уже готов и приложен как референс: статичные HTML-стейты (не интерактивные),
-показывающие все экраны — Home, Calendar (свой и в режиме просмотра друга),
-Add Entry, Feed, Manage Friends, Profile. Экран Home снизу имеет таб-бар:
-Home / Calendar / Add (+) / Feed (grid icon) / Profile.
+### Ключевые возможности:
 
-Референсы покрывают не все состояния и не все страницы. Поэтому дополнительно
-ведём файл `design-reference/DESIGN.md` — дизайн-система (цвета, шрифты, отступы,
-радиусы, тени, стиль карточек/кнопок/чипов, паттерны компонентов), выведенная из
-имеющихся HTML-стейтов. Правило для Claude Code: для любого экрана или состояния
-сначала искать конкретный HTML-референс в `design-reference/`; если референса на
-эту страницу/состояние нет — не придумывать стиль с нуля, а собирать вёрстку по
-правилам из `DESIGN.md`, чтобы всё приложение выглядело единообразно.
+- **Дневник настроения:** Ежедневные записи с выбором эмодзи (шкала 1–5), выбором тегов по категориям (_Positive_, _Neutral_, _Difficult_), текстовой заметкой, прикреплением фото и аудио-голосовых заметок (_Voice Notes_).
+- **Календарь и аналитика (Summary):** Визуальный календарь по месяцам, подсчет доминирующего настроения, частого тега и статистики за месяц.
+- **Социальная сеть друзей:** Поиск пользователей по username, система заявок в друзья (pending / accept / decline / cancel), удаление друзей.
+- **Просмотр друзей:** Возможность смотреть календарь и открытые записи подтвержденных друзей.
+- **Лента активности (Feed):** Общая лента нескрытых записей друзей с поддержкой лайков и комментариев.
+- **Уведомления и анонсы (Notifications & Announcements):** Колокольчик с бейджем непрочитанных событий, модальный центр уведомлений, система системных анонсов (в том числе админ-панель для их управления).
+- **Безопасность и аккаунт:** Авторизация JWT + CSRF, восстановление пароля через почту (Resend API), безопасная смена пароля и полное анонимизирующее удаление аккаунта (Account Deletion).
+- **Резервное копирование:** Автоматический фоновый бэкап базы данных в Google Drive.
 
-## 2. Технический стек
+---
 
-- **Backend**: Go (REST API, JSON)
-- **База данных**: PostgreSQL через Supabase (используем Supabase как managed Postgres +
-  Storage для фото; auth можно делать своим на Go, либо через Supabase Auth — см. п.4)
-- **Frontend**: React (Vite), собирается и работает как обычный сайт (не React Native).
-  Адаптивная вёрстка под мобильный вьюпорт (дизайн — mobile-first, ~380–420px).
-- **Хранилище фото**: Supabase Storage (bucket с подписанными/публичными URL)
+## 2. Технический стек (Tech Stack)
 
-## 3. Структура проекта
+### Backend
 
-```
+- **Язык:** Go 1.24/1.25 (`go.mod`)
+- **Web-фреймворк:** [Gin](https://github.com/gin-gonic/gin) (`v1.10.1`)
+- **База данных:** PostgreSQL (управляемая через Supabase)
+- **Драйвер БД:** [`pgx/v5`](https://github.com/jackc/pgx) (`pgxpool` + чистые SQL-запросы, без тяжелых ORM)
+- **Аутентификация и безопасность:**
+  - JWT (`github.com/golang-jwt/jwt/v5`)
+  - Хеширование паролей: bcrypt (`golang.org/x/crypto`)
+  - CSRF-защита для мутирующих запросов
+  - Тьер-лимитирование запросов (Rate Limiting) через `golang.org/x/time/rate`
+- **Файловое хранилище (Storage):** S3-совместимое хранилище (Supabase Storage / Cloudflare R2 / AWS S3 / MinIO). Прямая загрузка из браузера через подписанные PUT URL (`Presigned URLs`).
+- **Интеграции:**
+  - **Resend API:** отправка транзакционных писем (сброс пароля, удаление аккаунта).
+  - **Google Drive API:** фоновое резервное копирование БД по расписанию.
+
+### Frontend
+
+- **Язык / Сборщик:** React 19 (`^19.2.7`), Vite 8 (`^8.1.1`), ES Modules
+- **Роутинг:** React Router DOM 7 (`^7.18.1`)
+- **Управление состоянием и кешированием API:** TanStack React Query v5 (`^5.101.4`)
+- **Стилизация:** Tailwind CSS 3 (`^3.4.19`) + `index.css` + дизайн-токены
+- **PWA:** `vite-plugin-pwa`
+- **Линтинг:** Oxlint (`^1.71.0`)
+- **Утилиты UI:** `react-easy-crop` (кроп аватаров)
+
+---
+
+## 3. Архитектура и структура директорий
+
+```text
 moodshare/
-  backend/
-    cmd/api/main.go            — точка входа, поднятие сервера
-    internal/
-      config/                 — чтение env (DB DSN, JWT secret, Supabase keys)
-      db/                     — подключение к Postgres, миграции
-      models/                 — структуры (User, Entry, Friendship, Like, Comment)
-      handlers/                — HTTP-хендлеры по фичам (auth, entries, friends, feed)
-      middleware/              — auth middleware (проверка JWT), CORS, logging
-      repository/              — SQL-запросы к БД, по одному файлу на сущность
-    migrations/                — SQL-миграции (можно через golang-migrate или goose)
-    go.mod
-
-  frontend/
-    src/
-      pages/                   — Home, Calendar, AddEntry, Feed, Friends, Profile
-      components/              — переиспользуемые UI-блоки (MoodPicker, EntryCard,
-                                  CalendarGrid, FriendRow, TagChip, BottomNav)
-      api/                     — обёртки над fetch к бэку (по одному файлу на фичу)
-      store/ или context/      — состояние авторизации, текущий пользователь
-      styles/                  — общие стили/токены дизайна (взять из HTML-референса)
-    index.html
-    vite.config.ts
-
-  design-reference/            — сюда положить исходные HTML-стейты дизайна
-    DESIGN.md                  — дизайн-система (токены, паттерны компонентов);
-                                  использовать как fallback, если для конкретной
-                                  страницы/состояния нет отдельного HTML-референса
-  MOODSHARE_BRIEF.md           — этот файл
+├── AGENTS.MD                        # Исходный бриф и чеклист фич проекта
+├── backend/
+│   ├── cmd/api/main.go              # Точка входа бэкенда: подключение БД, роуты, миграции, крон бэкапов
+│   ├── internal/
+│   │   ├── backup/                  # Фоновый планировщик резервного копирования БД в Google Drive
+│   │   ├── config/                  # Чтение .env параметров (БД, S3, JWT, Resend, GDrive)
+│   │   ├── db/                      # Инициализация pgxpool и встроенный SQL-мигратор
+│   │   ├── handlers/                # HTTP-хендлеры Gin (auth, entries, friends, feed, notifications, storage, users, announcements)
+│   │   ├── mailer/                  # Клиент отправки писем через Resend API (с fallback-логированием в dev)
+│   │   ├── middleware/              # JWT Auth, CORS, Rate Limiters, CSRF, Admin check, Logging
+│   │   ├── models/                  # Структуры данных Go (User, Entry, Friend, Feed, Notification, Announcement, Reset/Delete tokens)
+│   │   └── repository/              # SQL-запросы к PostgreSQL по репозиторному паттерну
+│   ├── migrations/                  # SQL-миграции (от 0001 до 0010, выполняются лексически при старте)
+│   ├── go.mod / go.sum
+│   └── README.md
+├── frontend/
+│   ├── public/                      # Статические ассеты, иконки PWA
+│   ├── src/
+│   │   ├── api/                     # Клиент API и обертки над fetch (auth.js, entries.js, feed.js, queries.js, ...)
+│   │   ├── components/              # UI-компоненты (BottomNav, HeaderBell, NotificationCenterModal, VoiceNotePlayer, AvatarCropModal, ...)
+│   │   ├── pages/                   # Страницы (Home, Calendar, AddEntry, Feed, Friends, Profile, Auth, Forgot/Reset/ConfirmDelete, Admin, Landing)
+│   │   ├── utils/                   # Вспомогательные утилиты
+│   │   ├── App.jsx / main.jsx
+│   │   └── index.css                # Глобальные стили и Tailwind-директивы
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── vite.config.js
+└── design-reference/                # Референсы дизайна
+    ├── DESIGN.md                    # Дизайн-система (цвета, шрифты, отступы, тени, паттерны)
+    └── stitch_moodshare_social_journal/ # Исходные HTML/CSS стейты экранов
 ```
 
-## 4. Ключевые сущности данных (ориентир для схемы БД)
+---
 
-- **users**: id, email, password_hash, username, display_name, avatar_url, created_at
-- **entries** (записи дневника): id, user_id, date, mood (enum/int 1–5), tags (text[]),
-  text, photo_url (nullable), is_hidden (bool, default false), created_at
-- **friendships**: id, requester_id, addressee_id, status (pending/accepted/declined),
-  created_at, updated_at
-- **likes**: id, entry_id, user_id, created_at
+## 4. Схема базы данных и миграции (`backend/migrations/`)
 
-Приватность (по вашему выбору): записи по умолчанию видны всем принятым друзьям
-(`is_hidden = false`); пользователь может скрыть конкретную запись.
+1. **`0001_create_users.sql`** — Таблица `users`: `id`, `email`, `password_hash`, `username`, `display_name`, `avatar_url`, `created_at`.
+2. **`0002_create_entries.sql`** — Таблица `entries`: `id`, `user_id`, `date`, `mood` (1–5), `tags` (`text[]`), `text`, `photo_url`, `is_hidden`, `created_at`.
+3. **`0003_create_friendships.sql`** — Таблица `friendships`: `id`, `requester_id`, `addressee_id`, `status` (`pending`, `accepted`, `declined`), `created_at`, `updated_at`.
+4. **`0004_create_likes.sql`** — Таблица `likes`: `id`, `entry_id`, `user_id`, `created_at`.
+5. **`0005_create_comments_and_reactions.sql`** — Таблицы для комментариев к записям в ленте и реакций.
+6. **`0006_create_notifications.sql`** — Таблица `notifications`: хранит события (заявки в друзья, лайки, комментарии) для бейджа и центра уведомлений.
+7. **`0007_add_audio_to_entries.sql`** — Добавляет колонку `audio_url` в таблицу `entries` для голосовых заметок.
+8. **`0008_create_announcements.sql`** — Таблицы анонсов (`announcements`) и прочитанных анонсов пользователями (`announcement_reads`).
+9. **`0009_create_password_reset_tokens.sql`** — Таблица `password_reset_tokens` (одноразовые токены с TTL для сброса пароля).
+10. **`0010_create_account_deletion_tokens.sql`** — Таблица `account_deletion_tokens` и колонка `deleted_at` в `users` (для soft-delete / анонимизации аккаунта).
 
-Друзья: только через заявку + подтверждение (`friendships.status`).
+---
 
-Авторизация: сначала email + пароль (JWT). OAuth (Google) добавляем вторым заходом,
-архитектуру делаем так, чтобы это не ломало текущую auth-таблицу (пароль может быть
-nullable, если появится OAuth).
+## 5. Бэкенд: API, эндпоинты и безопасность
 
-## 5. Подход к разработке — вертикальные срезы
+### Группы эндпоинтов:
 
-Работаем не "весь бэк → потом весь фронт", а **фича за фичей, вертикально**:
-на каждую фичу — сначала минимальный бэк (эндпоинт + таблица), сразу подключаем
-фронт-экран к этому эндпоинту, тестим в браузере/приложении, и только после этого
-переходим к следующей фиче. Это позволяет в любой момент открыть приложение и
-увидеть работающий кусок целиком.
+- **Публичные эндпоинты (`/auth/*`, `/health`):**
+  - `GET /health` — проверка статуса сервера и подключения к БД.
+  - `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`.
+  - `POST /auth/forgot-password`, `POST /auth/reset-password` — сброс пароля.
+  - `POST /auth/account/delete-confirm` — публичное подтверждение удаления аккаунта по токену из письма.
+- **Защищенные эндпоинты (`Authorization: Bearer <JWT>` + CSRF):**
+  - `GET /auth/session` — валидация сессии.
+  - `PATCH /auth/password` — смена пароля в профиле.
+  - `POST /auth/account/delete-request` — запрос удаления аккаунта с отправкой письма-подтверждения.
+  - **Записи (`/entries`):** `POST /entries` (создание/обновление), `DELETE /entries/:id`, `PATCH /entries/:id/visibility`, `GET /entries/me`, `GET /entries/friend/:friend_id`, `GET /entries/summary`.
+  - **Хранилище (`/storage`):** получение Presigned URL для загрузки фото (`/storage/entry-photos/upload-url`) и аудио (`/storage/entry-audio/upload-url`), удаление объектов.
+  - **Друзья (`/friends` & `/users`):** поиск `GET /users/search`, запросы дружбы `POST /friends/request`, `accept`, `decline`, `cancel`, `DELETE /friends/:id`, списки `GET /friends`, `GET /friends/pending`, просмотр профиля друга `GET /users/:id/profile`.
+  - **Лента (`/feed`):** `GET /feed`, лайки `POST /feed/:entry_id/like`, комментарии `GET /POST /feed/:entry_id/comments`, `DELETE /feed/comments/:comment_id`.
+  - **Уведомления (`/notifications`):** список, `GET /unread-count`, отметка прочитанными `POST /mark-read`.
+  - **Анонсы (`/announcements`):** `GET /announcements/unread`, `POST /announcements/:id/read`.
+- **Административные эндпоинты (`/admin/*`, требует middleware `Admin`):**
+  - CRUD и управление анонсами: `GET/POST /admin/announcements`, `PATCH /admin/announcements/:id`, `POST /publish`, `POST /archive`.
 
-Порядок фич — от простого к сложному, каждая фича добавляет один рабочий сценарий
-end-to-end:
+### Безопасность и Rate Limiting:
 
-## 6. To-do лист (по фичам, бэк+фронт вместе)
+В `cmd/api/main.go` настроены тьер-лимитеры по IP или `UserOrIPKey`:
 
-### Фича 0 — Скелет проекта
+- `authLimiter`: 5 зап. / 12 сек.
+- `forgotLimiter`: 1 зап. / 60 сек.
+- `passwordChangeLimiter`: 5 зап. / 60 сек.
+- `uploadLimiter`: 10 зап. / 4 сек.
+- `mutationLimiter`: 15 зап. / 2 сек.
+- `readLimiter`: 30 зап. / 0.6 сек.
 
-- [x] Backend: инициализировать Go-модуль, поднять минимальный HTTP-сервер
-      (`/health` эндпоинт), подключение к Supabase Postgres, накатить первую
-      миграцию (таблица `users`)
-- [x] Frontend: инициализировать Vite + React проект, базовый роутинг
-      (react-router), перенести цветовые токены/шрифты из HTML-референса в
-      общие стили
-- [x] Тест: фронт стучится на `/health` и показывает "backend OK"
+---
 
-### Фича 1 — Регистрация и вход (email + пароль)
+## 6. Фронтенд: Архитектура, страницы и состояние
 
-- [ X ] Backend: таблица `users`, эндпоинты `POST /auth/register`,
-  `POST /auth/login` (JWT в ответ), middleware проверки JWT
-- [ x ] Frontend: экран регистрации/логина, сохранение токена, редирект на Home
-  после входа
-- [ X ] Тест: можно зарегистрироваться, выйти, зайти заново, попасть на Home
+- **Управление запросами и кешем:** Вся работа с API инкапсулирована в директории `src/api/` (через TanStack React Query). Кеш-ключи централизованы в `src/api/queryKeys.js`.
+- **Ключевые страницы (`src/pages/`):**
+  - `Home.jsx` — главный экран с приветствием, сводкой за неделю и карточкой статистики настроения.
+  - `Calendar.jsx` — календарь месяца с переключателем просмотра своего календаря или календаря друга.
+  - `AddEntry.jsx` — экран добавления/редактирования записи (выбор эмодзи, категорий тегов, текста, фото, запись аудио).
+  - `Feed.jsx` — социальная лента активности друзей с лайками, комментариями и плеером аудиозаметок.
+  - `Friends.jsx` / `FriendProfile.jsx` — поиск друзей, управление заявками, профиль друга.
+  - `Profile.jsx` — профиль пользователя, смена аватара (с кропом через `AvatarCropModal`), настройки смены пароля (`ChangePasswordForm`) и Danger Zone для удаления аккаунта (`DeleteAccountModal`).
+  - `Admin.jsx` — панель администратора для создания и публикации системных объявлений.
 
-### Фича 2 — Создание записи дневника (Add Entry)
+---
 
-- [ X ] Backend: таблица `entries`, эндпоинт `POST /entries` (mood, tags, text,
-  date), `GET /entries/me?date=...`
-- [ X ] Frontend: экран Add Entry по референсу (выбор эмодзи настроения, чипы
-  тегов, текстовое поле, кнопка Save)
-- [ X ] Тест: создал запись → она сохранилась в БД → видна при повторном запросе
+## 7. Дизайн-система и верстка (UI/UX Conventions)
 
-### Фича 3 — Календарь (свой)
+1. **Mobile-First:** Вёрстка ориентирована на мобильный вьюпорт (`~380–420px`), адаптивна под десктоп (используется `DesktopSidebar` и центральный контейнер).
+2. **Источник истины по стилям:**
+   - **Первичный источник:** Статичные HTML-референсы в `design-reference/stitch_moodshare_social_journal/`.
+   - **Вторичный источник:** `design-reference/DESIGN.md` (дизайн-система: палитры, тени, скругления, шрифты).
+3. **Правило для ИИ-агентов:** Никогда не придумывать произвольные стили с нуля. Всегда опираться на токены Tailwind и правила из `DESIGN.md`.
 
-- [x] Backend: `GET /entries/me?month=YYYY-MM` — список записей месяца с mood
-      для отрисовки точек в календаре
-- [x] Frontend: экран Calendar (Month view) с эмодзи по дням, переход между
-      месяцами, клик по дню открывает запись
-- [x] Тест: сделанные записи отображаются нужными эмодзи в нужных днях
+---
 
-### Фича 4 — Home с summary
+## 8. Инструкции для ИИ-агентов при разработке (Rules for AI)
 
-- [x] Backend: эндпоинт `GET /entries/summary?month=YYYY-MM` (доминирующее
-      настроение, самый частый тег, количество записей)
-- [x] Frontend: экран Home — приветствие, "This week's mood", Recent logs,
-      блок Mood summary
-- [x] Тест: карточки summary показывают реальные агрегаты по записям юзера
+1. **Вертикальные срезы (Vertical Slice Development):**
+   - При добавлении или изменении фичи реализуйте изменения сквозным образом: **Миграция БД -> Репозиторий Go -> Хендлер API -> API-клиент фронтенда -> UI Компонент/Страница -> Проверка E2E**.
+2. **Работа с БД (Go Repository Pattern):**
+   - Не использовать ORM. Писать SQL-запросы в пакете `internal/repository/` с использованием `pgxpool.Pool` и параметризованных запросов (`$1`, `$2`, ...).
+   - Любые изменения схемы БД создавать исключительно через новый файл миграции в `backend/migrations/` (в лексическом порядке номеров, например `0011_...sql`).
+3. **Безопасность API:**
+   - Все мутирующие хендлеры (POST, PATCH, PUT, DELETE) должны быть защищены JWT-аутентификацией, CSRF-миддлварей и соответствующим Rate Limiter-ом.
+4. **Фронтенд и состояние:**
+   - Для всех сетевых запросов использовать хуки TanStack React Query (`src/api/queries.js`). Не писать `useEffect` с прямыми `fetch`-вызовами внутри UI-компонентов.
+   - Обязательно инвалидировать соответствующие `queryKeys` при успешных мутациях.
 
-### Фича 5 — Друзья: заявка и подтверждение
+```
 
-- [x] Backend: таблица `friendships`, эндпоинты: поиск пользователя по
-      username (`GET /users/search?q=...`), `POST /friends/request`,
-      `POST /friends/accept`, `POST /friends/decline`, `GET /friends` (принятые),
-      `GET /friends/pending`
-- [x] Frontend: экран Manage Friends — поиск по username, список pending
-      (кнопки принять/отклонить), список принятых друзей
-- [x] Тест: юзер А отправляет заявку юзеру Б, Б видит её в pending, принимает,
-      оба видят друг друга в списке друзей
-
-### Фича 6 — Просмотр календаря друга
-
-- [x] Backend: `GET /entries/friend/{friend_id}?month=YYYY-MM` — только не
-      скрытые записи, только если friendship = accepted
-- [x] Frontend: экран Calendar с переключателем "Viewing calendar" (селектор
-      друга), те же mood-точки, но по данным друга
-- [x] Тест: если А и Б друзья, А видит календарь Б (без скрытых записей Б)
-
-### Фича 7 — Лента (Feed)
-
-- [x] Backend: `GET /feed` — записи всех друзей (не скрытые), отсортированные
-      по дате, с mood-тегом и текстом; таблица `likes`, `POST /feed/{entry_id}/like`
-- [x] Frontend: экран Feed — карточки записей друзей с аватаром, временем,
-      тегом настроения, текстом, счётчиком лайков и возможностью лайкнуть
-- [x] Тест: новая запись друга появляется в ленте, лайк увеличивает счётчик
-
-### Фича 8 — Профиль
-
-- [ ] Backend: `GET /users/me`, `PATCH /users/me` (аватар, display_name)
-- [ ] Frontend: экран Profile — аватар, username, recent entries, список
-      друзей, настройки (тема и т.п. можно заглушкой)
-- [ ] Тест: можно поменять аватар/имя и увидеть изменения сразу
-
-### Фича 9 — Фото в записях
-
-- [x] Backend: интеграция с Supabase Storage — эндпоинт получения
-      signed upload URL, поле `photo_url` в `entries`
-- [x] Frontend: кнопка добавления фото в Add Entry, отображение фото в
-      карточках Calendar/Feed
-- [x] Тест: загруженное фото видно и в своей записи, и в ленте у друга
-
-### Фича 10 (по желанию, позже) — OAuth и приватность записей
-
-- [ ] Backend: OAuth провайдер (Google), поле `is_hidden` на уровне записи +
-      эндпоинт скрытия/показа
-- [ ] Frontend: тумблер "скрыть запись" в Add Entry/деталях записи, кнопка
-      "Войти через Google"
-
-### Фича 11 — Центр уведомлений (Notifications)
-
-- [x] Backend: миграция `0006_create_notifications.sql` (таблица `notifications`), репозиторий `repository.Notifications`, эндпоинты `GET /notifications`, `GET /notifications/unread-count`, `POST /notifications/mark-read`. Авто-генерация уведомлений при получении/принятии заявки в друзья, а также при лайках и комментариях.
-- [x] Frontend: бейдж с колокольчиком (`HeaderBell`) в шапках страниц с индикатором непрочитанных, модальное окно/слайдовер (`NotificationCenterModal`) со списком уведомлений, возможностью отметки "прочитано" и быстрыми переходами.
-- [x] Тест: действия друзей вызывают появление уведомлений, счётчик обновляется, отметка прочитанным убирает бейдж.
-
-### Фича 12 — Восстановление пароля (Password Reset)
-
-- [x] Backend: миграция `0009_create_password_reset_tokens.sql` (таблица `password_reset_tokens`), репозиторий `repository.PasswordReset` с атомарной транзакционной выемкой токена и сбросом пароля, эндпоинты `POST /auth/forgot-password` (rate limit 1/60s, защита от user enumeration) и `POST /auth/reset-password`, пакет `mailer.Mailer` для отправки через Resend API и graceful console logging fallback.
-- [x] Frontend: страницы `ForgotPassword` и `ResetPassword` (дизайн по `DESIGN.md`), обёртки API в `src/api/auth.js`, ссылка "Forgot password?" на экране входа.
-- [x] Тест: полный цикл запроса сброса, валидации и атомарной смены пароля проверен.
-
-### Фича 13 — Смена пароля (Change Password)
-
-- [x] Backend: эндпоинт `PATCH /auth/password` под JWT middleware, проверка `old_password` через bcrypt, защита от отсутствия пользователя в БД / недействительной сессии, переиспользование метода `SetPassword` в `repository.Users` с автоматической инвалидацией неиспользованных `password_reset_tokens`, базовый rate limit (5 запросов / мин).
-- [x] Frontend: общий компонент `PasswordFieldsForm` (переиспользован на `ResetPassword` без визуальных регрессий), обёртка API `changePassword` в `src/api/auth.js`, раскрываемая секция смены пароля `ChangePasswordForm` в настройках на экране `Profile` с инлайн-ошибками под `old_password` и успешным сообщением без редиректа.
-- [x] Тест: проверка работы смены с верным/неверным текущим паролем, 401 без JWT и инвалидация оставшихся reset-токенов.
-
-### Фича 14 — Удаление аккаунта (Account Deletion)
-
-- [x] Backend: миграция `0010_create_account_deletion_tokens.sql` (таблица `account_deletion_tokens` + колонка `deleted_at` в `users`), репозиторий `repository.AccountDeletion` и метод `DeleteAccount` в `repository.Users` (транзакционный soft delete/анонимизация, скрытие записей, hard delete дружб, удаление входящих уведомлений и очистка токенов), эндпоинты `POST /auth/account/delete-request` (JWT auth, проверка текущего пароля, генерирование 32-байтного токена, отправка письма с подтверждением) и `POST /auth/account/delete-confirm` (публичный эндпоинт гашения токена и анонимизации), рассылка писем через `mailer.Mailer`.
-- [x] Frontend: модалка подтверждения `DeleteAccountModal.jsx` на странице `Profile` (секция "Danger zone" с вводом пароля и предупреждением), страница `ConfirmAccountDeletion.jsx` (роут `/account/confirm-delete` с ручным сабмитом для защиты от префетчеров, вызовом `confirmAccountDeletion`, выходом из аккаунта и редиректом на впредь анонимизированную систему).
-- [x] Тест: вручную и автоматически через `go test ./...` и `npm run build` все сценарии удаления и подтверждения верифицированы.
-
-
-
-## 7. Что передать Claude Code вместе с этим брифом
-
-1. Этот файл целиком.
-2. Исходные HTML-файлы дизайна (стейты экранов) — положить в `design-reference/`
-   и явно указать: "вёрстку и стили брать отсюда, это не интерактивный макет,
-   нужно сделать его рабочим на React".
-3. Файл `design-reference/DESIGN.md` с дизайн-системой (токены, компоненты) —
-   если его ещё нет, попросить Claude Code сначала самому вывести его из
-   HTML-референсов, прежде чем начинать вёрстку фич. Явно зафиксировать правило:
-   для страницы/состояния есть HTML-референс → верстать по нему; референса нет →
-   верстать по DESIGN.md, а не придумывать стиль заново.
-4. Явно указать: работать по to-do листу сверху вниз, фича за фичей, не
-   перескакивать вперёд, после каждой фичи — рабочая демонстрация в браузере.
+```

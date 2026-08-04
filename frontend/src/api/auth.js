@@ -1,4 +1,4 @@
-import { api } from './client'
+import { api, setCSRFToken } from './client'
 
 export const register = (data) =>
   api('/auth/register', { method: 'POST', body: JSON.stringify(data) })
@@ -10,9 +10,21 @@ export const getSession = () => api('/auth/session')
 
 export const logout = async () => {
   try {
-    return await api('/auth/logout', { method: 'POST' })
+    const res = await api('/auth/logout', { method: 'POST' })
+    setCSRFToken('')
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem('csrf_token')
+      } catch (_) {}
+    }
+    return res
   } catch {
-    // Ignore errors during logout
+    setCSRFToken('')
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem('csrf_token')
+      } catch (_) {}
+    }
     return null
   }
 }

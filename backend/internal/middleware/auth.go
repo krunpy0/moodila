@@ -43,6 +43,9 @@ func Auth(secret string) gin.HandlerFunc {
 		}
 		c.Set("userID", claims.Subject)
 		c.Set("csrfToken", claims.CSRF)
+		if claims.CSRF != "" {
+			c.Header("X-CSRF-Token", claims.CSRF)
+		}
 		c.Next()
 	}
 }

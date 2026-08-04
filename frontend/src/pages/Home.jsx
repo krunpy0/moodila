@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getLocalDate } from "../api/client";
 import { logout } from "../api/auth";
 import {
+  queryKeys,
   useEntriesQuery,
   useEntrySummaryQuery,
   useProfileQuery,
@@ -135,6 +136,8 @@ export default function Home() {
               title={t("common.logout")}
               onClick={async () => {
                 await logout().catch(() => {});
+                queryClient.setQueryData(queryKeys.session, null);
+                queryClient.removeQueries({ queryKey: queryKeys.session });
                 queryClient.clear();
                 navigate("/login", { replace: true });
               }}

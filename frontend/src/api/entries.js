@@ -1,4 +1,4 @@
-import { api, apiURL, getCookie } from './client'
+import { api, apiURL, getCSRFToken } from './client'
 import { saveOfflineEntry, syncOfflineEntries } from '../utils/offlineStore'
 
 export const getEntry = (date) => api(`/entries/me?date=${encodeURIComponent(date)}`)
@@ -62,7 +62,7 @@ export const requestPhotoUpload = (file) =>
 
 export async function uploadEntryPhoto(file) {
   const { upload_url: uploadURL, photo_url: photoURL } = await requestPhotoUpload(file)
-  const csrfToken = getCookie('csrf_token')
+  const csrfToken = getCSRFToken()
   const response = await fetch(apiURL(uploadURL), {
     method: 'PUT',
     credentials: 'include',
@@ -95,7 +95,7 @@ export const requestAudioUpload = (file) =>
 export async function uploadEntryAudio(audioBlob) {
   const file = new File([audioBlob], audioBlob.name || 'voicenote.webm', { type: audioBlob.type || 'audio/webm' })
   const { upload_url: uploadURL, audio_url: audioURL } = await requestAudioUpload(file)
-  const csrfToken = getCookie('csrf_token')
+  const csrfToken = getCSRFToken()
   const response = await fetch(apiURL(uploadURL), {
     method: 'PUT',
     credentials: 'include',

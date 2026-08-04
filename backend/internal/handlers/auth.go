@@ -131,8 +131,13 @@ func (h Auth) Login(c *gin.Context) {
 }
 
 func (h Auth) Session(c *gin.Context) {
+	csrfToken := c.GetString("csrfToken")
+	if csrfToken != "" {
+		c.Header("X-CSRF-Token", csrfToken)
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": c.GetString("userID"),
+		"user_id":    c.GetString("userID"),
+		"csrf_token": csrfToken,
 	})
 }
 
@@ -161,16 +166,20 @@ func (h Auth) Refresh(c *gin.Context) {
 		return
 	}
 
-	if err := h.setAuthCookies(c, claims.Subject); err != nil {
+	csrfToken, err := h.setAuthCookies(c, claims.Subject)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not rotate tokens"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "refreshed"})
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "refreshed",
+		"csrf_token": csrfToken,
+	})
 }
 
 func (h Auth) Logout(c *gin.Context) {
-	clearAuthCookies(c)
+	h.clearAuthCookies(c)
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
 
@@ -181,13 +190,15 @@ type CustomClaims struct {
 }
 
 func (h Auth) respondWithCookies(c *gin.Context, status int, userID string, user any) {
-	if err := h.setAuthCookies(c, userID); err != nil {
+	csrfToken, err := h.setAuthCookies(c, userID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not set auth cookies"})
 		return
 	}
 
 	c.JSON(status, gin.H{
-		"user": user,
+		"user":       user,
+		"csrf_token": csrfToken,
 	})
 }
 
@@ -199,10 +210,31 @@ func generateRandomHex(bytesLen int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func (h Auth) setAuthCookies(c *gin.Context, userID string) error {
+func getCookieSameSiteMode(configured string, secure bool) http.SameSite {
+	switch strings.ToLower(strings.TrimSpace(configured)) {
+	case "none":
+		if !secure {
+			return http.SameSiteLaxMode
+		}
+		return http.SameSiteNoneMode
+	case "strict":
+		return http.SameSiteStrictMode
+	default:
+		return http.SameSiteLaxMode
+	}
+}
+
+func (h Auth) getCookieSecure(c *gin.Context) bool {
+	if c.Request.TLS != nil || strings.EqualFold(c.GetHeader("X-Forwarded-Proto"), "https") || (h.Config.TLSCert != "" && h.Config.TLSKey != "") {
+		return true
+	}
+	return h.Config.CookieSecure
+}
+
+func (h Auth) setAuthCookies(c *gin.Context, userID string) (string, error) {
 	csrfToken, err := generateRandomHex(16)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	now := time.Now()
@@ -220,7 +252,7 @@ func (h Auth) setAuthCookies(c *gin.Context, userID string) error {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	signedAccess, err := accessToken.SignedString([]byte(h.JWTSecret))
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	refreshClaims := CustomClaims{
@@ -236,58 +268,81 @@ func (h Auth) setAuthCookies(c *gin.Context, userID string) error {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	signedRefresh, err := refreshToken.SignedString([]byte(h.JWTSecret))
 	if err != nil {
-		return err
+		return "", err
 	}
+
+	secure := h.getCookieSecure(c)
+	sameSite := getCookieSameSiteMode(h.Config.CookieSameSite, secure)
+	domain := h.Config.CookieDomain
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "access_token",
 		Value:    signedAccess,
 		Path:     "/",
+		Domain:   domain,
 		Expires:  now.Add(15 * time.Minute),
 		MaxAge:   15 * 60,
-		Secure:   true,
+		Secure:   secure,
 		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    signedRefresh,
 		Path:     "/",
+		Domain:   domain,
 		Expires:  now.Add(30 * 24 * time.Hour),
 		MaxAge:   30 * 24 * 3600,
-		Secure:   true,
+		Secure:   secure,
 		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 	})
 
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "csrf_token",
 		Value:    csrfToken,
 		Path:     "/",
+		Domain:   domain,
 		Expires:  now.Add(30 * 24 * time.Hour),
 		MaxAge:   30 * 24 * 3600,
-		Secure:   true,
+		Secure:   secure,
 		HttpOnly: false,
-		SameSite: http.SameSiteNoneMode,
+		SameSite: sameSite,
 	})
 
-	return nil
+	c.Header("X-CSRF-Token", csrfToken)
+	return csrfToken, nil
 }
 
-func clearAuthCookies(c *gin.Context) {
+func (h Auth) clearAuthCookies(c *gin.Context) {
 	past := time.Unix(0, 0)
-	for _, name := range []string{"access_token", "refresh_token", "csrf_token", "token"} {
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     name,
-			Value:    "",
-			Path:     "/",
-			Expires:  past,
-			MaxAge:   -1,
-			Secure:   true,
-			HttpOnly: name != "csrf_token",
-			SameSite: http.SameSiteNoneMode,
-		})
+	cookieNames := []string{"access_token", "refresh_token", "csrf_token", "token"}
+	domains := []string{h.Config.CookieDomain}
+	if h.Config.CookieDomain != "" {
+		domains = append(domains, "")
+	}
+	secOptions := []bool{true, false}
+	sameSiteOptions := []http.SameSite{http.SameSiteNoneMode, http.SameSiteLaxMode, http.SameSiteDefaultMode}
+
+	for _, name := range cookieNames {
+		for _, dom := range domains {
+			for _, sec := range secOptions {
+				for _, ss := range sameSiteOptions {
+					http.SetCookie(c.Writer, &http.Cookie{
+						Name:     name,
+						Value:    "",
+						Path:     "/",
+						Domain:   dom,
+						Expires:  past,
+						MaxAge:   -1,
+						Secure:   sec,
+						HttpOnly: name != "csrf_token",
+						SameSite: ss,
+					})
+				}
+			}
+		}
 	}
 }
 
