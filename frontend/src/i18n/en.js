@@ -4,6 +4,7 @@ export const en = {
     home: 'Home',
     calendar: 'Calendar',
     addEntry: 'Add entry',
+    friends: 'Friends',
     feed: 'Feed',
     profile: 'Profile',
   },

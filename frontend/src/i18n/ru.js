@@ -4,6 +4,7 @@ export const ru = {
     home: 'Главная',
     calendar: 'Календарь',
     addEntry: 'Новая запись',
+    friends: 'Друзья',
     feed: 'Лента',
     profile: 'Профиль',
   },

@@ -250,21 +250,6 @@ func (r Feed) canAccessEntry(ctx context.Context, viewerID, entryID string) (boo
 	return accessible, err
 }
 
-const feedQuery = `
-	SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.created_at,
-	       u.id, u.username, u.display_name, u.avatar_url,
-	       (SELECT COUNT(*)::int FROM likes l WHERE l.entry_id = e.id) AS like_count,
-	       EXISTS(SELECT 1 FROM likes l WHERE l.entry_id = e.id AND l.user_id = $1) AS liked_by_me,
-	       COALESCE((SELECT reaction FROM likes l WHERE l.entry_id = e.id AND l.user_id = $1 LIMIT 1), '') AS my_reaction,
-	       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id) AS comment_count
-	FROM entries e
-	JOIN users u ON u.id = e.user_id
-	JOIN friendships f ON f.status = 'accepted'
-		AND ((f.requester_id = $2 AND f.addressee_id = e.user_id)
-			OR (f.addressee_id = $2 AND f.requester_id = e.user_id))
-	WHERE e.is_hidden = false
-	ORDER BY e.date DESC, e.created_at DESC`
-
 type feedRow interface {
 	Scan(...any) error
 }

@@ -4,6 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"moodshare/internal/backup"
@@ -72,6 +75,7 @@ func main() {
 	// Tier-based Rate Limiters
 	authLimiter := middleware.RateLimit(rate.Every(12*time.Second), 5, middleware.IPKey)
 	forgotLimiter := middleware.RateLimit(rate.Every(60*time.Second), 1, middleware.IPKey)
+	deleteConfirmLimiter := middleware.RateLimit(rate.Every(10*time.Minute), 3, middleware.IPKey)
 	passwordChangeLimiter := middleware.RateLimit(rate.Every(60*time.Second), 5, middleware.UserOrIPKey)
 	uploadLimiter := middleware.RateLimit(rate.Every(4*time.Second), 10, middleware.UserOrIPKey)
 	mutationLimiter := middleware.RateLimit(rate.Every(2*time.Second), 15, middleware.UserOrIPKey)
@@ -94,7 +98,7 @@ func main() {
 	router.POST("/auth/refresh", authLimiter, auth.Refresh)
 	router.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
 	router.POST("/auth/reset-password", authLimiter, auth.ResetPassword)
-	router.POST("/auth/account/delete-confirm", authLimiter, auth.DeleteAccountConfirm)
+	router.POST("/auth/account/delete-confirm", deleteConfirmLimiter, auth.DeleteAccountConfirm)
 	router.POST("/auth/logout", mutationLimiter, auth.Logout)
 	router.GET("/auth/session", middleware.Auth(cfg.JWTSecret), readLimiter, auth.Session)
 	storageS3 := storage.S3{
@@ -163,6 +167,27 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
+	shutdownComplete := make(chan struct{})
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-quit
+		log.Printf("Received signal %v, initiating graceful shutdown...", sig)
+
+		backupCancel()
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			log.Printf("HTTP server Shutdown error: %v", err)
+		} else {
+			log.Println("HTTP server stopped gracefully")
+		}
+
+		close(shutdownComplete)
+	}()
+
 	if cfg.TLSCert != "" && cfg.TLSKey != "" {
 		log.Printf("MoodShare API listening on HTTPS :%s (env=%s)", cfg.Port, cfg.AppEnv)
 		if err := srv.ListenAndServeTLS(cfg.TLSCert, cfg.TLSKey); err != nil && err != http.ErrServerClosed {
@@ -174,4 +199,12 @@ func main() {
 			log.Fatalf("server error: %v", err)
 		}
 	}
+
+	<-shutdownComplete
+
+	if pool != nil {
+		pool.Close()
+		log.Println("Database connection pool closed")
+	}
+	log.Println("Server exited cleanly")
 }

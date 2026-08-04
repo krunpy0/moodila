@@ -101,15 +101,23 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, dir string) error {
 			return fmt.Errorf("read migration %s: %w", name, err)
 		}
 
-		// Supabase's pooler can stall on multi-statement batches. Migrations are
-		// idempotent, so apply the SQL first and record it only after success.
-		if _, err := pool.Exec(ctx, string(sqlBytes)); err != nil {
+		tx, err := pool.Begin(ctx)
+		if err != nil {
+			return fmt.Errorf("begin transaction for migration %s: %w", name, err)
+		}
+
+		if _, err := tx.Exec(ctx, string(sqlBytes)); err != nil {
+			_ = tx.Rollback(ctx)
 			return fmt.Errorf("apply migration %s: %w", name, err)
 		}
-		if _, err := pool.Exec(ctx,
+		if _, err := tx.Exec(ctx,
 			`INSERT INTO schema_migrations (version) VALUES ($1)`, name,
 		); err != nil {
+			_ = tx.Rollback(ctx)
 			return fmt.Errorf("record migration %s: %w", name, err)
+		}
+		if err := tx.Commit(ctx); err != nil {
+			return fmt.Errorf("commit migration %s: %w", name, err)
 		}
 		fmt.Printf("migration applied: %s\n", name)
 	}

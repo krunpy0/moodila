@@ -96,41 +96,6 @@ func (h Entries) Save(c *gin.Context) {
 	c.JSON(http.StatusOK, entry)
 }
 
-func (h Entries) UpdateVisibility(c *gin.Context) {
-	if h.Entries.Pool == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
-		return
-	}
-
-	entryID := strings.TrimSpace(c.Param("id"))
-	if !validUUID(entryID) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id must be a valid UUID"})
-		return
-	}
-
-	var input visibilityInput
-	if err := c.ShouldBindJSON(&input); err != nil || input.IsHidden == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "is_hidden (boolean) is required"})
-		return
-	}
-
-	entry, err := h.Entries.UpdateVisibility(c.Request.Context(), entryID, c.GetString("userID"), *input.IsHidden)
-	if errors.Is(err, repository.ErrNotFound) {
-		c.JSON(http.StatusNotFound, gin.H{"error": "entry not found"})
-		return
-	}
-	if errors.Is(err, repository.ErrForbidden) {
-		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
-		return
-	}
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update entry visibility"})
-		return
-	}
-
-	c.JSON(http.StatusOK, entry)
-}
-
 func (h Entries) Me(c *gin.Context) {
 	if h.Entries.Pool == nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
