@@ -98,6 +98,33 @@ export const en = {
     emptyRecent: 'Your recent entries will appear here.',
   },
 
+  // Stats / Analytics Page
+  stats: {
+    title: 'Analytics & Statistics',
+    subtitle: 'Patterns and insights of your mood',
+    periods: {
+      week: 'Week',
+      month: 'Month',
+      year: 'Year',
+    },
+    moodDynamics: 'Mood Trends',
+    insightsHeader: 'Insights',
+    dayOfWeekPattern: 'Day-of-Week Mood Pattern',
+    tagCorrelation: 'Tag Correlation',
+    moodDistribution: 'Mood Distribution',
+    annualHeatmap: 'Annual Mood Heatmap',
+    heatmapLegend: 'Legend',
+    noData: 'No data',
+    insufficientData: 'Not enough data',
+    minTagDataNote: 'Only tags with at least 3 entries are highlighted',
+    lowestMoodTag: 'Lowest avg mood tag',
+    highestMoodTag: 'Highest avg mood tag',
+    avgMood: 'Average mood',
+    totalEntries: 'Total entries',
+    entriesCount: 'entries',
+    noStatsData: 'Not enough logged entries for statistics yet. Log more days in your journal!',
+  },
+
   // Add Entry Page
   addEntry: {
     title: 'How are you feeling?',

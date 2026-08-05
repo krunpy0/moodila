@@ -181,10 +181,12 @@ export default function Home() {
                       {t("home.thisWeekMood")}
                     </h2>
                     <Link
-                      to="/calendar"
-                      className="text-label-sm font-label-sm lg:text-body-md text-primary hover:underline font-medium"
+                      to="/stats"
+                      className="flex items-center gap-1 rounded-full bg-primary-container/40 px-3 py-1 text-label-sm font-bold text-primary hover:bg-primary-container hover:scale-105 active:scale-95 transition-all cloud-shadow"
                     >
-                      {t("common.seeMore")}
+                      <span className="material-symbols-outlined text-[16px]">equalizer</span>
+                      <span>{t("common.seeMore")}</span>
+                      <span className="material-symbols-outlined text-[16px]">chevron_right</span>
                     </Link>
                   </div>
                   <div className="flex justify-between gap-sm overflow-x-auto rounded-[24px] lg:rounded-[32px] bg-white/40 p-md lg:p-6 cloud-shadow">

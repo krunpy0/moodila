@@ -915,13 +915,23 @@ function WeeklyMoodWave({ days, entriesByDate, weekdays, t }) {
             {loggedCount} / 7
           </p>
         </div>
-        {avgMood && (
-          <div className="flex items-center gap-1.5 rounded-full bg-primary-container/40 px-3 py-1 text-primary">
-            <span className="material-symbols-outlined text-[18px]">sentiment_very_satisfied</span>
-            <span className="text-label-lg font-bold">{avgMood}</span>
-            <span className="text-[11px] opacity-70">/ 5</span>
-          </div>
-        )}
+        <div className="flex items-center gap-sm">
+          {avgMood && (
+            <div className="flex items-center gap-1.5 rounded-full bg-primary-container/40 px-3 py-1 text-primary">
+              <span className="material-symbols-outlined text-[18px]">sentiment_very_satisfied</span>
+              <span className="text-label-lg font-bold">{avgMood}</span>
+              <span className="text-[11px] opacity-70">/ 5</span>
+            </div>
+          )}
+          <Link
+            to="/stats"
+            className="flex items-center gap-1 rounded-full bg-surface-container-low px-2.5 py-1 text-label-sm font-bold text-primary hover:bg-primary-container/40 transition-colors"
+            title={t('stats.title')}
+          >
+            <span className="material-symbols-outlined text-[16px]">equalizer</span>
+            <span className="hidden sm:inline">{t('stats.title')}</span>
+          </Link>
+        </div>
       </div>
 
       <div className="relative w-full pt-1">

@@ -129,9 +129,11 @@ func main() {
 	authorized.PUT("/storage/entry-photos/upload/:token", uploadLimiter, storageHandler.Upload)
 	authorized.POST("/storage/delete", mutationLimiter, storageHandler.DeleteObject)
 
+	statsHandler := handlers.Stats{Entries: repository.Entries{Pool: pool}}
 	authorized.GET("/entries/me", readLimiter, entries.Me)
 	authorized.GET("/entries/friend/:friend_id", readLimiter, entries.Friend)
 	authorized.GET("/entries/summary", readLimiter, entries.Summary)
+	authorized.GET("/stats", readLimiter, statsHandler.Get)
 	authorized.GET("/users/search", readLimiter, friends.Search)
 	authorized.GET("/users/me", readLimiter, users.Me)
 	authorized.PATCH("/users/me", mutationLimiter, users.UpdateMe)

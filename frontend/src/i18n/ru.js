@@ -98,6 +98,33 @@ export const ru = {
     emptyRecent: 'Здесь будут ваши последние записи.',
   },
 
+  // Stats / Analytics Page
+  stats: {
+    title: 'Аналитика и статистика',
+    subtitle: 'Паттерны и инсайты вашего настроения',
+    periods: {
+      week: 'Неделя',
+      month: 'Месяц',
+      year: 'Год',
+    },
+    moodDynamics: 'Динамика настроения',
+    insightsHeader: 'Инсайты',
+    dayOfWeekPattern: 'Настроение по дням недели',
+    tagCorrelation: 'Связь с тегами',
+    moodDistribution: 'Распределение настроения',
+    annualHeatmap: 'Годовой календарь настроения',
+    heatmapLegend: 'Легенда',
+    noData: 'Нет данных',
+    insufficientData: 'Недостаточно данных',
+    minTagDataNote: 'Показываются теги минимум с 3 записями',
+    lowestMoodTag: 'Низкое ср. настроение',
+    highestMoodTag: 'Высокое ср. настроение',
+    avgMood: 'Среднее настроение',
+    totalEntries: 'Всего записей',
+    entriesCount: 'записей',
+    noStatsData: 'Пока недостаточно записей для аналитики. Добавьте больше дней в дневник!',
+  },
+
   // Add Entry Page
   addEntry: {
     title: 'Как вы себя чувствуете?',

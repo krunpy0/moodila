@@ -12,6 +12,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 const ConfirmAccountDeletion = lazy(() => import('./pages/ConfirmAccountDeletion'))
 const AddEntry = lazy(() => import('./pages/AddEntry'))
 const Calendar = lazy(() => import('./pages/Calendar'))
+const Stats = lazy(() => import('./pages/Stats'))
 const Friends = lazy(() => import('./pages/Friends'))
 const Feed = lazy(() => import('./pages/Feed'))
 const Profile = lazy(() => import('./pages/Profile'))
@@ -62,6 +63,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Calendar />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/stats"
+              element={
+                <RequireAuth>
+                  <Stats />
                 </RequireAuth>
               }
             />

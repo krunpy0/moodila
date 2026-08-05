@@ -14,4 +14,5 @@ export const queryKeys = {
   unreadCount: ['notifications', 'unreadCount'],
   unreadAnnouncements: ['announcements', 'unread'],
   adminAnnouncements: ['admin', 'announcements'],
+  stats: (period = 'month') => ['stats', period],
 }

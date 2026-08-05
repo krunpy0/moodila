@@ -12,6 +12,9 @@ export const getFriendEntriesByMonth = (friendId, month) =>
 export const getEntrySummary = (month) =>
   api(`/entries/summary?month=${encodeURIComponent(month)}`)
 
+export const getStats = (period = 'month') =>
+  api(`/stats?period=${encodeURIComponent(period)}`)
+
 export const saveEntryDirect = (entry) =>
   api('/entries', { method: 'POST', body: JSON.stringify(entry) })
 
