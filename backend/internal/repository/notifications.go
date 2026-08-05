@@ -8,8 +8,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type PushSender interface {
+	SendToUser(ctx context.Context, userID string, payload models.PushPayload) error
+}
+
 type Notifications struct {
-	Pool *pgxpool.Pool
+	Pool       *pgxpool.Pool
+	PushSender PushSender
 }
 
 func (r Notifications) Create(ctx context.Context, userID, actorID, notifType string, entityID, content *string) error {
@@ -25,7 +30,52 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 		VALUES ($1, $2, $3, $4, $5)`,
 		userID, actorID, notifType, entityID, content,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if r.PushSender != nil {
+		var actorName string
+		_ = r.Pool.QueryRow(ctx, `SELECT COALESCE(NULLIF(display_name, ''), username) FROM users WHERE id = $1`, actorID).Scan(&actorName)
+		if actorName == "" {
+			actorName = "Друг"
+		}
+
+		payload := models.PushPayload{
+			Title: "Moodila",
+			URL:   "/feed",
+		}
+
+		cnt := ""
+		if content != nil {
+			cnt = *content
+		}
+
+		switch notifType {
+		case "like":
+			payload.Body = actorName + " поставил(а) реакцию " + cnt
+			payload.Tag = "reaction"
+			payload.URL = "/feed"
+		case "comment":
+			payload.Body = actorName + " оставил(а) комментарий: " + cnt
+			payload.Tag = "comment"
+			payload.URL = "/feed"
+		case "friend_request":
+			payload.Body = actorName + " отправил(а) вам заявку в друзья"
+			payload.Tag = "friend_request"
+			payload.URL = "/friends"
+		case "friend_accept":
+			payload.Body = actorName + " принял(а) вашу заявку в друзья"
+			payload.Tag = "friend_accept"
+			payload.URL = "/friends"
+		default:
+			payload.Body = actorName + " отправил(а) вам уведомление"
+		}
+
+		_ = r.PushSender.SendToUser(ctx, userID, payload)
+	}
+
+	return nil
 }
 
 func (r Notifications) List(ctx context.Context, userID string, limit int) ([]models.Notification, error) {

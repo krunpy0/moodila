@@ -16,6 +16,7 @@ import (
 	"moodshare/internal/mailer"
 	"moodshare/internal/middleware"
 	"moodshare/internal/repository"
+	"moodshare/internal/services/push"
 	"moodshare/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -84,6 +85,12 @@ func main() {
 
 	mailClient := mailer.New(cfg.ResendAPIKey, cfg.ResendFromEmail, cfg.AppEnv == "development")
 
+	pushSubscriptionsRepo := repository.PushSubscriptions{Pool: pool}
+	pushService, err := push.NewService(cfg, pushSubscriptionsRepo)
+	if err != nil {
+		log.Printf("warning: push service initialization failed: %v", err)
+	}
+
 	router.GET("/health", healthLimiter, handlers.Health{Pool: pool}.Get)
 	auth := handlers.Auth{
 		Users:           repository.Users{Pool: pool},
@@ -109,8 +116,9 @@ func main() {
 	}
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}, Storage: storageS3}
 	storageHandler := handlers.Storage{Storage: storageS3, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
-	notificationsRepo := repository.Notifications{Pool: pool}
+	notificationsRepo := repository.Notifications{Pool: pool, PushSender: pushService}
 	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo}
+	pushNotificationsHandler := handlers.PushNotifications{Repo: pushSubscriptionsRepo, PushService: pushService}
 	announcementsRepo := repository.Announcements{Pool: pool}
 	announcementsHandler := handlers.Announcements{Announcements: announcementsRepo}
 	usersRepo := repository.Users{Pool: pool}
@@ -153,6 +161,9 @@ func main() {
 	authorized.GET("/notifications", readLimiter, notificationsHandler.List)
 	authorized.GET("/notifications/unread-count", readLimiter, notificationsHandler.UnreadCount)
 	authorized.POST("/notifications/mark-read", mutationLimiter, notificationsHandler.MarkRead)
+	authorized.GET("/notifications/vapid-public-key", readLimiter, pushNotificationsHandler.VAPIDPublicKey)
+	authorized.POST("/notifications/push-subscription", mutationLimiter, pushNotificationsHandler.Subscribe)
+	authorized.DELETE("/notifications/push-subscription", mutationLimiter, pushNotificationsHandler.Unsubscribe)
 	authorized.GET("/announcements/unread", readLimiter, announcementsHandler.GetUnread)
 	authorized.POST("/announcements/:id/read", mutationLimiter, announcementsHandler.MarkRead)
 

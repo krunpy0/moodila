@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNotificationsQuery, useMarkNotificationsAsReadMutation } from '../api/queries'
 import { useLanguage } from '../context/LanguageContext'
+import { getPushSubscriptionState, subscribeToPushNotifications, unsubscribeFromPushNotifications } from '../api/push'
 
 function formatRelativeTime(dateString, t) {
   if (!dateString) return ''
@@ -23,6 +25,29 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   const { data: notifications = [], isLoading } = useNotificationsQuery(isOpen)
   const markReadMutation = useMarkNotificationsAsReadMutation()
   const { t } = useLanguage()
+  const [pushState, setPushState] = useState({ supported: true, subscribed: false, permission: 'default', loading: false, error: '' })
+
+  useEffect(() => {
+    if (!isOpen) return
+    getPushSubscriptionState().then((state) => {
+      setPushState((prev) => ({ ...prev, ...state }))
+    })
+  }, [isOpen])
+
+  const handleTogglePush = async () => {
+    setPushState((prev) => ({ ...prev, loading: true, error: '' }))
+    try {
+      if (pushState.subscribed) {
+        await unsubscribeFromPushNotifications()
+        setPushState((prev) => ({ ...prev, subscribed: false, loading: false }))
+      } else {
+        await subscribeToPushNotifications()
+        setPushState((prev) => ({ ...prev, subscribed: true, permission: 'granted', loading: false }))
+      }
+    } catch (err) {
+      setPushState((prev) => ({ ...prev, loading: false, error: err.message || 'Error' }))
+    }
+  }
 
   if (!isOpen) return null
 
@@ -131,6 +156,38 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
             </button>
           </div>
         </div>
+
+        {/* Push Notification Toggle Banner */}
+        {pushState.supported && (
+          <div className="bg-surface-container-low px-lg py-sm flex items-center justify-between border-b border-outline-variant/20 text-body-small text-on-surface-variant">
+            <div className="flex items-center gap-xs">
+              <span className={`material-symbols-outlined text-[18px] ${pushState.subscribed ? 'text-primary' : 'text-outline'}`}>
+                {pushState.subscribed ? 'notifications_active' : 'notifications_paused'}
+              </span>
+              <span className="text-label-medium">
+                {pushState.subscribed
+                  ? t('notifications.pushEnabled')
+                  : pushState.permission === 'denied'
+                  ? t('notifications.pushPermissionDenied')
+                  : t('notifications.enablePush')}
+              </span>
+            </div>
+            {pushState.permission !== 'denied' && (
+              <button
+                type="button"
+                onClick={handleTogglePush}
+                disabled={pushState.loading}
+                className="px-3 py-1 rounded-full text-label-small font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+              >
+                {pushState.loading
+                  ? t('common.loading')
+                  : pushState.subscribed
+                  ? (t('common.disable') || 'Выключить')
+                  : t('notifications.enablePush')}
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Content list */}
         <div className="flex-1 overflow-y-auto p-md space-y-sm">

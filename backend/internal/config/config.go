@@ -44,6 +44,9 @@ type Config struct {
 	CookieSecure                 bool
 	CookieSameSite               string
 	CookieDomain                 string
+	VAPIDPublicKey               string
+	VAPIDPrivateKey              string
+	VAPIDSubscriber              string
 }
 
 // Load reads configuration, loading backend/.env first (if present) so local
@@ -91,6 +94,9 @@ func Load() Config {
 		CookieSecure:                 defaultSecure,
 		CookieSameSite:               getenv("COOKIE_SAMESITE", "none"),
 		CookieDomain:                 os.Getenv("COOKIE_DOMAIN"),
+		VAPIDPublicKey:               os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey:              os.Getenv("VAPID_PRIVATE_KEY"),
+		VAPIDSubscriber:              getenv("VAPID_SUBSCRIBER", "mailto:admin@moodila.app"),
 	}
 }
 

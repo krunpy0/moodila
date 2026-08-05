@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { useUnreadNotificationCountQuery } from '../api/queries'
+import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useUnreadNotificationCountQuery, queryKeys } from '../api/queries'
 import NotificationCenterModal from './NotificationCenterModal'
 import { useLanguage } from '../context/LanguageContext'
 
@@ -7,7 +8,22 @@ export default function HeaderBell() {
   const [isOpen, setIsOpen] = useState(false)
   const { data } = useUnreadNotificationCountQuery()
   const { t } = useLanguage()
+  const queryClient = useQueryClient()
   const unreadCount = data?.unread_count || 0
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'PUSH_NOTIFICATION_RECEIVED') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
+        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
+        queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+        queryClient.invalidateQueries({ queryKey: queryKeys.pendingFriends })
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', handleMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', handleMessage)
+  }, [queryClient])
 
   return (
     <>
