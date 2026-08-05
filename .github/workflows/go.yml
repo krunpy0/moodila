@@ -79,13 +79,13 @@ jobs:
 
       - name: Upload backend
         run: |
-          scp -P "${{ secrets.PORT || 22 }}" \
+          -P "${{ secrets.PORT || 22 }}" \
           backend/moodila \
           ${{ secrets.USER }}@${{ secrets.HOST }}:/opt/moodila/incoming/
 
       - name: Upload frontend
         run: |
-          scp -P "${{ secrets.PORT || 22 }}" \
+          -P "${{ secrets.PORT || 22 }}" \
           frontend.tar.gz \
           ${{ secrets.USER }}@${{ secrets.HOST }}:/opt/moodila/incoming/
 
@@ -96,6 +96,6 @@ jobs:
       - name: Deploy
         run: |
           ssh \
-          scp -P "${{ secrets.PORT || 22 }}" \
+          -P "${{ secrets.PORT || 22 }}" \
           ${{ secrets.USER }}@${{ secrets.HOST }} \
           "/opt/moodila/deploy.sh"
