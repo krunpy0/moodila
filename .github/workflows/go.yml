@@ -96,6 +96,6 @@ jobs:
       - name: Deploy
         run: |
           ssh \
-          -p ${{ secrets.PORT }} \
+          scp -P "${{ secrets.PORT || 22 }}" \
           ${{ secrets.USER }}@${{ secrets.HOST }} \
           "/opt/moodila/deploy.sh"
