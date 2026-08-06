@@ -120,6 +120,9 @@ func (h Feed) GetReactions(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load reactions"})
 		return
 	}
+	for i := range reactors {
+		reactors[i].AvatarURL = h.Storage.ResolveAccessURL(reactors[i].AvatarURL)
+	}
 	c.JSON(http.StatusOK, reactors)
 }
 
@@ -141,6 +144,9 @@ func (h Feed) GetComments(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load comments"})
 		return
+	}
+	for i := range comments {
+		comments[i].Author.AvatarURL = h.Storage.ResolveAccessURL(comments[i].Author.AvatarURL)
 	}
 	c.JSON(http.StatusOK, comments)
 }
@@ -181,6 +187,7 @@ func (h Feed) AddComment(c *gin.Context) {
 		_ = h.Notifications.Create(c.Request.Context(), ownerID, c.GetString("userID"), "comment", &entryID, &text)
 	}
 
+	comment.Author.AvatarURL = h.Storage.ResolveAccessURL(comment.Author.AvatarURL)
 	c.JSON(http.StatusOK, comment)
 }
 

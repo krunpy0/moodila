@@ -5,12 +5,14 @@ import (
 	"strconv"
 
 	"moodshare/internal/repository"
+	"moodshare/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Notifications struct {
 	Notifications repository.Notifications
+	Storage       storage.S3
 }
 
 type markReadInput struct {
@@ -36,6 +38,9 @@ func (h Notifications) List(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load notifications"})
 		return
+	}
+	for i := range list {
+		list[i].ActorAvatarURL = h.Storage.ResolveAccessURL(list[i].ActorAvatarURL)
 	}
 	c.JSON(http.StatusOK, list)
 }

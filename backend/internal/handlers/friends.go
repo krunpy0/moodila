@@ -9,6 +9,7 @@ import (
 
 	"moodshare/internal/models"
 	"moodshare/internal/repository"
+	"moodshare/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -21,11 +22,21 @@ var usernameSearchPattern = regexp.MustCompile(`^[a-z0-9_]+$`)
 type Friends struct {
 	Friends       repository.Friends
 	Notifications repository.Notifications
+	Storage       storage.S3
 }
 
 type friendInput struct {
 	UserID       string `json:"user_id"`
 	FriendshipID string `json:"friendship_id"`
+}
+
+func (h Friends) resolveFriendUsers(users []models.FriendUser) []models.FriendUser {
+	out := make([]models.FriendUser, len(users))
+	for i, u := range users {
+		u.AvatarURL = h.Storage.ResolveAccessURL(u.AvatarURL)
+		out[i] = u
+	}
+	return out
 }
 
 func (h Friends) Search(c *gin.Context) {
@@ -42,7 +53,7 @@ func (h Friends) Search(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not search users"})
 		return
 	}
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, h.resolveFriendUsers(users))
 }
 
 func (h Friends) Request(c *gin.Context) {
@@ -182,7 +193,7 @@ func (h Friends) list(c *gin.Context, load func(context.Context, string) ([]mode
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friends"})
 		return
 	}
-	c.JSON(http.StatusOK, users)
+	c.JSON(http.StatusOK, h.resolveFriendUsers(users))
 }
 
 func (h Friends) available(c *gin.Context) bool {

@@ -117,12 +117,12 @@ func main() {
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}, Storage: storageS3}
 	storageHandler := handlers.Storage{Storage: storageS3, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
 	notificationsRepo := repository.Notifications{Pool: pool, PushSender: pushService}
-	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo}
+	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo, Storage: storageS3}
 	pushNotificationsHandler := handlers.PushNotifications{Repo: pushSubscriptionsRepo, PushService: pushService}
 	announcementsRepo := repository.Announcements{Pool: pool}
 	announcementsHandler := handlers.Announcements{Announcements: announcementsRepo}
 	usersRepo := repository.Users{Pool: pool}
-	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Notifications: notificationsRepo}
+	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
 	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}, Storage: storageS3}
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret), middleware.CSRF())

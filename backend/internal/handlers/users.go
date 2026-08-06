@@ -112,11 +112,11 @@ func (h Users) UpdateMe(c *gin.Context) {
 	}
 	if input.AvatarURL != nil {
 		avatar := strings.TrimSpace(*input.AvatarURL)
-		if len(avatar) > 2048 {
+		if len(avatar) > 4096 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "avatar_url is too long"})
 			return
 		}
-		input.AvatarURL = &avatar
+		input.AvatarURL = h.Storage.CleanURL(&avatar)
 	}
 	if input.DisplayName == nil && input.AvatarURL == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "at least one field is required"})
