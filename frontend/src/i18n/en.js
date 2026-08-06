@@ -22,6 +22,7 @@ export const en = {
     delete: "Delete",
     remove: "Remove",
     close: "Close",
+    openOriginal: "Open original",
     back: "Go back",
     logout: "Log out",
     none: "None",

@@ -96,11 +96,12 @@ func (r PasswordReset) ResetPassword(ctx context.Context, tokenHash string, newP
 		return fmt.Errorf("consume token: %w", err)
 	}
 
-	// Update user's password_hash
+	// Update user's password_hash and increment token_version
 	cmd, err := tx.Exec(ctx, `
 		UPDATE users
-		SET password_hash = $2
-		WHERE id = $1`,
+		SET password_hash = $2,
+		    token_version = token_version + 1
+		WHERE id = $1 AND deleted_at IS NULL`,
 		userID, string(hash),
 	)
 	if err != nil {

@@ -303,7 +303,10 @@ export default function AddEntry() {
                 {form.photo_url && !isUploadingPhoto && (
                   <button
                     type="button"
-                    onClick={removePhoto}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      removePhoto()
+                    }}
                     aria-label={t('addEntry.removePhoto')}
                     className="absolute right-sm top-sm z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm hover:bg-background"
                   >

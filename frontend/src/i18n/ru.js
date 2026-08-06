@@ -22,6 +22,7 @@ export const ru = {
     delete: 'Удалить',
     remove: 'Убрать',
     close: 'Закрыть',
+    openOriginal: 'Открыть оригинал',
     back: 'Назад',
     logout: 'Выйти',
     none: 'Нет',

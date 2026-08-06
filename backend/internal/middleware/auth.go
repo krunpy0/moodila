@@ -11,8 +11,9 @@ const jwtIssuer = "moodshare"
 
 type CustomClaims struct {
 	jwt.RegisteredClaims
-	TokenType string `json:"type,omitempty"`
-	CSRF      string `json:"csrf,omitempty"`
+	TokenType    string `json:"type,omitempty"`
+	CSRF         string `json:"csrf,omitempty"`
+	TokenVersion int    `json:"token_version,omitempty"`
 }
 
 func Auth(secret string) gin.HandlerFunc {
@@ -42,6 +43,7 @@ func Auth(secret string) gin.HandlerFunc {
 			return
 		}
 		c.Set("userID", claims.Subject)
+		c.Set("tokenVersion", claims.TokenVersion)
 		c.Set("csrfToken", claims.CSRF)
 		if claims.CSRF != "" {
 			c.Header("X-CSRF-Token", claims.CSRF)
