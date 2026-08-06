@@ -120,7 +120,10 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-12 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 pt-12 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      onClick={onClose}
+    >
       <div className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-3xl bg-surface-container-lowest shadow-2xl overflow-hidden mx-container-margin">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 px-lg py-md">
