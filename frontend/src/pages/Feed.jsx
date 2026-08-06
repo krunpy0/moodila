@@ -22,7 +22,7 @@ import { getLocalDate } from "../api/client";
 import ReactionsModal from "../components/ReactionsModal";
 import ReactionIcon from "../components/ReactionIcon";
 
-const emojiReactions = ["❤️", "🫂", "👏", "💡", "😁"];
+const emojiReactions = ["❤️", "👏", "💡", "😁", "🔥"];
 
 export default function Feed() {
   const [includeSelf, setIncludeSelf] = useState(() => {
@@ -473,7 +473,8 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
   const { t } = useLanguage();
 
   const reactions = entry.reactions || [];
-  const myReactions = entry.my_reactions || (entry.my_reaction ? [entry.my_reaction] : []);
+  const myReactions =
+    entry.my_reactions || (entry.my_reaction ? [entry.my_reaction] : []);
   const totalCount = entry.like_count || 0;
 
   return (
@@ -491,7 +492,9 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                   setEmojiPickerOpen(false);
                 }}
                 className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:scale-125 active:scale-95 ${
-                  isMine ? "bg-primary-container/70 ring-1 ring-primary/30" : "hover:bg-surface-container-low"
+                  isMine
+                    ? "bg-primary-container/70 ring-1 ring-primary/30"
+                    : "hover:bg-surface-container-low"
                 }`}
               >
                 <ReactionIcon reaction={reac} className="text-[20px]" />
@@ -531,7 +534,9 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
             className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container"
             title={t("reactions.title")}
           >
-            <span className="material-symbols-outlined text-[18px]">add_reaction</span>
+            <span className="material-symbols-outlined text-[18px]">
+              add_reaction
+            </span>
           </button>
 
           {totalCount > 0 && (
@@ -541,7 +546,9 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
               className="flex items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors px-xs py-0.5 rounded-full hover:bg-surface-container-low"
               title={t("reactions.longPressHint")}
             >
-              <span className="material-symbols-outlined text-[16px]">group</span>
+              <span className="material-symbols-outlined text-[16px]">
+                group
+              </span>
             </button>
           )}
         </div>
@@ -551,8 +558,12 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
           onClick={() => setShowComments((prev) => !prev)}
           className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container shrink-0"
         >
-          <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
-          <span>{t("feed.commentsCount", { count: entry.comment_count || 0 })}</span>
+          <span className="material-symbols-outlined text-[19px]">
+            chat_bubble
+          </span>
+          <span>
+            {t("feed.commentsCount", { count: entry.comment_count || 0 })}
+          </span>
         </button>
       </div>
 
