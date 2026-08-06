@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"moodshare/internal/repository"
+	"moodshare/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -15,6 +16,7 @@ import (
 type Feed struct {
 	Feed          repository.Feed
 	Notifications repository.Notifications
+	Storage       storage.S3
 }
 
 type reactInput struct {
@@ -48,6 +50,13 @@ func (h Feed) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load feed"})
 		return
 	}
+
+	for i := range entries {
+		entries[i].PhotoURL = h.Storage.ResolveAccessURL(entries[i].PhotoURL)
+		entries[i].AudioURL = h.Storage.ResolveAccessURL(entries[i].AudioURL)
+		entries[i].Author.AvatarURL = h.Storage.ResolveAccessURL(entries[i].Author.AvatarURL)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"items":       entries,
 		"entries":     entries,

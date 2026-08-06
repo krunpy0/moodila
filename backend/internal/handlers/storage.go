@@ -98,11 +98,36 @@ func (h Storage) SignUpload(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not prepare photo upload"})
 		return
 	}
-	base := strings.TrimRight(h.UploadAPIURL, "/")
+	photoURL := prepared.PhotoURL
+	if resolved := h.Storage.ResolveAccessURL(&prepared.PhotoURL); resolved != nil {
+		photoURL = *resolved
+	}
+	base := h.getUploadBaseURL(c)
 	c.JSON(http.StatusOK, storage.Upload{
 		UploadURL: base + "/storage/entry-photos/upload/" + signed,
-		PhotoURL:  prepared.PhotoURL,
+		PhotoURL:  photoURL,
 	})
+}
+
+func (h Storage) getUploadBaseURL(c *gin.Context) string {
+	base := strings.TrimRight(h.UploadAPIURL, "/")
+	scheme := "http"
+	if c != nil && c.Request != nil && (c.Request.TLS != nil ||
+		strings.EqualFold(c.GetHeader("X-Forwarded-Proto"), "https") ||
+		strings.HasPrefix(c.GetHeader("Origin"), "https://") ||
+		strings.HasPrefix(c.GetHeader("Referer"), "https://")) {
+		scheme = "https"
+	}
+
+	if base == "" && c != nil && c.Request != nil {
+		return scheme + "://" + c.Request.Host
+	}
+
+	if scheme == "https" && strings.HasPrefix(base, "http://") {
+		return "https://" + strings.TrimPrefix(base, "http://")
+	}
+
+	return base
 }
 
 func (h Storage) Upload(c *gin.Context) {
@@ -486,10 +511,14 @@ func (h Storage) SignAudioUpload(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not prepare audio upload"})
 		return
 	}
-	base := strings.TrimRight(h.UploadAPIURL, "/")
+	audioURL := prepared.PhotoURL
+	if resolved := h.Storage.ResolveAccessURL(&prepared.PhotoURL); resolved != nil {
+		audioURL = *resolved
+	}
+	base := h.getUploadBaseURL(c)
 	c.JSON(http.StatusOK, storage.AudioUpload{
 		UploadURL: base + "/storage/entry-photos/upload/" + signed, // Reuse upload proxy endpoint!
-		AudioURL:  prepared.PhotoURL,
+		AudioURL:  audioURL,
 	})
 }
 

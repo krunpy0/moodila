@@ -32,6 +32,7 @@ type S3 struct {
 	SessionToken    string
 	PublicBaseURL   string
 	ForcePathStyle  bool
+	IsPrivate       bool
 	Now             func() time.Time
 }
 
@@ -155,12 +156,13 @@ func (s S3) Delete(ctx context.Context, objectKey string) error {
 	return nil
 }
 
-// ExtractObjectKey parses a full photo/file URL or key and verifies it belongs to userID.
-func (s S3) ExtractObjectKey(rawTarget, userID string) (string, error) {
+const defaultSignedURLLifetime = 2 * time.Hour
+
+// ExtractKey parses a target string (full HTTP/HTTPS URL or relative key) into a clean S3 object key.
+func (s S3) ExtractKey(rawTarget string) (string, error) {
 	rawTarget = strings.TrimSpace(rawTarget)
-	userID = strings.TrimSpace(userID)
-	if rawTarget == "" || userID == "" {
-		return "", fmt.Errorf("invalid target or user ID")
+	if rawTarget == "" {
+		return "", fmt.Errorf("invalid target")
 	}
 
 	var key string
@@ -174,14 +176,11 @@ func (s S3) ExtractObjectKey(rawTarget, userID string) (string, error) {
 				return "", fmt.Errorf("invalid URL: %w", err)
 			}
 			pathStr := u.Path
-			prefix := "/" + userID + "/"
-			idx := strings.Index(pathStr, prefix)
-			if idx != -1 {
-				key = pathStr[idx+1:]
-			} else if strings.HasPrefix(strings.TrimPrefix(pathStr, "/"), userID+"/") {
-				key = strings.TrimPrefix(pathStr, "/")
+			bucketPrefix := "/" + s.Bucket + "/"
+			if s.Bucket != "" && strings.HasPrefix(pathStr, bucketPrefix) {
+				key = strings.TrimPrefix(pathStr, bucketPrefix)
 			} else {
-				return "", fmt.Errorf("URL does not belong to user")
+				key = strings.TrimPrefix(pathStr, "/")
 			}
 		}
 	} else {
@@ -192,22 +191,109 @@ func (s S3) ExtractObjectKey(rawTarget, userID string) (string, error) {
 	if err != nil {
 		unescapedKey = key
 	}
-
-	if !strings.HasPrefix(unescapedKey, userID+"/") {
-		return "", fmt.Errorf("object key does not belong to user")
+	if unescapedKey == "" {
+		return "", fmt.Errorf("empty object key")
 	}
 	return unescapedKey, nil
 }
 
+// ExtractObjectKey parses a full photo/file URL or key and verifies it belongs to userID.
+func (s S3) ExtractObjectKey(rawTarget, userID string) (string, error) {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
+		return "", fmt.Errorf("invalid target or user ID")
+	}
+	key, err := s.ExtractKey(rawTarget)
+	if err == nil && strings.HasPrefix(key, userID+"/") {
+		return key, nil
+	}
+
+	// Fallback for URLs containing extra path prefixes (e.g. /bucket/userID/...) when S3 struct Bucket is not set.
+	if strings.HasPrefix(rawTarget, "http://") || strings.HasPrefix(rawTarget, "https://") {
+		if u, err := url.Parse(rawTarget); err == nil {
+			prefix := "/" + userID + "/"
+			if idx := strings.Index(u.Path, prefix); idx != -1 {
+				subKey := u.Path[idx+1:]
+				if unescaped, err := url.PathUnescape(subKey); err == nil && strings.HasPrefix(unescaped, userID+"/") {
+					return unescaped, nil
+				}
+			}
+		}
+	}
+
+	return "", fmt.Errorf("object key does not belong to user")
+}
+
+// PresignGet generates a short-lived presigned GET URL for an object key.
+func (s S3) PresignGet(objectKey string, ttl time.Duration) (string, error) {
+	if s.Bucket == "" || s.AccessKeyID == "" || s.SecretAccessKey == "" {
+		return "", fmt.Errorf("storage is not configured")
+	}
+	now := time.Now().UTC()
+	if s.Now != nil {
+		now = s.Now().UTC()
+	}
+	if ttl <= 0 {
+		ttl = defaultSignedURLLifetime
+	}
+	return s.presign("GET", objectKey, "", ttl, now)
+}
+
+// ResolveAccessURL converts a raw photo/audio URL or key into an accessible URL.
+// If IsPrivate is false, it returns the URL unchanged. If IsPrivate is true,
+// it generates and returns a presigned GET URL.
+func (s S3) ResolveAccessURL(rawURL *string) *string {
+	if rawURL == nil {
+		return nil
+	}
+	val := strings.TrimSpace(*rawURL)
+	if val == "" {
+		return nil
+	}
+	if !s.IsPrivate {
+		return &val
+	}
+	key, err := s.ExtractKey(val)
+	if err != nil {
+		return &val
+	}
+	signed, err := s.PresignGet(key, defaultSignedURLLifetime)
+	if err != nil {
+		return &val
+	}
+	return &signed
+}
+
+// CleanURL strips query parameters and signature strings from a URL, returning
+// a clean canonical S3 URL or relative key for database storage.
+func (s S3) CleanURL(rawURL *string) *string {
+	if rawURL == nil {
+		return nil
+	}
+	val := strings.TrimSpace(*rawURL)
+	if val == "" {
+		return nil
+	}
+	key, err := s.ExtractKey(val)
+	if err != nil {
+		return &val
+	}
+	clean := s.publicURL(key)
+	if clean == "" {
+		return &val
+	}
+	return &clean
+}
+
 func (s S3) presignPut(objectKey, contentType string, now time.Time) (string, error) {
-	return s.presign("PUT", objectKey, contentType, now)
+	return s.presign("PUT", objectKey, contentType, uploadURLLifetime, now)
 }
 
 func (s S3) presignDelete(objectKey string, now time.Time) (string, error) {
-	return s.presign("DELETE", objectKey, "", now)
+	return s.presign("DELETE", objectKey, "", uploadURLLifetime, now)
 }
 
-func (s S3) presign(method, objectKey, contentType string, now time.Time) (string, error) {
+func (s S3) presign(method, objectKey, contentType string, ttl time.Duration, now time.Time) (string, error) {
 	endpoint, err := s.endpointURL()
 	if err != nil {
 		return "", err
@@ -238,11 +324,15 @@ func (s S3) presign(method, objectKey, contentType string, now time.Time) (strin
 		canonicalHeaders = "content-type:" + strings.TrimSpace(contentType) + "\n" + canonicalHeaders
 	}
 
+	if ttl <= 0 {
+		ttl = uploadURLLifetime
+	}
+
 	query := url.Values{
 		"X-Amz-Algorithm":     {"AWS4-HMAC-SHA256"},
 		"X-Amz-Credential":    {s.AccessKeyID + "/" + credentialScope},
 		"X-Amz-Date":          {amzDate},
-		"X-Amz-Expires":       {fmt.Sprintf("%d", int(uploadURLLifetime.Seconds()))},
+		"X-Amz-Expires":       {fmt.Sprintf("%d", int(ttl.Seconds()))},
 		"X-Amz-SignedHeaders": {signedHeaders},
 	}
 	if s.SessionToken != "" {

@@ -8,6 +8,7 @@ import (
 
 	"moodshare/internal/models"
 	"moodshare/internal/repository"
+	"moodshare/internal/storage"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -17,6 +18,7 @@ type Users struct {
 	Users   repository.Users
 	Entries repository.Entries
 	Friends repository.Friends
+	Storage storage.S3
 }
 
 type profileUpdateInput struct {
@@ -34,6 +36,30 @@ type friendProfileResponse struct {
 	User    models.User         `json:"user"`
 	Entries []models.Entry      `json:"entries"`
 	Summary models.EntrySummary `json:"summary"`
+}
+
+func (h Users) resolveUser(u models.User) models.User {
+	u.AvatarURL = h.Storage.ResolveAccessURL(u.AvatarURL)
+	return u
+}
+
+func (h Users) resolveEntries(entries []models.Entry) []models.Entry {
+	out := make([]models.Entry, len(entries))
+	for i, e := range entries {
+		e.PhotoURL = h.Storage.ResolveAccessURL(e.PhotoURL)
+		e.AudioURL = h.Storage.ResolveAccessURL(e.AudioURL)
+		out[i] = e
+	}
+	return out
+}
+
+func (h Users) resolveFriendUsers(friends []models.FriendUser) []models.FriendUser {
+	out := make([]models.FriendUser, len(friends))
+	for i, f := range friends {
+		f.AvatarURL = h.Storage.ResolveAccessURL(f.AvatarURL)
+		out[i] = f
+	}
+	return out
 }
 
 func (h Users) Me(c *gin.Context) {
@@ -60,7 +86,11 @@ func (h Users) Me(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friends"})
 		return
 	}
-	c.JSON(http.StatusOK, profileResponse{User: user, RecentEntries: recent, Friends: friends})
+	c.JSON(http.StatusOK, profileResponse{
+		User:          h.resolveUser(user),
+		RecentEntries: h.resolveEntries(recent),
+		Friends:       h.resolveFriendUsers(friends),
+	})
 }
 
 func (h Users) UpdateMe(c *gin.Context) {
@@ -101,7 +131,7 @@ func (h Users) UpdateMe(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update profile"})
 		return
 	}
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, h.resolveUser(user))
 }
 
 func (h Users) FriendProfile(c *gin.Context) {
@@ -160,8 +190,8 @@ func (h Users) FriendProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, friendProfileResponse{
-		User:    user,
-		Entries: recent,
+		User:    h.resolveUser(user),
+		Entries: h.resolveEntries(recent),
 		Summary: summary,
 	})
 }

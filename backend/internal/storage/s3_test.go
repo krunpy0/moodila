@@ -119,3 +119,79 @@ func TestPresignDelete(t *testing.T) {
 	}
 }
 
+func TestPresignGet(t *testing.T) {
+	s := S3{
+		Endpoint:        "https://s3.example.test",
+		Bucket:          "photos",
+		AccessKeyID:     "access-key",
+		SecretAccessKey: "secret-key",
+		Now:             func() time.Time { return time.Date(2026, 8, 6, 12, 0, 0, 0, time.UTC) },
+	}
+
+	getURL, err := s.PresignGet("user-1/2026/08/photo.jpg", 2*time.Hour)
+	if err != nil {
+		t.Fatalf("PresignGet() error = %v", err)
+	}
+	parsed, err := url.Parse(getURL)
+	if err != nil {
+		t.Fatalf("parse GET URL: %v", err)
+	}
+	if parsed.Query().Get("X-Amz-SignedHeaders") != "host" {
+		t.Errorf("signed headers = %q, want host", parsed.Query().Get("X-Amz-SignedHeaders"))
+	}
+	if parsed.Query().Get("X-Amz-Expires") != "7200" {
+		t.Errorf("expires = %q, want 7200", parsed.Query().Get("X-Amz-Expires"))
+	}
+	if parsed.Query().Get("X-Amz-Signature") == "" {
+		t.Error("GET URL has no signature")
+	}
+}
+
+func TestResolveAccessURL(t *testing.T) {
+	sPublic := S3{
+		IsPrivate:     false,
+		PublicBaseURL: "https://cdn.example.test/photos",
+	}
+
+	sPrivate := S3{
+		IsPrivate:       true,
+		Endpoint:        "https://s3.example.test",
+		Bucket:          "photos",
+		AccessKeyID:     "access-key",
+		SecretAccessKey: "secret-key",
+		PublicBaseURL:   "https://cdn.example.test/photos",
+	}
+
+	rawURL := "https://cdn.example.test/photos/user-1/2026/08/photo.jpg"
+
+	t.Run("Public Mode", func(t *testing.T) {
+		res := sPublic.ResolveAccessURL(&rawURL)
+		if res == nil || *res != rawURL {
+			t.Errorf("got %v, want %q", res, rawURL)
+		}
+	})
+
+	t.Run("Private Mode Generates Presigned GET", func(t *testing.T) {
+		res := sPrivate.ResolveAccessURL(&rawURL)
+		if res == nil {
+			t.Fatal("got nil resolved URL")
+		}
+		if !strings.Contains(*res, "X-Amz-Signature=") {
+			t.Errorf("expected presigned URL with signature, got %q", *res)
+		}
+		if !strings.Contains(*res, "user-1/2026/08/photo.jpg") {
+			t.Errorf("expected URL to contain object key, got %q", *res)
+		}
+	})
+
+	t.Run("Nil or Empty Input", func(t *testing.T) {
+		if res := sPrivate.ResolveAccessURL(nil); res != nil {
+			t.Errorf("expected nil for nil input, got %v", res)
+		}
+		emptyStr := ""
+		if res := sPrivate.ResolveAccessURL(&emptyStr); res != nil {
+			t.Errorf("expected nil for empty input, got %v", res)
+		}
+	})
+}
+

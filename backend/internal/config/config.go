@@ -25,6 +25,7 @@ type Config struct {
 	S3SessionToken       string
 	S3PublicBaseURL      string
 	S3ForcePathStyle     bool
+	S3IsPrivate          bool
 	ResetTokenTTLMinutes         int
 	AccountDeleteTokenTTLMinutes int
 	ResendAPIKey                 string
@@ -75,6 +76,7 @@ func Load() Config {
 		S3SessionToken:               getenv("AWS_SESSION_TOKEN", ""),
 		S3PublicBaseURL:              strings.TrimRight(os.Getenv("S3_PUBLIC_BASE_URL"), "/"),
 		S3ForcePathStyle:             strings.EqualFold(os.Getenv("S3_FORCE_PATH_STYLE"), "true"),
+		S3IsPrivate:                  parseBool(getenv("S3_IS_PRIVATE", "false")),
 		ResetTokenTTLMinutes:         parseInt(getenv("RESET_TOKEN_TTL_MINUTES", "30"), 30),
 		AccountDeleteTokenTTLMinutes: parseInt(getenv("ACCOUNT_DELETE_TOKEN_TTL_MINUTES", "30"), 30),
 		ResendAPIKey:                 os.Getenv("RESEND_API_KEY"),

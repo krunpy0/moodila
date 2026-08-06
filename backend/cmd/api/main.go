@@ -112,7 +112,7 @@ func main() {
 		Endpoint: cfg.S3Endpoint, Region: cfg.S3Region, Bucket: cfg.S3Bucket,
 		AccessKeyID: cfg.S3AccessKeyID, SecretAccessKey: cfg.S3SecretAccessKey,
 		SessionToken: cfg.S3SessionToken, PublicBaseURL: cfg.S3PublicBaseURL,
-		ForcePathStyle: cfg.S3ForcePathStyle,
+		ForcePathStyle: cfg.S3ForcePathStyle, IsPrivate: cfg.S3IsPrivate,
 	}
 	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}, Storage: storageS3}
 	storageHandler := handlers.Storage{Storage: storageS3, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
@@ -123,8 +123,8 @@ func main() {
 	announcementsHandler := handlers.Announcements{Announcements: announcementsRepo}
 	usersRepo := repository.Users{Pool: pool}
 	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Notifications: notificationsRepo}
-	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}}
-	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo}
+	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}, Storage: storageS3}
+	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret), middleware.CSRF())
 	authorized.PATCH("/auth/password", passwordChangeLimiter, auth.ChangePassword)
 	authorized.POST("/auth/account/delete-request", passwordChangeLimiter, auth.DeleteAccountRequest)

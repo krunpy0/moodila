@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"moodshare/internal/models"
 	"moodshare/internal/repository"
 	"moodshare/internal/storage"
 
@@ -53,22 +54,22 @@ func (h Entries) Save(c *gin.Context) {
 		photoURL := strings.TrimSpace(*input.PhotoURL)
 		if photoURL == "" {
 			input.PhotoURL = nil
-		} else if len(photoURL) > 2048 || !(strings.HasPrefix(photoURL, "https://") || strings.HasPrefix(photoURL, "http://")) {
+		} else if len(photoURL) > 4096 || !(strings.HasPrefix(photoURL, "https://") || strings.HasPrefix(photoURL, "http://")) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "photo_url must be a valid URL"})
 			return
 		} else {
-			input.PhotoURL = &photoURL
+			input.PhotoURL = h.Storage.CleanURL(&photoURL)
 		}
 	}
 	if input.AudioURL != nil {
 		audioURL := strings.TrimSpace(*input.AudioURL)
 		if audioURL == "" {
 			input.AudioURL = nil
-		} else if len(audioURL) > 2048 || !(strings.HasPrefix(audioURL, "https://") || strings.HasPrefix(audioURL, "http://")) {
+		} else if len(audioURL) > 4096 || !(strings.HasPrefix(audioURL, "https://") || strings.HasPrefix(audioURL, "http://")) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "audio_url must be a valid URL"})
 			return
 		} else {
-			input.AudioURL = &audioURL
+			input.AudioURL = h.Storage.CleanURL(&audioURL)
 		}
 	}
 	if input.AudioDuration != nil && (*input.AudioDuration < 0 || *input.AudioDuration > 300) {
@@ -93,7 +94,23 @@ func (h Entries) Save(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save entry"})
 		return
 	}
-	c.JSON(http.StatusOK, entry)
+	c.JSON(http.StatusOK, h.resolveEntry(entry))
+}
+
+func (h Entries) resolveEntry(e models.Entry) models.Entry {
+	e.PhotoURL = h.Storage.ResolveAccessURL(e.PhotoURL)
+	e.AudioURL = h.Storage.ResolveAccessURL(e.AudioURL)
+	return e
+}
+
+func (h Entries) resolveCalendarEntries(entries []models.CalendarEntry) []models.CalendarEntry {
+	out := make([]models.CalendarEntry, len(entries))
+	for i, e := range entries {
+		e.PhotoURL = h.Storage.ResolveAccessURL(e.PhotoURL)
+		e.AudioURL = h.Storage.ResolveAccessURL(e.AudioURL)
+		out[i] = e
+	}
+	return out
 }
 
 func (h Entries) Me(c *gin.Context) {
@@ -118,7 +135,7 @@ func (h Entries) Me(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load entries"})
 			return
 		}
-		c.JSON(http.StatusOK, entries)
+		c.JSON(http.StatusOK, h.resolveCalendarEntries(entries))
 		return
 	}
 
@@ -136,7 +153,7 @@ func (h Entries) Me(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load entry"})
 		return
 	}
-	c.JSON(http.StatusOK, entry)
+	c.JSON(http.StatusOK, h.resolveEntry(entry))
 }
 
 func (h Entries) Summary(c *gin.Context) {
@@ -198,7 +215,7 @@ func (h Entries) Friend(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friend entries"})
 		return
 	}
-	c.JSON(http.StatusOK, entries)
+	c.JSON(http.StatusOK, h.resolveCalendarEntries(entries))
 }
 
 func (h Entries) Visibility(c *gin.Context) {
@@ -232,7 +249,7 @@ func (h Entries) Visibility(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update visibility"})
 		return
 	}
-	c.JSON(http.StatusOK, entry)
+	c.JSON(http.StatusOK, h.resolveEntry(entry))
 }
 
 func (h Entries) cleanupAttachments(ctx context.Context, userID string, attachments []repository.AttachmentURLs) {

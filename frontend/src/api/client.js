@@ -49,7 +49,14 @@ export const getLocalDate = () => {
   ].join('-')
 }
 
-export const apiURL = (path) => (/^https?:\/\//.test(path) ? path : BASE + path)
+export const apiURL = (path) => {
+  if (!path) return ''
+  let url = /^https?:\/\//.test(path) ? path : BASE + path
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
+    url = 'https://' + url.slice(7)
+  }
+  return url
+}
 
 let refreshPromise = null
 
