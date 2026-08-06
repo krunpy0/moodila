@@ -33,7 +33,7 @@ func TestHiddenEntriesE2E(t *testing.T) {
 		t.Skipf("DB connection failed: %v — skipping test", err)
 	}
 	defer pool.Close()
-	_ = db.Migrate(ctx, pool, "migrations")
+	_ = db.Migrate(ctx, pool, nil)
 
 	usersRepo := repository.Users{Pool: pool}
 	entriesRepo := repository.Entries{Pool: pool}

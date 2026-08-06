@@ -4,11 +4,12 @@ package db
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/fs"
 	"sort"
 	"strings"
 	"time"
+
+	"moodshare/migrations"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -47,10 +48,14 @@ func Connect(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
 	return pool, nil
 }
 
-// Migrate applies every *.sql file in dir (lexical order) that has not yet been
+// Migrate applies every *.sql file in fsys (lexical order) that has not yet been
 // recorded in schema_migrations. Each file is applied atomically together with
-// its version record.
-func Migrate(ctx context.Context, pool *pgxpool.Pool, dir string) error {
+// its version record. If fsys is nil, it defaults to embedded migrations.FS.
+func Migrate(ctx context.Context, pool *pgxpool.Pool, fsys fs.FS) error {
+	if fsys == nil {
+		fsys = migrations.FS
+	}
+
 	if _, err := pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version    TEXT PRIMARY KEY,
@@ -59,7 +64,7 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, dir string) error {
 		return fmt.Errorf("ensure schema_migrations: %w", err)
 	}
 
-	entries, err := os.ReadDir(dir)
+	entries, err := fs.ReadDir(fsys, ".")
 	if err != nil {
 		return fmt.Errorf("read migrations dir: %w", err)
 	}
@@ -96,7 +101,7 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, dir string) error {
 			continue
 		}
 
-		sqlBytes, err := os.ReadFile(filepath.Join(dir, name))
+		sqlBytes, err := fs.ReadFile(fsys, name)
 		if err != nil {
 			return fmt.Errorf("read migration %s: %w", name, err)
 		}

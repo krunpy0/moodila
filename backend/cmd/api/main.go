@@ -61,7 +61,7 @@ func main() {
 			log.Println("connected to database")
 
 			mctx, mcancel := context.WithTimeout(context.Background(), 30*time.Second)
-			if err := db.Migrate(mctx, pool, "migrations"); err != nil {
+			if err := db.Migrate(mctx, pool, nil); err != nil {
 				log.Printf("warning: migrations failed: %v", err)
 			} else {
 				log.Println("migrations up to date")
