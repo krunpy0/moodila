@@ -92,6 +92,28 @@ func (h Feed) Like(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func (h Feed) GetReactions(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	entryID := strings.TrimSpace(c.Param("entry_id"))
+	if !validUUID(entryID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "entry_id must be a valid UUID"})
+		return
+	}
+
+	reactors, err := h.Feed.GetEntryReactions(c.Request.Context(), c.GetString("userID"), entryID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "entry not found or access denied"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load reactions"})
+		return
+	}
+	c.JSON(http.StatusOK, reactors)
+}
+
 func (h Feed) GetComments(c *gin.Context) {
 	if !h.available(c) {
 		return

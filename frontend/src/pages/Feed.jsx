@@ -19,6 +19,8 @@ import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
 import { getLocalDate } from "../api/client";
+import ReactionsModal from "../components/ReactionsModal";
+import ReactionIcon from "../components/ReactionIcon";
 
 const emojiReactions = ["❤️", "🫂", "👏", "💡", "😁"];
 
@@ -95,9 +97,7 @@ export default function Feed() {
   }, [hasNextPage]);
 
   const handleReact = (entryId, reaction) => {
-    if (!likeMutation.isPending) {
-      likeMutation.mutate({ entryId, reaction });
-    }
+    likeMutation.mutate({ entryId, reaction });
   };
 
   return (
@@ -175,10 +175,6 @@ export default function Feed() {
                     <FeedCard
                       key={entry.id}
                       entry={entry}
-                      busy={
-                        likeMutation.isPending &&
-                        likeMutation.variables?.entryId === entry.id
-                      }
                       onReact={handleReact}
                     />
                   ))}
@@ -318,9 +314,8 @@ const moodTintBg = {
   5: "bg-tertiary-container/40",
 };
 
-function FeedCard({ entry, busy, onReact }) {
+function FeedCard({ entry, onReact }) {
   const [showComments, setShowComments] = useState(false);
-  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const { t, dateLocale } = useLanguage();
   const moodInfo = getMoodInfo(entry.mood, t);
   const authorName = entry.author.display_name || entry.author.username;
@@ -380,51 +375,12 @@ function FeedCard({ entry, busy, onReact }) {
         </div>
 
         <footer className="relative mt-sm border-t border-on-surface/5 pt-sm">
-          {emojiPickerOpen && (
-            <div className="absolute -top-12 left-0 z-20 flex items-center gap-xs rounded-full bg-surface-container-high p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
-              {emojiReactions.map((reac) => (
-                <button
-                  key={reac}
-                  type="button"
-                  onClick={() => {
-                    onReact(entry.id, reac);
-                    setEmojiPickerOpen(false);
-                  }}
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-xl transition-transform hover:scale-125 active:scale-95"
-                >
-                  {reac}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setEmojiPickerOpen((prev) => !prev)}
-              disabled={busy}
-              aria-label="Select reaction"
-              className={`flex items-center gap-xs rounded-full px-sm py-xs text-label-sm font-label-sm transition-colors disabled:opacity-70 ${
-                entry.liked_by_me
-                  ? "bg-primary-container text-on-primary-container"
-                  : "bg-surface-container-lowest/60 text-on-surface-variant"
-              }`}
-            >
-              <span className="text-[16px]">{entry.my_reaction || "❤️"}</span>
-              <span>{entry.like_count || 0}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowComments((prev) => !prev)}
-              className="flex items-center gap-xs rounded-full bg-surface-container-lowest/60 px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container-lowest"
-            >
-              <span className="material-symbols-outlined text-[19px]">
-                chat_bubble
-              </span>
-              <span>
-                {t("feed.commentsCount", { count: entry.comment_count || 0 })}
-              </span>
-            </button>
-          </div>
+          <ReactionsSection
+            entry={entry}
+            onReact={onReact}
+            showComments={showComments}
+            setShowComments={setShowComments}
+          />
         </footer>
 
         {showComments && <CommentsSection entryId={entry.id} />}
@@ -498,9 +454,35 @@ function FeedCard({ entry, busy, onReact }) {
       </div>
 
       <footer className="relative mt-md border-t border-surface-container pt-sm">
-        {emojiPickerOpen && (
-          <div className="absolute -top-12 left-0 z-20 flex items-center gap-xs rounded-full bg-surface-container-high p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
-            {emojiReactions.map((reac) => (
+        <ReactionsSection
+          entry={entry}
+          onReact={onReact}
+          showComments={showComments}
+          setShowComments={setShowComments}
+        />
+      </footer>
+
+      {showComments && <CommentsSection entryId={entry.id} />}
+    </article>
+  );
+}
+
+function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
+  const { t } = useLanguage();
+
+  const reactions = entry.reactions || [];
+  const myReactions = entry.my_reactions || (entry.my_reaction ? [entry.my_reaction] : []);
+  const totalCount = entry.like_count || 0;
+
+  return (
+    <>
+      {emojiPickerOpen && (
+        <div className="absolute -top-12 left-0 z-20 flex items-center gap-xs rounded-full bg-surface-container-high p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
+          {emojiReactions.map((reac) => {
+            const isMine = myReactions.includes(reac);
+            return (
               <button
                 key={reac}
                 type="button"
@@ -508,49 +490,126 @@ function FeedCard({ entry, busy, onReact }) {
                   onReact(entry.id, reac);
                   setEmojiPickerOpen(false);
                 }}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-xl transition-transform hover:scale-125 active:scale-95"
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:scale-125 active:scale-95 ${
+                  isMine ? "bg-primary-container/70 ring-1 ring-primary/30" : "hover:bg-surface-container-low"
+                }`}
               >
-                {reac}
+                <ReactionIcon reaction={reac} className="text-[20px]" />
               </button>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
+      )}
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-xs">
+      <div className="flex flex-wrap items-center justify-between gap-sm">
+        <div className="flex flex-wrap items-center gap-xs">
+          {reactions.length > 0 ? (
+            reactions.map((r) => (
+              <ReactionChip
+                key={r.reaction}
+                reactionItem={r}
+                onToggle={() => onReact(entry.id, r.reaction)}
+                onLongPress={() => setReactionsModalOpen(true)}
+              />
+            ))
+          ) : (
             <button
               type="button"
-              onClick={() => setEmojiPickerOpen((prev) => !prev)}
-              disabled={busy}
-              aria-label="Select reaction"
-              className={`flex items-center gap-xs rounded-full px-sm py-xs text-label-sm font-label-sm transition-colors disabled:opacity-70 ${
-                entry.liked_by_me
-                  ? "bg-primary-container text-on-primary-container"
-                  : "bg-surface-container-low text-on-surface-variant"
-              }`}
+              onClick={() => onReact(entry.id, "❤️")}
+              aria-label="Add reaction"
+              className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-all hover:bg-surface-container active:scale-95"
             >
-              <span className="text-[16px]">{entry.my_reaction || "❤️"}</span>
-              <span>{entry.like_count || 0}</span>
+              <ReactionIcon reaction="❤️" className="text-[18px]" />
+              <span>0</span>
             </button>
-          </div>
+          )}
 
           <button
             type="button"
-            onClick={() => setShowComments((prev) => !prev)}
-            className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container"
+            onClick={() => setEmojiPickerOpen((prev) => !prev)}
+            aria-label={t("reactions.title")}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container"
+            title={t("reactions.title")}
           >
-            <span className="material-symbols-outlined text-[19px]">
-              chat_bubble
-            </span>
-            <span>
-              {t("feed.commentsCount", { count: entry.comment_count || 0 })}
-            </span>
+            <span className="material-symbols-outlined text-[18px]">add_reaction</span>
           </button>
-        </div>
-      </footer>
 
-      {showComments && <CommentsSection entryId={entry.id} />}
-    </article>
+          {totalCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setReactionsModalOpen(true)}
+              className="flex items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors px-xs py-0.5 rounded-full hover:bg-surface-container-low"
+              title={t("reactions.longPressHint")}
+            >
+              <span className="material-symbols-outlined text-[16px]">group</span>
+            </button>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowComments((prev) => !prev)}
+          className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container shrink-0"
+        >
+          <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
+          <span>{t("feed.commentsCount", { count: entry.comment_count || 0 })}</span>
+        </button>
+      </div>
+
+      <ReactionsModal
+        entryId={entry.id}
+        isOpen={reactionsModalOpen}
+        onClose={() => setReactionsModalOpen(false)}
+      />
+    </>
+  );
+}
+
+function ReactionChip({ reactionItem, onToggle, onLongPress }) {
+  const timerRef = useRef(null);
+  const isLongPressRef = useRef(false);
+
+  const handleStart = () => {
+    isLongPressRef.current = false;
+    timerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      if (onLongPress) onLongPress();
+    }, 450);
+  };
+
+  const handleEnd = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (!isLongPressRef.current) {
+      onToggle();
+    }
+  };
+
+  const handleCancel = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
+  return (
+    <button
+      type="button"
+      onMouseDown={handleStart}
+      onMouseUp={handleEnd}
+      onMouseLeave={handleCancel}
+      onTouchStart={handleStart}
+      onTouchEnd={(e) => {
+        e.preventDefault();
+        handleEnd();
+      }}
+      onTouchMove={handleCancel}
+      title="Зажмите для просмотра реакций"
+      className={`flex items-center gap-xs rounded-full px-sm py-xs text-label-sm transition-all duration-200 active:scale-95 cursor-pointer ${
+        reactionItem.reacted_by_me
+          ? "bg-primary-container text-on-primary-container font-semibold ring-1 ring-primary/30 shadow-xs"
+          : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+      }`}
+    >
+      <ReactionIcon reaction={reactionItem.reaction} className="text-[18px]" />
+      <span>{reactionItem.count}</span>
+    </button>
   );
 }
 

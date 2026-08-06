@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSession } from './auth'
 import { deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, getStats, saveEntry, updateEntryVisibility } from './entries'
-import { likeEntry, getFeed, getComments, addComment, deleteComment } from './feed'
+import { likeEntry, getFeed, getEntryReactions, getComments, addComment, deleteComment } from './feed'
 import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser } from './friends'
 import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
 import { queryKeys } from './queryKeys'
@@ -44,6 +44,7 @@ export const useInfiniteFeedQuery = (limit = 10, includeSelf = false) =>
     staleTime: STALE_TIMES.DYNAMIC,
   })
 export const useCommentsQuery = (entryId, enabled = true) => useQuery({ queryKey: queryKeys.comments(entryId), queryFn: () => getComments(entryId), enabled: Boolean(entryId) && enabled, staleTime: STALE_TIMES.DYNAMIC, retry: false, meta: { ignore404: true } })
+export const useEntryReactionsQuery = (entryId, enabled = true) => useQuery({ queryKey: queryKeys.reactions(entryId), queryFn: () => getEntryReactions(entryId), enabled: Boolean(entryId) && enabled, staleTime: STALE_TIMES.DYNAMIC, retry: false, meta: { ignore404: true } })
 export const useProfileQuery = () => useQuery({ queryKey: queryKeys.profile, queryFn: getMyProfile, staleTime: STALE_TIMES.STANDARD })
 export const useFriendProfileQuery = (friendId, enabled = true) => useQuery({ queryKey: queryKeys.friendProfile(friendId), queryFn: () => getFriendProfile(friendId), enabled: Boolean(friendId) && enabled, staleTime: STALE_TIMES.STANDARD, retry: false })
 export const useUserSearchQuery = (query) => useQuery({ queryKey: ['users', 'search', query], queryFn: () => searchUsers(query), enabled: Boolean(query), staleTime: STALE_TIMES.DYNAMIC })
@@ -92,9 +93,105 @@ export function useLikeEntryMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ entryId, reaction }) => likeEntry(entryId, reaction),
-    onSuccess: () => {
+    onMutate: async ({ entryId, reaction }) => {
+      await queryClient.cancelQueries({ queryKey: ['feed'] })
+
+      const previousFeedQueries = queryClient.getQueriesData({ queryKey: ['feed'] })
+
+      queryClient.setQueriesData({ queryKey: ['feed'] }, (oldData) => {
+        if (!oldData) return oldData
+
+        const updateEntry = (entry) => {
+          if (entry.id !== entryId) return entry
+
+          const targetReac = reaction || '❤️'
+          const existingMyReactions = entry.my_reactions || (entry.my_reaction ? [entry.my_reaction] : [])
+          const hasTarget = existingMyReactions.includes(targetReac)
+
+          let newMyReactions = []
+          if (hasTarget) {
+            newMyReactions = existingMyReactions.filter((r) => r !== targetReac)
+          } else {
+            newMyReactions = [...existingMyReactions, targetReac]
+          }
+
+          const existingReactions = entry.reactions || []
+          let newReactions = existingReactions.map((r) => ({ ...r }))
+
+          const rIdx = newReactions.findIndex((r) => r.reaction === targetReac)
+          if (hasTarget) {
+            if (rIdx !== -1) {
+              newReactions[rIdx].count = Math.max(0, newReactions[rIdx].count - 1)
+              newReactions[rIdx].reacted_by_me = false
+              if (newReactions[rIdx].count === 0) {
+                newReactions.splice(rIdx, 1)
+              }
+            }
+          } else {
+            if (rIdx !== -1) {
+              newReactions[rIdx].count += 1
+              newReactions[rIdx].reacted_by_me = true
+            } else {
+              newReactions.push({
+                reaction: targetReac,
+                count: 1,
+                reacted_by_me: true,
+              })
+            }
+          }
+
+          newReactions.sort((a, b) => b.count - a.count)
+
+          const newLikeCount = newReactions.reduce((sum, item) => sum + item.count, 0)
+          const newLikedByMe = newMyReactions.length > 0
+          const newMyReaction = newMyReactions[0] || ''
+
+          return {
+            ...entry,
+            liked_by_me: newLikedByMe,
+            my_reaction: newMyReaction,
+            my_reactions: newMyReactions,
+            reactions: newReactions,
+            like_count: newLikeCount,
+          }
+        }
+
+        if (oldData.pages) {
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page) => {
+              const itemsKey = page.items ? 'items' : (page.entries ? 'entries' : null)
+              if (!itemsKey) return page
+              return {
+                ...page,
+                [itemsKey]: page[itemsKey].map(updateEntry),
+              }
+            }),
+          }
+        }
+
+        if (Array.isArray(oldData)) {
+          return oldData.map(updateEntry)
+        }
+
+        return oldData
+      })
+
+      return { previousFeedQueries }
+    },
+    onError: (err, newLike, context) => {
+      if (context?.previousFeedQueries) {
+        context.previousFeedQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+      }
+    },
+    onSettled: (_, __, { entryId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.feed })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
+      if (entryId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.reactions(entryId) })
+      }
     },
   })
 }

@@ -18,6 +18,9 @@ export const likeEntry = (entryId, reaction = '❤️') =>
     body: JSON.stringify({ reaction }),
   })
 
+export const getEntryReactions = (entryId) =>
+  api(`/feed/${encodeURIComponent(entryId)}/reactions`)
+
 export const getComments = (entryId) =>
   api(`/feed/${encodeURIComponent(entryId)}/comments`)
 

@@ -179,8 +179,16 @@ export const ru = {
     commentsCount: '{count} комментарий(ев)',
     addComment: 'Написать комментарий...',
     sendComment: 'Отправить',
-    includeMyPosts: 'Мои записи в ленте',
-    includeMyPostsDesc: 'Показывать свои посты вместе с постами друзей',
+    includeMyPosts: 'Показывать мои записи',
+    includeMyPostsDesc: 'Включать собственные записи в ленту',
+  },
+
+  // Reactions Modal
+  reactions: {
+    title: 'Реакции',
+    all: 'Все',
+    empty: 'Пока нет реакций',
+    longPressHint: 'Зажмите для просмотра участников',
   },
 
   // Friends & Profile Pages

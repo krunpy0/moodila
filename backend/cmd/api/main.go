@@ -155,6 +155,7 @@ func main() {
 	authorized.GET("/friends/pending", readLimiter, friends.Pending)
 	authorized.GET("/feed", readLimiter, feed.List)
 	authorized.POST("/feed/:entry_id/like", mutationLimiter, feed.Like)
+	authorized.GET("/feed/:entry_id/reactions", readLimiter, feed.GetReactions)
 	authorized.GET("/feed/:entry_id/comments", readLimiter, feed.GetComments)
 	authorized.POST("/feed/:entry_id/comments", mutationLimiter, feed.AddComment)
 	authorized.DELETE("/feed/comments/:comment_id", mutationLimiter, feed.DeleteComment)

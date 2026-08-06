@@ -7,6 +7,7 @@ export const queryKeys = {
   pendingFriends: ['friends', 'pending'],
   feed: (includeSelf = false) => ['feed', { includeSelf }],
   comments: (entryId) => ['feed', 'comments', entryId],
+  reactions: (entryId) => ['feed', 'reactions', entryId],
   session: ['auth', 'session'],
   profile: ['profile'],
   friendProfile: (id) => ['users', 'profile', id],

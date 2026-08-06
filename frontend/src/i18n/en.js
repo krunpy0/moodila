@@ -186,6 +186,14 @@ export const en = {
     includeMyPostsDesc: "Show your own entries in the feed",
   },
 
+  // Reactions Modal
+  reactions: {
+    title: "Reactions",
+    all: "All",
+    empty: "No reactions yet",
+    longPressHint: "Hold to view reactors",
+  },
+
   // Friends & Profile Pages
   friends: {
     title: "Manage Friends",
