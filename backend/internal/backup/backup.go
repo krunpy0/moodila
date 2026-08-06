@@ -11,10 +11,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -185,29 +187,14 @@ func dumpGoNative(ctx context.Context, dbURL string, w io.Writer) error {
 	}
 	defer pool.Close()
 
-	header := fmt.Sprintf("-- Moodila Database Dump\n-- Date: %s\n\nSET statement_timeout = 0;\nSET client_encoding = 'UTF8';\n\n", time.Now().Format(time.RFC3339))
+	header := fmt.Sprintf("-- Moodila Database Dump\n-- Date: %s\n\nSET statement_timeout = 0;\nSET client_encoding = 'UTF8';\nSET standard_conforming_strings = on;\nSET check_function_bodies = false;\nSET xmloption = content;\nSET client_min_messages = warning;\nSET row_security = off;\n\n-- Temporarily disable foreign key checks during import\nSET session_replication_role = 'replica';\n\n", time.Now().Format(time.RFC3339))
 	if _, err := io.WriteString(w, header); err != nil {
 		return err
 	}
 
-	// Fetch all table names in public schema
-	rows, err := pool.Query(ctx, `
-		SELECT table_name
-		FROM information_schema.tables
-		WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-		ORDER BY table_name;
-	`)
+	tables, err := getTablesInDependencyOrder(ctx, pool)
 	if err != nil {
-		return fmt.Errorf("query table names failed: %w", err)
-	}
-	defer rows.Close()
-
-	var tables []string
-	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err == nil {
-			tables = append(tables, name)
-		}
+		return fmt.Errorf("failed to determine table order: %w", err)
 	}
 
 	for _, table := range tables {
@@ -251,7 +238,138 @@ func dumpGoNative(ctx context.Context, dbURL string, w io.Writer) error {
 		qRows.Close()
 	}
 
+	footer := "\n-- Re-enable foreign key checks after import\nSET session_replication_role = 'origin';\n"
+	if _, err := io.WriteString(w, footer); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// getTablesInDependencyOrder fetches table names from public schema sorted in topological dependency order (parents before children).
+func getTablesInDependencyOrder(ctx context.Context, pool *pgxpool.Pool) ([]string, error) {
+	rows, err := pool.Query(ctx, `
+		SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("query table names failed: %w", err)
+	}
+	defer rows.Close()
+
+	var tables []string
+	tableSet := make(map[string]bool)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err == nil {
+			tables = append(tables, name)
+			tableSet[name] = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("scan table names failed: %w", err)
+	}
+
+	fkRows, err := pool.Query(ctx, `
+		SELECT
+			tc.table_name AS child_table,
+			ccu.table_name AS parent_table
+		FROM information_schema.table_constraints AS tc
+		JOIN information_schema.key_column_usage AS kcu
+		  ON tc.constraint_name = kcu.constraint_name
+		 AND tc.table_schema = kcu.table_schema
+		JOIN information_schema.constraint_column_usage AS ccu
+		  ON ccu.constraint_name = tc.constraint_name
+		 AND ccu.table_schema = tc.table_schema
+		WHERE tc.constraint_type = 'FOREIGN KEY'
+		  AND tc.table_schema = 'public';
+	`)
+
+	deps := make(map[string][]string)
+	if err == nil {
+		defer fkRows.Close()
+		for fkRows.Next() {
+			var child, parent string
+			if err := fkRows.Scan(&child, &parent); err == nil {
+				if child != parent && tableSet[child] && tableSet[parent] {
+					deps[child] = append(deps[child], parent)
+				}
+			}
+		}
+	}
+
+	return sortTablesTopologically(tables, deps), nil
+}
+
+// sortTablesTopologically sorts table names in dependency order (parents before children) deterministically.
+func sortTablesTopologically(tables []string, deps map[string][]string) []string {
+	cleanDeps := make(map[string]map[string]bool)
+	for child, parents := range deps {
+		if cleanDeps[child] == nil {
+			cleanDeps[child] = make(map[string]bool)
+		}
+		for _, p := range parents {
+			if p != child {
+				cleanDeps[child][p] = true
+			}
+		}
+	}
+
+	inDegree := make(map[string]int)
+	parentToChildren := make(map[string][]string)
+
+	for _, t := range tables {
+		parents := cleanDeps[t]
+		inDegree[t] = len(parents)
+		for p := range parents {
+			parentToChildren[p] = append(parentToChildren[p], t)
+		}
+	}
+
+	var available []string
+	for _, t := range tables {
+		if inDegree[t] == 0 {
+			available = append(available, t)
+		}
+	}
+
+	sort.Strings(available)
+
+	visited := make(map[string]bool)
+	var result []string
+
+	for len(available) > 0 {
+		curr := available[0]
+		available = available[1:]
+
+		if visited[curr] {
+			continue
+		}
+		visited[curr] = true
+		result = append(result, curr)
+
+		for _, child := range parentToChildren[curr] {
+			if !visited[child] {
+				inDegree[child]--
+				if inDegree[child] == 0 {
+					available = append(available, child)
+					sort.Strings(available)
+				}
+			}
+		}
+	}
+
+	var remaining []string
+	for _, t := range tables {
+		if !visited[t] {
+			remaining = append(remaining, t)
+		}
+	}
+	sort.Strings(remaining)
+	result = append(result, remaining...)
+
+	return result
 }
 
 func formatSQLValue(val interface{}) string {
