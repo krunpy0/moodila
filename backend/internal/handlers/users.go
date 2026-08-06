@@ -117,10 +117,16 @@ func (h Users) FriendProfile(c *gin.Context) {
 
 	requesterID := c.GetString("userID")
 
-	allowed, err := h.Entries.CanViewFriend(c.Request.Context(), requesterID, friendID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify friendship"})
-		return
+	var allowed bool
+	var err error
+	if requesterID == friendID {
+		allowed = true
+	} else {
+		allowed, err = h.Entries.CanViewFriend(c.Request.Context(), requesterID, friendID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify friendship"})
+			return
+		}
 	}
 	if !allowed {
 		c.JSON(http.StatusForbidden, gin.H{"error": "not friends"})

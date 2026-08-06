@@ -1,6 +1,6 @@
 import { useDeferredValue, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useSendFriendRequestMutation, useUnfriendMutation, useUserSearchQuery } from '../api/queries'
+import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useProfileQuery, useSendFriendRequestMutation, useUnfriendMutation, useUserSearchQuery } from '../api/queries'
 import AppLayout from '../components/AppLayout'
 import HeaderBell from '../components/HeaderBell'
 import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
@@ -158,11 +158,15 @@ function UserSection({ title, count, children }) {
 }
 
 function UserCard({ user, children }) {
+  const profileQuery = useProfileQuery()
+  const currentUserId = profileQuery.data?.user?.id
   const isFriend = !user.status || user.status === 'accepted'
+  const isSelf = currentUserId && user.id === currentUserId
+  const profileLink = isSelf ? '/profile' : `/profile/${user.id}`
   return (
     <div className="flex min-h-[112px] items-center justify-between gap-sm rounded-[24px] border border-surface-container bg-white p-lg cloud-shadow">
       {isFriend ? (
-        <Link to={`/profile/${user.id}`} className="flex min-w-0 flex-1 items-center gap-md rounded-xl transition-opacity hover:opacity-80">
+        <Link to={profileLink} className="flex min-w-0 flex-1 items-center gap-md rounded-xl transition-opacity hover:opacity-80">
           <Avatar user={user} />
           <div className="min-w-0">
             <p className="truncate text-body-md font-semibold text-on-surface">

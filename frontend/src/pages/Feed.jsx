@@ -317,8 +317,14 @@ const moodTintBg = {
 function FeedCard({ entry, onReact }) {
   const [showComments, setShowComments] = useState(false);
   const { t, dateLocale } = useLanguage();
+  const profileQuery = useProfileQuery();
+  const currentUserId = profileQuery.data?.user?.id;
   const moodInfo = getMoodInfo(entry.mood, t);
   const authorName = entry.author.display_name || entry.author.username;
+  const profileLink =
+    currentUserId && entry.author?.id === currentUserId
+      ? "/profile"
+      : `/profile/${entry.author.id}`;
 
   const hasText = !!entry.text;
   const hasPhoto = !!entry.photo_url;
@@ -333,7 +339,7 @@ function FeedCard({ entry, onReact }) {
       >
         <header className="flex items-center gap-sm">
           <Link
-            to={`/profile/${entry.author.id}`}
+            to={profileLink}
             className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80"
           >
             <Avatar author={entry.author} />
@@ -392,7 +398,7 @@ function FeedCard({ entry, onReact }) {
     <article className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
       <header className="flex items-center gap-sm">
         <Link
-          to={`/profile/${entry.author.id}`}
+          to={profileLink}
           className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80"
         >
           <Avatar author={entry.author} />

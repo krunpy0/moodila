@@ -1,5 +1,5 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useFriendProfileQuery } from "../api/queries";
+import { useParams, useNavigate, Link, Navigate } from "react-router-dom";
+import { useFriendProfileQuery, useProfileQuery } from "../api/queries";
 import AppLayout from "../components/AppLayout";
 import { ProfileSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
@@ -12,7 +12,15 @@ export default function FriendProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, formatDate } = useLanguage();
-  const profileQuery = useFriendProfileQuery(id);
+  const myProfileQuery = useProfileQuery();
+  const currentUserId = myProfileQuery.data?.user?.id;
+
+  const profileQuery = useFriendProfileQuery(id, id !== currentUserId);
+
+  if (currentUserId && id === currentUserId) {
+    return <Navigate to="/profile" replace />;
+  }
+
   const profile = profileQuery.data;
   const user = profile?.user;
   const entries = profile?.entries || [];
