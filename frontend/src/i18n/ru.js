@@ -200,9 +200,13 @@ export const ru = {
 
   // Friends & Profile Pages
   friends: {
-    title: 'Управление друзьями',
-    searchPlaceholder: 'Поиск по username...',
+    title: 'Друзья',
+    searchPlaceholder: 'Найти друга по @username...',
     myFriends: 'Мои друзья',
+    addFriend: 'Добавить',
+    addFriendBtn: 'Найти и добавить друзей',
+    noFriendsYet: 'У вас пока нет друзей',
+    noFriendsDesc: 'Найдите пользователей по @username, чтобы видеть их записи в ленте.',
     pendingRequests: 'Заявки в друзья',
     noFriends: 'Вы пока не добавили друзей.',
     noPending: 'Нет входящих заявок.',

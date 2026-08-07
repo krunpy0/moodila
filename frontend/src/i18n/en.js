@@ -203,9 +203,13 @@ export const en = {
 
   // Friends & Profile Pages
   friends: {
-    title: "Manage Friends",
-    searchPlaceholder: "Search by username...",
+    title: "Friends",
+    searchPlaceholder: "Search & add by @username...",
     myFriends: "My Friends",
+    addFriend: "Add friend",
+    addFriendBtn: "Find & add friends",
+    noFriendsYet: "No friends added yet",
+    noFriendsDesc: "Find users by @username to see their mood journals in your feed.",
     pendingRequests: "Pending Requests",
     noFriends: "No friends added yet.",
     noPending: "No pending friend requests.",

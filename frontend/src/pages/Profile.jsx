@@ -375,36 +375,72 @@ export default function Profile() {
 
               <section className="mb-8 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
                 <div className="mb-md flex items-center justify-between">
-                  <h2 className="text-label-lg text-on-surface-variant">
+                  <h2 className="text-label-lg font-semibold text-on-surface-variant">
                     {t("friends.myFriends")}
                   </h2>
-                  <Link to="/friends" className="text-label-lg text-primary">
-                    {t("common.manage")}
-                  </Link>
-                </div>
-                <div className="space-y-sm">
-                  {(profile.friends || []).slice(0, 5).map((friend) => (
+                  <div className="flex items-center gap-xs">
                     <Link
-                      key={friend.id}
-                      to={`/profile/${friend.id}`}
-                      className="flex items-center gap-sm rounded-xl p-xs transition-colors hover:bg-surface-container-low active:bg-surface-container"
+                      to="/friends"
+                      className="flex items-center gap-xs rounded-full bg-primary-container px-md py-1.5 text-label-sm font-semibold text-on-primary-container transition-transform active:scale-95 hover:bg-primary-container/80 shadow-xs"
                     >
-                      <Avatar user={friend} />
-                      <div>
-                        <p className="text-body-md font-semibold text-on-surface">
-                          {friend.display_name || friend.username}
-                        </p>
-                        <p className="text-label-sm text-on-surface-variant">
-                          @{friend.username}
-                        </p>
-                      </div>
+                      <span className="material-symbols-outlined text-[16px]">
+                        person_add
+                      </span>
+                      <span>{t("friends.addFriend")}</span>
                     </Link>
-                  ))}
+                    {(profile.friends || []).length > 0 && (
+                      <Link
+                        to="/friends"
+                        className="text-label-sm font-medium text-on-surface-variant hover:text-primary transition-colors px-xs"
+                      >
+                        {t("common.seeAll")}
+                      </Link>
+                    )}
+                  </div>
                 </div>
-                {profile.friends?.length === 0 && (
-                  <p className="text-body-sm text-on-surface-variant">
-                    {t("friends.noFriends")}
-                  </p>
+                {profile.friends && profile.friends.length > 0 ? (
+                  <div className="space-y-sm">
+                    {(profile.friends || []).slice(0, 5).map((friend) => (
+                      <Link
+                        key={friend.id}
+                        to={`/profile/${friend.id}`}
+                        className="flex items-center gap-sm rounded-xl p-xs transition-colors hover:bg-surface-container-low active:bg-surface-container"
+                      >
+                        <Avatar user={friend} />
+                        <div>
+                          <p className="text-body-md font-semibold text-on-surface">
+                            {friend.display_name || friend.username}
+                          </p>
+                          <p className="text-label-sm text-on-surface-variant">
+                            @{friend.username}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-2xl bg-surface-container-low p-md text-center border border-outline-variant/15 space-y-xs">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-on-primary-container">
+                      <span className="material-symbols-outlined text-[20px]">
+                        person_add
+                      </span>
+                    </div>
+                    <p className="text-body-sm font-semibold text-on-surface">
+                      {t("friends.noFriendsYet")}
+                    </p>
+                    <p className="text-label-sm text-on-surface-variant max-w-xs">
+                      {t("friends.noFriendsDesc")}
+                    </p>
+                    <Link
+                      to="/friends"
+                      className="mt-xs inline-flex items-center gap-xs rounded-full bg-primary px-md py-xs text-label-sm font-semibold text-on-primary shadow-xs hover:opacity-90 transition-all active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        person_add
+                      </span>
+                      <span>{t("friends.addFriendBtn")}</span>
+                    </Link>
+                  </div>
                 )}
               </section>
 
