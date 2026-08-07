@@ -11,6 +11,7 @@ import MoodIcon from '../components/MoodIcon'
 import { MOODS, TAG_CATEGORIES, getLocalizedTag, getMoodInfo } from '../utils/moods'
 import { useLanguage } from '../context/LanguageContext'
 import { AddEntrySkeleton } from '../components/skeleton/PageSkeletons'
+import { useModalKeyboard } from '../hooks/useModalKeyboard'
 
 export default function AddEntry() {
   const [params] = useSearchParams()
@@ -22,6 +23,9 @@ export default function AddEntry() {
   const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
   const [status, setStatus] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const deleteModalRef = useRef(null)
+
+  useModalKeyboard(() => setShowDeleteModal(false), showDeleteModal, deleteModalRef)
   const entryQuery = useEntryQuery(date, !futureDate)
   const saveMutation = useSaveEntryMutation()
   const visibilityMutation = useUpdateEntryVisibilityMutation()
@@ -475,8 +479,17 @@ export default function AddEntry() {
         )}
 
         {showDeleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs">
-            <div className="w-full max-w-sm rounded-[24px] bg-white p-lg cloud-shadow space-y-md text-center">
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setShowDeleteModal(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs animate-in fade-in duration-200"
+          >
+            <div
+              ref={deleteModalRef}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-sm rounded-[24px] bg-white p-lg cloud-shadow space-y-md text-center"
+            >
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error-container/40 text-error">
                 <span className="material-symbols-outlined text-[28px]">delete</span>
               </div>

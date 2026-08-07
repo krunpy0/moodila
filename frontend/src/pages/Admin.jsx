@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import AppLayout from '../components/AppLayout'
 import {
   useAdminAnnouncementsQuery,
   useArchiveAnnouncementMutation,
@@ -9,6 +10,7 @@ import {
   useUpdateAnnouncementMutation,
 } from '../api/queries'
 import { AdminSkeleton } from '../components/skeleton/PageSkeletons'
+import { useModalKeyboard } from '../hooks/useModalKeyboard'
 
 const severityOptions = [
   { value: 'info', label: 'Info' },
@@ -35,6 +37,9 @@ export default function Admin() {
   const [editBody, setEditBody] = useState('')
   const [editSeverity, setEditSeverity] = useState('info')
   const [formError, setFormError] = useState('')
+  const editModalRef = useRef(null)
+
+  useModalKeyboard(() => setEditingItem(null), Boolean(editingItem), editModalRef)
 
   if (isProfileLoading) {
     return (
@@ -275,8 +280,17 @@ export default function Admin() {
       </section>
 
       {editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-container-margin backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md">
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setEditingItem(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div
+            ref={editModalRef}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md"
+          >
             <div className="flex items-center justify-between">
               <h3 className="text-headline-lg font-headline-lg text-on-surface font-bold">
                 Edit Announcement

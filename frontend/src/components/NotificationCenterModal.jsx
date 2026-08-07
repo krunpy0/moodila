@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNotificationsQuery, useMarkNotificationsAsReadMutation } from '../api/queries'
 import { useLanguage } from '../context/LanguageContext'
 import { getPushSubscriptionState, subscribeToPushNotifications, unsubscribeFromPushNotifications } from '../api/push'
 import { NotificationSkeleton } from './skeleton/PageSkeletons'
+import { useModalKeyboard } from '../hooks/useModalKeyboard'
 
 function formatRelativeTime(dateString, t) {
   if (!dateString) return ''
@@ -27,6 +28,9 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   const markReadMutation = useMarkNotificationsAsReadMutation()
   const { t } = useLanguage()
   const [pushState, setPushState] = useState({ supported: true, subscribed: false, permission: 'default', loading: false, error: '' })
+  const modalRef = useRef(null)
+
+  useModalKeyboard(onClose, isOpen, modalRef)
 
   useEffect(() => {
     if (!isOpen) return
@@ -129,7 +133,14 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
       className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 pt-12 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
       onClick={onClose}
     >
-      <div className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-3xl bg-surface-container-lowest shadow-2xl overflow-hidden mx-container-margin">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('notifications.title')}
+        onClick={(e) => e.stopPropagation()}
+        className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-3xl bg-surface-container-lowest shadow-2xl overflow-hidden mx-container-margin"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 px-lg py-md">
           <div className="flex items-center gap-sm">

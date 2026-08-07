@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import Cropper from "react-easy-crop";
 import { getCroppedImg } from "../utils/cropImage";
 import { useLanguage } from "../context/LanguageContext";
+import { useModalKeyboard } from "../hooks/useModalKeyboard";
 
 export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) {
   const { t } = useLanguage();
@@ -9,6 +10,9 @@ export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) 
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isApplying, setIsApplying] = useState(false);
+  const modalRef = useRef(null);
+
+  useModalKeyboard(onCancel, Boolean(imageSrc), modalRef);
 
   const handleCropComplete = useCallback((_croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -33,9 +37,14 @@ export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) 
     <div
       role="dialog"
       aria-modal="true"
+      onClick={onCancel}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="flex w-full max-w-md flex-col overflow-hidden rounded-[28px] bg-surface-container-lowest cloud-shadow">
+      <div
+        ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
+        className="flex w-full max-w-md flex-col overflow-hidden rounded-[28px] bg-surface-container-lowest cloud-shadow"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-surface-container-low px-lg py-md">
           <h3 className="text-headline-sm font-headline-sm text-on-surface">

@@ -1,27 +1,12 @@
-import { useEffect } from 'react'
+import { useRef } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { useModalKeyboard } from '../hooks/useModalKeyboard'
 
 export default function ImageModal({ src, alt = '', isOpen, onClose }) {
   const { t } = useLanguage()
+  const modalRef = useRef(null)
 
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        onClose?.()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = originalOverflow
-    }
-  }, [isOpen, onClose])
+  useModalKeyboard(onClose, isOpen, modalRef)
 
   if (!isOpen || !src) return null
 
@@ -62,6 +47,7 @@ export default function ImageModal({ src, alt = '', isOpen, onClose }) {
 
       {/* Main Image View */}
       <div
+        ref={modalRef}
         className="relative max-h-[90vh] max-w-[94vw] flex items-center justify-center overflow-hidden rounded-2xl animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >

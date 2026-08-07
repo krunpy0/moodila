@@ -1,13 +1,17 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useEntryReactionsQuery } from '../api/queries'
 import { useLanguage } from '../context/LanguageContext'
 import ReactionIcon from './ReactionIcon'
+import { useModalKeyboard } from '../hooks/useModalKeyboard'
 
 export default function ReactionsModal({ entryId, isOpen, onClose }) {
   const { data: reactors = [], isLoading, isError } = useEntryReactionsQuery(entryId, isOpen)
   const { t } = useLanguage()
   const [selectedEmoji, setSelectedEmoji] = useState('ALL')
+  const modalRef = useRef(null)
+
+  useModalKeyboard(onClose, isOpen, modalRef)
 
   if (!isOpen) return null
 
@@ -30,6 +34,10 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
       onClick={onClose}
     >
       <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('reactions.title')}
         className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-[24px] bg-surface-container-lowest cloud-shadow border border-outline-variant/15 overflow-hidden transition-all animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >

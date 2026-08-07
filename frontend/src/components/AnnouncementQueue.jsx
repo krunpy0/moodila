@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useMarkAnnouncementReadMutation, useUnreadAnnouncementsQuery } from '../api/queries'
+import { useModalKeyboard } from '../hooks/useModalKeyboard'
 
 const severityConfig = {
   critical: {
@@ -23,6 +24,7 @@ export default function AnnouncementQueue() {
   const { data: unreadList } = useUnreadAnnouncementsQuery()
   const markReadMutation = useMarkAnnouncementReadMutation()
   const [queue, setQueue] = useState([])
+  const modalRef = useRef(null)
 
   useEffect(() => {
     if (unreadList && Array.isArray(unreadList)) {
@@ -30,16 +32,20 @@ export default function AnnouncementQueue() {
     }
   }, [unreadList])
 
-  if (!queue || queue.length === 0) {
-    return null
-  }
-
   const current = queue[0]
-  const config = severityConfig[current.severity] || severityConfig.info
+  const config = severityConfig[current?.severity] || severityConfig.info
 
   const handleDismiss = () => {
-    markReadMutation.mutate(current.id)
-    setQueue((prev) => prev.slice(1))
+    if (current) {
+      markReadMutation.mutate(current.id)
+      setQueue((prev) => prev.slice(1))
+    }
+  }
+
+  useModalKeyboard(handleDismiss, Boolean(queue && queue.length > 0), modalRef)
+
+  if (!queue || queue.length === 0) {
+    return null
   }
 
   return (
@@ -47,9 +53,14 @@ export default function AnnouncementQueue() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="announcement-title"
+      onClick={handleDismiss}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-sm rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow text-center flex flex-col items-center gap-md border border-outline-variant/20">
+      <div
+        ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow text-center flex flex-col items-center gap-md border border-outline-variant/20"
+      >
         <div className={`flex h-16 w-16 items-center justify-center rounded-full ${config.bgClass}`}>
           <span className={`material-symbols-outlined text-[36px] ${config.colorClass}`}>
             {config.icon}

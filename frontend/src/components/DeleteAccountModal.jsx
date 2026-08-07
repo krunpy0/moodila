@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { requestAccountDeletion } from "../api/auth";
 import { useLanguage } from "../context/LanguageContext";
+import { useModalKeyboard } from "../hooks/useModalKeyboard";
 
 export default function DeleteAccountModal({ isOpen, onClose }) {
   const { t } = useLanguage();
@@ -9,8 +10,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isPending, setIsPending] = useState(false);
-
-  if (!isOpen) return null;
+  const modalRef = useRef(null);
 
   const handleClose = () => {
     setPassword("");
@@ -19,6 +19,10 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
     setIsPending(false);
     onClose();
   };
+
+  useModalKeyboard(handleClose, isOpen, modalRef);
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -44,11 +48,16 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-container-margin backdrop-blur-sm animate-fade-in"
+      onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="delete-modal-title"
     >
-      <div className="w-full max-w-md rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md">
+      <div
+        ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md"
+      >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-sm">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-error-container text-error">
