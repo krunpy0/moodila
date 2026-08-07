@@ -32,7 +32,7 @@ export default function HeaderBell() {
         aria-label={t('notifications.title')}
         title={t('notifications.title')}
         onClick={() => setIsOpen(true)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow transition-transform active:scale-95"
+        className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow transition-transform active:scale-95"
       >
         <span className="material-symbols-outlined text-[20px]">notifications</span>
         {unreadCount > 0 && (

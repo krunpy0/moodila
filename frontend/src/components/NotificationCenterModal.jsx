@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useNotificationsQuery, useMarkNotificationsAsReadMutation } from '../api/queries'
 import { useLanguage } from '../context/LanguageContext'
 import { getPushSubscriptionState, subscribeToPushNotifications, unsubscribeFromPushNotifications } from '../api/push'
+import { NotificationSkeleton } from './skeleton/PageSkeletons'
 
 function formatRelativeTime(dateString, t) {
   if (!dateString) return ''
@@ -153,7 +154,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
               type="button"
               aria-label={t('common.close')}
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
@@ -195,9 +196,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
         {/* Content list */}
         <div className="flex-1 overflow-y-auto p-md space-y-sm">
           {isLoading ? (
-            <div className="flex items-center justify-center py-xl text-on-surface-variant text-body-medium">
-              {t('common.loading')}
-            </div>
+            <NotificationSkeleton />
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-xl text-center">
               <span className="material-symbols-outlined text-[48px] text-outline-variant mb-sm">

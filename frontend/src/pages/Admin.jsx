@@ -8,6 +8,7 @@ import {
   usePublishAnnouncementMutation,
   useUpdateAnnouncementMutation,
 } from '../api/queries'
+import { AdminSkeleton } from '../components/skeleton/PageSkeletons'
 
 const severityOptions = [
   { value: 'info', label: 'Info' },
@@ -37,9 +38,11 @@ export default function Admin() {
 
   if (isProfileLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-on-surface-variant">
-        Loading...
-      </div>
+      <AppLayout>
+        <main className="mx-auto min-h-screen w-full max-w-2xl lg:max-w-6xl xl:max-w-7xl bg-background px-container-margin lg:px-6 py-lg pb-32 lg:pb-12">
+          <AdminSkeleton />
+        </main>
+      </AppLayout>
     )
   }
 
@@ -193,9 +196,7 @@ export default function Admin() {
       <section className="space-y-md">
         <h2 className="text-headline-lg font-headline-lg text-on-surface">All Announcements</h2>
 
-        {isLoading && (
-          <p className="text-body-sm font-body-sm text-on-surface-variant">Loading announcements...</p>
-        )}
+        {isLoading && <AdminSkeleton />}
         {isError && (
           <p className="text-body-sm font-body-sm text-error">{error?.message || 'Failed to load'}</p>
         )}

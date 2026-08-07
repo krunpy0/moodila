@@ -98,6 +98,9 @@ export const ru = {
     noNote: 'Без заметки.',
     emptyRecent: 'Здесь будут ваши последние записи.',
     viewDetailedStats: 'Смотреть подробную аналитику',
+    welcomeTitle: 'Добро пожаловать в Moodila!',
+    welcomeDesc: 'Сделайте первую запись своего настроения или найдите друзей.',
+    firstEntryBtn: 'Сделать первую запись',
   },
 
   // Stats / Analytics Page
@@ -172,6 +175,8 @@ export const ru = {
   // Feed Page
   feed: {
     title: 'Лента друзей',
+    welcomeTitle: 'Добро пожаловать в Moodila!',
+    welcomeDesc: 'Сделайте первую запись или найдите друзей, чтобы делиться своими моментами.',
     emptyTitle: 'Пока нет обновлений',
     emptySubtitle: 'Добавьте друзей, чтобы видеть их записи настроения в ленте.',
     addFriendsBtn: 'Найти друзей',
@@ -276,6 +281,7 @@ export const ru = {
     createAccount: 'Регистрация',
     email: 'Электронная почта',
     username: 'Имя пользователя',
+    usernameHint: 'Только строчные латинские буквы, цифры и символ подчеркивания',
     password: 'Пароль',
     loginBtn: 'Войти',
     registerBtn: 'Зарегистрироваться',

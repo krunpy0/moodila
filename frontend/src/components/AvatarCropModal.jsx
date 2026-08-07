@@ -45,7 +45,7 @@ export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) 
             type="button"
             onClick={onCancel}
             disabled={isApplying}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
             aria-label={t("common.close")}
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -95,7 +95,7 @@ export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) 
               type="button"
               onClick={onCancel}
               disabled={isApplying}
-              className="flex-1 rounded-full bg-surface-container-highest py-sm text-label-lg font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:opacity-50"
+              className="flex-1 rounded-full bg-surface-container-highest py-sm text-label-lg font-semibold text-on-surface-variant transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50"
             >
               {t("common.cancel")}
             </button>
@@ -103,7 +103,7 @@ export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) 
               type="button"
               onClick={handleApply}
               disabled={isApplying || !croppedAreaPixels}
-              className="flex-1 rounded-full bg-primary py-sm text-label-lg font-semibold text-on-primary shadow-sm transition-opacity hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+              className="flex-1 rounded-full bg-primary py-sm text-label-lg font-semibold text-on-primary shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.98] disabled:opacity-50"
             >
               {isApplying
                 ? t("common.loading") || "Загрузка..."

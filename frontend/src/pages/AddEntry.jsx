@@ -10,6 +10,7 @@ import ImageWithSkeleton from '../components/ImageWithSkeleton'
 import MoodIcon from '../components/MoodIcon'
 import { MOODS, TAG_CATEGORIES, getLocalizedTag, getMoodInfo } from '../utils/moods'
 import { useLanguage } from '../context/LanguageContext'
+import { AddEntrySkeleton } from '../components/skeleton/PageSkeletons'
 
 export default function AddEntry() {
   const [params] = useSearchParams()
@@ -229,17 +230,20 @@ export default function AddEntry() {
           <Link
             to="/home"
             aria-label={t('common.back')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </Link>
           <h1 className="text-headline-lg font-headline-lg">
             {entryQuery.data ? t('addEntry.editTitle') : t('addEntry.title')}
           </h1>
-          <div className="w-10" />
+          <div className="w-11" />
         </header>
 
-        <form onSubmit={submit} className="space-y-lg px-container-margin lg:px-0 mt-4">
+        {entryQuery.isLoading ? (
+          <AddEntrySkeleton />
+        ) : (
+          <form onSubmit={submit} className="space-y-lg px-container-margin lg:px-0 mt-4">
         <section className="rounded-[24px] bg-white p-lg cloud-shadow">
           <h2 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
             {t('addEntry.title')}
@@ -308,6 +312,11 @@ export default function AddEntry() {
             placeholder={t('addEntry.notePlaceholder')}
             className="min-h-[210px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
           />
+          <div className="mt-1 flex justify-end">
+            <span className="text-label-sm text-on-surface-variant/60">
+              {form.text?.length || 0} / 5000
+            </span>
+          </div>
           {(form.photo_url || isUploadingPhoto) && (
             <div className="mb-md">
               <ImageWithSkeleton
@@ -326,7 +335,7 @@ export default function AddEntry() {
                       removePhoto()
                     }}
                     aria-label={t('addEntry.removePhoto')}
-                    className="absolute right-sm top-sm z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm hover:bg-background"
+                    className="absolute right-sm top-sm z-10 flex h-11 w-11 items-center justify-center rounded-full bg-background/90 text-on-surface shadow-sm hover:bg-background"
                   >
                     <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>
@@ -366,7 +375,7 @@ export default function AddEntry() {
           ) : null}
 
           <div className="mt-lg flex items-center gap-md border-t border-surface-container pt-md">
-            <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">
+            <label className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">
               <span className="material-symbols-outlined text-[20px]">image</span>
               <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={selectPhoto} className="sr-only" />
               <span className="sr-only">{t('addEntry.addPhoto')}</span>
@@ -378,7 +387,7 @@ export default function AddEntry() {
               onClick={isRecording ? stopRecording : startRecording}
               title={isRecording ? t('addEntry.stopRecording') : t('addEntry.recordVoice')}
               aria-label={isRecording ? t('addEntry.stopRecording') : t('addEntry.recordVoice')}
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+              className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
                 isRecording
                   ? 'bg-error text-on-error animate-pulse'
                   : (audioBlob || form.audio_url)
@@ -464,46 +473,47 @@ export default function AddEntry() {
             <span>{t('common.delete')}</span>
           </button>
         )}
-      </form>
 
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-[24px] bg-white p-lg cloud-shadow space-y-md text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error-container/40 text-error">
-              <span className="material-symbols-outlined text-[28px]">delete</span>
-            </div>
-            <h2 className="text-headline-lg font-headline-lg text-on-surface">{t('common.delete')}?</h2>
-            <div className="flex gap-sm pt-xs">
-              <button
-                type="button"
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 rounded-full bg-surface-container-high py-3 text-label-lg font-label-lg text-on-surface"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="button"
-                disabled={deleteMutation.isPending}
-                onClick={() => {
-                  const targetId = entryQuery.data?.id || date
-                  deleteMutation.mutate(targetId, {
-                    onSuccess: () => {
-                      notify(t('common.success'))
-                      navigate('/calendar', { replace: true })
-                    },
-                    onError: (err) => {
-                      notify(err.message, 'error')
-                      setShowDeleteModal(false)
-                    },
-                  })
-                }}
-                className="flex-1 rounded-full bg-error py-3 text-label-lg font-label-lg text-on-error disabled:opacity-60"
-              >
-                {deleteMutation.isPending ? t('common.loading') : t('common.delete')}
-              </button>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs">
+            <div className="w-full max-w-sm rounded-[24px] bg-white p-lg cloud-shadow space-y-md text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error-container/40 text-error">
+                <span className="material-symbols-outlined text-[28px]">delete</span>
+              </div>
+              <h2 className="text-headline-lg font-headline-lg text-on-surface">{t('common.delete')}?</h2>
+              <div className="flex gap-sm pt-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 rounded-full bg-surface-container-high py-3 text-label-lg font-label-lg text-on-surface"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="button"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => {
+                    const targetId = entryQuery.data?.id || date
+                    deleteMutation.mutate(targetId, {
+                      onSuccess: () => {
+                        notify(t('common.success'))
+                        navigate('/calendar', { replace: true })
+                      },
+                      onError: (err) => {
+                        notify(err.message, 'error')
+                        setShowDeleteModal(false)
+                      },
+                    })
+                  }}
+                  className="flex-1 rounded-full bg-error py-3 text-label-lg font-label-lg text-on-error disabled:opacity-60"
+                >
+                  {deleteMutation.isPending ? t('common.loading') : t('common.delete')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+        </form>
       )}
 
       </main>

@@ -99,6 +99,9 @@ export const en = {
     noNote: "No note for this day.",
     emptyRecent: "Your recent entries will appear here.",
     viewDetailedStats: "View detailed analytics",
+    welcomeTitle: "Welcome to Moodila!",
+    welcomeDesc: "Make your first mood entry or find friends to get started.",
+    firstEntryBtn: "Create first entry",
   },
 
   // Stats / Analytics Page
@@ -174,6 +177,8 @@ export const en = {
   // Feed Page
   feed: {
     title: "Friend Feed",
+    welcomeTitle: "Welcome to Moodila!",
+    welcomeDesc: "Create your first entry or find friends to share your day.",
     emptyTitle: "No updates yet",
     emptySubtitle:
       "Add friends to see their daily mood journals and updates here.",
@@ -280,6 +285,7 @@ export const en = {
     createAccount: "Create account",
     email: "Email address",
     username: "Username",
+    usernameHint: "Only lowercase Latin letters, numbers, and underscores",
     password: "Password",
     loginBtn: "Sign In",
     registerBtn: "Sign Up",

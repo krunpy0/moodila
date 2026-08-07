@@ -72,7 +72,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
             type="button"
             onClick={handleClose}
             aria-label={t('common.close')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>

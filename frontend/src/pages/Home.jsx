@@ -157,6 +157,38 @@ export default function Home() {
             <div className="space-y-lg lg:grid lg:grid-cols-12 lg:gap-8 lg:space-y-0 lg:items-stretch">
               {/* Left Column: Hero Greeting, Week Mood, Recent Logs */}
               <div className="lg:col-span-7 space-y-lg flex flex-col justify-between">
+                {summary.entry_count === 0 && (
+                  <section className="rounded-[24px] lg:rounded-[32px] bg-white p-lg lg:p-8 cloud-shadow border border-primary/20 space-y-sm animate-in fade-in">
+                    <div className="flex items-center gap-sm">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
+                        <span className="material-symbols-outlined text-[24px]">waving_hand</span>
+                      </span>
+                      <div>
+                        <h3 className="text-headline-sm font-bold text-on-surface">
+                          {t("home.welcomeTitle")}
+                        </h3>
+                        <p className="text-body-sm text-on-surface-variant">
+                          {t("home.welcomeDesc")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-xs pt-xs">
+                      <Link
+                        to="/entries/new"
+                        className="rounded-full bg-primary px-md py-xs text-label-sm font-semibold text-on-primary shadow-xs hover:opacity-90 transition-all"
+                      >
+                        {t("home.firstEntryBtn")}
+                      </Link>
+                      <Link
+                        to="/friends"
+                        className="rounded-full bg-surface-container-high px-md py-xs text-label-sm font-semibold text-on-surface-variant hover:bg-surface-container-highest transition-all"
+                      >
+                        {t("feed.addFriendsBtn")}
+                      </Link>
+                    </div>
+                  </section>
+                )}
+
                 <section className="relative overflow-hidden rounded-[24px] lg:rounded-[32px] bg-primary-container p-lg lg:p-8 xl:p-10 cloud-shadow">
                   <div className="relative z-10 flex max-w-full flex-col items-start gap-md lg:gap-lg">
                     <h2 className="text-headline-lg font-headline-lg lg:text-3xl xl:text-4xl lg:leading-tight font-bold text-on-primary-container">

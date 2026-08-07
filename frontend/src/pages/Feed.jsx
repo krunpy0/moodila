@@ -12,6 +12,7 @@ import {
 import AppLayout from "../components/AppLayout";
 import BottomNav from "../components/BottomNav";
 import HeaderBell from "../components/HeaderBell";
+import { useNotifications } from "../components/Notifications";
 import { FeedSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
@@ -38,6 +39,7 @@ export default function Feed() {
   const likeMutation = useLikeEntryMutation();
   const observerRef = useRef(null);
   const { t, language } = useLanguage();
+  const { notify } = useNotifications();
 
   const friends = friendsQuery.data || [];
 
@@ -97,7 +99,12 @@ export default function Feed() {
   }, [hasNextPage]);
 
   const handleReact = (entryId, reaction) => {
-    likeMutation.mutate({ entryId, reaction });
+    likeMutation.mutate(
+      { entryId, reaction },
+      {
+        onError: (err) => notify(err.message, "error"),
+      },
+    );
   };
 
   return (
@@ -192,22 +199,30 @@ export default function Feed() {
                   {!feedQuery.isLoading &&
                     !feedQuery.isError &&
                     entries.length === 0 && (
-                      <div className="rounded-[24px] bg-surface-container-low p-lg text-center border border-outline-variant/15">
-                        <span className="material-symbols-outlined text-[32px] text-primary">
-                          diversity_1
+                      <div className="rounded-[24px] bg-surface-container-low p-lg text-center border border-outline-variant/15 space-y-sm">
+                        <span className="material-symbols-outlined text-[36px] text-primary">
+                          waving_hand
                         </span>
-                        <h2 className="mt-sm text-body-md font-semibold text-on-surface">
-                          {t("feed.emptyTitle")}
+                        <h2 className="text-headline-sm font-bold text-on-surface">
+                          {t("feed.welcomeTitle")}
                         </h2>
-                        <p className="mt-xs text-body-sm text-on-surface-variant">
-                          {t("feed.emptySubtitle")}
+                        <p className="text-body-sm text-on-surface-variant max-w-sm mx-auto">
+                          {t("feed.welcomeDesc")}
                         </p>
-                        <Link
-                          to="/friends"
-                          className="mt-md inline-block rounded-full bg-primary px-lg py-sm text-label-lg font-semibold text-on-primary"
-                        >
-                          {t("feed.addFriendsBtn")}
-                        </Link>
+                        <div className="flex flex-wrap justify-center gap-xs pt-xs">
+                          <Link
+                            to="/entries/new"
+                            className="rounded-full bg-primary px-lg py-sm text-label-lg font-semibold text-on-primary shadow-xs hover:opacity-90 transition-all"
+                          >
+                            {t("home.firstEntryBtn")}
+                          </Link>
+                          <Link
+                            to="/friends"
+                            className="rounded-full bg-surface-container-high px-lg py-sm text-label-lg font-semibold text-on-surface-variant hover:bg-surface-container-highest transition-all"
+                          >
+                            {t("feed.addFriendsBtn")}
+                          </Link>
+                        </div>
                       </div>
                     )}
                 </>
@@ -218,14 +233,6 @@ export default function Feed() {
                   className="py-lg text-center text-body-sm text-error"
                 >
                   {feedQuery.error.message}
-                </p>
-              )}
-              {likeMutation.isError && (
-                <p
-                  role="alert"
-                  className="py-lg text-center text-body-sm text-error"
-                >
-                  {likeMutation.error.message}
                 </p>
               )}
             </section>
@@ -637,6 +644,7 @@ function CommentsSection({ entryId }) {
   const deleteMutation = useDeleteCommentMutation();
   const profileQuery = useProfileQuery();
   const { t, dateLocale } = useLanguage();
+  const { notify } = useNotifications();
   const currentUserId = profileQuery.data?.user?.id;
   const comments = commentsQuery.data || [];
 
@@ -648,13 +656,19 @@ function CommentsSection({ entryId }) {
       { entryId, text: trimmed },
       {
         onSuccess: () => setCommentText(""),
+        onError: (err) => notify(err.message, "error"),
       },
     );
   };
 
   const handleDelete = (commentId) => {
     if (!deleteMutation.isPending) {
-      deleteMutation.mutate({ commentId, entryId });
+      deleteMutation.mutate(
+        { commentId, entryId },
+        {
+          onError: (err) => notify(err.message, "error"),
+        },
+      );
     }
   };
 

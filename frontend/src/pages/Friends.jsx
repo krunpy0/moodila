@@ -1,16 +1,20 @@
-import { useDeferredValue, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useDeclineFriendRequestMutation, useFriendsQuery, usePendingFriendsQuery, useProfileQuery, useSendFriendRequestMutation, useUnfriendMutation, useUserSearchQuery } from '../api/queries'
 import AppLayout from '../components/AppLayout'
 import HeaderBell from '../components/HeaderBell'
+import { useNotifications } from '../components/Notifications'
 import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
 import { useLanguage } from '../context/LanguageContext'
+import { useDebounce } from '../hooks/useDebounce'
 
 export default function Friends() {
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
   const { t, language } = useLanguage()
-  const searchTerm = useDeferredValue(query.trim().toLowerCase())
+  const { notify } = useNotifications()
+  const debouncedQuery = useDebounce(query, 300)
+  const searchTerm = debouncedQuery.trim().toLowerCase()
   const friendsQuery = useFriendsQuery()
   const pendingQuery = usePendingFriendsQuery()
   const searchQuery = useUserSearchQuery(searchTerm)
@@ -23,7 +27,37 @@ export default function Friends() {
   const pending = pendingQuery.data || []
   const results = searchQuery.data || []
   const isLoading = friendsQuery.isLoading || pendingQuery.isLoading
-  const error = friendsQuery.error || pendingQuery.error || searchQuery.error || sendRequest.error || acceptRequest.error || declineRequest.error || unfriend.error || cancelRequest.error
+  const error = friendsQuery.error || pendingQuery.error || searchQuery.error
+
+  const handleSend = (userId) => {
+    sendRequest.mutate(userId, {
+      onError: (err) => notify(err.message, 'error'),
+    })
+  }
+
+  const handleCancel = (userId) => {
+    cancelRequest.mutate(userId, {
+      onError: (err) => notify(err.message, 'error'),
+    })
+  }
+
+  const handleUnfriend = (userId) => {
+    unfriend.mutate(userId, {
+      onError: (err) => notify(err.message, 'error'),
+    })
+  }
+
+  const handleDecline = (friendshipId) => {
+    declineRequest.mutate(friendshipId, {
+      onError: (err) => notify(err.message, 'error'),
+    })
+  }
+
+  const handleAccept = (friendshipId) => {
+    acceptRequest.mutate(friendshipId, {
+      onError: (err) => notify(err.message, 'error'),
+    })
+  }
 
   return (
     <AppLayout>
@@ -72,9 +106,9 @@ export default function Friends() {
                     <SearchAction
                       user={user}
                       busy={sendRequest.isPending && sendRequest.variables === user.id}
-                      onSend={() => sendRequest.mutate(user.id)}
-                      onCancel={() => cancelRequest.mutate(user.id)}
-                      onUnfriend={() => unfriend.mutate(user.id)}
+                      onSend={() => handleSend(user.id)}
+                      onCancel={() => handleCancel(user.id)}
+                      onUnfriend={() => handleUnfriend(user.id)}
                       unfriendBusy={unfriend.isPending}
                       cancelBusy={cancelRequest.isPending}
                     />
@@ -93,14 +127,14 @@ export default function Friends() {
                         label={t('friends.decline')}
                         icon="close"
                         disabled={declineRequest.isPending}
-                        onClick={() => declineRequest.mutate(user.friendship_id)}
+                        onClick={() => handleDecline(user.friendship_id)}
                       />
                       <CircleButton
                         primary
                         label={t('friends.accept')}
                         icon="check"
                         disabled={acceptRequest.isPending}
-                        onClick={() => acceptRequest.mutate(user.friendship_id)}
+                        onClick={() => handleAccept(user.friendship_id)}
                       />
                     </div>
                   </UserCard>
@@ -120,7 +154,7 @@ export default function Friends() {
                       label={t('friends.removeFriend')}
                       icon="person_remove"
                       disabled={unfriend.isPending}
-                      onClick={() => unfriend.mutate(user.id)}
+                      onClick={() => handleUnfriend(user.id)}
                     />
                   </UserCard>
                 ))}
@@ -262,7 +296,7 @@ function CircleButton({ label, icon, primary = false, ...props }) {
       type="button"
       aria-label={label}
       title={label}
-      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-opacity disabled:opacity-60 ${
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-opacity disabled:opacity-60 ${
         primary
           ? 'bg-primary text-on-primary'
           : 'bg-surface-container-highest text-on-surface-variant'

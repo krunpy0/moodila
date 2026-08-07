@@ -106,18 +106,18 @@ export default function Auth() {
 
           <div>
             {infoMessage && (
-              <div className="mb-md p-sm rounded-lg bg-primary-container/40 text-on-primary-container text-body-sm font-body-sm text-center">
+              <div className="mb-md p-sm rounded-2xl bg-primary-container/40 text-on-primary-container text-body-sm font-body-sm text-center">
                 {infoMessage}
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-xs p-1 mb-lg bg-surface-container-low rounded-lg">
+            <div className="grid grid-cols-2 gap-xs p-1 mb-lg bg-surface-container-low rounded-full">
               {["login", "register"].map((item) => (
                 <button
                   key={item}
                   type="button"
                   onClick={() => switchMode(item)}
-                  className={`h-11 rounded-md text-label-lg font-label-lg transition-colors ${
+                  className={`h-11 rounded-full text-label-lg font-label-lg transition-colors ${
                     mode === item
                       ? "bg-white text-on-surface shadow-sm"
                       : "text-on-surface-variant"
@@ -132,25 +132,30 @@ export default function Auth() {
 
             <form onSubmit={submit} className="flex flex-col gap-md">
               {mode === "register" && (
-                <Field
-                  label={t("auth.username")}
-                  name="username"
-                  value={form.username}
-                  onChange={update}
-                  autoComplete="username"
-                  minLength="2"
-                  maxLength="32"
-                  pattern="[a-zA-Z0-9_.-]+"
-                  required
-                />
+                <div>
+                  <Field
+                    label={t("auth.username")}
+                    name="username"
+                    value={form.username}
+                    onChange={update}
+                    autoComplete="username"
+                    minLength="2"
+                    maxLength="32"
+                    pattern="[a-z0-9_]+"
+                    required
+                  />
+                  <p className="mt-xs text-label-sm text-on-surface-variant/70">
+                    {t("auth.usernameHint")}
+                  </p>
+                </div>
               )}
               <Field
                 label={t("auth.email")}
                 name="email"
-                type="text"
+                type="email"
                 value={form.email}
                 onChange={update}
-                autoComplete="username"
+                autoComplete="email"
                 required
               />
               <div>
@@ -181,7 +186,7 @@ export default function Auth() {
 
               {error && (
                 <p
-                  className="px-sm py-xs rounded-md bg-error-container text-on-error-container text-body-sm font-body-sm"
+                  className="px-sm py-xs rounded-2xl bg-error-container text-on-error-container text-body-sm font-body-sm"
                   role="alert"
                 >
                   {error}
@@ -191,7 +196,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={authMutation.isPending}
-                className="mt-xs h-12 rounded-lg bg-primary-container text-on-primary-container text-label-lg font-label-lg disabled:opacity-60"
+                className="mt-xs h-12 rounded-full bg-primary-container text-on-primary-container text-label-lg font-label-lg disabled:opacity-60 hover:opacity-90 transition-opacity"
               >
                 {authMutation.isPending
                   ? t("common.loading")
@@ -213,7 +218,7 @@ function Field({ label, ...props }) {
       {label}
       <input
         {...props}
-        className="h-12 w-full rounded-lg bg-surface-container-low px-md text-body-md font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary-fixed-dim"
+        className="h-12 w-full rounded-2xl bg-surface-container-low px-md text-body-md font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary-fixed-dim"
       />
     </label>
   );

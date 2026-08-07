@@ -50,7 +50,7 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
             type="button"
             onClick={onClose}
             aria-label={t('common.close')}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>

@@ -5,6 +5,7 @@ import AppLayout from "../components/AppLayout";
 import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
+import { StatsSkeleton } from "../components/skeleton/PageSkeletons";
 
 export default function Stats() {
   const [period, setPeriod] = useState("month");
@@ -50,9 +51,8 @@ export default function Stats() {
         </header>
 
         {isLoading ? (
-          <div className="px-container-margin py-12 flex flex-col items-center justify-center gap-sm text-on-surface-variant">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-body-sm font-medium">{t("common.loading")}</p>
+          <div className="px-container-margin lg:px-0 py-md">
+            <StatsSkeleton />
           </div>
         ) : isError ? (
           <div className="px-container-margin py-8 text-center text-error">

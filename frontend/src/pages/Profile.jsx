@@ -152,7 +152,7 @@ export default function Profile() {
             type="button"
             aria-label={t("common.back")}
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-primary"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
@@ -166,7 +166,7 @@ export default function Profile() {
               aria-label={t("profile.editProfile")}
               onClick={beginEdit}
               disabled={!user}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-primary disabled:opacity-40"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-primary disabled:opacity-40"
             >
               <span className="material-symbols-outlined">edit</span>
             </button>
@@ -187,7 +187,7 @@ export default function Profile() {
                   <Avatar user={editing ? form : user} large />
                   {editing && (
                     <label
-                      className={`absolute bottom-1 right-1 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-md transition-transform active:scale-95 ${
+                      className={`absolute bottom-1 right-1 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-md transition-transform active:scale-95 ${
                         isUploadingAvatar ? "cursor-wait opacity-60" : ""
                       }`}
                     >
