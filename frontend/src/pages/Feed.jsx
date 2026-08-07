@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   useInfiniteFeedQuery,
   useLikeEntryMutation,
@@ -40,6 +40,8 @@ export default function Feed() {
   const observerRef = useRef(null);
   const { t, language } = useLanguage();
   const { notify } = useNotifications();
+  const [searchParams] = useSearchParams();
+  const targetEntryId = searchParams.get("entry");
 
   const friends = friendsQuery.data || [];
 
@@ -58,6 +60,18 @@ export default function Feed() {
   const entries = feedQuery.data
     ? feedQuery.data.pages.flatMap((page) => page.items || page.entries || [])
     : [];
+
+  useEffect(() => {
+    if (targetEntryId && entries.length > 0) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`feed-entry-${targetEntryId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [targetEntryId, entries]);
 
   const fetchNextPage = feedQuery.fetchNextPage;
   const hasNextPage = feedQuery.hasNextPage;
@@ -183,6 +197,7 @@ export default function Feed() {
                       key={entry.id}
                       entry={entry}
                       onReact={handleReact}
+                      isHighlighted={entry.id === targetEntryId}
                     />
                   ))}
 
@@ -321,8 +336,8 @@ const moodTintBg = {
   5: "bg-tertiary-container/40",
 };
 
-function FeedCard({ entry, onReact }) {
-  const [showComments, setShowComments] = useState(false);
+function FeedCard({ entry, onReact, isHighlighted = false }) {
+  const [showComments, setShowComments] = useState(isHighlighted);
   const { t, dateLocale } = useLanguage();
   const profileQuery = useProfileQuery();
   const currentUserId = profileQuery.data?.user?.id;
@@ -342,7 +357,10 @@ function FeedCard({ entry, onReact }) {
   if (isMoodOnly) {
     return (
       <article
-        className={`rounded-[24px] p-lg cloud-shadow ${moodTintBg[entry.mood] || "bg-surface-container-high/50"}`}
+        id={`feed-entry-${entry.id}`}
+        className={`rounded-[24px] p-lg cloud-shadow transition-all duration-300 ${moodTintBg[entry.mood] || "bg-surface-container-high/50"} ${
+          isHighlighted ? "ring-2 ring-primary shadow-xl scale-[1.01]" : ""
+        }`}
       >
         <header className="flex items-center gap-sm">
           <Link
@@ -402,7 +420,12 @@ function FeedCard({ entry, onReact }) {
   }
 
   return (
-    <article className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
+    <article
+      id={`feed-entry-${entry.id}`}
+      className={`rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow transition-all duration-300 ${
+        isHighlighted ? "ring-2 ring-primary shadow-xl scale-[1.01]" : ""
+      }`}
+    >
       <header className="flex items-center gap-sm">
         <Link
           to={profileLink}

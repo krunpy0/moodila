@@ -7,6 +7,7 @@ import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
+import { safeNavigateBack } from "../utils/navigation";
 
 export default function FriendProfile() {
   const { id } = useParams();
@@ -40,7 +41,7 @@ export default function FriendProfile() {
           <button
             type="button"
             aria-label={t("common.back")}
-            onClick={() => navigate(-1)}
+            onClick={() => safeNavigateBack(navigate, "/friends")}
             className="flex h-10 w-10 items-center justify-center rounded-full text-primary"
           >
             <span className="material-symbols-outlined">arrow_back</span>
@@ -66,7 +67,7 @@ export default function FriendProfile() {
               </p>
               <button
                 type="button"
-                onClick={() => navigate(-1)}
+                onClick={() => safeNavigateBack(navigate, "/friends")}
                 className="rounded-full bg-primary px-lg py-sm text-label-lg text-on-primary"
               >
                 {t("common.back")}
@@ -156,7 +157,7 @@ export default function FriendProfile() {
                   <h2 className="text-headline-lg font-headline-lg text-on-surface">
                     {t("profile.recentEntries")}
                   </h2>
-                  <Link to="/calendar" className="text-label-lg text-primary">
+                  <Link to={`/calendar?friend=${id}`} className="text-label-lg text-primary">
                     {t("nav.calendar")}
                   </Link>
                 </div>

@@ -15,6 +15,7 @@ import DeleteAccountModal from "../components/DeleteAccountModal";
 import AvatarCropModal from "../components/AvatarCropModal";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
+import { safeNavigateBack } from "../utils/navigation";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -151,7 +152,7 @@ export default function Profile() {
           <button
             type="button"
             aria-label={t("common.back")}
-            onClick={() => navigate(-1)}
+            onClick={() => safeNavigateBack(navigate, "/home")}
             className="flex h-11 w-11 items-center justify-center rounded-full text-primary"
           >
             <span className="material-symbols-outlined">arrow_back</span>

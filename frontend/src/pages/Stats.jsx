@@ -6,6 +6,7 @@ import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
 import { StatsSkeleton } from "../components/skeleton/PageSkeletons";
+import { safeNavigateBack } from "../utils/navigation";
 
 export default function Stats() {
   const [period, setPeriod] = useState("month");
@@ -33,7 +34,7 @@ export default function Stats() {
           <div className="flex items-center gap-sm">
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() => safeNavigateBack(navigate, "/home")}
               aria-label={t("common.back")}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow active:scale-95 transition-transform"
             >

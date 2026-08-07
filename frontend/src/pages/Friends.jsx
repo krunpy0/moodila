@@ -7,6 +7,7 @@ import { useNotifications } from '../components/Notifications'
 import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
 import { useLanguage } from '../context/LanguageContext'
 import { useDebounce } from '../hooks/useDebounce'
+import { safeNavigateBack } from '../utils/navigation'
 
 export default function Friends() {
   const [query, setQuery] = useState('')
@@ -67,7 +68,7 @@ export default function Friends() {
             <button
               type="button"
               aria-label={t('common.back')}
-              onClick={() => navigate(-1)}
+              onClick={() => safeNavigateBack(navigate, '/home')}
               className="flex h-10 w-10 items-center justify-center rounded-full text-primary hover:bg-surface-container-low transition-colors"
             >
               <span className="material-symbols-outlined">arrow_back</span>

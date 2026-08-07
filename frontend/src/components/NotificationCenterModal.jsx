@@ -64,7 +64,11 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
     if (item.type === 'friend_request' || item.type === 'friend_accept') {
       navigate('/friends')
     } else if (item.type === 'like' || item.type === 'comment') {
-      navigate('/feed')
+      if (item.entity_id) {
+        navigate(`/feed?entry=${item.entity_id}`)
+      } else {
+        navigate('/feed')
+      }
     }
   }
 
