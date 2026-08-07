@@ -25,7 +25,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var usernamePattern = regexp.MustCompile(`^[a-z0-9_]{3,24}$`)
+var usernamePattern = regexp.MustCompile(`^[a-z0-9_.-]{2,32}$`)
 
 type Auth struct {
 	Users           repository.Users
@@ -369,7 +369,7 @@ func validateRegistration(input credentials) error {
 		return errors.New("valid email is required")
 	}
 	if !usernamePattern.MatchString(input.Username) {
-		return errors.New("username must be 3-24 lowercase letters, numbers, or underscores")
+		return errors.New("username must be 2-32 letters, numbers, underscores, hyphens, or dots")
 	}
 	if len(input.DisplayName) > 60 {
 		return errors.New("display name must be 60 characters or fewer")

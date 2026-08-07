@@ -138,9 +138,9 @@ export default function Auth() {
                   value={form.username}
                   onChange={update}
                   autoComplete="username"
-                  minLength="3"
-                  maxLength="24"
-                  pattern="[a-z0-9_]+"
+                  minLength="2"
+                  maxLength="32"
+                  pattern="[a-zA-Z0-9_.-]+"
                   required
                 />
               )}

@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var usernameSearchPattern = regexp.MustCompile(`^[a-z0-9_]+$`)
+var usernameSearchPattern = regexp.MustCompile(`^[a-z0-9_.-]+$`)
 
 type Friends struct {
 	Friends       repository.Friends
@@ -44,8 +44,8 @@ func (h Friends) Search(c *gin.Context) {
 		return
 	}
 	query := strings.ToLower(strings.TrimSpace(c.Query("q")))
-	if len(query) < 1 || len(query) > 24 || !usernameSearchPattern.MatchString(query) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "q must contain 1-24 lowercase letters, numbers, or underscores"})
+	if len(query) < 1 || len(query) > 32 || !usernameSearchPattern.MatchString(query) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "q must contain 1-32 letters, numbers, underscores, hyphens, or dots"})
 		return
 	}
 	users, err := h.Friends.Search(c.Request.Context(), c.GetString("userID"), query)
