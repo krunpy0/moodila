@@ -147,16 +147,16 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
 
         {/* Waveform & Info */}
         <div className="flex flex-1 flex-col gap-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-label-sm font-medium text-on-surface-variant font-mono">
+          <div className="flex items-center justify-between gap-2 min-w-0">
+            <span className="text-label-sm font-medium text-on-surface-variant font-mono min-w-0 truncate">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
-            <div className="flex items-center gap-xs">
+            <div className="flex items-center gap-xs shrink-0">
               <button
                 type="button"
                 onClick={cycleSpeed}
                 title="Playback speed"
-                className="rounded-md bg-surface-container px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-surface-container-high"
+                className="shrink-0 rounded-md bg-surface-container px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-surface-container-high"
               >
                 {speed}x
               </button>
@@ -171,7 +171,7 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
                     onDelete()
                   }}
                   title="Remove voice note"
-                  className="flex h-6 w-6 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high"
                 >
                   <span className="material-symbols-outlined text-[16px]">delete</span>
                 </button>

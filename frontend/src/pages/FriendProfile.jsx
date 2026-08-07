@@ -161,47 +161,56 @@ export default function FriendProfile() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 gap-md">
-                  {entries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-white p-lg cloud-shadow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <span className="text-label-sm text-on-surface-variant">
-                          {formatDate(entry.date)}
-                        </span>
-                        <span
-                          className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood, t).bg}`}
-                        >
-                          <MoodIcon mood={entry.mood} className="text-[20px]" />
-                        </span>
+                  {entries.map((entry) => {
+                    const isRich = Boolean(
+                      entry.audio_url ||
+                        (entry.photo_url && (entry.audio_url || entry.text)) ||
+                        (entry.text && entry.text.length > 80)
+                    );
+                    return (
+                      <div
+                        key={entry.id}
+                        className={`flex min-h-[140px] flex-col justify-between rounded-[24px] bg-white p-lg cloud-shadow ${
+                          isRich ? "col-span-2" : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <span className="text-label-sm text-on-surface-variant">
+                            {formatDate(entry.date)}
+                          </span>
+                          <span
+                            className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood, t).bg}`}
+                          >
+                            <MoodIcon mood={entry.mood} className="text-[20px]" />
+                          </span>
+                        </div>
+                        {entry.photo_url && (
+                          <div className="my-xs">
+                            <ImageWithSkeleton
+                              src={entry.photo_url}
+                              alt="Entry photo"
+                              className={`${isRich ? "h-36 sm:h-48" : "h-20"} w-full object-cover rounded-xl`}
+                              containerClassName="rounded-xl"
+                              skeletonHeightClass={isRich ? "h-36 sm:h-48" : "h-20"}
+                            />
+                          </div>
+                        )}
+                        {entry.audio_url && (
+                          <div className="my-xs">
+                            <VoiceNotePlayer
+                              audioUrl={entry.audio_url}
+                              duration={entry.audio_duration}
+                            />
+                          </div>
+                        )}
+                        <p className="line-clamp-2 text-body-sm text-on-surface">
+                          {entry.text ||
+                            getLocalizedTag(entry.tags?.[0], t) ||
+                            t("home.noNote")}
+                        </p>
                       </div>
-                      {entry.photo_url && (
-                        <div className="my-xs">
-                          <ImageWithSkeleton
-                            src={entry.photo_url}
-                            alt="Entry photo"
-                            className="h-16 w-full object-cover rounded-xl"
-                            containerClassName="rounded-xl"
-                            skeletonHeightClass="h-16"
-                          />
-                        </div>
-                      )}
-                      {entry.audio_url && (
-                        <div className="my-xs">
-                          <VoiceNotePlayer
-                            audioUrl={entry.audio_url}
-                            duration={entry.audio_duration}
-                          />
-                        </div>
-                      )}
-                      <p className="line-clamp-2 text-body-sm text-on-surface">
-                        {entry.text ||
-                          getLocalizedTag(entry.tags?.[0], t) ||
-                          t("home.noNote")}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 {entries.length === 0 && (
                   <p className="rounded-[24px] bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant">

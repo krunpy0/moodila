@@ -13,6 +13,8 @@ import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 import AvatarCropModal from "../components/AvatarCropModal";
+import VoiceNotePlayer from "../components/VoiceNotePlayer";
+import ImageWithSkeleton from "../components/ImageWithSkeleton";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -303,37 +305,65 @@ export default function Profile() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 gap-md">
-                  {(profile.recent_entries || []).map((entry) => (
-                    <Link
-                      key={entry.id}
-                      to={`/entries/new?date=${entry.date}`}
-                      className="flex min-h-[140px] flex-col justify-between rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow"
-                    >
-                      <div className="flex items-start justify-between">
-                        <span className="flex items-center gap-1 text-label-sm text-on-surface-variant">
-                          {entry.is_hidden && (
-                            <span
-                              className="material-symbols-outlined text-[13px]"
-                              title={t("common.hiddenFromFriends")}
-                            >
-                              lock
-                            </span>
-                          )}
-                          {formatDate(entry.date)}
-                        </span>
-                        <span
-                          className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood).bg}`}
-                        >
-                          <MoodIcon mood={entry.mood} className="text-[20px]" />
-                        </span>
-                      </div>
-                      <p className="line-clamp-2 text-body-sm text-on-surface">
-                        {entry.text ||
-                          getLocalizedTag(entry.tags?.[0], t) ||
-                          t("home.noNote")}
-                      </p>
-                    </Link>
-                  ))}
+                  {(profile.recent_entries || []).map((entry) => {
+                    const isRich = Boolean(
+                      entry.audio_url ||
+                        (entry.photo_url && (entry.audio_url || entry.text)) ||
+                        (entry.text && entry.text.length > 80)
+                    );
+                    return (
+                      <Link
+                        key={entry.id}
+                        to={`/entries/new?date=${entry.date}`}
+                        className={`flex min-h-[140px] flex-col justify-between rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow ${
+                          isRich ? "col-span-2" : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <span className="flex items-center gap-1 text-label-sm text-on-surface-variant">
+                            {entry.is_hidden && (
+                              <span
+                                className="material-symbols-outlined text-[13px]"
+                                title={t("common.hiddenFromFriends")}
+                              >
+                                lock
+                              </span>
+                            )}
+                            {formatDate(entry.date)}
+                          </span>
+                          <span
+                            className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood, t).bg}`}
+                          >
+                            <MoodIcon mood={entry.mood} className="text-[20px]" />
+                          </span>
+                        </div>
+                        {entry.photo_url && (
+                          <div className="my-xs">
+                            <ImageWithSkeleton
+                              src={entry.photo_url}
+                              alt="Entry photo"
+                              className={`${isRich ? "h-36 sm:h-48" : "h-20"} w-full object-cover rounded-xl`}
+                              containerClassName="rounded-xl"
+                              skeletonHeightClass={isRich ? "h-36 sm:h-48" : "h-20"}
+                            />
+                          </div>
+                        )}
+                        {entry.audio_url && (
+                          <div className="my-xs">
+                            <VoiceNotePlayer
+                              audioUrl={entry.audio_url}
+                              duration={entry.audio_duration}
+                            />
+                          </div>
+                        )}
+                        <p className="line-clamp-2 text-body-sm text-on-surface">
+                          {entry.text ||
+                            getLocalizedTag(entry.tags?.[0], t) ||
+                            t("home.noNote")}
+                        </p>
+                      </Link>
+                    );
+                  })}
                 </div>
                 {profile.recent_entries?.length === 0 && (
                   <p className="rounded-[24px] bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant">
