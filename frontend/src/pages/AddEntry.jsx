@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
 import { useDeleteEntryMutation, useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
 import { uploadEntryPhoto, uploadEntryAudio, deleteStorageObject } from '../api/entries'
@@ -8,22 +8,26 @@ import { useNotifications } from '../components/Notifications'
 import VoiceNotePlayer from '../components/VoiceNotePlayer'
 import ImageWithSkeleton from '../components/ImageWithSkeleton'
 import MoodIcon from '../components/MoodIcon'
+import DatePickerModal from '../components/DatePickerModal'
 import { MOODS, TAG_CATEGORIES, getLocalizedTag, getMoodInfo } from '../utils/moods'
 import { useLanguage } from '../context/LanguageContext'
 import { AddEntrySkeleton } from '../components/skeleton/PageSkeletons'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
+import { safeNavigateBack } from '../utils/navigation'
 
 export default function AddEntry() {
-  const [params] = useSearchParams()
+  const [params, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const { notify } = useNotifications()
-  const { t } = useLanguage()
+  const { t, formatDate } = useLanguage()
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
   const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
   const [status, setStatus] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const deleteModalRef = useRef(null)
+  const textareaRef = useRef(null)
 
   useModalKeyboard(() => setShowDeleteModal(false), showDeleteModal, deleteModalRef)
   const entryQuery = useEntryQuery(date, !futureDate)
@@ -33,6 +37,13 @@ export default function AddEntry() {
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.max(210, textareaRef.current.scrollHeight)}px`
+    }
+  }, [form.text])
 
   const selectPhoto = async (event) => {
     const file = event.target.files?.[0]
@@ -85,7 +96,10 @@ export default function AddEntry() {
     } else if (entryQuery.isError && entryQuery.error.status !== 404) {
       setStatus(entryQuery.error.message)
     } else if (!entryQuery.isLoading) {
-      setForm({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
+      setForm((prev) => ({
+        ...prev,
+        date,
+      }))
     }
   }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error, t])
 
@@ -231,16 +245,28 @@ export default function AddEntry() {
     <AppLayout>
       <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-4xl xl:max-w-5xl bg-background pb-32 lg:pb-12 text-on-surface px-0 lg:px-6 py-0 lg:py-6">
         <header className="flex items-center justify-between px-container-margin py-md lg:px-0">
-          <Link
-            to="/home"
+          <button
+            type="button"
+            onClick={() => safeNavigateBack(navigate, '/home')}
             aria-label={t('common.back')}
             className="flex h-11 w-11 items-center justify-center rounded-full bg-surface-container hover:bg-surface-container-high transition-colors"
           >
             <span className="material-symbols-outlined">arrow_back</span>
-          </Link>
-          <h1 className="text-headline-lg font-headline-lg">
-            {entryQuery.data ? t('addEntry.editTitle') : t('addEntry.title')}
-          </h1>
+          </button>
+          <div className="flex flex-col items-center">
+            <h1 className="text-headline-lg font-headline-lg">
+              {entryQuery.data ? t('addEntry.editTitle') : t('addEntry.title')}
+            </h1>
+            <button
+              type="button"
+              onClick={() => setShowDatePicker(true)}
+              className="relative mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3.5 py-1 text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all cursor-pointer group shadow-xs"
+            >
+              <span className="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
+              <span>{formatDate(date, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+              <span className="material-symbols-outlined text-[14px] text-on-surface-variant/60 group-hover:text-on-surface-variant">edit</span>
+            </button>
+          </div>
           <div className="w-11" />
         </header>
 
@@ -309,15 +335,24 @@ export default function AddEntry() {
             {t('addEntry.optionalNote')}
           </label>
           <textarea
+            ref={textareaRef}
             id="entry-text"
             value={form.text}
             maxLength={5000}
             onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
             placeholder={t('addEntry.notePlaceholder')}
-            className="min-h-[210px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
+            className="min-h-[210px] w-full resize-none overflow-hidden bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
           />
           <div className="mt-1 flex justify-end">
-            <span className="text-label-sm text-on-surface-variant/60">
+            <span
+              className={`text-label-sm transition-colors duration-300 ${
+                (5000 - (form.text?.length || 0)) <= 50
+                  ? "text-red-500 font-semibold"
+                  : (5000 - (form.text?.length || 0)) <= 100
+                  ? "text-amber-500 font-medium"
+                  : "text-on-surface-variant/60"
+              }`}
+            >
               {form.text?.length || 0} / 5000
             </span>
           </div>
@@ -529,6 +564,16 @@ export default function AddEntry() {
         </form>
       )}
 
+        <DatePickerModal
+          isOpen={showDatePicker}
+          onClose={() => setShowDatePicker(false)}
+          selectedDate={date}
+          onSelectDate={(newDate) => {
+            setSearchParams({ date: newDate }, { replace: true })
+            setForm((prev) => ({ ...prev, date: newDate }))
+          }}
+          maxDate={getLocalDate()}
+        />
       </main>
     </AppLayout>
   )
