@@ -4,6 +4,7 @@ import { useSessionQuery } from './api/queries'
 import AnnouncementQueue from './components/AnnouncementQueue'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import ErrorBoundary from './components/ErrorBoundary'
+import SplashScreen from './components/SplashScreen'
 
 const Home = lazy(() => import('./pages/Home'))
 const Auth = lazy(() => import('./pages/Auth'))
@@ -22,12 +23,7 @@ const Landing = lazy(() => import('./pages/Landing'))
 const RootRoute = lazy(() => import('./pages/RootRoute'))
 
 function PageFallback() {
-  return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center text-on-surface-variant gap-sm">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      <p className="text-body-sm font-medium">Loading page...</p>
-    </div>
-  )
+  return <SplashScreen />
 }
 
 export default function App() {
@@ -107,11 +103,7 @@ function RequireAuth({ children }) {
     return <Navigate to="/login" replace />
   }
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-on-surface-variant">
-        Checking session...
-      </div>
-    )
+    return <SplashScreen />
   }
   return (
     <>
