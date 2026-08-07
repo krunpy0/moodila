@@ -54,22 +54,32 @@ func (h Entries) Save(c *gin.Context) {
 		photoURL := strings.TrimSpace(*input.PhotoURL)
 		if photoURL == "" {
 			input.PhotoURL = nil
-		} else if len(photoURL) > 4096 || !(strings.HasPrefix(photoURL, "https://") || strings.HasPrefix(photoURL, "http://")) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "photo_url must be a valid URL"})
+		} else if len(photoURL) > 4096 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "photo_url is too long"})
 			return
 		} else {
-			input.PhotoURL = h.Storage.CleanURL(&photoURL)
+			cleaned := h.Storage.CleanURL(&photoURL)
+			if cleaned == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "photo_url must be a valid key or URL"})
+				return
+			}
+			input.PhotoURL = cleaned
 		}
 	}
 	if input.AudioURL != nil {
 		audioURL := strings.TrimSpace(*input.AudioURL)
 		if audioURL == "" {
 			input.AudioURL = nil
-		} else if len(audioURL) > 4096 || !(strings.HasPrefix(audioURL, "https://") || strings.HasPrefix(audioURL, "http://")) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "audio_url must be a valid URL"})
+		} else if len(audioURL) > 4096 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "audio_url is too long"})
 			return
 		} else {
-			input.AudioURL = h.Storage.CleanURL(&audioURL)
+			cleaned := h.Storage.CleanURL(&audioURL)
+			if cleaned == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "audio_url must be a valid key or URL"})
+				return
+			}
+			input.AudioURL = cleaned
 		}
 	}
 	if input.AudioDuration != nil && (*input.AudioDuration < 0 || *input.AudioDuration > 300) {

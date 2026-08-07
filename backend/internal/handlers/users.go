@@ -116,7 +116,12 @@ func (h Users) UpdateMe(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "avatar_url is too long"})
 			return
 		}
-		input.AvatarURL = h.Storage.CleanURL(&avatar)
+		cleaned := h.Storage.CleanURL(&avatar)
+		if avatar != "" && cleaned == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "avatar_url must be a valid key or URL"})
+			return
+		}
+		input.AvatarURL = cleaned
 	}
 	if input.DisplayName == nil && input.AvatarURL == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "at least one field is required"})

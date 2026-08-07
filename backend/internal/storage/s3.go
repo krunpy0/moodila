@@ -158,8 +158,33 @@ func (s S3) Delete(ctx context.Context, objectKey string) error {
 
 const defaultSignedURLLifetime = 2 * time.Hour
 
-// ExtractKey parses a target string (full HTTP/HTTPS URL or relative key) into a clean S3 object key.
+// ExtractKey returns objectKey if rawTarget is a valid relative key.
+// It strictly rejects full URLs or legacy path prefixes.
 func (s S3) ExtractKey(rawTarget string) (string, error) {
+	rawTarget = strings.TrimSpace(rawTarget)
+	if rawTarget == "" {
+		return "", fmt.Errorf("invalid target")
+	}
+	if strings.HasPrefix(rawTarget, "http://") || strings.HasPrefix(rawTarget, "https://") {
+		return "", fmt.Errorf("invalid object key: expected relative key, got full URL %q", rawTarget)
+	}
+	key := strings.TrimPrefix(rawTarget, "/")
+	if strings.HasPrefix(key, "storage/v1/object/public/") {
+		return "", fmt.Errorf("invalid object key: legacy storage path prefix detected in %q", rawTarget)
+	}
+	unescapedKey, err := url.PathUnescape(key)
+	if err != nil {
+		unescapedKey = key
+	}
+	if unescapedKey == "" {
+		return "", fmt.Errorf("empty object key")
+	}
+	return unescapedKey, nil
+}
+
+// ExtractKeyFromInput parses either a relative key or a full URL of the CURRENT S3 configuration into a relative key.
+// It strictly rejects legacy URL formats (e.g. Supabase or unknown domains).
+func (s S3) ExtractKeyFromInput(rawTarget string) (string, error) {
 	rawTarget = strings.TrimSpace(rawTarget)
 	if rawTarget == "" {
 		return "", fmt.Errorf("invalid target")
@@ -180,11 +205,18 @@ func (s S3) ExtractKey(rawTarget string) (string, error) {
 			if s.Bucket != "" && strings.HasPrefix(pathStr, bucketPrefix) {
 				key = strings.TrimPrefix(pathStr, bucketPrefix)
 			} else {
-				key = strings.TrimPrefix(pathStr, "/")
+				return "", fmt.Errorf("unsupported host or legacy URL format: %q", rawTarget)
 			}
+		}
+		if idx := strings.Index(key, "?"); idx != -1 {
+			key = key[:idx]
 		}
 	} else {
 		key = strings.TrimPrefix(rawTarget, "/")
+	}
+
+	if strings.HasPrefix(key, "storage/v1/object/public/") {
+		return "", fmt.Errorf("legacy storage path prefix not allowed: %q", rawTarget)
 	}
 
 	unescapedKey, err := url.PathUnescape(key)
@@ -203,25 +235,14 @@ func (s S3) ExtractObjectKey(rawTarget, userID string) (string, error) {
 	if userID == "" {
 		return "", fmt.Errorf("invalid target or user ID")
 	}
-	key, err := s.ExtractKey(rawTarget)
-	if err == nil && strings.HasPrefix(key, userID+"/") {
-		return key, nil
+	key, err := s.ExtractKeyFromInput(rawTarget)
+	if err != nil {
+		return "", err
 	}
-
-	// Fallback for URLs containing extra path prefixes (e.g. /bucket/userID/...) when S3 struct Bucket is not set.
-	if strings.HasPrefix(rawTarget, "http://") || strings.HasPrefix(rawTarget, "https://") {
-		if u, err := url.Parse(rawTarget); err == nil {
-			prefix := "/" + userID + "/"
-			if idx := strings.Index(u.Path, prefix); idx != -1 {
-				subKey := u.Path[idx+1:]
-				if unescaped, err := url.PathUnescape(subKey); err == nil && strings.HasPrefix(unescaped, userID+"/") {
-					return unescaped, nil
-				}
-			}
-		}
+	if !strings.HasPrefix(key, userID+"/") {
+		return "", fmt.Errorf("object key does not belong to user")
 	}
-
-	return "", fmt.Errorf("object key does not belong to user")
+	return key, nil
 }
 
 // PresignGet generates a short-lived presigned GET URL for an object key.
@@ -239,9 +260,7 @@ func (s S3) PresignGet(objectKey string, ttl time.Duration) (string, error) {
 	return s.presign("GET", objectKey, "", ttl, now)
 }
 
-// ResolveAccessURL converts a raw photo/audio URL or key into an accessible URL.
-// If IsPrivate is false, it returns the URL unchanged. If IsPrivate is true,
-// it generates and returns a presigned GET URL.
+// ResolveAccessURL converts a relative key into an accessible Backblaze URL (public CDN or presigned GET).
 func (s S3) ResolveAccessURL(rawURL *string) *string {
 	if rawURL == nil {
 		return nil
@@ -250,22 +269,31 @@ func (s S3) ResolveAccessURL(rawURL *string) *string {
 	if val == "" {
 		return nil
 	}
-	if !s.IsPrivate {
+	if strings.HasPrefix(val, "http://") || strings.HasPrefix(val, "https://") || strings.HasPrefix(val, "storage/v1/object/public/") {
+		log.Printf("ERROR: unmigrated full URL or legacy path found in database/input: %s", val)
 		return &val
 	}
 	key, err := s.ExtractKey(val)
 	if err != nil {
+		log.Printf("ERROR: failed to parse object key %q: %v", val, err)
 		return &val
 	}
-	signed, err := s.PresignGet(key, defaultSignedURLLifetime)
-	if err != nil {
+	if s.IsPrivate {
+		signed, err := s.PresignGet(key, defaultSignedURLLifetime)
+		if err != nil {
+			log.Printf("ERROR: failed to presign GET for key %q: %v", key, err)
+			return &val
+		}
+		return &signed
+	}
+	pub := s.publicURL(key)
+	if pub == "" {
 		return &val
 	}
-	return &signed
+	return &pub
 }
 
-// CleanURL strips query parameters and signature strings from a URL, returning
-// a clean canonical S3 URL or relative key for database storage.
+// CleanURL strips hosts and query parameters, returning a clean relative key for database storage.
 func (s S3) CleanURL(rawURL *string) *string {
 	if rawURL == nil {
 		return nil
@@ -274,15 +302,12 @@ func (s S3) CleanURL(rawURL *string) *string {
 	if val == "" {
 		return nil
 	}
-	key, err := s.ExtractKey(val)
+	key, err := s.ExtractKeyFromInput(val)
 	if err != nil {
-		return &val
+		log.Printf("warning: CleanURL failed for input %q: %v", val, err)
+		return nil
 	}
-	clean := s.publicURL(key)
-	if clean == "" {
-		return &val
-	}
-	return &clean
+	return &key
 }
 
 func (s S3) presignPut(objectKey, contentType string, now time.Time) (string, error) {

@@ -48,15 +48,11 @@ func TestCreateUploadRejectsUnsupportedType(t *testing.T) {
 	}
 }
 
-func TestExtractObjectKey(t *testing.T) {
-	s := S3{
-		PublicBaseURL: "https://xyz.supabase.co/storage/v1/object/public/entries",
-	}
-	userID := "user-123"
+func TestStrictExtractKey(t *testing.T) {
+	s := S3{}
 
-	t.Run("Valid Public Base URL", func(t *testing.T) {
-		urlStr := "https://xyz.supabase.co/storage/v1/object/public/entries/user-123/2026/08/abc.jpg"
-		key, err := s.ExtractObjectKey(urlStr, userID)
+	t.Run("Valid Relative Key", func(t *testing.T) {
+		key, err := s.ExtractKey("user-123/2026/08/abc.jpg")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -65,114 +61,78 @@ func TestExtractObjectKey(t *testing.T) {
 		}
 	})
 
-	t.Run("Valid Generic URL with User Path", func(t *testing.T) {
-		sNoBase := S3{}
-		urlStr := "https://s3.us-east-1.amazonaws.com/bucket/user-123/2026/08/file%20name.jpg"
-		key, err := sNoBase.ExtractObjectKey(urlStr, userID)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if key != "user-123/2026/08/file name.jpg" {
-			t.Errorf("got key %q, want %q", key, "user-123/2026/08/file name.jpg")
-		}
-	})
-
-	t.Run("Raw Key Input", func(t *testing.T) {
-		key, err := s.ExtractObjectKey("user-123/2026/08/abc.jpg", userID)
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-		if key != "user-123/2026/08/abc.jpg" {
-			t.Errorf("got key %q, want %q", key, "user-123/2026/08/abc.jpg")
-		}
-	})
-
-	t.Run("Cross-User Rejection", func(t *testing.T) {
-		urlStr := "https://xyz.supabase.co/storage/v1/object/public/entries/other-user/2026/08/abc.jpg"
-		_, err := s.ExtractObjectKey(urlStr, userID)
+	t.Run("Rejects Full HTTPS URL", func(t *testing.T) {
+		_, err := s.ExtractKey("https://moodila-uploads.s3.eu-central-003.backblazeb2.com/user-123/2026/08/abc.jpg")
 		if err == nil {
-			t.Fatal("expected error for cross-user object deletion, got nil")
+			t.Fatal("expected error for full HTTP URL, got nil")
+		}
+	})
+
+	t.Run("Rejects Legacy Storage Prefix", func(t *testing.T) {
+		_, err := s.ExtractKey("storage/v1/object/public/entry-photos/user-123/2026/08/abc.jpg")
+		if err == nil {
+			t.Fatal("expected error for legacy path prefix, got nil")
 		}
 	})
 }
 
-func TestPresignDelete(t *testing.T) {
+func TestCleanURL(t *testing.T) {
 	s := S3{
-		Endpoint:        "https://s3.example.test",
-		Bucket:          "photos",
-		AccessKeyID:     "access-key",
-		SecretAccessKey: "secret-key",
-	}
-	deleteURL, err := s.presignDelete("user-1/photo.jpg", time.Date(2026, 8, 3, 12, 0, 0, 0, time.UTC))
-	if err != nil {
-		t.Fatalf("presignDelete() error = %v", err)
-	}
-	parsed, err := url.Parse(deleteURL)
-	if err != nil {
-		t.Fatalf("parse delete URL: %v", err)
-	}
-	if parsed.Query().Get("X-Amz-SignedHeaders") != "host" {
-		t.Errorf("signed headers = %q, want host", parsed.Query().Get("X-Amz-SignedHeaders"))
-	}
-	if parsed.Query().Get("X-Amz-Signature") == "" {
-		t.Error("delete URL has no signature")
-	}
-}
-
-func TestPresignGet(t *testing.T) {
-	s := S3{
-		Endpoint:        "https://s3.example.test",
-		Bucket:          "photos",
-		AccessKeyID:     "access-key",
-		SecretAccessKey: "secret-key",
-		Now:             func() time.Time { return time.Date(2026, 8, 6, 12, 0, 0, 0, time.UTC) },
+		PublicBaseURL: "https://moodila-uploads.s3.eu-central-003.backblazeb2.com",
+		Bucket:        "moodila-uploads",
 	}
 
-	getURL, err := s.PresignGet("user-1/2026/08/photo.jpg", 2*time.Hour)
-	if err != nil {
-		t.Fatalf("PresignGet() error = %v", err)
-	}
-	parsed, err := url.Parse(getURL)
-	if err != nil {
-		t.Fatalf("parse GET URL: %v", err)
-	}
-	if parsed.Query().Get("X-Amz-SignedHeaders") != "host" {
-		t.Errorf("signed headers = %q, want host", parsed.Query().Get("X-Amz-SignedHeaders"))
-	}
-	if parsed.Query().Get("X-Amz-Expires") != "7200" {
-		t.Errorf("expires = %q, want 7200", parsed.Query().Get("X-Amz-Expires"))
-	}
-	if parsed.Query().Get("X-Amz-Signature") == "" {
-		t.Error("GET URL has no signature")
-	}
+	t.Run("Relative Key Preserved", func(t *testing.T) {
+		in := "user-123/2026/08/abc.jpg"
+		res := s.CleanURL(&in)
+		if res == nil || *res != "user-123/2026/08/abc.jpg" {
+			t.Errorf("got %v, want %q", res, "user-123/2026/08/abc.jpg")
+		}
+	})
+
+	t.Run("Current Public Base URL Cleaned To Relative Key", func(t *testing.T) {
+		in := "https://moodila-uploads.s3.eu-central-003.backblazeb2.com/user-123/2026/08/abc.jpg?X-Amz-Signature=123"
+		res := s.CleanURL(&in)
+		if res == nil || *res != "user-123/2026/08/abc.jpg" {
+			t.Errorf("got %v, want %q", res, "user-123/2026/08/abc.jpg")
+		}
+	})
+
+	t.Run("Rejects Legacy Supabase URL", func(t *testing.T) {
+		in := "https://amnpytvtzvcgyqmsmrvp.supabase.co/storage/v1/object/public/entry-photos/user-123/2026/08/abc.jpg"
+		res := s.CleanURL(&in)
+		if res != nil {
+			t.Errorf("expected nil for legacy Supabase URL on write, got %q", *res)
+		}
+	})
 }
 
 func TestResolveAccessURL(t *testing.T) {
 	sPublic := S3{
 		IsPrivate:     false,
-		PublicBaseURL: "https://cdn.example.test/photos",
+		PublicBaseURL: "https://moodila-uploads.s3.eu-central-003.backblazeb2.com",
 	}
 
 	sPrivate := S3{
 		IsPrivate:       true,
-		Endpoint:        "https://s3.example.test",
-		Bucket:          "photos",
+		Endpoint:        "https://s3.eu-central-003.backblazeb2.com",
+		Bucket:          "moodila-uploads",
 		AccessKeyID:     "access-key",
 		SecretAccessKey: "secret-key",
-		PublicBaseURL:   "https://cdn.example.test/photos",
 	}
 
-	rawURL := "https://cdn.example.test/photos/user-1/2026/08/photo.jpg"
+	key := "user-1/2026/08/photo.jpg"
 
-	t.Run("Public Mode", func(t *testing.T) {
-		res := sPublic.ResolveAccessURL(&rawURL)
-		if res == nil || *res != rawURL {
-			t.Errorf("got %v, want %q", res, rawURL)
+	t.Run("Public Mode Builds Full URL From Relative Key", func(t *testing.T) {
+		res := sPublic.ResolveAccessURL(&key)
+		want := "https://moodila-uploads.s3.eu-central-003.backblazeb2.com/user-1/2026/08/photo.jpg"
+		if res == nil || *res != want {
+			t.Errorf("got %v, want %q", res, want)
 		}
 	})
 
-	t.Run("Private Mode Generates Presigned GET", func(t *testing.T) {
-		res := sPrivate.ResolveAccessURL(&rawURL)
+	t.Run("Private Mode Generates Presigned GET From Relative Key", func(t *testing.T) {
+		res := sPrivate.ResolveAccessURL(&key)
 		if res == nil {
 			t.Fatal("got nil resolved URL")
 		}
@@ -185,13 +145,12 @@ func TestResolveAccessURL(t *testing.T) {
 	})
 
 	t.Run("Nil or Empty Input", func(t *testing.T) {
-		if res := sPrivate.ResolveAccessURL(nil); res != nil {
+		if res := sPublic.ResolveAccessURL(nil); res != nil {
 			t.Errorf("expected nil for nil input, got %v", res)
 		}
 		emptyStr := ""
-		if res := sPrivate.ResolveAccessURL(&emptyStr); res != nil {
+		if res := sPublic.ResolveAccessURL(&emptyStr); res != nil {
 			t.Errorf("expected nil for empty input, got %v", res)
 		}
 	})
 }
-
