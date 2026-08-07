@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useEntriesQuery, useFriendEntriesQuery, useFriendsQuery } from "../api/queries";
 import { getLocalDate } from "../api/client";
@@ -24,6 +24,11 @@ export default function Calendar() {
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const [inspectorDragX, setInspectorDragX] = useState(0);
+  const [isInspectorDragging, setIsInspectorDragging] = useState(false);
+  const [inspectorSlideAnim, setInspectorSlideAnim] = useState('');
+  const inspectorTouchStartRef = useRef(null);
 
   const { t, language, dateLocale, formatDate: formatDateLocale } = useLanguage();
   const weekdays = language === "ru" ? weekdaysRu : weekdaysEn;
@@ -87,6 +92,57 @@ export default function Calendar() {
     }
     return calendarDays(month);
   }, [viewMode, weekStart, month]);
+
+  const navigateInspectorDate = (delta) => {
+    if (!selectedDate) return;
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    const currentDate = new Date(y, m - 1, d);
+    const targetDate = addDays(currentDate, delta);
+    const targetStr = formatDate(targetDate);
+
+    if (targetDate.getMonth() !== month.getMonth() || targetDate.getFullYear() !== month.getFullYear()) {
+      setMonth(startOfMonth(targetDate));
+    }
+
+    setInspectorSlideAnim(
+      delta > 0
+        ? 'animate-in slide-in-from-right-8 fade-in duration-200'
+        : 'animate-in slide-in-from-left-8 fade-in duration-200'
+    );
+    setSelectedDate(targetStr);
+
+    setTimeout(() => {
+      setInspectorSlideAnim('');
+    }, 200);
+  };
+
+  const handleInspectorTouchStart = (e) => {
+    inspectorTouchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+    setIsInspectorDragging(true);
+  };
+
+  const handleInspectorTouchMove = (e) => {
+    if (!inspectorTouchStartRef.current) return;
+    const diffX = e.touches[0].clientX - inspectorTouchStartRef.current.x;
+    const diffY = e.touches[0].clientY - inspectorTouchStartRef.current.y;
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      setInspectorDragX(diffX);
+    }
+  };
+
+  const handleInspectorTouchEnd = () => {
+    if (inspectorDragX < -50) {
+      navigateInspectorDate(1);
+    } else if (inspectorDragX > 50) {
+      navigateInspectorDate(-1);
+    }
+    setInspectorDragX(0);
+    setIsInspectorDragging(false);
+    inspectorTouchStartRef.current = null;
+  };
 
   const handleTouchStart = (e) => {
     setTouchStart({
@@ -359,27 +415,13 @@ export default function Calendar() {
                   );
 
                   if (selectedFriend) {
-                    if (!entry) {
-                      return (
-                        <button
-                          key={dateKey}
-                          type="button"
-                          onClick={() => setSelectedDate(dateKey)}
-                          className={`flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 rounded-2xl transition-all text-body-md font-body-md ${
-                            isSelected ? "bg-primary-container/20 ring-2 ring-primary" : ""
-                          }`}
-                        >
-                          {cellInner}
-                        </button>
-                      );
-                    }
                     return (
                       <button
                         key={dateKey}
                         type="button"
                         onClick={() => {
                           setSelectedDate(dateKey);
-                          setSelectedFriendEntry(entry);
+                          setMobileInspectorOpen(true);
                         }}
                         aria-label={`${friendName(selectedFriend)}`}
                         className={`group flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 rounded-2xl transition-all text-body-md font-body-md active:scale-95 ${
@@ -696,14 +738,17 @@ export default function Calendar() {
               );
 
               if (selectedFriend) {
-                if (!entry) {
+                if (future) {
                   return <div key={dateKey}>{cardContent}</div>;
                 }
                 return (
                   <button
                     key={dateKey}
                     type="button"
-                    onClick={() => setSelectedFriendEntry(entry)}
+                    onClick={() => {
+                      setSelectedDate(dateKey);
+                      setMobileInspectorOpen(true);
+                    }}
                     className="w-full text-left active:scale-[0.99] transition-transform"
                   >
                     {cardContent}
@@ -791,7 +836,7 @@ export default function Calendar() {
         </div>
       )}
 
-      {mobileInspectorOpen && selectedDate && !selectedFriend && (
+      {mobileInspectorOpen && selectedDate && (
         <div
           className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-on-surface/40 p-0 sm:p-container-margin backdrop-blur-xs animate-in fade-in duration-200 lg:hidden"
           role="presentation"
@@ -802,8 +847,17 @@ export default function Calendar() {
             aria-modal="true"
             aria-labelledby="mobile-inspector-title"
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-[32px] sm:rounded-[32px] bg-surface-container-lowest p-lg cloud-shadow"
+            onTouchStart={handleInspectorTouchStart}
+            onTouchMove={handleInspectorTouchMove}
+            onTouchEnd={handleInspectorTouchEnd}
+            style={{
+              transform: isInspectorDragging ? `translateX(${inspectorDragX}px)` : 'translateX(0px)',
+              transition: isInspectorDragging ? 'none' : 'transform 0.2s ease-out',
+            }}
+            className={`w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-[32px] sm:rounded-[32px] bg-surface-container-lowest p-lg cloud-shadow select-none ${inspectorSlideAnim}`}
           >
+            <div className="mx-auto mb-xs h-1.5 w-12 rounded-full bg-surface-container-high" />
+
             {(() => {
               const activeDateStr = selectedDate || getLocalDate();
               const activeEntry = entriesByDate[activeDateStr];
@@ -815,14 +869,38 @@ export default function Calendar() {
               return (
                 <div className="space-y-md">
                   <div className="flex items-center justify-between border-b border-outline-variant/40 pb-sm">
-                    <div>
-                      <span className="text-label-sm font-label-sm uppercase tracking-wider text-on-surface-variant/70">
-                        {isTodayDate ? t('common.today') : t('calendar.inspectorDate')}
-                      </span>
-                      <h3 id="mobile-inspector-title" className="text-headline-lg-mobile font-bold text-on-surface">
-                        {formattedDateStr}
-                      </h3>
+                    <div className="flex items-center gap-xs">
+                      <button
+                        type="button"
+                        onClick={() => navigateInspectorDate(-1)}
+                        aria-label="Previous day"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container active:scale-95 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">chevron_left</span>
+                      </button>
+
+                      <div className="flex items-center gap-sm">
+                        {selectedFriend && <FriendAvatar friend={selectedFriend} />}
+                        <div>
+                          <span className="text-label-sm font-label-sm uppercase tracking-wider text-on-surface-variant/70">
+                            {selectedFriend ? friendName(selectedFriend) : isTodayDate ? t('common.today') : t('calendar.inspectorDate')}
+                          </span>
+                          <h3 id="mobile-inspector-title" className="text-headline-lg-mobile font-bold text-on-surface">
+                            {formattedDateStr}
+                          </h3>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => navigateInspectorDate(1)}
+                        aria-label="Next day"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container active:scale-95 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">chevron_right</span>
+                      </button>
                     </div>
+
                     <button
                       type="button"
                       aria-label={t('common.close')}
@@ -844,7 +922,7 @@ export default function Calendar() {
                             {activeMood.label}
                           </h4>
                           <p className="text-body-sm text-on-surface-variant">
-                            {t('calendar.myEntry')}
+                            {selectedFriend ? friendName(selectedFriend) : t('calendar.myEntry')}
                           </p>
                         </div>
                       </div>
@@ -890,20 +968,22 @@ export default function Calendar() {
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
                       <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant/40">
-                        <span className="material-symbols-outlined text-[28px]">edit_calendar</span>
+                        <span className="material-symbols-outlined text-[28px]">{selectedFriend ? 'event_busy' : 'edit_calendar'}</span>
                       </span>
                       <div className="space-y-1">
                         <p className="text-body-lg font-semibold text-on-surface">
                           {t('calendar.noEntryForDate')}
                         </p>
-                        <p className="text-body-sm text-on-surface-variant">
-                          {t('calendar.clickToAddNote')}
-                        </p>
+                        {!selectedFriend && (
+                          <p className="text-body-sm text-on-surface-variant">
+                            {t('calendar.clickToAddNote')}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
 
-                  {!isFutureDate && (
+                  {!selectedFriend && !isFutureDate && (
                     <div className="pt-md border-t border-outline-variant/40">
                       <Link
                         to={`/entries/new?date=${activeDateStr}`}
