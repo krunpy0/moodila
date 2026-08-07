@@ -47,9 +47,9 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
   }, [])
 
   const handleLoadedMetadata = () => {
-    if (audioRef.current) {
+    if (audioRef.current && (!initialDuration || initialDuration <= 0)) {
       const d = Math.round(audioRef.current.duration)
-      if (!isNaN(d) && d > 0 && d !== Infinity) {
+      if (!isNaN(d) && d > 0 && d !== Infinity && d <= 300) {
         setDuration(d)
       }
     }
