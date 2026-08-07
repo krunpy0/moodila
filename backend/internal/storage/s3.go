@@ -68,7 +68,11 @@ func (s S3) PrepareUpload(userID, filename, contentType string) (PreparedUpload,
 		now = s.Now().UTC()
 	}
 	objectKey := path.Join(userID, now.Format("2006/01"), hex.EncodeToString(random)+ext)
-	return PreparedUpload{ObjectKey: objectKey, PhotoURL: s.publicURL(objectKey)}, nil
+	photoURL := s.publicURL(objectKey)
+	if resolved := s.ResolveAccessURL(&objectKey); resolved != nil {
+		photoURL = *resolved
+	}
+	return PreparedUpload{ObjectKey: objectKey, PhotoURL: photoURL}, nil
 }
 
 func (s S3) PrepareAudioUpload(userID, filename, contentType string) (PreparedUpload, error) {
@@ -88,7 +92,11 @@ func (s S3) PrepareAudioUpload(userID, filename, contentType string) (PreparedUp
 		now = s.Now().UTC()
 	}
 	objectKey := path.Join(userID, "audio", now.Format("2006/01"), hex.EncodeToString(random)+ext)
-	return PreparedUpload{ObjectKey: objectKey, PhotoURL: s.publicURL(objectKey)}, nil
+	audioURL := s.publicURL(objectKey)
+	if resolved := s.ResolveAccessURL(&objectKey); resolved != nil {
+		audioURL = *resolved
+	}
+	return PreparedUpload{ObjectKey: objectKey, PhotoURL: audioURL}, nil
 }
 
 func (s S3) CreateUpload(_ context.Context, userID, filename, contentType string) (Upload, error) {

@@ -99,7 +99,7 @@ func (h Storage) SignUpload(c *gin.Context) {
 		return
 	}
 	photoURL := prepared.PhotoURL
-	if resolved := h.Storage.ResolveAccessURL(&prepared.PhotoURL); resolved != nil {
+	if resolved := h.Storage.ResolveAccessURL(&prepared.ObjectKey); resolved != nil {
 		photoURL = *resolved
 	}
 	base := h.getUploadBaseURL(c)
@@ -512,7 +512,7 @@ func (h Storage) SignAudioUpload(c *gin.Context) {
 		return
 	}
 	audioURL := prepared.PhotoURL
-	if resolved := h.Storage.ResolveAccessURL(&prepared.PhotoURL); resolved != nil {
+	if resolved := h.Storage.ResolveAccessURL(&prepared.ObjectKey); resolved != nil {
 		audioURL = *resolved
 	}
 	base := h.getUploadBaseURL(c)

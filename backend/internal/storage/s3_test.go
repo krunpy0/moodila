@@ -40,6 +40,26 @@ func TestCreateUploadForCustomS3Endpoint(t *testing.T) {
 	}
 }
 
+func TestPrepareUploadPrivateS3(t *testing.T) {
+	s := S3{
+		IsPrivate:       true,
+		Endpoint:        "https://s3.eu-central-003.backblazeb2.com",
+		Bucket:          "moodila-uploads",
+		AccessKeyID:     "access-key",
+		SecretAccessKey: "secret-key",
+		Now:             func() time.Time { return time.Date(2026, 8, 7, 10, 0, 0, 0, time.UTC) },
+	}
+
+	prep, err := s.PrepareUpload("user-1", "photo.png", "image/png")
+	if err != nil {
+		t.Fatalf("PrepareUpload() error = %v", err)
+	}
+
+	if !strings.Contains(prep.PhotoURL, "X-Amz-Signature=") {
+		t.Errorf("expected PhotoURL in private S3 mode to contain GET presigned signature, got %q", prep.PhotoURL)
+	}
+}
+
 func TestCreateUploadRejectsUnsupportedType(t *testing.T) {
 	s := S3{Bucket: "photos", AccessKeyID: "key", SecretAccessKey: "secret"}
 	_, err := s.CreateUpload(t.Context(), "user-1", "file.pdf", "application/pdf")
