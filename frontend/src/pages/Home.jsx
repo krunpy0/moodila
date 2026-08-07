@@ -350,6 +350,26 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
+                  <Link
+                    to="/stats"
+                    className="col-span-2 flex items-center justify-between gap-md rounded-[24px] lg:rounded-[32px] bg-primary text-on-primary p-md lg:p-5 cloud-shadow hover:shadow-md hover:opacity-95 transition-all hover:scale-[1.01] active:scale-[0.98] group"
+                  >
+                    <div className="flex items-center gap-sm lg:gap-md">
+                      <div className="flex h-10 w-10 lg:h-12 lg:w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-on-primary">
+                        <span className="material-symbols-outlined text-[22px] lg:text-[26px]">
+                          insights
+                        </span>
+                      </div>
+                      <span className="text-body-md font-bold lg:text-headline-sm">
+                        {t("home.viewDetailedStats")}
+                      </span>
+                    </div>
+                    <div className="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-1">
+                      <span className="material-symbols-outlined text-[20px] lg:text-[24px]">
+                        arrow_forward
+                      </span>
+                    </div>
+                  </Link>
                 </section>
               </div>
             </div>

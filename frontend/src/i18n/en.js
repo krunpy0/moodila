@@ -98,6 +98,7 @@ export const en = {
     thisMonth: "This month",
     noNote: "No note for this day.",
     emptyRecent: "Your recent entries will appear here.",
+    viewDetailedStats: "View detailed analytics",
   },
 
   // Stats / Analytics Page

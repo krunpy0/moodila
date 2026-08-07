@@ -97,6 +97,7 @@ export const ru = {
     thisMonth: 'Этот месяц',
     noNote: 'Без заметки.',
     emptyRecent: 'Здесь будут ваши последние записи.',
+    viewDetailedStats: 'Смотреть подробную аналитику',
   },
 
   // Stats / Analytics Page
