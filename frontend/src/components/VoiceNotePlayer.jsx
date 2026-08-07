@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { apiURL } from '../api/client'
+import { notifyAudioPlaybackStarted, subscribeAudioPlaybackStart } from '../utils/audioManager'
 
 const WAVEFORM_HEIGHTS = [
   35, 60, 40, 75, 50, 90, 65, 40, 80, 100, 70, 45, 85, 95, 60, 40, 75, 50, 85, 90, 60, 40, 55, 35, 65, 80, 45, 30
@@ -35,6 +36,15 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
       setDuration(initialDuration)
     }
   }, [initialDuration])
+
+  useEffect(() => {
+    const unsubscribe = subscribeAudioPlaybackStart((source) => {
+      if (audioRef.current && source !== audioRef.current) {
+        audioRef.current.pause()
+      }
+    })
+    return () => unsubscribe()
+  }, [])
 
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
@@ -80,7 +90,7 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
 
   const handleSeek = (index, e) => {
     if (e) e.stopPropagation()
-    if (!audioRef.current || !duration) return
+    if (!audioRef.current || !duration || isNaN(duration)) return
     const targetRatio = (index + 1) / WAVEFORM_HEIGHTS.length
     const targetTime = targetRatio * duration
     audioRef.current.currentTime = targetTime
@@ -105,7 +115,12 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
       <audio
         ref={audioRef}
         src={src}
-        onPlay={() => setIsPlaying(true)}
+        onPlay={() => {
+          setIsPlaying(true)
+          if (audioRef.current) {
+            notifyAudioPlaybackStarted(audioRef.current)
+          }
+        }}
         onPause={() => setIsPlaying(false)}
         onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}

@@ -97,12 +97,15 @@ func (h Entries) Save(c *gin.Context) {
 		return
 	}
 
-	entry, err := h.Entries.Save(
+	entry, replaced, err := h.Entries.Save(
 		c.Request.Context(), c.GetString("userID"), input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save entry"})
 		return
+	}
+	if len(replaced) > 0 {
+		h.cleanupAttachments(c.Request.Context(), c.GetString("userID"), replaced)
 	}
 	c.JSON(http.StatusOK, h.resolveEntry(entry))
 }

@@ -69,13 +69,13 @@ func TestHiddenEntriesE2E(t *testing.T) {
 	isTrue := true
 
 	// User A creates Entry 1 (public, is_hidden=false)
-	entry1, err := entriesRepo.Save(ctx, userA.ID, date1, 4, []string{"Calm"}, "Public note", nil, nil, nil, &isFalse)
+	entry1, _, err := entriesRepo.Save(ctx, userA.ID, date1, 4, []string{"Calm"}, "Public note", nil, nil, nil, &isFalse)
 	if err != nil {
 		t.Fatalf("save entry 1: %v", err)
 	}
 
 	// User A creates Entry 2 (hidden, is_hidden=true)
-	entry2, err := entriesRepo.Save(ctx, userA.ID, date2, 5, []string{"Secret"}, "Hidden note", nil, nil, nil, &isTrue)
+	entry2, _, err := entriesRepo.Save(ctx, userA.ID, date2, 5, []string{"Secret"}, "Hidden note", nil, nil, nil, &isTrue)
 	if err != nil {
 		t.Fatalf("save entry 2: %v", err)
 	}

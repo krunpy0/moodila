@@ -96,7 +96,11 @@ export const requestAudioUpload = (file) =>
   })
 
 export async function uploadEntryAudio(audioBlob) {
-  const file = new File([audioBlob], audioBlob.name || 'voicenote.webm', { type: audioBlob.type || 'audio/webm' })
+  const mime = audioBlob.type || 'audio/webm'
+  const isMp4 = mime.includes('mp4') || mime.includes('aac') || mime.includes('m4a')
+  const defaultName = isMp4 ? 'voicenote.m4a' : 'voicenote.webm'
+  const defaultType = isMp4 ? 'audio/mp4' : 'audio/webm'
+  const file = new File([audioBlob], audioBlob.name || defaultName, { type: mime || defaultType })
   const { upload_url: uploadURL, audio_url: audioURL } = await requestAudioUpload(file)
   const csrfToken = getCSRFToken()
   const response = await fetch(apiURL(uploadURL), {

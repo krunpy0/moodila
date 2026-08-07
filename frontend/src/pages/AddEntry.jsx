@@ -92,6 +92,21 @@ export default function AddEntry() {
         : [...current.tags, tag],
     }))
 
+  const getSupportedMimeType = () => {
+    if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return ''
+    const candidateTypes = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/aac',
+      'audio/ogg;codecs=opus',
+    ]
+    for (const type of candidateTypes) {
+      if (MediaRecorder.isTypeSupported(type)) return type
+    }
+    return ''
+  }
+
   const startRecording = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       notify('Microphone access is not supported in your browser.', 'error')
@@ -100,7 +115,9 @@ export default function AddEntry() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       audioChunksRef.current = []
-      const recorder = new MediaRecorder(stream)
+      const mimeType = getSupportedMimeType()
+      const recorderOptions = mimeType ? { mimeType } : undefined
+      const recorder = new MediaRecorder(stream, recorderOptions)
       mediaRecorderRef.current = recorder
 
       recorder.ondataavailable = (event) => {
@@ -111,7 +128,8 @@ export default function AddEntry() {
 
       recorder.onstop = () => {
         stream.getTracks().forEach((track) => track.stop())
-        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+        const finalMime = recorder.mimeType || mimeType || 'audio/webm'
+        const blob = new Blob(audioChunksRef.current, { type: finalMime })
         setAudioBlob(blob)
         clearInterval(recordingTimerRef.current)
         setIsRecording(false)

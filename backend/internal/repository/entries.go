@@ -146,7 +146,10 @@ func (r Entries) getCache() *SummaryCache {
 	return defaultSummaryCache
 }
 
-func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool) (models.Entry, error) {
+func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool) (models.Entry, []AttachmentURLs, error) {
+	var oldAtt AttachmentURLs
+	_ = r.Pool.QueryRow(ctx, `SELECT photo_url, audio_url FROM entries WHERE user_id = $1 AND date = $2`, userID, date).Scan(&oldAtt.PhotoURL, &oldAtt.AudioURL)
+
 	var entry models.Entry
 	err := r.Pool.QueryRow(ctx, `
 		INSERT INTO entries (user_id, date, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden)
@@ -165,10 +168,24 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
 		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
-	if err == nil {
-		r.getCache().InvalidateUser(userID)
+	if err != nil {
+		return models.Entry{}, nil, err
 	}
-	return entry, err
+	r.getCache().InvalidateUser(userID)
+
+	var replaced []AttachmentURLs
+	if oldAtt.PhotoURL != nil && *oldAtt.PhotoURL != "" {
+		if entry.PhotoURL == nil || *entry.PhotoURL != *oldAtt.PhotoURL {
+			replaced = append(replaced, AttachmentURLs{PhotoURL: oldAtt.PhotoURL})
+		}
+	}
+	if oldAtt.AudioURL != nil && *oldAtt.AudioURL != "" {
+		if entry.AudioURL == nil || *entry.AudioURL != *oldAtt.AudioURL {
+			replaced = append(replaced, AttachmentURLs{AudioURL: oldAtt.AudioURL})
+		}
+	}
+
+	return entry, replaced, nil
 }
 
 func (r Entries) ByDate(ctx context.Context, userID, date string) (models.Entry, error) {
