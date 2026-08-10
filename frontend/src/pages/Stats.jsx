@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useStatsQuery } from "../api/queries";
 import AppLayout from "../components/AppLayout";
 import MoodIcon from "../components/MoodIcon";
-import { getMoodInfo, getLocalizedTag } from "../utils/moods";
+import { getMoodInfo, getLocalizedTag, getLocalizedInsightText } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
 import { StatsSkeleton } from "../components/skeleton/PageSkeletons";
 import { safeNavigateBack } from "../utils/navigation";
@@ -82,7 +82,7 @@ export default function Stats() {
                       </span>
                       <div className="flex-1">
                         <p className="text-body-md font-medium text-on-surface leading-snug">
-                          {insight.text}
+                          {getLocalizedInsightText(insight, t)}
                         </p>
                       </div>
                     </div>

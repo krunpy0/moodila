@@ -528,6 +528,7 @@ func generateInsights(stats models.StatsResponse, today string) []models.StatIns
 			TemplateKey: "insight.day_lower",
 			Text:        fmt.Sprintf("Настроение обычно ниже по %s (на %.1f ниже среднего)", pluralRu, diff),
 			Params: map[string]interface{}{
+				"day":      minDay.Day,
 				"day_ru":   pluralRu,
 				"day_name": minDay.DayName,
 				"diff":     diff,
@@ -542,6 +543,7 @@ func generateInsights(stats models.StatsResponse, today string) []models.StatIns
 			TemplateKey: "insight.day_higher",
 			Text:        fmt.Sprintf("Настроение обычно выше по %s (на %.1f выше среднего)", pluralRu, diff),
 			Params: map[string]interface{}{
+				"day":      maxDay.Day,
 				"day_ru":   pluralRu,
 				"day_name": maxDay.DayName,
 				"diff":     diff,
