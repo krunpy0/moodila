@@ -21,7 +21,7 @@ Thumbs.db
 credentials*.json
 *.json.key
 secrets/
-
+.agents/
 # =========================
 # Logs
 # =========================
