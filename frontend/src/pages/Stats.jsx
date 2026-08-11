@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useStatsQuery } from "../api/queries";
 import AppLayout from "../components/AppLayout";
@@ -263,7 +263,7 @@ export default function Stats() {
             </section>
 
             {/* Annual Heatmap (GitHub Contribution Style) */}
-            <section className="rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-md lg:p-8 cloud-shadow space-y-md overflow-x-auto">
+            <section className="rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-md lg:p-8 cloud-shadow space-y-md">
               <div className="flex items-center justify-between">
                 <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">grid_on</span>
@@ -416,15 +416,25 @@ function DayOfWeekBarChart({ data, t, language }) {
   );
 }
 
-/* Annual Heatmap Component (Custom SVG 365 Days Grid) */
+/* Annual Heatmap Component (GitHub Contribution Style) */
 function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
+  const scrollRef = useRef(null);
+  const { language } = useLanguage();
+
+  const monthsRu = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+  const monthsEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const months = language === "ru" ? monthsRu : monthsEn;
+
+  const dayLabelsRu = ["Пн", "", "Ср", "", "Пт", "", ""];
+  const dayLabelsEn = ["Mon", "", "Wed", "", "Fri", "", ""];
+  const dayLabels = language === "ru" ? dayLabelsRu : dayLabelsEn;
+
   const weeks = useMemo(() => {
     if (!heatmapData || heatmapData.length === 0) return [];
 
     const result = [];
     let currentWeek = [];
 
-    // Pad first week if initial day of year is not Monday
     const firstDay = heatmapData[0];
     const firstDow = firstDay.day_of_week; // 1=Mon..7=Sun
     for (let i = 1; i < firstDow; i++) {
@@ -449,81 +459,201 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
     return result;
   }, [heatmapData]);
 
+  // Compute month label positions
+  const monthHeaders = useMemo(() => {
+    if (!weeks.length) return [];
+    const headers = [];
+    let lastMonth = -1;
+
+    weeks.forEach((week, wIdx) => {
+      const validDay = week.find((d) => d !== null);
+      if (!validDay) return;
+      const mIdx = parseInt(validDay.date.split("-")[1], 10) - 1;
+      if (mIdx !== lastMonth) {
+        lastMonth = mIdx;
+        headers.push({
+          monthIdx: mIdx,
+          weekIdx: wIdx,
+          name: months[mIdx],
+        });
+      }
+    });
+
+    return headers;
+  }, [weeks, months]);
+
+  // Auto-scroll to rightmost (current date) on mount/update
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [weeks]);
+
   const moodColors = {
-    1: "bg-red-400 border-red-500",
-    2: "bg-orange-300 border-orange-400",
-    3: "bg-amber-300 border-amber-400",
-    4: "bg-emerald-300 border-emerald-400",
-    5: "bg-emerald-500 border-emerald-600",
+    1: "bg-red-400 border-red-500/40 dark:bg-red-500/80",
+    2: "bg-orange-300 border-orange-400/40 dark:bg-orange-400/80",
+    3: "bg-amber-300 border-amber-400/40 dark:bg-amber-400/80",
+    4: "bg-emerald-300 border-emerald-400/40 dark:bg-emerald-400/80",
+    5: "bg-emerald-500 border-emerald-600/40 dark:bg-emerald-600",
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr + "T00:00:00");
+      return date.toLocaleDateString(language === "ru" ? "ru-RU" : "en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  if (!heatmapData || heatmapData.length === 0) {
+    return (
+      <div className="py-8 text-center text-body-sm text-on-surface-variant/70 italic">
+        {t("stats.noData")}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-md min-w-[640px]">
-      {/* Grid */}
-      <div className="flex gap-1">
-        {weeks.map((week, wIdx) => (
-          <div key={wIdx} className="flex flex-col gap-1">
-            {week.map((day, dIdx) => {
+    <div className="space-y-md w-full">
+      {/* Scrollable Heatmap Container */}
+      <div
+        ref={scrollRef}
+        className="overflow-x-auto scrollbar-thin touch-pan-x pb-2 pt-1 relative rounded-lg"
+      >
+        <div
+          className="grid gap-[3px] inline-grid select-none"
+          style={{
+            gridTemplateColumns: `auto repeat(${weeks.length}, minmax(11px, 12px))`,
+            gridTemplateRows: `auto repeat(7, minmax(11px, 12px))`,
+          }}
+        >
+          {/* Sticky top-left corner */}
+          <div className="sticky left-0 bg-surface-container-lowest z-20 pr-2 border-r border-outline-variant/10 shadow-[2px_0_4px_rgba(0,0,0,0.03)]" />
+
+          {/* Month Headers */}
+          {monthHeaders.map((header) => (
+            <div
+              key={`${header.monthIdx}-${header.weekIdx}`}
+              className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap overflow-visible leading-none pb-1"
+              style={{
+                gridRow: 1,
+                gridColumnStart: header.weekIdx + 2,
+              }}
+            >
+              {header.name}
+            </div>
+          ))}
+
+          {/* Sticky Day Labels */}
+          {dayLabels.map((label, dIdx) => (
+            <div
+              key={dIdx}
+              className="sticky left-0 bg-surface-container-lowest z-20 pr-2 flex items-center justify-end text-[10px] font-medium text-on-surface-variant/60 leading-none border-r border-outline-variant/10 shadow-[2px_0_4px_rgba(0,0,0,0.03)] min-w-[24px]"
+              style={{
+                gridRow: dIdx + 2,
+                gridColumn: 1,
+              }}
+            >
+              {label}
+            </div>
+          ))}
+
+          {/* Heatmap Grid Cells */}
+          {weeks.map((week, wIdx) =>
+            week.map((day, dIdx) => {
               if (!day) {
-                return <div key={dIdx} className="h-3 w-3 rounded-xs opacity-0" />;
+                return (
+                  <div
+                    key={`empty-${wIdx}-${dIdx}`}
+                    style={{
+                      gridRow: dIdx + 2,
+                      gridColumn: wIdx + 2,
+                    }}
+                    className="h-3 w-3 rounded-[2px] opacity-0 pointer-events-none"
+                  />
+                );
               }
+
               const hasMood = day.mood !== null && day.mood !== undefined;
               const isSelected = activeDay?.date === day.date;
+
               return (
                 <button
                   key={day.date}
                   type="button"
-                  title={`${day.date}: ${hasMood ? `${day.mood}/5` : t("stats.noData")}`}
+                  title={`${formatDate(day.date)}: ${hasMood ? `${day.mood}/5` : t("stats.noData")}`}
                   onClick={() => setActiveDay(day)}
-                  className={`h-3 w-3 rounded-xs border transition-transform hover:scale-125 ${
+                  style={{
+                    gridRow: dIdx + 2,
+                    gridColumn: wIdx + 2,
+                  }}
+                  className={`h-3 w-3 rounded-[2px] border transition-all ${
                     hasMood
                       ? moodColors[day.mood]
-                      : "bg-surface-container-low border-outline-variant/30 opacity-70"
-                  } ${isSelected ? "ring-2 ring-primary scale-125 z-10" : ""}`}
+                      : "bg-surface-container-low border-outline-variant/20 dark:bg-surface-container/60 hover:border-outline-variant/60"
+                  } ${
+                    isSelected
+                      ? "ring-2 ring-primary ring-offset-1 ring-offset-surface-container-lowest z-10 scale-125"
+                      : "hover:scale-125 hover:z-10"
+                  }`}
                 />
               );
-            })}
-          </div>
-        ))}
+            })
+          )}
+        </div>
       </div>
 
       {/* Selected Day Tooltip Detail */}
       {activeDay && (
-        <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-2 px-3 text-body-sm">
-          <span>
-            <strong>{activeDay.date}</strong>:{" "}
-            {activeDay.mood ? (
-              <span className="font-bold text-primary">
-                {t(`moods.${activeDay.mood}`)} ({activeDay.mood}/5)
-              </span>
-            ) : (
-              <span className="text-on-surface-variant/70">{t("stats.noData")}</span>
-            )}
-          </span>
+        <div className="flex items-center justify-between rounded-2xl bg-surface-container-low p-3 text-body-sm cloud-shadow animate-fade-in border border-outline-variant/15">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
+            <div>
+              <span className="font-semibold text-on-surface">{formatDate(activeDay.date)}</span>
+              <span className="text-on-surface-variant/70 mx-1.5">•</span>
+              {activeDay.mood ? (
+                <span className="font-bold text-primary">
+                  {t(`moods.${activeDay.mood}`)} ({activeDay.mood}/5)
+                </span>
+              ) : (
+                <span className="text-on-surface-variant/70">{t("stats.noData")}</span>
+              )}
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setActiveDay(null)}
-            className="text-label-sm font-bold text-primary hover:underline"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            aria-label={t("common.close")}
           >
-            {t("common.close")}
+            <span className="material-symbols-outlined text-[18px]">close</span>
           </button>
         </div>
       )}
 
-      {/* Legend */}
-      <div className="flex items-center justify-between text-label-sm text-on-surface-variant/80 pt-xs">
-        <span className="font-medium">{t("stats.heatmapLegend")}</span>
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1">
-            <span className="h-3 w-3 rounded-xs bg-surface-container-low border border-outline-variant/30" />
-            <span>{t("stats.noData")}</span>
-          </span>
+      {/* GitHub-style Legend */}
+      <div className="flex flex-wrap items-center justify-between gap-sm text-label-sm text-on-surface-variant/80 pt-xs border-t border-outline-variant/15">
+        <span className="font-medium text-[12px]">{t("stats.heatmapLegend")}</span>
+        <div className="flex items-center gap-1.5 text-[11px]">
+          <span className="text-on-surface-variant/70 mr-0.5">{t("stats.less", "Less")}</span>
+          <span
+            className="h-3 w-3 rounded-[2px] bg-surface-container-low border border-outline-variant/20 dark:bg-surface-container/60"
+            title={t("stats.noData")}
+          />
           {[1, 2, 3, 4, 5].map((m) => (
-            <span key={m} className="flex items-center gap-1">
-              <span className={`h-3 w-3 rounded-xs border ${moodColors[m]}`} />
-              <span>{m}</span>
-            </span>
+            <span
+              key={m}
+              className={`h-3 w-3 rounded-[2px] border ${moodColors[m]}`}
+              title={`${m}/5`}
+            />
           ))}
+          <span className="text-on-surface-variant/70 ml-0.5">{t("stats.more", "More")}</span>
         </div>
       </div>
     </div>

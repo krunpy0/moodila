@@ -135,6 +135,8 @@ export const en = {
     moodDistribution: "Mood Distribution",
     annualHeatmap: "Annual Mood Heatmap",
     heatmapLegend: "Legend",
+    less: "Less",
+    more: "More",
     noData: "No data",
     insufficientData: "Not enough data",
     minTagDataNote: "Only tags with at least 3 entries are highlighted",

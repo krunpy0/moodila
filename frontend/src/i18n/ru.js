@@ -134,6 +134,8 @@ export const ru = {
     moodDistribution: 'Распределение настроения',
     annualHeatmap: 'Годовой календарь настроения',
     heatmapLegend: 'Легенда',
+    less: 'Меньше',
+    more: 'Больше',
     noData: 'Нет данных',
     insufficientData: 'Недостаточно данных',
     minTagDataNote: 'Показываются теги минимум с 3 записями',
