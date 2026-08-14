@@ -95,3 +95,43 @@ export function getLocalizedTag(tag, t) {
   if (!t) return tag;
   return t(`moods.tags.${tag}`, tag);
 }
+
+export function getLocalizedInsightText(insight, t) {
+  if (!insight) return "";
+
+  const rawKey = insight.template_key || insight.templateKey;
+  let key = rawKey;
+  if (rawKey && rawKey.startsWith("insight.")) {
+    key = `stats.insights.${rawKey.replace("insight.", "")}`;
+  } else if (!rawKey && insight.id) {
+    if (insight.id.startsWith("day_lower")) key = "stats.insights.day_lower";
+    else if (insight.id.startsWith("day_higher")) key = "stats.insights.day_higher";
+    else if (insight.id.startsWith("tag_lower")) key = "stats.insights.tag_lower";
+    else if (insight.id.startsWith("tag_higher")) key = "stats.insights.tag_higher";
+  }
+
+  if (key && t) {
+    const params = { ...(insight.params || {}) };
+    if (params.day !== undefined && params.day !== null) {
+      const localizedDay = t(`stats.insights.daysPlural.${params.day}`);
+      if (localizedDay && localizedDay !== `stats.insights.daysPlural.${params.day}`) {
+        params.day = localizedDay;
+      } else {
+        params.day = params.day_ru || params.day_name || params.day;
+      }
+    } else if (params.day_ru) {
+      params.day = params.day_ru;
+    }
+
+    if (params.tag) {
+      params.tag = getLocalizedTag(params.tag, t);
+    }
+
+    const translated = t(key, params);
+    if (translated && translated !== key) {
+      return translated;
+    }
+  }
+
+  return insight.text || "";
+}

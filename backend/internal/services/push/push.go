@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -86,6 +87,7 @@ func (s *Service) SendToUser(ctx context.Context, userID string, payload models.
 
 			err := s.sendPushNotification(sendCtx, sub, payloadBytes)
 			if err != nil {
+				log.Printf("[push] failed to send to endpoint %s: %v", sub.Endpoint, err)
 				// If push endpoint returned 404 Not Found or 410 Gone, subscription is invalid/expired
 				if strings.Contains(err.Error(), "status 404") || strings.Contains(err.Error(), "status 410") {
 					_ = s.repo.DeleteByEndpointGlobal(sendCtx, sub.Endpoint)
@@ -221,7 +223,7 @@ func encryptAES128GCM(payload []byte, peerP256dhB64, peerAuthB64 string) ([]byte
 
 	localPubBytes := localKey.PublicKey().Bytes()
 
-	// 1. Derive ikm using HKDF-Extract with peerAuth
+	// 1. Derive IKM from ECDH shared secret using auth as salt (RFC 8291 Section 3.3)
 	authInfo := append([]byte("WebPush: info\x00"), peerP256dh...)
 	authInfo = append(authInfo, localPubBytes...)
 
@@ -237,21 +239,17 @@ func encryptAES128GCM(payload []byte, peerP256dhB64, peerAuthB64 string) ([]byte
 		return nil, err
 	}
 
-	// 3. Derive PRK from ikm and salt
-	prkReader := hkdf.New(sha256.New, ikm, salt, []byte("Content-Encoding: aes128gcm\x00"))
-	prk := make([]byte, 32)
-	if _, err := io.ReadFull(prkReader, prk); err != nil {
-		return nil, err
-	}
+	// 3. Derive PRK via HKDF-Extract (RFC 8188 Section 2.2)
+	prk := hkdf.Extract(sha256.New, ikm, salt)
 
-	// 4. Derive CEK (16 bytes) and Nonce (12 bytes)
-	cekReader := hkdf.New(sha256.New, prk, nil, []byte("Content-Encoding: aes128gcm\x00"))
+	// 4. Derive CEK (16 bytes) and Nonce (12 bytes) via HKDF-Expand
+	cekReader := hkdf.Expand(sha256.New, prk, []byte("Content-Encoding: aes128gcm\x00"))
 	cek := make([]byte, 16)
 	if _, err := io.ReadFull(cekReader, cek); err != nil {
 		return nil, err
 	}
 
-	nonceReader := hkdf.New(sha256.New, prk, nil, []byte("Content-Encoding: nonce\x00"))
+	nonceReader := hkdf.Expand(sha256.New, prk, []byte("Content-Encoding: nonce\x00"))
 	nonce := make([]byte, 12)
 	if _, err := io.ReadFull(nonceReader, nonce); err != nil {
 		return nil, err
