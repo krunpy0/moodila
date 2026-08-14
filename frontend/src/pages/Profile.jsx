@@ -40,6 +40,7 @@ export default function Profile() {
     setForm({
       display_name: user?.display_name || "",
       avatar_url: currentAvatar,
+      username: user?.username || "",
     });
     setAvatarStatus("");
     setEditing(true);
@@ -69,7 +70,7 @@ export default function Profile() {
         notify(t("common.success"));
         if (oldAvatar && oldAvatar !== newAvatar) {
           deleteStorageObject(oldAvatar).catch((err) =>
-            console.warn("Could not delete old avatar from storage:", err)
+            console.warn("Could not delete old avatar from storage:", err),
           );
         }
       },
@@ -129,7 +130,7 @@ export default function Profile() {
       const prevTemp = form?.avatar_url;
       if (prevTemp && prevTemp !== initialAvatarUrl) {
         deleteStorageObject(prevTemp).catch((err) =>
-          console.warn("Could not delete previous temporary avatar:", err)
+          console.warn("Could not delete previous temporary avatar:", err),
         );
       }
       setForm((current) => ({ ...current, avatar_url: avatarURL }));
@@ -143,7 +144,6 @@ export default function Profile() {
       setIsUploadingAvatar(false);
     }
   };
-
 
   return (
     <AppLayout>
@@ -309,8 +309,8 @@ export default function Profile() {
                   {(profile.recent_entries || []).map((entry) => {
                     const isRich = Boolean(
                       entry.audio_url ||
-                        (entry.photo_url && (entry.audio_url || entry.text)) ||
-                        (entry.text && entry.text.length > 80)
+                      (entry.photo_url && (entry.audio_url || entry.text)) ||
+                      (entry.text && entry.text.length > 80),
                     );
                     return (
                       <Link
@@ -335,7 +335,10 @@ export default function Profile() {
                           <span
                             className={`flex h-8 w-8 items-center justify-center rounded-full ${getMoodInfo(entry.mood, t).bg}`}
                           >
-                            <MoodIcon mood={entry.mood} className="text-[20px]" />
+                            <MoodIcon
+                              mood={entry.mood}
+                              className="text-[20px]"
+                            />
                           </span>
                         </div>
                         {entry.photo_url && (
@@ -345,7 +348,9 @@ export default function Profile() {
                               alt="Entry photo"
                               className={`${isRich ? "h-36 sm:h-48" : "h-20"} w-full object-cover rounded-xl`}
                               containerClassName="rounded-xl"
-                              skeletonHeightClass={isRich ? "h-36 sm:h-48" : "h-20"}
+                              skeletonHeightClass={
+                                isRich ? "h-36 sm:h-48" : "h-20"
+                              }
                             />
                           </div>
                         )}
@@ -597,8 +602,9 @@ function Avatar({ user, large = false }) {
   const classes = large
     ? "h-[112px] w-[112px] text-headline-lg cloud-shadow"
     : "h-10 w-10 text-body-md";
-  const initials = (user.display_name || user.username)
+  const initials = (user.display_name || user.username || "?")
     .split(/\s+/)
+    .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0])
     .join("")
