@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -47,6 +48,8 @@ func (h Feed) List(c *gin.Context) {
 
 	entries, nextCursor, err := h.Feed.List(c.Request.Context(), c.GetString("userID"), limit, cursor, includeSelf)
 	if err != nil {
+		log.Printf("[ERROR] Feed.List (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load feed"})
 		return
 	}
@@ -88,6 +91,8 @@ func (h Feed) Like(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Feed.Like (user=%s, entry=%s): %v", c.GetString("userID"), entryID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not react to entry"})
 		return
 	}
@@ -117,6 +122,8 @@ func (h Feed) GetReactions(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Feed.GetReactions (user=%s, entry=%s): %v", c.GetString("userID"), entryID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load reactions"})
 		return
 	}
@@ -142,6 +149,8 @@ func (h Feed) GetComments(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Feed.GetComments (user=%s, entry=%s): %v", c.GetString("userID"), entryID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load comments"})
 		return
 	}
@@ -179,6 +188,8 @@ func (h Feed) AddComment(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Feed.AddComment (user=%s, entry=%s): %v", c.GetString("userID"), entryID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not add comment"})
 		return
 	}
@@ -207,11 +218,14 @@ func (h Feed) DeleteComment(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Feed.DeleteComment (user=%s, comment=%s): %v", c.GetString("userID"), commentID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete comment"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "comment deleted"})
 }
+
 
 func (h Feed) available(c *gin.Context) bool {
 	if h.Feed.Pool != nil {

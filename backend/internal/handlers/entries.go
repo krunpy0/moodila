@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -21,16 +22,21 @@ type Entries struct {
 	Storage storage.S3
 }
 
+type friendOverrideInput struct {
+	FriendID string `json:"friend_id"`
+	IsHidden *bool  `json:"is_hidden"`
+}
 
 type entryInput struct {
-	Date          string   `json:"date"`
-	Mood          int      `json:"mood"`
-	Tags          []string `json:"tags"`
-	Text          string   `json:"text"`
-	PhotoURL      *string  `json:"photo_url"`
-	AudioURL      *string  `json:"audio_url"`
-	AudioDuration *int     `json:"audio_duration"`
-	IsHidden      *bool    `json:"is_hidden"`
+	Date            string                `json:"date"`
+	Mood            int                   `json:"mood"`
+	Tags            []string              `json:"tags"`
+	Text            string                `json:"text"`
+	PhotoURL        *string               `json:"photo_url"`
+	AudioURL        *string               `json:"audio_url"`
+	AudioDuration   *int                  `json:"audio_duration"`
+	IsHidden        *bool                 `json:"is_hidden"`
+	FriendOverrides []friendOverrideInput `json:"friend_overrides"`
 }
 
 type visibilityInput struct {
@@ -97,18 +103,69 @@ func (h Entries) Save(c *gin.Context) {
 		return
 	}
 
+	userID := c.GetString("userID")
+	var overrides []models.EntryFriendOverride
+	if input.FriendOverrides != nil {
+		seen := make(map[string]bool)
+		overrides = make([]models.EntryFriendOverride, 0, len(input.FriendOverrides))
+		for _, ov := range input.FriendOverrides {
+			fID := strings.TrimSpace(ov.FriendID)
+			if !validUUID(fID) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "friend_id must be a valid UUID in friend_overrides", "field": "friend_overrides"})
+				return
+			}
+			if ov.IsHidden == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "is_hidden (boolean) is required for each friend override", "field": "friend_overrides"})
+				return
+			}
+			if seen[fID] {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "duplicate friend_id in friend_overrides", "field": "friend_overrides"})
+				return
+			}
+			seen[fID] = true
+
+			var isFriend bool
+			err := h.Entries.Pool.QueryRow(c.Request.Context(), `
+				SELECT EXISTS (
+					SELECT 1 FROM friendships
+					WHERE status = 'accepted'
+					  AND ((requester_id = $1 AND addressee_id = $2)
+					    OR (requester_id = $2 AND addressee_id = $1))
+				)`, userID, fID).Scan(&isFriend)
+			if err != nil {
+				log.Printf("[ERROR] Entries.Save check friend (user=%s, friend=%s): %v", userID, fID, err)
+				_ = c.Error(err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify friendship"})
+				return
+			}
+			if !isFriend {
+				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("user %s is not an accepted friend", fID), "field": "friend_overrides"})
+				return
+			}
+
+			overrides = append(overrides, models.EntryFriendOverride{
+				FriendID: fID,
+				IsHidden: *ov.IsHidden,
+			})
+		}
+	}
+
 	entry, replaced, err := h.Entries.Save(
-		c.Request.Context(), c.GetString("userID"), input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden,
+		c.Request.Context(), userID, input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden, overrides,
 	)
 	if err != nil {
+		log.Printf("[ERROR] Entries.Save (user=%s, date=%s): %v", userID, input.Date, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save entry"})
 		return
 	}
 	if len(replaced) > 0 {
-		h.cleanupAttachments(c.Request.Context(), c.GetString("userID"), replaced)
+		h.cleanupAttachments(c.Request.Context(), userID, replaced)
 	}
 	c.JSON(http.StatusOK, h.resolveEntry(entry))
 }
+
+
 
 func (h Entries) resolveEntry(e models.Entry) models.Entry {
 	e.PhotoURL = h.Storage.ResolveAccessURL(e.PhotoURL)
@@ -145,6 +202,8 @@ func (h Entries) Me(c *gin.Context) {
 			nextMonth,
 		)
 		if err != nil {
+			log.Printf("[ERROR] Entries.Me ByMonth (user=%s, month=%s): %v", c.GetString("userID"), month, err)
+			_ = c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load entries"})
 			return
 		}
@@ -163,6 +222,8 @@ func (h Entries) Me(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Entries.Me ByDate (user=%s, date=%s): %v", c.GetString("userID"), date, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load entry"})
 		return
 	}
@@ -182,6 +243,8 @@ func (h Entries) Summary(c *gin.Context) {
 	}
 	summary, err := h.Entries.Summary(c.Request.Context(), c.GetString("userID"), month, nextMonth)
 	if err != nil {
+		log.Printf("[ERROR] Entries.Summary (user=%s, month=%s): %v", c.GetString("userID"), month, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load summary"})
 		return
 	}
@@ -214,6 +277,8 @@ func (h Entries) Friend(c *gin.Context) {
 	} else {
 		allowed, err = h.Entries.CanViewFriend(c.Request.Context(), requesterID, friendID)
 		if err != nil {
+			log.Printf("[ERROR] Entries.Friend CanViewFriend (requester=%s, friend=%s): %v", requesterID, friendID, err)
+			_ = c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify friendship"})
 			return
 		}
@@ -223,8 +288,10 @@ func (h Entries) Friend(c *gin.Context) {
 		return
 	}
 
-	entries, err := h.Entries.VisibleByMonth(c.Request.Context(), friendID, month, nextMonth)
+	entries, err := h.Entries.VisibleByMonth(c.Request.Context(), friendID, requesterID, month, nextMonth)
 	if err != nil {
+		log.Printf("[ERROR] Entries.Friend VisibleByMonth (requester=%s, friend=%s, month=%s): %v", requesterID, friendID, month, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friend entries"})
 		return
 	}
@@ -259,6 +326,8 @@ func (h Entries) Visibility(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Entries.Visibility (user=%s, entry=%s): %v", c.GetString("userID"), entryID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update visibility"})
 		return
 	}
@@ -304,6 +373,8 @@ func (h Entries) Delete(c *gin.Context) {
 			return
 		}
 		if err != nil {
+			log.Printf("[ERROR] Entries.Delete id (user=%s, id=%s): %v", userID, entryID, err)
+			_ = c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete entry"})
 			return
 		}
@@ -323,12 +394,16 @@ func (h Entries) Delete(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Entries.Delete date (user=%s, date=%s): %v", userID, date, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete entry"})
 		return
 	}
 	h.cleanupAttachments(c.Request.Context(), userID, attachments)
 	c.JSON(http.StatusOK, gin.H{"message": "entry deleted"})
 }
+
+
 
 
 

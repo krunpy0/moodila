@@ -25,14 +25,28 @@ func Connect(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("parse dsn: %w", err)
 	}
 	cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	cfg.ConnConfig.ConnectTimeout = 10 * time.Second
 
-	// Supabase's transaction pooler (Supavisor) closes idle server-side
-	// connections, which leaves stale conns in our pool that hang ~10s on next
-	// use. Recycle idle/old conns before that happens and health-check on
-	// acquire so a dead conn is discarded, not handed out.
-	cfg.MaxConnIdleTime = 20 * time.Second
+	cfg.MaxConns = 25
+	cfg.MinConns = 0
+	cfg.MaxConnIdleTime = 15 * time.Second
 	cfg.MaxConnLifetime = 5 * time.Minute
-	cfg.HealthCheckPeriod = 15 * time.Second
+	cfg.HealthCheckPeriod = 5 * time.Second
+	cfg.BeforeAcquire = func(ctx context.Context, c *pgx.Conn) bool {
+		if c.IsClosed() {
+			return false
+		}
+		pingCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
+		defer cancel()
+		return c.Ping(pingCtx) == nil
+	}
+
+
+
+
+
+
+
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {

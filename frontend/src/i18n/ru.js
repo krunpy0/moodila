@@ -156,8 +156,15 @@ export const ru = {
     tagsHeader: 'Что повлияло на настроение?',
     optionalNote: 'Заметка (необязательно)',
     notePlaceholder: 'Опишите ваш день или мысли...',
-    hideFromFriends: 'Скрыть от друзей',
+    hideFromFriends: 'Скрыть от всех друзей',
     hideDescription: 'Эту запись будете видеть только вы в своём календаре.',
+    friendVisibility: 'Видимость для друзей',
+    friendVisibilityDesc: 'Настройте, кто из друзей сможет увидеть именно эту запись.',
+    overrideBadge: 'Исключение',
+    resetDefaults: 'Сбросить к дефолтам',
+    visibleToFriend: 'Видно',
+    hiddenFromFriend: 'Скрыто',
+    customVisibilityBadge: 'Выборочная видимость',
     photo: 'Фото',
     addPhoto: 'Добавить фото',
     removePhoto: 'Удалить фото',
@@ -170,6 +177,17 @@ export const ru = {
     photoUploaded: 'Фото прикреплено.',
     maxPhotoSize: 'Размер фото не должен превышать 10 МБ.',
   },
+
+  friendPrivacy: {
+    title: 'Приватность для друзей',
+    subtitle: 'Видимость постов по умолчанию',
+    description: 'Выберите друзей, от которых по умолчанию будут скрыты ваши записи. Вы сможете открыть или скрыть любую отдельную запись при её создании.',
+    hideByDefault: 'Скрывать посты по умолчанию',
+    hidden: 'Скрыто',
+    visible: 'Видно',
+    noFriends: 'У вас пока нет подтвержденных друзей.',
+  },
+
 
   // Calendar Page
   calendar: {

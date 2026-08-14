@@ -61,14 +61,27 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 		LEFT JOIN friendships f ON f.status = 'accepted'
 			AND ((f.requester_id = $1 AND f.addressee_id = e.user_id)
 				OR (f.addressee_id = $1 AND f.requester_id = e.user_id))
-		WHERE (e.user_id = $1 OR (f.id IS NOT NULL AND e.is_hidden = false))`
+		LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
+		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
+		WHERE (
+			e.user_id = $1
+			OR (
+				f.id IS NOT NULL
+				AND e.is_hidden = false
+				AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
+			)
+		)`
 	} else {
 		query += `
 		JOIN friendships f ON f.status = 'accepted'
 			AND ((f.requester_id = $1 AND f.addressee_id = e.user_id)
 				OR (f.addressee_id = $1 AND f.requester_id = e.user_id))
-		WHERE e.is_hidden = false`
+		LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
+		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
+		WHERE e.is_hidden = false
+		  AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false`
 	}
+
 
 	var args []any
 	args = append(args, viewerID)
@@ -375,14 +388,21 @@ func (r Feed) canAccessEntry(ctx context.Context, viewerID, entryID string) (boo
 			LEFT JOIN friendships f ON f.status = 'accepted'
 				AND ((f.requester_id = $1 AND f.addressee_id = e.user_id)
 					OR (f.addressee_id = $1 AND f.requester_id = e.user_id))
+			LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
+			LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
 			WHERE e.id = $2
 			  AND (
 			      e.user_id = $1
-			      OR (f.id IS NOT NULL AND e.is_hidden = false)
+			      OR (
+			          f.id IS NOT NULL
+			          AND e.is_hidden = false
+			          AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
+			      )
 			  )
 		)`, viewerID, entryID).Scan(&accessible)
 	return accessible, err
 }
+
 
 type feedRow interface {
 	Scan(...any) error

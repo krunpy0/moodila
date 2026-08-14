@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 
@@ -37,6 +38,8 @@ func (h Announcements) GetUnread(c *gin.Context) {
 	userID := c.GetString("userID")
 	list, err := h.Announcements.UnreadForUser(c.Request.Context(), userID)
 	if err != nil {
+		log.Printf("[ERROR] Announcements.GetUnread (user=%s): %v", userID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch unread announcements"})
 		return
 	}
@@ -56,6 +59,8 @@ func (h Announcements) MarkRead(c *gin.Context) {
 	}
 	userID := c.GetString("userID")
 	if err := h.Announcements.MarkAsRead(c.Request.Context(), announcementID, userID); err != nil {
+		log.Printf("[ERROR] Announcements.MarkRead (user=%s, id=%s): %v", userID, announcementID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not mark announcement as read"})
 		return
 	}
@@ -70,11 +75,14 @@ func (h Announcements) ListAdmin(c *gin.Context) {
 	}
 	list, err := h.Announcements.ListAll(c.Request.Context())
 	if err != nil {
+		log.Printf("[ERROR] Announcements.ListAdmin: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not fetch announcements"})
 		return
 	}
 	c.JSON(http.StatusOK, list)
 }
+
 
 // POST /admin/announcements
 func (h Announcements) CreateAdmin(c *gin.Context) {
@@ -104,6 +112,8 @@ func (h Announcements) CreateAdmin(c *gin.Context) {
 
 	item, err := h.Announcements.Create(c.Request.Context(), input.Title, input.Body, string(input.Severity))
 	if err != nil {
+		log.Printf("[ERROR] Announcements.CreateAdmin: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create announcement"})
 		return
 	}
@@ -147,6 +157,8 @@ func (h Announcements) UpdateAdmin(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Announcements.UpdateAdmin (id=%s): %v", id, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update announcement"})
 		return
 	}
@@ -170,6 +182,8 @@ func (h Announcements) PublishAdmin(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Announcements.PublishAdmin (id=%s): %v", id, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not publish announcement"})
 		return
 	}
@@ -193,11 +207,14 @@ func (h Announcements) ArchiveAdmin(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Announcements.ArchiveAdmin (id=%s): %v", id, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not archive announcement"})
 		return
 	}
 	c.JSON(http.StatusOK, item)
 }
+
 
 func isValidSeverity(s models.Severity) bool {
 	return s == models.SeverityInfo || s == models.SeverityWarning || s == models.SeverityCritical

@@ -398,12 +398,17 @@ export default function Calendar() {
                     <>
                       <span className={`flex items-center gap-0.5 lg:text-body-lg ${today ? "font-bold text-primary" : ""}`}>
                         {date.getDate()}
-                        {!selectedFriend && entry?.is_hidden && (
+                        {!selectedFriend && entry?.is_hidden ? (
                           <span className="material-symbols-outlined text-[13px] lg:text-[15px] text-on-surface-variant/80" title={t('common.hiddenFromFriends')}>
                             lock
                           </span>
-                        )}
+                        ) : !selectedFriend && entry?.has_custom_visibility ? (
+                          <span className="material-symbols-outlined text-[13px] lg:text-[15px] text-primary" title={t('addEntry.customVisibilityBadge')}>
+                            group
+                          </span>
+                        ) : null}
                       </span>
+
                       <span className={`flex h-10 w-10 lg:h-12 lg:w-12 items-center justify-center rounded-full transition-transform group-hover:scale-105 ${mood ? `${mood.bg} ${today ? "ring-2 lg:ring-4 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
                         {entry ? (
                           <MoodIcon mood={entry.mood} className="text-[20px] lg:text-[26px]" />
@@ -474,12 +479,17 @@ export default function Calendar() {
                             {formattedDateStr}
                           </h3>
                         </div>
-                        {activeEntry?.is_hidden && !selectedFriend && (
+                        {activeEntry?.is_hidden && !selectedFriend ? (
                           <span className="flex items-center gap-1 rounded-full bg-surface-container px-3 py-1 text-label-sm font-medium text-on-surface-variant">
                             <span className="material-symbols-outlined text-[16px]">lock</span>
                             {t('common.hiddenFromFriends')}
                           </span>
-                        )}
+                        ) : activeEntry?.has_custom_visibility && !selectedFriend ? (
+                          <span className="flex items-center gap-1 rounded-full bg-primary-container/60 px-3 py-1 text-label-sm font-medium text-primary">
+                            <span className="material-symbols-outlined text-[16px]">group</span>
+                            {t('addEntry.customVisibilityBadge')}
+                          </span>
+                        ) : null}
                       </div>
 
                       {activeEntry ? (
@@ -651,14 +661,21 @@ export default function Calendar() {
                             <span className="text-label-lg font-bold text-on-surface">
                               {mood.label}
                             </span>
-                            {!selectedFriend && entry.is_hidden && (
+                            {!selectedFriend && entry.is_hidden ? (
                               <span
                                 className="material-symbols-outlined text-[14px] text-on-surface-variant/70"
                                 title={t('common.hiddenFromFriends')}
                               >
                                 lock
                               </span>
-                            )}
+                            ) : !selectedFriend && entry.has_custom_visibility ? (
+                              <span
+                                className="material-symbols-outlined text-[14px] text-primary"
+                                title={t('addEntry.customVisibilityBadge')}
+                              >
+                                group
+                              </span>
+                            ) : null}
                             {today && (
                               <span className="ml-auto sm:ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
                                 {t('common.today').toUpperCase()}

@@ -14,12 +14,6 @@ export default defineConfig({
   server: {
     host: "localhost",
     port: 5173,
-    https: hasHttps
-      ? {
-          cert: fs.readFileSync(certFile),
-          key: fs.readFileSync(keyFile),
-        }
-      : undefined,
   },
   plugins: [
     react(),

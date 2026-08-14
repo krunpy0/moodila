@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -73,16 +74,22 @@ func (h Users) Me(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Users.Me ByID (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load profile"})
 		return
 	}
 	recent, err := h.Entries.Recent(ctx, user.ID, 6)
 	if err != nil {
+		log.Printf("[ERROR] Users.Me Recent (user=%s): %v", user.ID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load recent entries"})
 		return
 	}
 	friends, err := h.Friends.Accepted(ctx, user.ID)
 	if err != nil {
+		log.Printf("[ERROR] Users.Me Friends (user=%s): %v", user.ID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friends"})
 		return
 	}
@@ -133,6 +140,8 @@ func (h Users) UpdateMe(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Users.UpdateMe (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update profile"})
 		return
 	}
@@ -159,6 +168,8 @@ func (h Users) FriendProfile(c *gin.Context) {
 	} else {
 		allowed, err = h.Entries.CanViewFriend(c.Request.Context(), requesterID, friendID)
 		if err != nil {
+			log.Printf("[ERROR] Users.FriendProfile CanViewFriend (requester=%s, friend=%s): %v", requesterID, friendID, err)
+			_ = c.Error(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify friendship"})
 			return
 		}
@@ -176,20 +187,26 @@ func (h Users) FriendProfile(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Users.FriendProfile ByID (requester=%s, friend=%s): %v", requesterID, friendID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load profile"})
 		return
 	}
 
-	recent, err := h.Entries.VisibleRecent(ctx, friendID, 6)
+	recent, err := h.Entries.VisibleRecent(ctx, friendID, requesterID, 6)
 	if err != nil {
+		log.Printf("[ERROR] Users.FriendProfile VisibleRecent (requester=%s, friend=%s): %v", requesterID, friendID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load recent entries"})
 		return
 	}
 
 	currentMonth := time.Now().Format("2006-01")
 	month, nextMonth, _ := monthBounds(currentMonth)
-	summary, err := h.Entries.VisibleSummary(ctx, friendID, month, nextMonth)
+	summary, err := h.Entries.VisibleSummary(ctx, friendID, requesterID, month, nextMonth)
 	if err != nil {
+		log.Printf("[ERROR] Users.FriendProfile VisibleSummary (requester=%s, friend=%s): %v", requesterID, friendID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load summary"})
 		return
 	}
@@ -200,6 +217,7 @@ func (h Users) FriendProfile(c *gin.Context) {
 		Summary: summary,
 	})
 }
+
 
 func (h Users) available(c *gin.Context) bool {
 	if h.Users.Pool != nil && h.Entries.Pool != nil && h.Friends.Pool != nil {

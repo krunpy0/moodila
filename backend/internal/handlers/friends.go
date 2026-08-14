@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -21,6 +22,7 @@ var usernameSearchPattern = regexp.MustCompile(`^[a-z0-9_.-]+$`)
 
 type Friends struct {
 	Friends       repository.Friends
+	Entries       repository.Entries
 	Notifications repository.Notifications
 	Storage       storage.S3
 }
@@ -30,6 +32,10 @@ type friendInput struct {
 	FriendshipID string `json:"friendship_id"`
 }
 
+type setVisibilityDefaultInput struct {
+	HideByDefault *bool `json:"hide_by_default"`
+}
+
 func (h Friends) resolveFriendUsers(users []models.FriendUser) []models.FriendUser {
 	out := make([]models.FriendUser, len(users))
 	for i, u := range users {
@@ -37,6 +43,62 @@ func (h Friends) resolveFriendUsers(users []models.FriendUser) []models.FriendUs
 		out[i] = u
 	}
 	return out
+}
+
+func (h Friends) GetVisibilityDefaults(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	friends, err := h.Friends.GetFriendsVisibilityDefaults(c.Request.Context(), c.GetString("userID"))
+	if err != nil {
+		log.Printf("[ERROR] Friends.GetVisibilityDefaults (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friend visibility defaults"})
+		return
+	}
+	for i := range friends {
+		friends[i].AvatarURL = h.Storage.ResolveAccessURL(friends[i].AvatarURL)
+	}
+	c.JSON(http.StatusOK, friends)
+}
+
+func (h Friends) SetVisibilityDefault(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	friendID := strings.TrimSpace(c.Param("id"))
+	if !validUUID(friendID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "valid friend_id is required"})
+		return
+	}
+
+	var input setVisibilityDefaultInput
+	if err := c.ShouldBindJSON(&input); err != nil || input.HideByDefault == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "hide_by_default (boolean) is required"})
+		return
+	}
+
+	userID := c.GetString("userID")
+	err := h.Friends.SetFriendVisibilityDefault(c.Request.Context(), userID, friendID, *input.HideByDefault)
+	if errors.Is(err, pgx.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "friend not found or friendship is not accepted"})
+		return
+	}
+	if err != nil {
+		log.Printf("[ERROR] Friends.SetVisibilityDefault (user=%s, friend=%s): %v", userID, friendID, err)
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update visibility default"})
+		return
+	}
+
+	if h.Entries.Pool != nil {
+		h.Entries.Cache.InvalidateUser(userID)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"friend_id":       friendID,
+		"hide_by_default": *input.HideByDefault,
+	})
 }
 
 func (h Friends) Search(c *gin.Context) {
@@ -50,6 +112,8 @@ func (h Friends) Search(c *gin.Context) {
 	}
 	users, err := h.Friends.Search(c.Request.Context(), c.GetString("userID"), query)
 	if err != nil {
+		log.Printf("[ERROR] Friends.Search (user=%s, q=%s): %v", c.GetString("userID"), query, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not search users"})
 		return
 	}
@@ -80,6 +144,8 @@ func (h Friends) Request(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Friends.Request (user=%s, target=%s): %v", c.GetString("userID"), input.UserID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not send friend request"})
 		return
 	}
@@ -122,6 +188,8 @@ func (h Friends) respond(c *gin.Context, status string) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Friends.Respond (user=%s, friendship=%s, status=%s): %v", c.GetString("userID"), input.FriendshipID, status, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update friend request"})
 		return
 	}
@@ -148,6 +216,8 @@ func (h Friends) Unfriend(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Friends.Unfriend (user=%s, target=%s): %v", c.GetString("userID"), targetID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not remove friend"})
 		return
 	}
@@ -177,6 +247,8 @@ func (h Friends) Cancel(c *gin.Context) {
 		return
 	}
 	if err != nil {
+		log.Printf("[ERROR] Friends.Cancel (user=%s, target=%s): %v", c.GetString("userID"), targetID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not cancel friend request"})
 		return
 	}
@@ -184,17 +256,19 @@ func (h Friends) Cancel(c *gin.Context) {
 }
 
 func (h Friends) list(c *gin.Context, load func(context.Context, string) ([]models.FriendUser, error)) {
-
 	if !h.available(c) {
 		return
 	}
 	users, err := load(c.Request.Context(), c.GetString("userID"))
 	if err != nil {
+		log.Printf("[ERROR] Friends.list (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friends"})
 		return
 	}
 	c.JSON(http.StatusOK, h.resolveFriendUsers(users))
 }
+
 
 func (h Friends) available(c *gin.Context) bool {
 	if h.Friends.Pool != nil {

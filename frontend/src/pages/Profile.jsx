@@ -13,6 +13,7 @@ import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 import AvatarCropModal from "../components/AvatarCropModal";
+import FriendPrivacyModal from "../components/FriendPrivacyModal";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import { safeNavigateBack } from "../utils/navigation";
@@ -26,7 +27,9 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showFriendPrivacyModal, setShowFriendPrivacyModal] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
+
   const [form, setForm] = useState(null);
   const [initialAvatarUrl, setInitialAvatarUrl] = useState("");
   const [avatarStatus, setAvatarStatus] = useState("");
@@ -322,14 +325,21 @@ export default function Profile() {
                       >
                         <div className="flex items-start justify-between">
                           <span className="flex items-center gap-1 text-label-sm text-on-surface-variant">
-                            {entry.is_hidden && (
+                            {entry.is_hidden ? (
                               <span
                                 className="material-symbols-outlined text-[13px]"
                                 title={t("common.hiddenFromFriends")}
                               >
                                 lock
                               </span>
-                            )}
+                            ) : entry.has_custom_visibility ? (
+                              <span
+                                className="material-symbols-outlined text-[13px] text-primary"
+                                title={t("addEntry.customVisibilityBadge")}
+                              >
+                                group
+                              </span>
+                            ) : null}
                             {formatDate(entry.date)}
                           </span>
                           <span
@@ -476,6 +486,25 @@ export default function Profile() {
                   <ThemeToggle />
                 </div>
 
+                {/* Friend privacy settings */}
+                <div className="border-t border-surface-container-low pt-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowFriendPrivacyModal(true)}
+                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity"
+                  >
+                    <span className="flex items-center gap-sm">
+                      <span className="material-symbols-outlined text-on-surface-variant">
+                        visibility_off
+                      </span>
+                      {t("friendPrivacy.title")}
+                    </span>
+                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                      chevron_right
+                    </span>
+                  </button>
+                </div>
+
                 {/* Change password */}
                 <div className="border-t border-surface-container-low pt-xs">
                   <button
@@ -515,6 +544,10 @@ export default function Profile() {
                   </button>
                 </div>
               </section>
+              <FriendPrivacyModal
+                isOpen={showFriendPrivacyModal}
+                onClose={() => setShowFriendPrivacyModal(false)}
+              />
               <DeleteAccountModal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}

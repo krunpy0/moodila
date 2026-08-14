@@ -89,6 +89,8 @@ func (h Auth) Register(c *gin.Context) {
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
+		log.Printf("[ERROR] Auth.Register hash: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not secure password"})
 		return
 	}
@@ -99,11 +101,14 @@ func (h Auth) Register(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": "email or username already exists"})
 			return
 		}
+		log.Printf("[ERROR] Auth.Register create (email=%s, username=%s): %v", input.Email, input.Username, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create account"})
 		return
 	}
 	h.respondWithCookies(c, http.StatusCreated, user.ID, user)
 }
+
 
 func (h Auth) Login(c *gin.Context) {
 	if h.Users.Pool == nil {
@@ -207,9 +212,12 @@ func (h Auth) respondWithCookies(c *gin.Context, status int, userID string, user
 	}
 	csrfToken, err := h.setAuthCookies(c, userID, tokenVersion)
 	if err != nil {
+		log.Printf("[ERROR] Auth.respondWithCookies (user=%s): %v", userID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not set auth cookies"})
 		return
 	}
+
 
 	c.JSON(status, gin.H{
 		"user":       user,
@@ -483,6 +491,8 @@ func (h Auth) ResetPassword(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired password reset token"})
 			return
 		}
+		log.Printf("[ERROR] Auth.ResetPassword: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not reset password"})
 		return
 	}
@@ -531,6 +541,8 @@ func (h Auth) ChangePassword(c *gin.Context) {
 
 	err = h.Users.SetPassword(c.Request.Context(), userID, input.NewPassword)
 	if err != nil {
+		log.Printf("[ERROR] Auth.ChangePassword (user=%s): %v", userID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not change password"})
 		return
 	}
@@ -583,7 +595,8 @@ func (h Auth) DeleteAccountRequest(c *gin.Context) {
 
 	tokenBytes := make([]byte, 32)
 	if _, err := rand.Read(tokenBytes); err != nil {
-		log.Printf("error generating random delete token: %v", err)
+		log.Printf("[ERROR] generating random delete token: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate deletion token"})
 		return
 	}
@@ -600,7 +613,8 @@ func (h Auth) DeleteAccountRequest(c *gin.Context) {
 
 	_, err = h.AccountDeletion.Create(c.Request.Context(), user.ID, tokenHash, expiresAt)
 	if err != nil {
-		log.Printf("error saving account deletion token: %v", err)
+		log.Printf("[ERROR] saving account deletion token (user=%s): %v", user.ID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not process deletion request"})
 		return
 	}
@@ -645,6 +659,8 @@ func (h Auth) DeleteAccountConfirm(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired account deletion token"})
 			return
 		}
+		log.Printf("[ERROR] Auth.DeleteAccountConfirm GetValidByHash: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify token"})
 		return
 	}
@@ -656,7 +672,8 @@ func (h Auth) DeleteAccountConfirm(c *gin.Context) {
 	}
 
 	if err := h.Users.DeleteAccount(c.Request.Context(), tok.UserID); err != nil {
-		log.Printf("error deleting account %s: %v", tok.UserID, err)
+		log.Printf("[ERROR] deleting account %s: %v", tok.UserID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete account"})
 		return
 	}
@@ -666,3 +683,4 @@ func (h Auth) DeleteAccountConfirm(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Account deleted successfully"})
 }
+

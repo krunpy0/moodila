@@ -20,3 +20,12 @@ type FriendUser struct {
 	Status        *string `json:"status,omitempty"`
 	RequesterIsMe *bool   `json:"requester_is_me,omitempty"`
 }
+
+type FriendVisibilityDefault struct {
+	ID            string  `json:"id"`
+	Username      string  `json:"username"`
+	DisplayName   string  `json:"display_name"`
+	AvatarURL     *string `json:"avatar_url"`
+	HideByDefault bool    `json:"hide_by_default"`
+}
+

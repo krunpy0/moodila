@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"moodshare/internal/models"
@@ -42,6 +43,8 @@ func (h PushNotifications) Subscribe(c *gin.Context) {
 
 	userID := c.GetString("userID")
 	if err := h.Repo.Save(c.Request.Context(), userID, input); err != nil {
+		log.Printf("[ERROR] PushNotifications.Subscribe (user=%s): %v", userID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save push subscription"})
 		return
 	}
@@ -64,9 +67,12 @@ func (h PushNotifications) Unsubscribe(c *gin.Context) {
 
 	userID := c.GetString("userID")
 	if err := h.Repo.DeleteByEndpoint(c.Request.Context(), userID, input.Endpoint); err != nil {
+		log.Printf("[ERROR] PushNotifications.Unsubscribe (user=%s): %v", userID, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not remove push subscription"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "push subscription removed"})
 }
+

@@ -33,4 +33,13 @@ export const cancelFriendRequest = (userId) =>
 export const getFriends = () => api('/friends')
 export const getPendingFriends = () => api('/friends/pending')
 
+export const getFriendVisibilityDefaults = () => api('/friends/visibility-defaults')
+
+export const setFriendVisibilityDefault = (friendId, hideByDefault) =>
+  api(`/friends/${encodeURIComponent(friendId)}/visibility-default`, {
+    method: 'PATCH',
+    body: JSON.stringify({ hide_by_default: hideByDefault }),
+  })
+
+
 

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"moodshare/internal/models"
 
@@ -128,8 +129,68 @@ func (r Friends) list(ctx context.Context, query, userID string) ([]models.Frien
 	return users, rows.Err()
 }
 
+func (r Friends) GetFriendsVisibilityDefaults(ctx context.Context, userID string) ([]models.FriendVisibilityDefault, error) {
+	rows, err := r.Pool.Query(ctx, `
+		SELECT u.id, u.username, u.display_name, u.avatar_url,
+		       COALESCE(ufv.hide_by_default, false) AS hide_by_default
+		FROM friendships f
+		JOIN users u ON u.id = CASE
+			WHEN f.requester_id = $1 THEN f.addressee_id
+			ELSE f.requester_id
+		END
+		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = $1 AND ufv.friend_id = u.id
+		WHERE (f.requester_id = $1 OR f.addressee_id = $1)
+		  AND f.status = 'accepted'
+		ORDER BY LOWER(u.display_name), u.username`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	friends := make([]models.FriendVisibilityDefault, 0)
+	for rows.Next() {
+		var f models.FriendVisibilityDefault
+		if err := rows.Scan(&f.ID, &f.Username, &f.DisplayName, &f.AvatarURL, &f.HideByDefault); err != nil {
+			return nil, err
+		}
+		friends = append(friends, f)
+	}
+	return friends, rows.Err()
+}
+
+func (r Friends) SetFriendVisibilityDefault(ctx context.Context, userID, friendID string, hideByDefault bool) error {
+	var isFriend bool
+	err := r.Pool.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM friendships
+			WHERE status = 'accepted'
+			  AND ((requester_id = $1 AND addressee_id = $2)
+			    OR (requester_id = $2 AND addressee_id = $1))
+		)`, userID, friendID).Scan(&isFriend)
+	if err != nil {
+		return err
+	}
+	if !isFriend {
+		return pgx.ErrNoRows
+	}
+
+	if !hideByDefault {
+		_, err = r.Pool.Exec(ctx, `DELETE FROM user_friend_visibility WHERE user_id = $1 AND friend_id = $2`, userID, friendID)
+		return err
+	}
+
+	_, err = r.Pool.Exec(ctx, `
+		INSERT INTO user_friend_visibility (user_id, friend_id, hide_by_default, updated_at)
+		VALUES ($1, $2, $3, now())
+		ON CONFLICT (user_id, friend_id) DO UPDATE
+		SET hide_by_default = EXCLUDED.hide_by_default,
+		    updated_at = now()`, userID, friendID, hideByDefault)
+	return err
+}
+
 func (r Friends) Delete(ctx context.Context, userID, targetID string) error {
-	commandTag, err := r.Pool.Exec(ctx, `
+	var reqID, addrID string
+	err := r.Pool.QueryRow(ctx, `
 		DELETE FROM friendships
 		WHERE status = 'accepted' AND (
 			(id = $1 AND (requester_id = $2 OR addressee_id = $2))
@@ -137,13 +198,25 @@ func (r Friends) Delete(ctx context.Context, userID, targetID string) error {
 				LEAST(requester_id, addressee_id) = LEAST($2::uuid, $1::uuid)
 				AND GREATEST(requester_id, addressee_id) = GREATEST($2::uuid, $1::uuid)
 			)
-		)`, targetID, userID)
+		)
+		RETURNING requester_id, addressee_id`, targetID, userID).Scan(&reqID, &addrID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return pgx.ErrNoRows
+	}
 	if err != nil {
 		return err
 	}
-	if commandTag.RowsAffected() == 0 {
-		return pgx.ErrNoRows
-	}
+
+	// Clean up visibility defaults and entry overrides between former friends
+	_, _ = r.Pool.Exec(ctx, `
+		DELETE FROM user_friend_visibility
+		WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`, reqID, addrID)
+
+	_, _ = r.Pool.Exec(ctx, `
+		DELETE FROM entry_friend_visibility
+		WHERE (friend_id = $1 AND entry_id IN (SELECT id FROM entries WHERE user_id = $2))
+		   OR (friend_id = $2 AND entry_id IN (SELECT id FROM entries WHERE user_id = $1))`, reqID, addrID)
+
 	return nil
 }
 
@@ -161,4 +234,5 @@ func (r Friends) CancelRequest(ctx context.Context, requesterID, targetID string
 	}
 	return nil
 }
+
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
-import { useDeleteEntryMutation, useEntryQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
+import { useDeleteEntryMutation, useEntryQuery, useFriendVisibilityDefaultsQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
 import { uploadEntryPhoto, uploadEntryAudio, deleteStorageObject } from '../api/entries'
 import AppLayout from '../components/AppLayout'
 import { useNotifications } from '../components/Notifications'
@@ -23,6 +23,8 @@ export default function AddEntry() {
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
   const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
+  const [friendOverridesMap, setFriendOverridesMap] = useState({})
+  const [isFriendVisibilityOpen, setIsFriendVisibilityOpen] = useState(false)
   const [status, setStatus] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -31,12 +33,14 @@ export default function AddEntry() {
 
   useModalKeyboard(() => setShowDeleteModal(false), showDeleteModal, deleteModalRef)
   const entryQuery = useEntryQuery(date, !futureDate)
+  const friendDefaultsQuery = useFriendVisibilityDefaultsQuery(!futureDate)
   const saveMutation = useSaveEntryMutation()
   const visibilityMutation = useUpdateEntryVisibilityMutation()
   const deleteMutation = useDeleteEntryMutation()
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -89,9 +93,16 @@ export default function AddEntry() {
       return
     }
     if (entryQuery.data) {
-      const { mood, tags, text, photo_url: photoURL, audio_url: audioURL, audio_duration: audioDur, is_hidden: isHidden } = entryQuery.data
+      const { mood, tags, text, photo_url: photoURL, audio_url: audioURL, audio_duration: audioDur, is_hidden: isHidden, friend_overrides: overrides } = entryQuery.data
       setForm({ date, mood, tags, text, photo_url: photoURL || null, audio_url: audioURL || null, audio_duration: audioDur || null, is_hidden: Boolean(isHidden) })
       setAudioDuration(audioDur || null)
+      const map = {}
+      if (Array.isArray(overrides)) {
+        overrides.forEach((ov) => {
+          map[ov.friend_id] = ov.is_hidden
+        })
+      }
+      setFriendOverridesMap(map)
       setStatus('')
     } else if (entryQuery.isError && entryQuery.error.status !== 404) {
       setStatus(entryQuery.error.message)
@@ -100,8 +111,32 @@ export default function AddEntry() {
         ...prev,
         date,
       }))
+      setFriendOverridesMap({})
     }
   }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error, t])
+
+  const friendsList = friendDefaultsQuery.data || []
+
+  const isFriendHidden = (friend) => {
+    if (friendOverridesMap[friend.id] !== undefined) {
+      return friendOverridesMap[friend.id]
+    }
+    return Boolean(friend.hide_by_default)
+  }
+
+  const toggleFriendOverride = (friend) => {
+    const currentHidden = isFriendHidden(friend)
+    const nextHidden = !currentHidden
+    setFriendOverridesMap((prev) => ({
+      ...prev,
+      [friend.id]: nextHidden,
+    }))
+  }
+
+  const resetFriendOverrides = () => {
+    setFriendOverridesMap({})
+  }
+
 
   const toggleTag = (tag) =>
     setForm((current) => ({
@@ -206,6 +241,17 @@ export default function AddEntry() {
 
     let payload = { ...form }
 
+    const overridesPayload = []
+    friendsList.forEach((friend) => {
+      if (friendOverridesMap[friend.id] !== undefined) {
+        overridesPayload.push({
+          friend_id: friend.id,
+          is_hidden: friendOverridesMap[friend.id],
+        })
+      }
+    })
+    payload.friend_overrides = overridesPayload
+
     if (audioBlob) {
       setStatus(t('common.uploading'))
       try {
@@ -228,6 +274,7 @@ export default function AddEntry() {
       onError: (error) => setStatus(error.message),
     })
   }
+
 
   const removePhoto = async () => {
     const urlToRemove = form.photo_url
@@ -484,6 +531,111 @@ export default function AddEntry() {
           </button>
         </section>
 
+        {!form.is_hidden && friendsList.length > 0 && (
+          <section className="rounded-[24px] bg-white p-lg cloud-shadow space-y-md animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsFriendVisibilityOpen((prev) => !prev)}
+                className="flex items-center gap-md text-left flex-1"
+              >
+                <span className="material-symbols-outlined text-[24px] text-primary">
+                  group
+                </span>
+                <div>
+                  <span className="block text-body-md font-label-lg text-on-surface">
+                    {t('addEntry.friendVisibility')}
+                  </span>
+                  <span className="block text-body-sm text-on-surface-variant">
+                    {friendsList.filter((f) => !isFriendHidden(f)).length} / {friendsList.length} {t('addEntry.visibleToFriend').toLowerCase()}
+                  </span>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsFriendVisibilityOpen((prev) => !prev)}
+                aria-label={t('addEntry.friendVisibility')}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-low transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  {isFriendVisibilityOpen ? 'expand_less' : 'expand_more'}
+                </span>
+              </button>
+            </div>
+
+            {isFriendVisibilityOpen && (
+              <div className="space-y-sm border-t border-surface-container pt-md">
+                <div className="flex items-center justify-between text-body-xs text-on-surface-variant">
+                  <span>{t('addEntry.friendVisibilityDesc')}</span>
+                  {Object.keys(friendOverridesMap).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={resetFriendOverrides}
+                      className="text-label-sm text-primary hover:underline whitespace-nowrap ml-sm"
+                    >
+                      {t('addEntry.resetDefaults')}
+                    </button>
+                  )}
+                </div>
+
+                <div className="max-h-60 overflow-y-auto space-y-xs pr-1">
+                  {friendsList.map((friend) => {
+                    const hidden = isFriendHidden(friend)
+                    const hasOverride = friendOverridesMap[friend.id] !== undefined && friendOverridesMap[friend.id] !== friend.hide_by_default
+                    return (
+                      <div
+                        key={friend.id}
+                        className="flex items-center justify-between gap-sm rounded-xl bg-surface-container-low p-xs px-sm transition-colors hover:bg-surface-container"
+                      >
+                        <div className="flex items-center gap-sm min-w-0">
+                          <FriendAvatar user={friend} />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-xs">
+                              <p className="truncate text-body-sm font-semibold text-on-surface">
+                                {friend.display_name || friend.username}
+                              </p>
+                              {hasOverride && (
+                                <span className="rounded-full bg-primary-container px-2 py-0.5 text-[10px] font-semibold text-primary">
+                                  {t('addEntry.overrideBadge')}
+                                </span>
+                              )}
+                            </div>
+                            <p className="truncate text-[11px] text-on-surface-variant">
+                              @{friend.username}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={!hidden}
+                          aria-label={`${friend.display_name || friend.username}: ${hidden ? t('addEntry.hiddenFromFriend') : t('addEntry.visibleToFriend')}`}
+                          onClick={() => toggleFriendOverride(friend)}
+                          className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                            !hidden ? 'bg-primary' : 'bg-surface-container-highest'
+                          }`}
+                        >
+                          <span
+                            className={`flex h-5 w-5 items-center justify-center rounded-full bg-surface-container-lowest shadow-sm transition-transform duration-200 ease-in-out ${
+                              !hidden ? 'translate-x-5 text-on-primary-container' : 'translate-x-0 text-on-surface-variant'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[13px]">
+                              {!hidden ? 'visibility' : 'visibility_off'}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+
         {status && (
           <p
             role="status"
@@ -578,3 +730,32 @@ export default function AddEntry() {
     </AppLayout>
   )
 }
+
+function FriendAvatar({ user }) {
+  const initials = (user.display_name || user.username || '?')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+
+  if (user.avatar_url) {
+    return (
+      <span className="inline-block h-8 w-8 shrink-0 overflow-hidden rounded-full">
+        <img
+          src={user.avatar_url}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      </span>
+    )
+  }
+
+  return (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary-container text-label-xs font-semibold text-secondary">
+      {initials}
+    </span>
+  )
+}
+

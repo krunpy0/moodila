@@ -16,4 +16,5 @@ export const queryKeys = {
   unreadAnnouncements: ['announcements', 'unread'],
   adminAnnouncements: ['admin', 'announcements'],
   stats: (period = 'month') => ['stats', period],
+  friendVisibilityDefaults: ['friends', 'visibilityDefaults'],
 }

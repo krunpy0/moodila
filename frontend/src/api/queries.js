@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { getSession } from './auth'
 import { deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, getStats, saveEntry, updateEntryVisibility } from './entries'
 import { likeEntry, getFeed, getEntryReactions, getComments, addComment, deleteComment } from './feed'
-import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser } from './friends'
+import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser, getFriendVisibilityDefaults, setFriendVisibilityDefault } from './friends'
 import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
 import { queryKeys } from './queryKeys'
 
@@ -34,6 +34,9 @@ export const useStatsQuery = (period = 'month') => useQuery({ queryKey: queryKey
 export const useFriendEntriesQuery = (friendId, month, enabled = true) => useQuery({ queryKey: queryKeys.friendEntries(friendId, month), queryFn: () => getFriendEntriesByMonth(friendId, month), enabled: Boolean(friendId) && Boolean(month) && enabled, staleTime: STALE_TIMES.STABLE })
 export const useFriendsQuery = () => useQuery({ queryKey: queryKeys.friends, queryFn: getFriends, staleTime: STALE_TIMES.STATIC })
 export const usePendingFriendsQuery = () => useQuery({ queryKey: queryKeys.pendingFriends, queryFn: getPendingFriends, staleTime: STALE_TIMES.DYNAMIC })
+export const useFriendVisibilityDefaultsQuery = (enabled = true) =>
+  useQuery({ queryKey: queryKeys.friendVisibilityDefaults, queryFn: getFriendVisibilityDefaults, enabled, staleTime: STALE_TIMES.DYNAMIC })
+
 export const useFeedQuery = (includeSelf = false) => useQuery({ queryKey: queryKeys.feed(includeSelf), queryFn: () => getFeed({ includeSelf }), staleTime: STALE_TIMES.DYNAMIC })
 export const useInfiniteFeedQuery = (limit = 10, includeSelf = false) =>
   useInfiniteQuery({
@@ -242,6 +245,22 @@ export const useAcceptFriendRequestMutation = () => useFriendMutation(acceptFrie
 export const useDeclineFriendRequestMutation = () => useFriendMutation(declineFriendRequest)
 export const useUnfriendMutation = () => useFriendMutation(unfriendUser)
 export const useCancelFriendRequestMutation = () => useFriendMutation(cancelFriendRequest)
+
+export function useSetFriendVisibilityDefaultMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ friendId, hideByDefault }) => setFriendVisibilityDefault(friendId, hideByDefault),
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKeys.friendVisibilityDefaults, (old) => {
+        if (!old) return old
+        return old.map((f) => (f.id === data.friend_id ? { ...f, hide_by_default: data.hide_by_default } : f))
+      })
+      queryClient.invalidateQueries({ queryKey: queryKeys.friendVisibilityDefaults })
+      queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+    },
+  })
+}
 
 export function useUpdateProfileMutation() {
   const queryClient = useQueryClient()

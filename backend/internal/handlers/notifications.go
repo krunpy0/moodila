@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -36,6 +37,8 @@ func (h Notifications) List(c *gin.Context) {
 
 	list, err := h.Notifications.List(c.Request.Context(), c.GetString("userID"), limit)
 	if err != nil {
+		log.Printf("[ERROR] Notifications.List (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load notifications"})
 		return
 	}
@@ -51,6 +54,8 @@ func (h Notifications) UnreadCount(c *gin.Context) {
 	}
 	count, err := h.Notifications.UnreadCount(c.Request.Context(), c.GetString("userID"))
 	if err != nil {
+		log.Printf("[ERROR] Notifications.UnreadCount (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not count unread notifications"})
 		return
 	}
@@ -72,11 +77,14 @@ func (h Notifications) MarkRead(c *gin.Context) {
 	}
 
 	if err := h.Notifications.MarkAsRead(c.Request.Context(), c.GetString("userID"), input.IDs); err != nil {
+		log.Printf("[ERROR] Notifications.MarkRead (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not mark notifications as read"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "marked as read"})
 }
+
 
 func (h Notifications) available(c *gin.Context) bool {
 	if h.Notifications.Pool != nil {

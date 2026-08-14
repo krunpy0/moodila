@@ -122,7 +122,7 @@ func main() {
 	announcementsRepo := repository.Announcements{Pool: pool}
 	announcementsHandler := handlers.Announcements{Announcements: announcementsRepo}
 	usersRepo := repository.Users{Pool: pool}
-	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
+	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Entries: repository.Entries{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
 	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}, Storage: storageS3}
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret), middleware.CSRF())
@@ -153,6 +153,9 @@ func main() {
 	authorized.DELETE("/friends/:id", mutationLimiter, friends.Unfriend)
 	authorized.GET("/friends", readLimiter, friends.Accepted)
 	authorized.GET("/friends/pending", readLimiter, friends.Pending)
+	authorized.GET("/friends/visibility-defaults", readLimiter, friends.GetVisibilityDefaults)
+	authorized.PATCH("/friends/:id/visibility-default", mutationLimiter, friends.SetVisibilityDefault)
+
 	authorized.GET("/feed", readLimiter, feed.List)
 	authorized.POST("/feed/:entry_id/like", mutationLimiter, feed.Like)
 	authorized.GET("/feed/:entry_id/reactions", readLimiter, feed.GetReactions)

@@ -95,9 +95,12 @@ func (h Storage) SignUpload(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(h.JWTSecret))
 	if err != nil {
+		log.Printf("[ERROR] Storage.SignUpload: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not prepare photo upload"})
 		return
 	}
+
 	photoURL := prepared.PhotoURL
 	if resolved := h.Storage.ResolveAccessURL(&prepared.ObjectKey); resolved != nil {
 		photoURL = *resolved
@@ -508,9 +511,12 @@ func (h Storage) SignAudioUpload(c *gin.Context) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signed, err := token.SignedString([]byte(h.JWTSecret))
 	if err != nil {
+		log.Printf("[ERROR] Storage.SignAudioUpload: %v", err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not prepare audio upload"})
 		return
 	}
+
 	audioURL := prepared.PhotoURL
 	if resolved := h.Storage.ResolveAccessURL(&prepared.ObjectKey); resolved != nil {
 		audioURL = *resolved

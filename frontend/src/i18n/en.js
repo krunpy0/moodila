@@ -158,8 +158,15 @@ export const en = {
     tagsHeader: "What made you feel this way?",
     optionalNote: "Write a note (optional)",
     notePlaceholder: "Describe your day or thoughts...",
-    hideFromFriends: "Hide from friends",
+    hideFromFriends: "Hide from all friends",
     hideDescription: "Only you will see this entry on your calendar.",
+    friendVisibility: "Visibility for friends",
+    friendVisibilityDesc: "Customize which friends can see this specific post.",
+    overrideBadge: "Custom",
+    resetDefaults: "Reset to defaults",
+    visibleToFriend: "Visible",
+    hiddenFromFriend: "Hidden",
+    customVisibilityBadge: "Custom visibility",
     photo: "Photo",
     addPhoto: "Add photo",
     removePhoto: "Remove photo",
@@ -172,6 +179,17 @@ export const en = {
     photoUploaded: "Photo attached.",
     maxPhotoSize: "Image must be 10 MB or smaller.",
   },
+
+  friendPrivacy: {
+    title: "Friend Privacy",
+    subtitle: "Default post visibility",
+    description: "Choose which friends you want to hide your entries from by default. You can still adjust visibility for any specific entry.",
+    hideByDefault: "Hide posts by default",
+    hidden: "Hidden",
+    visible: "Visible",
+    noFriends: "You have no accepted friends yet.",
+  },
+
 
   // Calendar Page
   calendar: {

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -28,9 +29,12 @@ func (h Stats) Get(c *gin.Context) {
 
 	stats, err := h.Entries.GetStats(c.Request.Context(), c.GetString("userID"), period, timeZone)
 	if err != nil {
+		log.Printf("[ERROR] Stats.Get (user=%s, period=%s): %v", c.GetString("userID"), period, err)
+		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load stats"})
 		return
 	}
+
 
 	c.JSON(http.StatusOK, stats)
 }

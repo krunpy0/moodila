@@ -43,9 +43,33 @@ func CORS(allowedOriginsStr string) gin.HandlerFunc {
 	}
 }
 
-// Logger logs method, path, status code and duration for each request.
+// Logger logs method, path, status code, duration, user, and any errors for each request.
 func Logger(c *gin.Context) {
 	start := time.Now()
+	path := c.Request.URL.Path
+	rawQuery := c.Request.URL.RawQuery
+	if rawQuery != "" {
+		path = path + "?" + rawQuery
+	}
+
 	c.Next()
-	log.Printf("%s %s %d %s", c.Request.Method, c.Request.URL.Path, c.Writer.Status(), time.Since(start))
+
+	duration := time.Since(start)
+	status := c.Writer.Status()
+	userID := c.GetString("userID")
+	userTag := ""
+	if userID != "" {
+		userTag = " [user=" + userID + "]"
+	}
+
+	errs := c.Errors.String()
+
+	if status >= 500 {
+		log.Printf("[HTTP 500 ERROR]%s %s %s -> %d in %s | client=%s | %s", userTag, c.Request.Method, path, status, duration, c.ClientIP(), errs)
+	} else if status >= 400 {
+		log.Printf("[HTTP %d WARN]%s %s %s -> %d in %s | client=%s | %s", status, userTag, c.Request.Method, path, status, duration, c.ClientIP(), errs)
+	} else {
+		log.Printf("[HTTP %d]%s %s %s -> %d in %s", status, userTag, c.Request.Method, path, status, duration)
+	}
 }
+
