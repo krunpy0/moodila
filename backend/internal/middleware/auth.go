@@ -3,6 +3,8 @@ package middleware
 import (
 	"strings"
 
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -47,6 +49,11 @@ func Auth(secret string) gin.HandlerFunc {
 		c.Set("csrfToken", claims.CSRF)
 		if claims.CSRF != "" {
 			c.Header("X-CSRF-Token", claims.CSRF)
+		}
+		if hub := sentrygin.GetHubFromContext(c); hub != nil {
+			hub.Scope().SetUser(sentry.User{
+				ID: claims.Subject,
+			})
 		}
 		c.Next()
 	}

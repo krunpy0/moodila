@@ -2,6 +2,7 @@ import fs from "fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 
 const certFile =
   process.env.TLS_CERT || "C:/Users/maksi/local-frontend.com+1.pem";
@@ -9,14 +10,31 @@ const keyFile =
   process.env.TLS_KEY || "C:/Users/maksi/local-frontend.com+1-key.pem";
 const hasHttps = fs.existsSync(certFile) && fs.existsSync(keyFile);
 
+const hasSentryToken = Boolean(process.env.SENTRY_AUTH_TOKEN);
+
 // https://vite.dev/config/
 export default defineConfig({
   server: {
     host: "localhost",
     port: 5173,
   },
+  build: {
+    sourcemap: hasSentryToken ? "hidden" : false,
+  },
   plugins: [
     react(),
+    ...(hasSentryToken
+      ? [
+          sentryVitePlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            release: {
+              name: process.env.VITE_SENTRY_RELEASE || "moodila-frontend@1.0.0",
+            },
+          }),
+        ]
+      : []),
     VitePWA({
       registerType: "autoUpdate",
       devOptions: {

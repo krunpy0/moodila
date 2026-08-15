@@ -40,6 +40,7 @@
 | **Web Push** | [`webpush-go`](https://github.com/SherClockHolmes/webpush-go) | Стандарт VAPID для отправки пушей в браузер |
 | **Транзакционная почта** | [Resend Go SDK](https://github.com/resend/resend-go) | Отправка писем сброса пароля и удаления аккаунта (логгирование в dev) |
 | **Резервное копирование** | `google.golang.org/api/drive/v3` | Фоновый крон выгрузки SQL-дампов в папку Google Drive |
+| **Мониторинг** | [`sentry-go`](https://github.com/getsentry/sentry-go) + Gin | Отслеживание паник, необработанных сбоев API и трейсинг |
 
 ### Frontend (React / PWA)
 | Компонент | Технология | Описание |
@@ -51,7 +52,7 @@
 | **PWA** | `vite-plugin-pwa` (`^1.3.0`) + Workbox | Офлайн-кеширование статики, Service Worker для Web Push |
 | **Линтер** | Oxlint (`^1.71.0`) | Сверхбыстрый линтинг JavaScript/JSX |
 | **UI Утилиты** | `react-easy-crop` (`^6.2.3`) | Интерактивный кроп аватаров перед отправкой в S3 |
-| **Мониторинг** | `@sentry/react` (`^10.70.0`) | Отслеживание клиентских ошибок и сбоев |
+| **Мониторинг** | `@sentry/react` (`^10.70.0`) + `@sentry/vite-plugin` | Отслеживание клиентских ошибок, Error Boundary, source maps |
 
 ---
 

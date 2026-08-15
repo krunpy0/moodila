@@ -48,6 +48,10 @@ type Config struct {
 	VAPIDPublicKey               string
 	VAPIDPrivateKey              string
 	VAPIDSubscriber              string
+	SentryDSN                    string
+	SentryEnvironment            string
+	SentryRelease                string
+	SentryTracesSampleRate       float64
 }
 
 // Load reads configuration, loading backend/.env first (if present) so local
@@ -99,10 +103,29 @@ func Load() Config {
 		VAPIDPublicKey:               os.Getenv("VAPID_PUBLIC_KEY"),
 		VAPIDPrivateKey:              os.Getenv("VAPID_PRIVATE_KEY"),
 		VAPIDSubscriber:              getenv("VAPID_SUBSCRIBER", "mailto:admin@moodila.app"),
+		SentryDSN:                    strings.TrimSpace(os.Getenv("SENTRY_DSN")),
+		SentryEnvironment:            getenv("SENTRY_ENVIRONMENT", appEnv),
+		SentryRelease:                getenv("SENTRY_RELEASE", "moodshare@1.0.0"),
+		SentryTracesSampleRate:       parseFloat(os.Getenv("SENTRY_TRACES_SAMPLE_RATE"), defaultTracesSampleRate(appEnv)),
 	}
 }
 
+func defaultTracesSampleRate(appEnv string) float64 {
+	if strings.EqualFold(appEnv, "production") {
+		return 0.1
+	}
+	return 0.0
+}
 
+func parseFloat(v string, def float64) float64 {
+	if v == "" {
+		return def
+	}
+	if n, err := strconv.ParseFloat(strings.TrimSpace(v), 64); err == nil && n >= 0.0 && n <= 1.0 {
+		return n
+	}
+	return def
+}
 
 func parseBool(v string) bool {
 	return strings.EqualFold(strings.TrimSpace(v), "true") || v == "1"

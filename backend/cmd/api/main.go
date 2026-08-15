@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -19,6 +20,8 @@ import (
 	"moodshare/internal/services/push"
 	"moodshare/internal/storage"
 
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/time/rate"
@@ -26,6 +29,40 @@ import (
 
 func main() {
 	cfg := config.Load()
+
+	// Initialize Sentry monitoring if SENTRY_DSN is configured
+	if cfg.SentryDSN != "" {
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn:              cfg.SentryDSN,
+			Environment:      cfg.SentryEnvironment,
+			Release:          cfg.SentryRelease,
+			TracesSampleRate: cfg.SentryTracesSampleRate,
+			AttachStacktrace: true,
+			BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+				if hint != nil && hint.OriginalException != nil {
+					err := hint.OriginalException
+					// Drop context cancellations & client timeouts
+					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+						return nil
+					}
+					// Drop broken pipe or client connection reset errors
+					var sysErr syscall.Errno
+					if errors.As(err, &sysErr) && (sysErr == syscall.EPIPE || sysErr == syscall.ECONNRESET) {
+						return nil
+					}
+				}
+				return event
+			},
+		})
+		if err != nil {
+			log.Printf("warning: sentry initialization failed: %v", err)
+		} else {
+			defer sentry.Flush(2 * time.Second)
+			log.Println("sentry initialized")
+		}
+	} else {
+		log.Println("sentry disabled (SENTRY_DSN not configured)")
+	}
 
 	// Start Google Drive database backup background scheduler (every 3 hours)
 	backupCtx, backupCancel := context.WithCancel(context.Background())
@@ -71,6 +108,11 @@ func main() {
 	}
 
 	router := gin.New()
+	if cfg.SentryDSN != "" {
+		router.Use(sentrygin.New(sentrygin.Options{
+			Repanic: true,
+		}))
+	}
 	router.Use(gin.Recovery(), middleware.Logger, middleware.CORS(cfg.CORSOrigin))
 
 	// Tier-based Rate Limiters

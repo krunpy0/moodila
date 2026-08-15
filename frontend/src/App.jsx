@@ -1,10 +1,23 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useSessionQuery } from './api/queries'
+import { setSentryUser, clearSentryUser } from './sentry'
 import AnnouncementQueue from './components/AnnouncementQueue'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import ErrorBoundary from './components/ErrorBoundary'
 import SplashScreen from './components/SplashScreen'
+
+function SessionUserSync() {
+  const { data: session } = useSessionQuery(true)
+  useEffect(() => {
+    if (session?.user) {
+      setSentryUser(session.user)
+    } else {
+      clearSentryUser()
+    }
+  }, [session])
+  return null
+}
 
 const Home = lazy(() => import('./pages/Home'))
 const Auth = lazy(() => import('./pages/Auth'))
@@ -29,6 +42,7 @@ function PageFallback() {
 export default function App() {
   return (
     <ErrorBoundary>
+      <SessionUserSync />
       <BrowserRouter>
         <Suspense fallback={<PageFallback />}>
           <Routes>
