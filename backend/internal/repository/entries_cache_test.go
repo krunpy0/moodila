@@ -70,3 +70,27 @@ func TestSummaryCacheUserInvalidation(t *testing.T) {
 		t.Fatal("expected userB keyB to remain valid in cache")
 	}
 }
+
+func TestEntriesInvalidateUserCache(t *testing.T) {
+	customCache := NewSummaryCache(5 * time.Minute)
+	repoWithCustom := Entries{Cache: customCache}
+
+	userA := "userA"
+	keyA := userA + ":2026-08:all"
+	s := models.EntrySummary{EntryCount: 3}
+
+	customCache.Set(keyA, s)
+	repoWithCustom.InvalidateUserCache(userA)
+	if _, ok := customCache.Get(keyA); ok {
+		t.Fatal("expected userA keyA to be invalidated via repoWithCustom")
+	}
+
+	// Test default fallback cache
+	repoDefault := Entries{}
+	defaultSummaryCache.Set(keyA, s)
+	repoDefault.InvalidateUserCache(userA)
+	if _, ok := defaultSummaryCache.Get(keyA); ok {
+		t.Fatal("expected userA keyA to be invalidated in default cache via repoDefault")
+	}
+}
+

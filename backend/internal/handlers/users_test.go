@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -23,3 +24,20 @@ func TestFriendProfile_InvalidUUID(t *testing.T) {
 		t.Fatalf("expected status 503 when pool is nil, got %d", w.Code)
 	}
 }
+
+func TestUpdateMe_DatabaseUnavailable(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Users{}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest("PATCH", "/users/me", strings.NewReader(`{"avatar_url":""}`))
+	c.Request.Header.Set("Content-Type", "application/json")
+	c.Set("userID", "550e8400-e29b-41d4-a716-446655440000")
+
+	h.UpdateMe(c)
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503 when pool is nil, got %d", w.Code)
+	}
+}
+

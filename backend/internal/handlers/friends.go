@@ -91,9 +91,9 @@ func (h Friends) SetVisibilityDefault(c *gin.Context) {
 		return
 	}
 
-	if h.Entries.Pool != nil && h.Entries.Cache != nil {
-		h.Entries.Cache.InvalidateUser(userID)
-		h.Entries.Cache.InvalidateUser(friendID)
+	if h.Entries.Pool != nil {
+		h.Entries.InvalidateUserCache(userID)
+		h.Entries.InvalidateUserCache(friendID)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -222,9 +222,9 @@ func (h Friends) Unfriend(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not remove friend"})
 		return
 	}
-	if h.Entries.Pool != nil && h.Entries.Cache != nil {
-		h.Entries.Cache.InvalidateUser(c.GetString("userID"))
-		h.Entries.Cache.InvalidateUser(targetID)
+	if h.Entries.Pool != nil {
+		h.Entries.InvalidateUserCache(c.GetString("userID"))
+		h.Entries.InvalidateUserCache(targetID)
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "unfriended successfully"})
 }

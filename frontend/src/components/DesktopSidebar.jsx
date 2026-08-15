@@ -137,7 +137,7 @@ export default function DesktopSidebar() {
             );
           })}
 
-          {user?.role === "admin" && (
+          {user?.is_admin && (
             <Link
               to="/admin"
               className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-body-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${

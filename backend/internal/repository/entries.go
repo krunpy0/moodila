@@ -146,6 +146,10 @@ func (r Entries) getCache() *SummaryCache {
 	return defaultSummaryCache
 }
 
+func (r Entries) InvalidateUserCache(userID string) {
+	r.getCache().InvalidateUser(userID)
+}
+
 func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool, overrides []models.EntryFriendOverride) (models.Entry, []AttachmentURLs, error) {
 	var oldAtt AttachmentURLs
 	_ = r.Pool.QueryRow(ctx, `SELECT photo_url, audio_url FROM entries WHERE user_id = $1 AND date = $2`, userID, date).Scan(&oldAtt.PhotoURL, &oldAtt.AudioURL)

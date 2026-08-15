@@ -212,14 +212,6 @@ export default function Home() {
                     <h2 className="text-label-lg font-label-lg lg:text-body-lg lg:font-bold text-on-surface-variant">
                       {t("home.thisWeekMood")}
                     </h2>
-                    <Link
-                      to="/stats"
-                      className="flex items-center gap-1 rounded-full bg-primary-container/40 px-3 py-1 text-label-sm font-bold text-primary hover:bg-primary-container hover:scale-105 active:scale-95 transition-all cloud-shadow"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">equalizer</span>
-                      <span>{t("common.seeMore")}</span>
-                      <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                    </Link>
                   </div>
                   <div className="flex justify-between gap-sm overflow-x-auto rounded-[24px] lg:rounded-[32px] bg-white/40 p-md lg:p-6 cloud-shadow">
                     {week.map((date) => {
@@ -266,6 +258,28 @@ export default function Home() {
                       );
                     })}
                   </div>
+
+                  {/* Prominent Stats Button */}
+                  <Link
+                    to="/stats"
+                    className="flex items-center justify-between gap-md rounded-[20px] lg:rounded-[28px] bg-primary text-on-primary p-md lg:p-5 cloud-shadow hover:shadow-md hover:opacity-95 transition-all hover:scale-[1.01] active:scale-[0.98] group"
+                  >
+                    <div className="flex items-center gap-sm lg:gap-md">
+                      <div className="flex h-10 w-10 lg:h-12 lg:w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-on-primary">
+                        <span className="material-symbols-outlined text-[22px] lg:text-[26px]">
+                          insights
+                        </span>
+                      </div>
+                      <span className="text-body-md font-bold lg:text-headline-sm">
+                        {t("home.viewDetailedStats")}
+                      </span>
+                    </div>
+                    <div className="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-1">
+                      <span className="material-symbols-outlined text-[20px] lg:text-[24px]">
+                        arrow_forward
+                      </span>
+                    </div>
+                  </Link>
                 </section>
 
                 <section className="space-y-md flex-1 flex flex-col justify-end">
@@ -330,7 +344,7 @@ export default function Home() {
               {/* Right Column: Mood Summary Stats */}
               <div className="lg:col-span-5 space-y-lg flex flex-col">
                 <section
-                  className="grid grid-cols-2 gap-md lg:gap-lg flex-1"
+                  className="grid grid-cols-2 gap-md lg:gap-lg"
                   aria-labelledby="summary-title"
                 >
                   <div className="col-span-2 rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-lg lg:p-8 cloud-shadow flex flex-col justify-between">
@@ -382,26 +396,6 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
-                  <Link
-                    to="/stats"
-                    className="col-span-2 flex items-center justify-between gap-md rounded-[24px] lg:rounded-[32px] bg-primary text-on-primary p-md lg:p-5 cloud-shadow hover:shadow-md hover:opacity-95 transition-all hover:scale-[1.01] active:scale-[0.98] group"
-                  >
-                    <div className="flex items-center gap-sm lg:gap-md">
-                      <div className="flex h-10 w-10 lg:h-12 lg:w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-on-primary">
-                        <span className="material-symbols-outlined text-[22px] lg:text-[26px]">
-                          insights
-                        </span>
-                      </div>
-                      <span className="text-body-md font-bold lg:text-headline-sm">
-                        {t("home.viewDetailedStats")}
-                      </span>
-                    </div>
-                    <div className="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-1">
-                      <span className="material-symbols-outlined text-[20px] lg:text-[24px]">
-                        arrow_forward
-                      </span>
-                    </div>
-                  </Link>
                 </section>
               </div>
             </div>
