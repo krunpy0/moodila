@@ -12,7 +12,7 @@ import { safeNavigateBack } from '../utils/navigation'
 export default function Friends() {
   const [query, setQuery] = useState('')
   const navigate = useNavigate()
-  const { t, language } = useLanguage()
+  const { t } = useLanguage()
   const { notify } = useNotifications()
   const debouncedQuery = useDebounce(query, 300)
   const searchTerm = debouncedQuery.trim().toLowerCase()

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { resetPassword } from "../api/auth";
 import PasswordFieldsForm from "../components/PasswordFieldsForm";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -12,13 +13,14 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const resetMutation = useMutation({
     mutationFn: () => resetPassword(token, newPassword),
     onSuccess: () => {
       navigate("/login", {
         replace: true,
-        state: { message: "Password changed successfully. Please log in with your new password." },
+        state: { message: t("auth.passwordResetSuccess") },
       });
     },
     onError: (requestError) => setError(requestError.message),
@@ -29,15 +31,15 @@ export default function ResetPassword() {
     setError("");
 
     if (!token) {
-      setError("Password reset token is missing from link");
+      setError(t("auth.resetTokenMissing"));
       return;
     }
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError(t("changePassword.tooShort"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("changePassword.mismatch"));
       return;
     }
 
@@ -55,10 +57,10 @@ export default function ResetPassword() {
             id="reset-title"
             className="text-headline-xl font-headline-xl text-on-surface"
           >
-            Set new password
+            {t("auth.setNewPassword")}
           </h1>
           <p className="mt-xs text-body-sm font-body-sm text-on-surface-variant">
-            Please enter your new password below
+            {t("auth.setNewPasswordSubtitle")}
           </p>
         </div>
 
@@ -69,13 +71,13 @@ export default function ResetPassword() {
                 className="px-sm py-xs rounded-md bg-error-container text-on-error-container text-body-sm font-body-sm"
                 role="alert"
               >
-                Password reset link is invalid or missing token.
+                {t("auth.resetTokenInvalid")}
               </p>
               <Link
                 to="/forgot-password"
                 className="mt-xs h-12 rounded-lg bg-primary-container text-on-primary-container text-label-lg font-label-lg flex items-center justify-center"
               >
-                Request a new link
+                {t("auth.requestNewLink")}
               </Link>
             </div>
           ) : (
@@ -85,6 +87,8 @@ export default function ResetPassword() {
                 setNewPassword={setNewPassword}
                 confirmPassword={confirmPassword}
                 setConfirmPassword={setConfirmPassword}
+                newPasswordLabel={t("changePassword.newPassword")}
+                confirmPasswordLabel={t("changePassword.confirmPassword")}
               />
 
               {error && (
@@ -102,8 +106,8 @@ export default function ResetPassword() {
                 className="mt-xs h-12 rounded-lg bg-primary-container text-on-primary-container text-label-lg font-label-lg disabled:opacity-60"
               >
                 {resetMutation.isPending
-                  ? "Saving..."
-                  : "Save new password"}
+                  ? t("common.loading")
+                  : t("auth.saveNewPassword")}
               </button>
             </form>
           )}

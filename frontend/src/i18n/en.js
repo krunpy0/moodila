@@ -348,6 +348,27 @@ export const en = {
       "If an account exists for that email, password reset instructions have been sent.",
     newPassword: "New Password",
     setNewPassword: "Set New Password",
+    setNewPasswordSubtitle: "Please enter your new password below",
+    resetTokenMissing: "Password reset token is missing from link",
+    resetTokenInvalid: "Password reset link is invalid or missing token.",
+    requestNewLink: "Request a new link",
+    saveNewPassword: "Save new password",
+    passwordResetSuccess: "Password changed successfully. Please log in with your new password.",
+  },
+
+  // Confirm Account Deletion
+  confirmDelete: {
+    title: "Confirm Account Deletion",
+    subtitle: "Factor 2 of 2 — Permanent action",
+    invalidToken: "Account deletion link is invalid or missing a valid token.",
+    backToLogin: "Back to sign in",
+    areYouSure: "Are you absolutely sure?",
+    warningDetails: "Deleting your account will anonymize your profile, hide all your journal entries, and remove your friend connections in Moodila.",
+    confirmBtn: "Confirm Account Deletion",
+    deleting: "Deleting account...",
+    cancelBtn: "Cancel and keep my account",
+    successMessage: "Your Moodila account has been successfully deleted.",
+    errorMessage: "Failed to confirm account deletion. The token may be invalid or expired.",
   },
 
   // PWA Install Prompt

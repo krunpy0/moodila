@@ -77,32 +77,33 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   }
 
   const renderContent = (item) => {
+    const actorName = item.actor_display_name || item.actor_username || t('common.user', 'User')
     switch (item.type) {
       case 'friend_request':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            <span className="font-semibold text-on-surface">{actorName}</span>{' '}
             {t('notifications.friendRequestSent', { name: '' }).trim()}
           </>
         )
       case 'friend_accept':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            <span className="font-semibold text-on-surface">{actorName}</span>{' '}
             {t('notifications.friendRequestAccepted', { name: '' }).trim()}
           </>
         )
       case 'like':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            <span className="font-semibold text-on-surface">{actorName}</span>{' '}
             {t('notifications.likedEntry', { name: '' }).trim()}
           </>
         )
       case 'comment':
         return (
           <>
-            <span className="font-semibold text-on-surface">{item.actor_display_name}</span>{' '}
+            <span className="font-semibold text-on-surface">{actorName}</span>{' '}
             {t('notifications.commentedEntry', { name: '' }).trim()} &quot;{item.content}&quot;
           </>
         )
@@ -238,12 +239,12 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
                   {item.actor_avatar_url ? (
                     <img
                       src={item.actor_avatar_url}
-                      alt={item.actor_display_name}
+                      alt={item.actor_display_name || item.actor_username || ''}
                       className="h-10 w-10 rounded-full object-cover"
                     />
                   ) : (
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-on-secondary-container font-semibold">
-                      {item.actor_display_name ? item.actor_display_name[0].toUpperCase() : '?'}
+                      {(item.actor_display_name || item.actor_username || '?')[0].toUpperCase()}
                     </div>
                   )}
                   <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-surface-container-lowest shadow-xs text-primary">

@@ -152,24 +152,29 @@ func (h Storage) Upload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file type does not match upload URL"})
 		return
 	}
-	if c.Request.ContentLength > claims.MaxSize || c.Request.ContentLength > maxPhotoBytes {
+	var maxAllowedBytes int64 = maxPhotoBytes
+	if strings.HasPrefix(claimContentType, "audio/") {
+		maxAllowedBytes = maxAudioBytes
+	}
+	if claims.MaxSize > maxAllowedBytes {
+		claims.MaxSize = maxAllowedBytes
+	}
+
+	if c.Request.ContentLength > claims.MaxSize {
 		log.Printf("upload size exceeded: ContentLength=%d > MaxSize=%d", c.Request.ContentLength, claims.MaxSize)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file size is invalid"})
 		return
 	}
 
 	readLimit := claims.MaxSize + 1
-	if readLimit > maxPhotoBytes+1 {
-		readLimit = maxPhotoBytes + 1
-	}
 	rawBytes, err := io.ReadAll(io.LimitReader(c.Request.Body, readLimit))
 	if err != nil {
 		log.Printf("upload body read failed: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "could not read upload body"})
 		return
 	}
-	if int64(len(rawBytes)) > claims.MaxSize || int64(len(rawBytes)) > maxPhotoBytes {
-		log.Printf("upload size exceeded post-read: len=%d (claimMax=%d, maxPhotoBytes=%d)", len(rawBytes), claims.MaxSize, maxPhotoBytes)
+	if int64(len(rawBytes)) > claims.MaxSize {
+		log.Printf("upload size exceeded post-read: len=%d (claimMax=%d)", len(rawBytes), claims.MaxSize)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file size is invalid"})
 		return
 	}

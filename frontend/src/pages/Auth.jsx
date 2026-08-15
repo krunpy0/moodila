@@ -141,7 +141,7 @@ export default function Auth() {
                     autoComplete="username"
                     minLength="2"
                     maxLength="32"
-                    pattern="[a-z0-9_]+"
+                    pattern="[a-z0-9_.-]+"
                     required
                   />
                   <p className="mt-xs text-label-sm text-on-surface-variant/70">

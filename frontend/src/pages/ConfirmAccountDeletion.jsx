@@ -3,19 +3,21 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { confirmAccountDeletion, logout } from '../api/auth'
 import { queryKeys } from '../api/queries'
 import { useQueryClient } from '@tanstack/react-query'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function ConfirmAccountDeletion() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') || ''
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { t } = useLanguage()
 
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState('')
 
   const handleConfirm = async () => {
     if (!token) {
-      setError('Account deletion token is missing from the link.')
+      setError(t('confirmDelete.invalidToken'))
       return
     }
 
@@ -30,10 +32,10 @@ export default function ConfirmAccountDeletion() {
       queryClient.clear()
       navigate('/login', {
         replace: true,
-        state: { message: 'Your Moodila account has been successfully deleted.' },
+        state: { message: t('confirmDelete.successMessage') },
       })
     } catch (err) {
-      setError(err.message || 'Failed to confirm account deletion. The token may be invalid or expired.')
+      setError(err.message || t('confirmDelete.errorMessage'))
       setIsPending(false)
     }
   }
@@ -46,10 +48,10 @@ export default function ConfirmAccountDeletion() {
             <span aria-hidden="true">⚠️</span>
           </div>
           <h1 id="confirm-delete-title" className="text-headline-xl font-headline-xl text-on-surface">
-            Confirm Account Deletion
+            {t('confirmDelete.title')}
           </h1>
           <p className="mt-xs text-body-sm font-body-sm text-on-surface-variant">
-            Factor 2 of 2 — Permanent action
+            {t('confirmDelete.subtitle')}
           </p>
         </div>
 
@@ -57,21 +59,21 @@ export default function ConfirmAccountDeletion() {
           {!token ? (
             <div className="flex flex-col gap-md text-center">
               <p className="rounded-xl bg-error-container/60 p-sm text-body-sm font-medium text-on-error-container" role="alert">
-                Account deletion link is invalid or missing a valid token.
+                {t('confirmDelete.invalidToken')}
               </p>
               <Link
                 to="/login"
                 className="mt-xs flex h-12 items-center justify-center rounded-full bg-primary-container text-label-lg font-semibold text-on-primary-container"
               >
-                Back to sign in
+                {t('confirmDelete.backToLogin')}
               </Link>
             </div>
           ) : (
             <div className="space-y-md">
               <div className="rounded-xl bg-error-container/40 p-sm text-body-sm text-on-error-container border border-error/10">
-                <p className="font-semibold">Are you absolutely sure?</p>
+                <p className="font-semibold">{t('confirmDelete.areYouSure')}</p>
                 <p className="mt-xs text-label-sm opacity-90">
-                  Deleting your account will anonymize your profile, hide all your journal entries, and remove your friend connections in Moodila.
+                  {t('confirmDelete.warningDetails')}
                 </p>
               </div>
 
@@ -88,13 +90,13 @@ export default function ConfirmAccountDeletion() {
                   disabled={isPending}
                   className="h-12 w-full rounded-full bg-error text-label-lg font-semibold text-on-error shadow-sm transition-opacity hover:opacity-95 disabled:opacity-50"
                 >
-                  {isPending ? 'Deleting account...' : 'Confirm Account Deletion'}
+                  {isPending ? t('confirmDelete.deleting') : t('confirmDelete.confirmBtn')}
                 </button>
                 <Link
                   to="/home"
                   className="flex h-12 items-center justify-center rounded-full bg-surface-container-highest text-label-lg font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high"
                 >
-                  Cancel and keep my account
+                  {t('confirmDelete.cancelBtn')}
                 </Link>
               </div>
             </div>

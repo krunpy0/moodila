@@ -101,7 +101,7 @@ export default function Stats() {
                   </h2>
                   {stats?.overall_avg_mood && (
                     <p className="text-label-sm text-on-surface-variant/70 mt-0.5">
-                      {t("stats.avgMood")}: <strong className="text-primary font-bold">{stats.overallAvgMood} / 5</strong> ({stats.totalEntries} {t("stats.entriesCount")})
+                      {t("stats.avgMood")}: <strong className="text-primary font-bold">{stats.overall_avg_mood} / 5</strong> ({stats.total_entries} {t("stats.entriesCount")})
                     </p>
                   )}
                 </div>
