@@ -60,12 +60,31 @@ export const TAG_CATEGORIES = [
   {
     key: "positive",
     label: "Positive",
-    tags: ["Calm", "Chill", "Motivated", "Grateful", "Inspired", "Peaceful"],
+    tags: [
+      "Calm",
+      "Chill",
+      "Motivated",
+      "Grateful",
+      "Inspired",
+      "Peaceful",
+      "Happy",
+      "Excited",
+      "Optimistic",
+    ],
   },
   {
     key: "neutral",
     label: "Neutral",
-    tags: ["Okay", "Neutral", "Bored", "Focused", "Steady", "Meh"],
+    tags: [
+      "Okay",
+      "Neutral",
+      "Bored",
+      "Focused",
+      "Steady",
+      "Meh",
+      "Unsure",
+      "Indifferent",
+    ],
   },
   {
     key: "difficult",
@@ -74,6 +93,7 @@ export const TAG_CATEGORIES = [
       "Tired",
       "Anxious",
       "Overwhelmed",
+      "Suicidal",
       "Frustrated",
       "Lonely",
       "Drained",
@@ -105,16 +125,22 @@ export function getLocalizedInsightText(insight, t) {
     key = `stats.insights.${rawKey.replace("insight.", "")}`;
   } else if (!rawKey && insight.id) {
     if (insight.id.startsWith("day_lower")) key = "stats.insights.day_lower";
-    else if (insight.id.startsWith("day_higher")) key = "stats.insights.day_higher";
-    else if (insight.id.startsWith("tag_lower")) key = "stats.insights.tag_lower";
-    else if (insight.id.startsWith("tag_higher")) key = "stats.insights.tag_higher";
+    else if (insight.id.startsWith("day_higher"))
+      key = "stats.insights.day_higher";
+    else if (insight.id.startsWith("tag_lower"))
+      key = "stats.insights.tag_lower";
+    else if (insight.id.startsWith("tag_higher"))
+      key = "stats.insights.tag_higher";
   }
 
   if (key && t) {
     const params = { ...(insight.params || {}) };
     if (params.day !== undefined && params.day !== null) {
       const localizedDay = t(`stats.insights.daysPlural.${params.day}`);
-      if (localizedDay && localizedDay !== `stats.insights.daysPlural.${params.day}`) {
+      if (
+        localizedDay &&
+        localizedDay !== `stats.insights.daysPlural.${params.day}`
+      ) {
         params.day = localizedDay;
       } else {
         params.day = params.day_ru || params.day_name || params.day;

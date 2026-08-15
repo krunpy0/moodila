@@ -82,6 +82,12 @@ export const en = {
       Lonely: "Lonely",
       Drained: "Drained",
       Emotional: "Emotional",
+      Indifferent: "Indifferent",
+      Suicidal: "Suicidal",
+      Unsure: "Unsure",
+      Happy: "Happy",
+      Excited: "Excited",
+      Optimistic: "Optimistic",
     },
   },
 
@@ -118,8 +124,10 @@ export const en = {
     insights: {
       day_lower: "Mood is usually lower on {day} (by {diff} below average)",
       day_higher: "Mood is usually higher on {day} (by {diff} above average)",
-      tag_lower: 'Entries with tag "{tag}" are on average {diff} below overall average',
-      tag_higher: 'Entries with tag "{tag}" are on average {diff} above overall average',
+      tag_lower:
+        'Entries with tag "{tag}" are on average {diff} below overall average',
+      tag_higher:
+        'Entries with tag "{tag}" are on average {diff} above overall average',
       daysPlural: {
         1: "Mondays",
         2: "Tuesdays",
@@ -183,13 +191,13 @@ export const en = {
   friendPrivacy: {
     title: "Friend Privacy",
     subtitle: "Default post visibility",
-    description: "Choose which friends you want to hide your entries from by default. You can still adjust visibility for any specific entry.",
+    description:
+      "Choose which friends you want to hide your entries from by default. You can still adjust visibility for any specific entry.",
     hideByDefault: "Hide posts by default",
     hidden: "Hidden",
     visible: "Visible",
     noFriends: "You have no accepted friends yet.",
   },
-
 
   // Calendar Page
   calendar: {
@@ -244,7 +252,8 @@ export const en = {
     addFriend: "Add friend",
     addFriendBtn: "Find & add friends",
     noFriendsYet: "No friends added yet",
-    noFriendsDesc: "Find users by @username to see their mood journals in your feed.",
+    noFriendsDesc:
+      "Find users by @username to see their mood journals in your feed.",
     pendingRequests: "Pending Requests",
     noFriends: "No friends added yet.",
     noPending: "No pending friend requests.",
