@@ -195,12 +195,13 @@ function UserSection({ title, count, children }) {
 function UserCard({ user, children }) {
   const profileQuery = useProfileQuery()
   const currentUserId = profileQuery.data?.user?.id
-  const isFriend = !user.status || user.status === 'accepted'
+  const isFriend = user.status === 'accepted'
   const isSelf = currentUserId && user.id === currentUserId
   const profileLink = isSelf ? '/profile' : `/profile/${user.id}`
+  const canViewProfile = isSelf || isFriend
   return (
     <div className="flex min-h-[112px] items-center justify-between gap-sm rounded-[24px] border border-surface-container bg-white p-lg cloud-shadow">
-      {isFriend ? (
+      {canViewProfile ? (
         <Link to={profileLink} className="flex min-w-0 flex-1 items-center gap-md rounded-xl transition-opacity hover:opacity-80">
           <Avatar user={user} />
           <div className="min-w-0">

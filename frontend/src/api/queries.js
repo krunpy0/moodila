@@ -73,7 +73,7 @@ export function useDeleteEntryMutation() {
       queryClient.invalidateQueries({ queryKey: ['entries', 'me'] })
       queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
       queryClient.removeQueries({ queryKey: queryKeys.entry(entryIdOrDate) })
     },
   })
@@ -190,7 +190,7 @@ export function useLikeEntryMutation() {
       }
     },
     onSettled: (_, __, { entryId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
       if (entryId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.reactions(entryId) })
@@ -205,7 +205,7 @@ export function useAddCommentMutation() {
     mutationFn: addComment,
     onSuccess: (comment) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.comments(comment.entry_id) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
     },
   })
@@ -225,7 +225,7 @@ export function useDeleteCommentMutation() {
       } else {
         queryClient.invalidateQueries({ queryKey: ['feed', 'comments'] })
       }
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
     },
   })
 }
@@ -257,7 +257,7 @@ export function useSetFriendVisibilityDefaultMutation() {
       })
       queryClient.invalidateQueries({ queryKey: queryKeys.friendVisibilityDefaults })
       queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
-      queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
     },
   })
 }

@@ -21,7 +21,7 @@ func (h Stats) Get(c *gin.Context) {
 	}
 
 	period := strings.ToLower(strings.TrimSpace(c.Query("period")))
-	if period != "week" && period != "year" {
+	if period != "week" && period != "year" && period != "all" {
 		period = "month"
 	}
 

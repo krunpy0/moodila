@@ -17,7 +17,7 @@ export default function HeaderBell() {
       if (event.data && event.data.type === 'PUSH_NOTIFICATION_RECEIVED') {
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
         queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
-        queryClient.invalidateQueries({ queryKey: queryKeys.feed })
+        queryClient.invalidateQueries({ queryKey: ['feed'] })
         queryClient.invalidateQueries({ queryKey: queryKeys.pendingFriends })
       }
     }

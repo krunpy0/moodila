@@ -246,6 +246,35 @@ func (r Entries) fetchMoodSeries(ctx context.Context, userID, period string, now
 			series = append(series, pt)
 		}
 
+	case "all":
+		// Historical monthly aggregation across all recorded time
+		rows, err := r.Pool.Query(ctx, `
+			SELECT TO_CHAR(date, 'YYYY-MM') AS month_key, AVG(mood)::float, COUNT(*)::int
+			FROM entries
+			WHERE user_id = $1
+			GROUP BY month_key
+			ORDER BY month_key ASC`, userID)
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var mKey string
+			var avg float64
+			var cnt int
+			if err := rows.Scan(&mKey, &avg, &cnt); err != nil {
+				return nil, err
+			}
+			rounded := math.Round(avg*10) / 10
+			series = append(series, models.MoodPoint{
+				Date:       mKey,
+				Label:      mKey,
+				Mood:       &rounded,
+				EntryCount: cnt,
+			})
+		}
+
 	default: // "month"
 		// Days of current month
 		year, month, _ := now.Date()
