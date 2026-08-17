@@ -5,27 +5,28 @@ package config
 import (
 	"bufio"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
 
 // Config holds all runtime settings for the API.
 type Config struct {
-	Port                 string
-	DatabaseURL          string
-	JWTSecret            string
-	CORSOrigin           string
-	APIPublicURL         string
-	AppEnv               string
-	S3Endpoint           string
-	S3Region             string
-	S3Bucket             string
-	S3AccessKeyID        string
-	S3SecretAccessKey    string
-	S3SessionToken       string
-	S3PublicBaseURL      string
-	S3ForcePathStyle     bool
-	S3IsPrivate          bool
+	Port                         string
+	DatabaseURL                  string
+	JWTSecret                    string
+	CORSOrigin                   string
+	APIPublicURL                 string
+	AppEnv                       string
+	S3Endpoint                   string
+	S3Region                     string
+	S3Bucket                     string
+	S3AccessKeyID                string
+	S3SecretAccessKey            string
+	S3SessionToken               string
+	S3PublicBaseURL              string
+	S3ForcePathStyle             bool
+	S3IsPrivate                  bool
 	ResetTokenTTLMinutes         int
 	AccountDeleteTokenTTLMinutes int
 	ResendAPIKey                 string
@@ -57,7 +58,7 @@ type Config struct {
 // Load reads configuration, loading backend/.env first (if present) so local
 // values are available without exporting them by hand.
 func Load() Config {
-	loadDotEnv(".env")
+	loadDotEnv()
 
 	appEnv := getenv("APP_ENV", "development")
 	defaultSecure := strings.EqualFold(appEnv, "production")
@@ -145,29 +146,73 @@ func getenv(key, def string) string {
 	return def
 }
 
-// loadDotEnv loads KEY=VALUE lines from path into the process environment,
-// without overriding variables that are already set. A missing file is fine.
-func loadDotEnv(path string) {
-	f, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer f.Close()
+// loadDotEnv loads KEY=VALUE lines from .env into the process environment,
+// searching the current directory, parent directories, and backend subfolder,
+// without overriding variables that are already set.
+func loadDotEnv(paths ...string) {
+	var envFiles []string
+	if len(paths) > 0 {
+		envFiles = paths
+	} else {
+		candidates := []string{
+			".env",
+			"backend/.env",
+			"../.env",
+			"../../.env",
+			"../../../.env",
+		}
+		for _, p := range candidates {
+			if info, err := os.Stat(p); err == nil && !info.IsDir() {
+				envFiles = append(envFiles, p)
+				break
+			}
+		}
 
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
+		if len(envFiles) == 0 {
+			if cwd, err := os.Getwd(); err == nil {
+				dir := cwd
+				for i := 0; i < 5; i++ {
+					envPath := filepath.Join(dir, ".env")
+					if info, err := os.Stat(envPath); err == nil && !info.IsDir() {
+						envFiles = append(envFiles, envPath)
+						break
+					}
+					backendEnvPath := filepath.Join(dir, "backend", ".env")
+					if info, err := os.Stat(backendEnvPath); err == nil && !info.IsDir() {
+						envFiles = append(envFiles, backendEnvPath)
+						break
+					}
+					parent := filepath.Dir(dir)
+					if parent == dir {
+						break
+					}
+					dir = parent
+				}
+			}
+		}
+	}
+
+	for _, path := range envFiles {
+		f, err := os.Open(path)
+		if err != nil {
 			continue
 		}
-		key, val, ok := strings.Cut(line, "=")
-		if !ok {
-			continue
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			key, val, ok := strings.Cut(line, "=")
+			if !ok {
+				continue
+			}
+			key = strings.TrimSpace(key)
+			val = strings.Trim(strings.TrimSpace(val), `"'`)
+			if _, exists := os.LookupEnv(key); !exists {
+				_ = os.Setenv(key, val)
+			}
 		}
-		key = strings.TrimSpace(key)
-		val = strings.Trim(strings.TrimSpace(val), `"'`)
-		if _, exists := os.LookupEnv(key); !exists {
-			_ = os.Setenv(key, val)
-		}
+		_ = f.Close()
 	}
 }

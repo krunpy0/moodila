@@ -4,28 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"strings"
 
+	"moodshare/internal/config"
 	"moodshare/internal/storage"
 
 	"github.com/jackc/pgx/v5"
 )
 
 func main() {
-	data, err := os.ReadFile(".env")
-	if err != nil {
-		log.Fatalf("read .env failed: %v", err)
-	}
-
-	var dbURL string
-	for _, line := range strings.Split(string(data), "\n") {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "DATABASE_URL=") {
-			dbURL = strings.TrimPrefix(line, "DATABASE_URL=")
-			dbURL = strings.Trim(dbURL, `"'`)
-		}
-	}
+	cfg := config.Load()
+	dbURL := cfg.DatabaseURL
 	if dbURL == "" {
 		log.Fatal("DATABASE_URL not found in .env")
 	}
