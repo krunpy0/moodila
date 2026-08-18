@@ -35,6 +35,7 @@ export const ru = {
     hiddenFromFriends: 'Скрыто от друзей',
     error: 'Ошибка',
     success: 'Успешно',
+    disable: 'Отключить',
   },
 
   // Greetings
@@ -81,6 +82,12 @@ export const ru = {
       Lonely: 'Одиночество',
       Drained: 'Опустошение',
       Emotional: 'Эмоционально',
+      Indifferent: 'Безразличие',
+      Suicidal: 'Суицидально',
+      Unsure: 'Неуверенность',
+      Happy: 'Счастье',
+      Excited: 'Восторг',
+      Optimistic: 'Оптимизм',
     },
   },
 

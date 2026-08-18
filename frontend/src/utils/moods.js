@@ -112,8 +112,10 @@ export function getTagsForMood() {
 
 export function getLocalizedTag(tag, t) {
   if (!tag) return "";
-  if (!t) return tag;
-  return t(`moods.tags.${tag}`, tag);
+  const trimmed = typeof tag === "string" ? tag.trim() : String(tag);
+  if (!trimmed) return "";
+  if (!t) return trimmed;
+  return t(`moods.tags.${trimmed}`, trimmed);
 }
 
 export function getLocalizedInsightText(insight, t) {
