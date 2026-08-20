@@ -73,8 +73,11 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
       } else {
         navigate('/feed')
       }
+    } else if (item.entity_id) {
+      navigate(`/feed?entry=${item.entity_id}`)
     }
   }
+
 
   const renderContent = (item) => {
     const actorName = item.actor_display_name || item.actor_username || t('common.user', 'User')

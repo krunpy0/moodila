@@ -274,12 +274,53 @@ export function useMarkNotificationsAsReadMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: markNotificationsAsRead,
-    onSuccess: () => {
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.notifications })
+      await queryClient.cancelQueries({ queryKey: queryKeys.unreadCount })
+
+      const prevNotifications = queryClient.getQueryData(queryKeys.notifications)
+      const prevUnreadCount = queryClient.getQueryData(queryKeys.unreadCount)
+
+      // Optimistically update notifications list
+      queryClient.setQueryData(queryKeys.notifications, (old) => {
+        if (!Array.isArray(old)) return old
+        if (!ids || ids.length === 0) {
+          return old.map((n) => ({ ...n, is_read: true }))
+        }
+        const idSet = new Set(ids)
+        return old.map((n) => (idSet.has(n.id) ? { ...n, is_read: true } : n))
+      })
+
+      // Optimistically update unread count
+      queryClient.setQueryData(queryKeys.unreadCount, (old) => {
+        if (!old) return old
+        if (!ids || ids.length === 0) {
+          return { ...old, unread_count: 0 }
+        }
+        const count = ids.length
+        return {
+          ...old,
+          unread_count: Math.max(0, (old.unread_count || 0) - count),
+        }
+      })
+
+      return { prevNotifications, prevUnreadCount }
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.prevNotifications) {
+        queryClient.setQueryData(queryKeys.notifications, context.prevNotifications)
+      }
+      if (context?.prevUnreadCount) {
+        queryClient.setQueryData(queryKeys.unreadCount, context.prevUnreadCount)
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
     },
   })
 }
+
 
 export const useUnreadAnnouncementsQuery = (enabled = true) =>
   useQuery({ queryKey: queryKeys.unreadAnnouncements, queryFn: getUnreadAnnouncements, enabled, staleTime: STALE_TIMES.STANDARD })

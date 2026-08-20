@@ -150,3 +150,51 @@ func (r Notifications) MarkAsRead(ctx context.Context, userID string, ids []stri
 	)
 	return err
 }
+
+// DeleteOlderThanBatch deletes up to batchSize notifications older than the given number of days.
+func (r Notifications) DeleteOlderThanBatch(ctx context.Context, days int, batchSize int) (int64, error) {
+	if r.Pool == nil {
+		return 0, nil
+	}
+	if days <= 0 {
+		days = 30
+	}
+	if batchSize <= 0 {
+		batchSize = 5000
+	}
+
+	tag, err := r.Pool.Exec(ctx, `
+		WITH to_delete AS (
+			SELECT id FROM notifications
+			WHERE created_at < NOW() - ($1 * INTERVAL '1 day')
+			LIMIT $2
+		)
+		DELETE FROM notifications
+		WHERE id IN (SELECT id FROM to_delete)`,
+		days, batchSize,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
+
+// PurgeOld deletes all notifications older than days in batches of batchSize.
+func (r Notifications) PurgeOld(ctx context.Context, days int, batchSize int) (int64, error) {
+	if r.Pool == nil {
+		return 0, nil
+	}
+	var total int64
+	for {
+		deleted, err := r.DeleteOlderThanBatch(ctx, days, batchSize)
+		if err != nil {
+			return total, err
+		}
+		total += deleted
+		if deleted == 0 {
+			break
+		}
+	}
+	return total, nil
+}
+

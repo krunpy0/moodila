@@ -338,7 +338,15 @@ const moodTintBg = {
 
 function FeedCard({ entry, onReact, isHighlighted = false }) {
   const [showComments, setShowComments] = useState(isHighlighted);
+
+  useEffect(() => {
+    if (isHighlighted) {
+      setShowComments(true);
+    }
+  }, [isHighlighted]);
+
   const { t, dateLocale } = useLanguage();
+
   const profileQuery = useProfileQuery();
   const currentUserId = profileQuery.data?.user?.id;
   const moodInfo = getMoodInfo(entry.mood, t);
