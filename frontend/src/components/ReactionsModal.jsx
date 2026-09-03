@@ -4,6 +4,7 @@ import { useEntryReactionsQuery } from '../api/queries'
 import { useLanguage } from '../context/LanguageContext'
 import ReactionIcon from './ReactionIcon'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
+import { ReactionsSkeleton } from './skeleton/PageSkeletons'
 
 export default function ReactionsModal({ entryId, isOpen, onClose }) {
   const { data: reactors = [], isLoading, isError } = useEntryReactionsQuery(entryId, isOpen)
@@ -102,9 +103,7 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
         {/* User List */}
         <div className="flex-1 overflow-y-auto p-md space-y-xs">
           {isLoading ? (
-            <div className="py-lg text-center text-body-sm text-on-surface-variant">
-              {t('common.loading')}
-            </div>
+            <ReactionsSkeleton />
           ) : isError ? (
             <div className="py-lg text-center text-body-sm text-error">
               {t('common.error')}

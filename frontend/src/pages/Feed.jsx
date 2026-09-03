@@ -13,7 +13,7 @@ import AppLayout from "../components/AppLayout";
 import BottomNav from "../components/BottomNav";
 import HeaderBell from "../components/HeaderBell";
 import { useNotifications } from "../components/Notifications";
-import { FeedSkeleton } from "../components/skeleton/PageSkeletons";
+import { FeedSkeleton, FeedCardSkeleton, CommentsSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import MoodIcon from "../components/MoodIcon";
@@ -202,12 +202,14 @@ export default function Feed() {
                   ))}
 
                   {hasNextPage && (
-                    <div ref={observerRef} className="py-md text-center">
-                      <p className="text-body-sm text-on-surface-variant">
-                        {isFetchingNextPage
-                          ? t("common.loading")
-                          : t("common.seeMore")}
-                      </p>
+                    <div ref={observerRef} className="py-md">
+                      {isFetchingNextPage ? (
+                        <FeedCardSkeleton />
+                      ) : (
+                        <p className="text-center text-body-sm text-on-surface-variant">
+                          {t("common.seeMore")}
+                        </p>
+                      )}
                     </div>
                   )}
 
@@ -706,9 +708,7 @@ function CommentsSection({ entryId }) {
   return (
     <div className="mt-md border-t border-surface-container-low pt-md">
       {commentsQuery.isLoading ? (
-        <p className="py-sm text-center text-body-sm text-on-surface-variant">
-          {t("common.loading")}
-        </p>
+        <CommentsSkeleton />
       ) : (
         <div className="space-y-md">
           {comments.map((comment) => {

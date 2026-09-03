@@ -113,6 +113,83 @@ export function AdminSkeleton() {
   </div>
 }
 
-function EntrySkeleton() { return <div className="flex min-h-[88px] items-center gap-md rounded-[24px] bg-white p-md cloud-shadow"><Skeleton borderRadius="20px" width="3.5rem" height="3.5rem" /><div className="flex-1"><Skeleton width="55%" height="1rem" /><Skeleton className="mt-xs" width="88%" height="0.875rem" /></div></div> }
-function FeedCardSkeleton() { return <article className="rounded-[24px] bg-white p-lg cloud-shadow"><div className="flex items-center gap-sm"><SkeletonCircle /><div className="flex-1"><Skeleton width="45%" height="1rem" /><Skeleton className="mt-xs" width="62%" height="0.75rem" /></div><SkeletonCircle size="2.75rem" /></div><div className="mt-md"><Skeleton width="5rem" height="1.75rem" borderRadius="9999px" /><SkeletonText className="mt-sm" lines={2} /></div><Skeleton className="mt-md" width="4.5rem" height="1.75rem" borderRadius="9999px" /></article> }
-function FriendRowSkeleton() { return <div className="flex min-h-[112px] items-center gap-md rounded-[24px] bg-white p-lg cloud-shadow"><SkeletonCircle size="3.5rem" /><div className="flex-1"><Skeleton width="52%" height="1rem" /><Skeleton className="mt-xs" width="36%" height="0.75rem" /></div><SkeletonCircle size="2.5rem" /></div> }
+export function EntrySkeleton() { return <div className="flex min-h-[88px] items-center gap-md rounded-[24px] bg-white p-md cloud-shadow"><Skeleton borderRadius="20px" width="3.5rem" height="3.5rem" /><div className="flex-1"><Skeleton width="55%" height="1rem" /><Skeleton className="mt-xs" width="88%" height="0.875rem" /></div></div> }
+export function FeedCardSkeleton() { return <article className="rounded-[24px] bg-white p-lg cloud-shadow"><div className="flex items-center gap-sm"><SkeletonCircle /><div className="flex-1"><Skeleton width="45%" height="1rem" /><Skeleton className="mt-xs" width="62%" height="0.75rem" /></div><SkeletonCircle size="2.75rem" /></div><div className="mt-md"><Skeleton width="5rem" height="1.75rem" borderRadius="9999px" /><SkeletonText className="mt-sm" lines={2} /></div><Skeleton className="mt-md" width="4.5rem" height="1.75rem" borderRadius="9999px" /></article> }
+export function FriendRowSkeleton() { return <div className="flex min-h-[112px] items-center gap-md rounded-[24px] bg-white p-lg cloud-shadow"><SkeletonCircle size="3.5rem" /><div className="flex-1"><Skeleton width="52%" height="1rem" /><Skeleton className="mt-xs" width="36%" height="0.75rem" /></div><SkeletonCircle size="2.5rem" /></div> }
+
+export function FriendPrivacySkeleton() {
+  return (
+    <div className="space-y-sm" role="status" aria-label="Loading friend privacy settings">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="flex items-center justify-between gap-sm rounded-2xl bg-surface-container-low p-md">
+          <div className="flex items-center gap-sm min-w-0 flex-1">
+            <SkeletonCircle size="2.5rem" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <Skeleton width="55%" height="1rem" />
+              <Skeleton width="35%" height="0.75rem" />
+            </div>
+          </div>
+          <Skeleton width="3rem" height="1.5rem" borderRadius="9999px" className="shrink-0" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function NotificationSettingsSkeleton() {
+  return (
+    <div className="space-y-sm" role="status" aria-label="Loading notification settings">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="flex items-center justify-between gap-sm rounded-2xl bg-surface-container-low p-md">
+          <div className="flex items-center gap-sm min-w-0 flex-1">
+            <SkeletonCircle size="2.25rem" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <Skeleton width="45%" height="1rem" />
+              <Skeleton width="75%" height="0.75rem" />
+            </div>
+          </div>
+          <Skeleton width="3rem" height="1.5rem" borderRadius="9999px" className="shrink-0" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function ReactionsSkeleton() {
+  return (
+    <div className="space-y-xs" role="status" aria-label="Loading reactions">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="flex items-center justify-between p-sm rounded-2xl bg-surface-container-lowest">
+          <div className="flex items-center gap-sm min-w-0 flex-1">
+            <SkeletonCircle size="2.25rem" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <Skeleton width="40%" height="1rem" />
+              <Skeleton width="25%" height="0.75rem" />
+            </div>
+          </div>
+          <SkeletonCircle size="1.75rem" className="shrink-0" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function CommentsSkeleton() {
+  return (
+    <div className="space-y-md py-xs" role="status" aria-label="Loading comments">
+      {Array.from({ length: 2 }, (_, i) => (
+        <div key={i} className="flex items-start gap-sm">
+          <SkeletonCircle size="2rem" className="shrink-0" />
+          <div className="min-w-0 flex-1 rounded-2xl bg-surface-container-low p-sm space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Skeleton width="5rem" height="0.875rem" />
+              <Skeleton width="3rem" height="0.75rem" />
+            </div>
+            <Skeleton width="85%" height="0.875rem" />
+            <Skeleton width="60%" height="0.875rem" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}

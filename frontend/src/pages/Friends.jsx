@@ -4,7 +4,7 @@ import { useAcceptFriendRequestMutation, useCancelFriendRequestMutation, useDecl
 import AppLayout from '../components/AppLayout'
 import HeaderBell from '../components/HeaderBell'
 import { useNotifications } from '../components/Notifications'
-import { FriendsSkeleton } from '../components/skeleton/PageSkeletons'
+import { FriendsSkeleton, FriendRowSkeleton } from '../components/skeleton/PageSkeletons'
 import { useLanguage } from '../context/LanguageContext'
 import { useDebounce } from '../hooks/useDebounce'
 import { safeNavigateBack } from '../utils/navigation'
@@ -102,20 +102,26 @@ export default function Friends() {
 
             {!isLoading && query.trim() && (
               <UserSection title={t('common.seeAll')}>
-                {results.map((user) => (
-                  <UserCard key={user.id} user={user}>
-                    <SearchAction
-                      user={user}
-                      busy={sendRequest.isPending && sendRequest.variables === user.id}
-                      onSend={() => handleSend(user.id)}
-                      onCancel={() => handleCancel(user.id)}
-                      onUnfriend={() => handleUnfriend(user.id)}
-                      unfriendBusy={unfriend.isPending}
-                      cancelBusy={cancelRequest.isPending}
-                    />
-                  </UserCard>
-                ))}
-                {results.length === 0 && <Empty text={t('friends.noFriends')} />}
+                {searchQuery.isLoading ? (
+                  Array.from({ length: 3 }, (_, i) => <FriendRowSkeleton key={i} />)
+                ) : (
+                  <>
+                    {results.map((user) => (
+                      <UserCard key={user.id} user={user}>
+                        <SearchAction
+                          user={user}
+                          busy={sendRequest.isPending && sendRequest.variables === user.id}
+                          onSend={() => handleSend(user.id)}
+                          onCancel={() => handleCancel(user.id)}
+                          onUnfriend={() => handleUnfriend(user.id)}
+                          unfriendBusy={unfriend.isPending}
+                          cancelBusy={cancelRequest.isPending}
+                        />
+                      </UserCard>
+                    ))}
+                    {results.length === 0 && <Empty text={t('friends.noFriends')} />}
+                  </>
+                )}
               </UserSection>
             )}
 

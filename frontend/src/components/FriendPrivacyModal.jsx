@@ -3,6 +3,7 @@ import { useFriendVisibilityDefaultsQuery, useSetFriendVisibilityDefaultMutation
 import { useLanguage } from "../context/LanguageContext";
 import { useModalKeyboard } from "../hooks/useModalKeyboard";
 import { useNotifications } from "./Notifications";
+import { FriendPrivacySkeleton } from "./skeleton/PageSkeletons";
 
 export default function FriendPrivacyModal({ isOpen, onClose }) {
   const { t } = useLanguage();
@@ -78,9 +79,7 @@ export default function FriendPrivacyModal({ isOpen, onClose }) {
 
         <div className="flex-1 overflow-y-auto space-y-sm pr-1 -mr-1">
           {isLoading ? (
-            <div className="py-8 text-center text-body-sm text-on-surface-variant">
-              {t('common.loading')}
-            </div>
+            <FriendPrivacySkeleton />
           ) : error ? (
             <div className="rounded-xl bg-error-container p-sm text-body-sm text-on-error-container">
               {error.message || t('common.error')}
