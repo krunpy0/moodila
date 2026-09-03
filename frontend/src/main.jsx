@@ -12,6 +12,16 @@ import { LanguageProvider } from './context/LanguageContext.jsx'
 
 initSentry()
 
+// Automatically reload the page when a dynamically imported chunk fails to load due to a new deployment
+window.addEventListener('vite:preloadError', () => {
+  const lastReload = sessionStorage.getItem('last_chunk_reload')
+  const now = Date.now()
+  if (!lastReload || now - Number(lastReload) > 10000) {
+    sessionStorage.setItem('last_chunk_reload', String(now))
+    window.location.reload()
+  }
+})
+
 registerSW({ immediate: true })
 
 const queryClient = new QueryClient({

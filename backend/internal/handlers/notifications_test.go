@@ -57,3 +57,40 @@ func TestMarkRead_InvalidUUID(t *testing.T) {
 		t.Fatalf("expected status 400 Bad Request for invalid UUID, got %d", w.Code)
 	}
 }
+
+func TestNotificationSettingsUnavailable(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Notifications{
+		Notifications: repository.Notifications{Pool: nil},
+		Settings:      repository.NotificationSettings{Pool: nil},
+	}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest(http.MethodGet, "/notifications/settings", nil)
+
+	h.GetSettings(c)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", w.Code)
+	}
+}
+
+func TestUpdateSettings_InvalidJSON(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Notifications{
+		Settings: repository.NotificationSettings{Pool: &pgxpool.Pool{}},
+	}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest(http.MethodPatch, "/notifications/settings", strings.NewReader(`{not valid json}`))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	h.UpdateSettings(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 Bad Request for invalid JSON, got %d", w.Code)
+	}
+}
+

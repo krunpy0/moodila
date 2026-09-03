@@ -1,6 +1,17 @@
 import React from 'react'
 import { captureSentryException } from '../sentry'
 
+function isChunkLoadError(error) {
+  if (!error) return false
+  const msg = error.message || (typeof error === 'string' ? error : '') || ''
+  return (
+    msg.includes('is not a valid JavaScript MIME type') ||
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('error loading dynamically imported module') ||
+    msg.includes('Importing a module script failed')
+  )
+}
+
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props)
@@ -12,6 +23,16 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    if (isChunkLoadError(error)) {
+      const lastReload = sessionStorage.getItem('last_chunk_reload')
+      const now = Date.now()
+      if (!lastReload || now - Number(lastReload) > 10000) {
+        sessionStorage.setItem('last_chunk_reload', String(now))
+        window.location.reload()
+        return
+      }
+    }
+
     console.error('Unhandled React render error caught by ErrorBoundary:', error, errorInfo)
     captureSentryException(error, { extra: errorInfo })
   }

@@ -156,10 +156,11 @@ func main() {
 		SessionToken: cfg.S3SessionToken, PublicBaseURL: cfg.S3PublicBaseURL,
 		ForcePathStyle: cfg.S3ForcePathStyle, IsPrivate: cfg.S3IsPrivate,
 	}
-	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}, Storage: storageS3}
-	storageHandler := handlers.Storage{Storage: storageS3, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
+	notificationSettingsRepo := repository.NotificationSettings{Pool: pool}
 	notificationsRepo := repository.Notifications{Pool: pool, PushSender: pushService}
-	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo, Storage: storageS3}
+	entries := handlers.Entries{Entries: repository.Entries{Pool: pool}, Storage: storageS3, Notifications: notificationsRepo}
+	storageHandler := handlers.Storage{Storage: storageS3, JWTSecret: cfg.JWTSecret, UploadAPIURL: cfg.APIPublicURL}
+	notificationsHandler := handlers.Notifications{Notifications: notificationsRepo, Settings: notificationSettingsRepo, Storage: storageS3}
 	pushNotificationsHandler := handlers.PushNotifications{Repo: pushSubscriptionsRepo, PushService: pushService}
 	announcementsRepo := repository.Announcements{Pool: pool}
 	announcementsHandler := handlers.Announcements{Announcements: announcementsRepo}
@@ -207,6 +208,8 @@ func main() {
 	authorized.GET("/notifications", readLimiter, notificationsHandler.List)
 	authorized.GET("/notifications/unread-count", readLimiter, notificationsHandler.UnreadCount)
 	authorized.POST("/notifications/mark-read", mutationLimiter, notificationsHandler.MarkRead)
+	authorized.GET("/notifications/settings", readLimiter, notificationsHandler.GetSettings)
+	authorized.PATCH("/notifications/settings", mutationLimiter, notificationsHandler.UpdateSettings)
 	authorized.GET("/notifications/vapid-public-key", readLimiter, pushNotificationsHandler.VAPIDPublicKey)
 	authorized.POST("/notifications/push-subscription", mutationLimiter, pushNotificationsHandler.Subscribe)
 	authorized.DELETE("/notifications/push-subscription", mutationLimiter, pushNotificationsHandler.Unsubscribe)

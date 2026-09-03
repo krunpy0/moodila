@@ -14,3 +14,14 @@ export function markNotificationsAsRead(ids) {
     body: JSON.stringify({ ids: ids || [] }),
   })
 }
+
+export function fetchNotificationSettings() {
+  return api('/notifications/settings')
+}
+
+export function updateNotificationSettings(settings) {
+  return api('/notifications/settings', {
+    method: 'PATCH',
+    body: JSON.stringify(settings),
+  })
+}

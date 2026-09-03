@@ -49,6 +49,14 @@ export function initSentry() {
       'canceled',
       'Non-Error promise rejection captured',
       'Extension context invalidated',
+      // Stale chunk / dynamic import failures after new deployments
+      'is not a valid JavaScript MIME type',
+      "'text/html' is not a valid JavaScript MIME type.",
+      'Failed to fetch dynamically imported module',
+      'error loading dynamically imported module',
+      /is not a valid JavaScript MIME type/i,
+      /Failed to fetch dynamically imported module/i,
+      /error loading dynamically imported module/i,
     ],
     beforeSend(event, hint) {
       // 1. Drop events when client is offline
@@ -68,7 +76,18 @@ export function initSentry() {
         return null
       }
 
-      // 4. Drop noise from browser extensions
+      // 4. Drop stale chunk / module loading errors caused by new deployments
+      const msg = error?.message || (typeof error === 'string' ? error : '') || ''
+      if (
+        msg.includes('is not a valid JavaScript MIME type') ||
+        msg.includes('Failed to fetch dynamically imported module') ||
+        msg.includes('error loading dynamically imported module') ||
+        msg.includes('Importing a module script failed')
+      ) {
+        return null
+      }
+
+      // 5. Drop noise from browser extensions
       const frames = event.exception?.values?.[0]?.stacktrace?.frames || []
       const isExtensionError = frames.some(
         (frame) =>
@@ -99,6 +118,17 @@ export function captureSentryException(error, context = {}) {
 
   // Do not report offline failures
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return
+  }
+
+  // Do not report stale chunk load errors caused by new deployments
+  const msg = error?.message || (typeof error === 'string' ? error : '') || ''
+  if (
+    msg.includes('is not a valid JavaScript MIME type') ||
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('error loading dynamically imported module') ||
+    msg.includes('Importing a module script failed')
+  ) {
     return
   }
 

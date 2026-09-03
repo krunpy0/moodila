@@ -14,6 +14,7 @@ import ChangePasswordForm from "../components/ChangePasswordForm";
 import DeleteAccountModal from "../components/DeleteAccountModal";
 import AvatarCropModal from "../components/AvatarCropModal";
 import FriendPrivacyModal from "../components/FriendPrivacyModal";
+import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import { safeNavigateBack } from "../utils/navigation";
@@ -28,6 +29,7 @@ export default function Profile() {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFriendPrivacyModal, setShowFriendPrivacyModal] = useState(false);
+  const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
 
   const [form, setForm] = useState(null);
@@ -505,6 +507,25 @@ export default function Profile() {
                   </button>
                 </div>
 
+                {/* Push notification settings */}
+                <div className="border-t border-surface-container-low pt-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowNotificationSettingsModal(true)}
+                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity"
+                  >
+                    <span className="flex items-center gap-sm">
+                      <span className="material-symbols-outlined text-on-surface-variant">
+                        notifications
+                      </span>
+                      {t("notificationSettings.title")}
+                    </span>
+                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                      chevron_right
+                    </span>
+                  </button>
+                </div>
+
                 {/* Change password */}
                 <div className="border-t border-surface-container-low pt-xs">
                   <button
@@ -544,6 +565,10 @@ export default function Profile() {
                   </button>
                 </div>
               </section>
+              <NotificationSettingsModal
+                isOpen={showNotificationSettingsModal}
+                onClose={() => setShowNotificationSettingsModal(false)}
+              />
               <FriendPrivacyModal
                 isOpen={showFriendPrivacyModal}
                 onClose={() => setShowFriendPrivacyModal(false)}

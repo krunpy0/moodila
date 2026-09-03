@@ -6,7 +6,7 @@ import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFrie
 import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
 import { queryKeys } from './queryKeys'
 
-import { fetchNotifications, fetchUnreadNotificationCount, markNotificationsAsRead } from './notifications'
+import { fetchNotifications, fetchUnreadNotificationCount, markNotificationsAsRead, fetchNotificationSettings, updateNotificationSettings } from './notifications'
 import { archiveAdminAnnouncement, createAdminAnnouncement, getAdminAnnouncements, getUnreadAnnouncements, markAnnouncementRead, publishAdminAnnouncement, updateAdminAnnouncement } from './announcements'
 
 export { queryKeys }
@@ -54,6 +54,24 @@ export const useUserSearchQuery = (query) => useQuery({ queryKey: ['users', 'sea
 
 export const useNotificationsQuery = (enabled = true) => useQuery({ queryKey: queryKeys.notifications, queryFn: () => fetchNotifications(), enabled, staleTime: STALE_TIMES.DYNAMIC })
 export const useUnreadNotificationCountQuery = (enabled = true) => useQuery({ queryKey: queryKeys.unreadCount, queryFn: fetchUnreadNotificationCount, enabled, staleTime: STALE_TIMES.DYNAMIC })
+export const useNotificationSettingsQuery = (enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.notificationSettings,
+    queryFn: fetchNotificationSettings,
+    enabled,
+    staleTime: STALE_TIMES.STANDARD,
+  })
+
+export function useUpdateNotificationSettingsMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateNotificationSettings,
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKeys.notificationSettings, data)
+      queryClient.invalidateQueries({ queryKey: queryKeys.notificationSettings })
+    },
+  })
+}
 
 export function useSaveEntryMutation() {
   const queryClient = useQueryClient()

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"moodshare/internal/models"
 
@@ -36,46 +37,170 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 
 	if r.PushSender != nil {
 		var actorName string
-		_ = r.Pool.QueryRow(ctx, `SELECT COALESCE(NULLIF(display_name, ''), username) FROM users WHERE id = $1`, actorID).Scan(&actorName)
+		var notifyReactions, notifyComments, notifyFriendRequests bool
+		notifyReactions = true
+		notifyComments = true
+		notifyFriendRequests = true
+
+		err := r.Pool.QueryRow(ctx, `
+			SELECT COALESCE(NULLIF(u.display_name, ''), u.username),
+			       COALESCE(ns.notify_reactions, true),
+			       COALESCE(ns.notify_comments, true),
+			       COALESCE(ns.notify_friend_requests, true)
+			FROM users u
+			LEFT JOIN notification_settings ns ON ns.user_id = $2
+			WHERE u.id = $1`,
+			actorID, userID,
+		).Scan(&actorName, &notifyReactions, &notifyComments, &notifyFriendRequests)
+		if err != nil && actorName == "" {
+			_ = r.Pool.QueryRow(ctx, `SELECT COALESCE(NULLIF(display_name, ''), username) FROM users WHERE id = $1`, actorID).Scan(&actorName)
+		}
 		if actorName == "" {
 			actorName = "Друг"
 		}
 
-		payload := models.PushPayload{
-			Title: "Moodila",
-			URL:   "/feed",
-		}
-
-		cnt := ""
-		if content != nil {
-			cnt = *content
-		}
-
+		shouldPush := true
 		switch notifType {
 		case "like":
-			payload.Body = actorName + " поставил(а) реакцию " + cnt
-			payload.Tag = "reaction"
-			payload.URL = "/feed"
+			shouldPush = notifyReactions
 		case "comment":
-			payload.Body = actorName + " оставил(а) комментарий: " + cnt
-			payload.Tag = "comment"
-			payload.URL = "/feed"
-		case "friend_request":
-			payload.Body = actorName + " отправил(а) вам заявку в друзья"
-			payload.Tag = "friend_request"
-			payload.URL = "/friends"
-		case "friend_accept":
-			payload.Body = actorName + " принял(а) вашу заявку в друзья"
-			payload.Tag = "friend_accept"
-			payload.URL = "/friends"
-		default:
-			payload.Body = actorName + " отправил(а) вам уведомление"
+			shouldPush = notifyComments
+		case "friend_request", "friend_accept":
+			shouldPush = notifyFriendRequests
 		}
 
-		_ = r.PushSender.SendToUser(ctx, userID, payload)
+		if shouldPush {
+			payload := models.PushPayload{
+				Title: "Moodila",
+				URL:   "/feed",
+			}
+
+			cnt := ""
+			if content != nil {
+				cnt = *content
+			}
+
+			switch notifType {
+			case "like":
+				payload.Body = actorName + " поставил(а) реакцию " + cnt
+				payload.Tag = "reaction"
+				payload.URL = "/feed"
+			case "comment":
+				payload.Body = actorName + " оставил(а) комментарий: " + cnt
+				payload.Tag = "comment"
+				payload.URL = "/feed"
+			case "friend_request":
+				payload.Body = actorName + " отправил(а) вам заявку в друзья"
+				payload.Tag = "friend_request"
+				payload.URL = "/friends"
+			case "friend_accept":
+				payload.Body = actorName + " принял(а) вашу заявку в друзья"
+				payload.Tag = "friend_accept"
+				payload.URL = "/friends"
+			default:
+				payload.Body = actorName + " отправил(а) вам уведомление"
+			}
+
+			_ = r.PushSender.SendToUser(ctx, userID, payload)
+		}
 	}
 
 	return nil
+}
+
+func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry models.Entry) error {
+	if r.Pool == nil || r.PushSender == nil {
+		return nil
+	}
+
+	var authorName string
+	err := r.Pool.QueryRow(ctx, `SELECT COALESCE(NULLIF(display_name, ''), username) FROM users WHERE id = $1`, authorID).Scan(&authorName)
+	if err != nil {
+		return err
+	}
+	if authorName == "" {
+		authorName = "Друг"
+	}
+
+	rows, err := r.Pool.Query(ctx, `
+		SELECT f_user.id
+		FROM (
+			SELECT CASE 
+				WHEN requester_id = $1 THEN addressee_id 
+				ELSE requester_id 
+			END AS friend_id
+			FROM friendships
+			WHERE status = 'accepted' AND (requester_id = $1 OR addressee_id = $1)
+		) friends
+		JOIN users f_user ON f_user.id = friends.friend_id
+		LEFT JOIN entry_friend_visibility efv ON efv.entry_id = $2 AND efv.friend_id = f_user.id
+		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = $1 AND ufv.friend_id = f_user.id
+		LEFT JOIN notification_settings ns ON ns.user_id = f_user.id
+		WHERE COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
+		  AND COALESCE(ns.notify_new_posts, true) = true
+		  AND EXISTS (SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = f_user.id)
+	`, authorID, entry.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	var friendIDs []string
+	for rows.Next() {
+		var fID string
+		if err := rows.Scan(&fID); err == nil {
+			friendIDs = append(friendIDs, fID)
+		}
+	}
+
+	if len(friendIDs) == 0 {
+		return nil
+	}
+
+	var recentCount int
+	_ = r.Pool.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM entries
+		WHERE user_id = $1
+		  AND is_hidden = false
+		  AND created_at >= NOW() - INTERVAL '2 hours'
+	`, authorID).Scan(&recentCount)
+	if recentCount <= 0 {
+		recentCount = 1
+	}
+
+	body := authorName + " поделился(ась) новой записью"
+	if recentCount > 1 {
+		body = fmt.Sprintf("%s опубликовал(а) %s", authorName, formatPostsCountRu(recentCount))
+	}
+
+	payload := models.PushPayload{
+		Title: "Moodila",
+		Body:  body,
+		Tag:   "new_post_" + authorID,
+		URL:   "/feed",
+	}
+
+	for _, fID := range friendIDs {
+		_ = r.PushSender.SendToUser(ctx, fID, payload)
+	}
+
+	return nil
+}
+
+func formatPostsCountRu(count int) string {
+	rem10 := count % 10
+	rem100 := count % 100
+	if rem100 >= 11 && rem100 <= 14 {
+		return fmt.Sprintf("%d новых записей", count)
+	}
+	if rem10 == 1 {
+		return fmt.Sprintf("%d новую запись", count)
+	}
+	if rem10 >= 2 && rem10 <= 4 {
+		return fmt.Sprintf("%d новые записи", count)
+	}
+	return fmt.Sprintf("%d новых записей", count)
 }
 
 func (r Notifications) List(ctx context.Context, userID string, limit int) ([]models.Notification, error) {

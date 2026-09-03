@@ -327,6 +327,25 @@ export const en = {
     daysAgo: "{d}d ago",
   },
 
+  // Notification Settings
+  notificationSettings: {
+    title: "Push Notifications",
+    subtitle: "Customize notification categories",
+    configure: "Configure",
+    pushActiveDesc: "Browser subscribed to notifications",
+    pushInactiveDesc: "Browser permission required",
+    pushEnabledToast: "Push notifications successfully enabled",
+    pushDisabledToast: "Push notifications disabled",
+    newPostsTitle: "Friends' new posts",
+    newPostsDesc: "Notify when friends publish a new entry",
+    reactionsTitle: "Reactions",
+    reactionsDesc: "When someone reacts to your entry",
+    commentsTitle: "Comments",
+    commentsDesc: "When someone comments on your entry",
+    friendRequestsTitle: "Friend requests",
+    friendRequestsDesc: "Incoming requests and accepted friendships",
+  },
+
   // Auth / Login / Register / Password Reset
   auth: {
     welcomeBack: "Welcome back",

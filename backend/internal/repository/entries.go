@@ -150,12 +150,13 @@ func (r Entries) InvalidateUserCache(userID string) {
 	r.getCache().InvalidateUser(userID)
 }
 
-func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool, overrides []models.EntryFriendOverride) (models.Entry, []AttachmentURLs, error) {
+func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool, overrides []models.EntryFriendOverride) (models.Entry, bool, []AttachmentURLs, error) {
 	var oldAtt AttachmentURLs
-	_ = r.Pool.QueryRow(ctx, `SELECT photo_url, audio_url FROM entries WHERE user_id = $1 AND date = $2`, userID, date).Scan(&oldAtt.PhotoURL, &oldAtt.AudioURL)
+	err := r.Pool.QueryRow(ctx, `SELECT photo_url, audio_url FROM entries WHERE user_id = $1 AND date = $2`, userID, date).Scan(&oldAtt.PhotoURL, &oldAtt.AudioURL)
+	isNew := errors.Is(err, pgx.ErrNoRows)
 
 	var entry models.Entry
-	err := r.Pool.QueryRow(ctx, `
+	err = r.Pool.QueryRow(ctx, `
 		INSERT INTO entries (user_id, date, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, false))
 		ON CONFLICT (user_id, date) DO UPDATE
@@ -173,13 +174,13 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
 	if err != nil {
-		return models.Entry{}, nil, err
+		return models.Entry{}, false, nil, err
 	}
 
 	if overrides != nil {
 		_, err = r.Pool.Exec(ctx, `DELETE FROM entry_friend_visibility WHERE entry_id = $1`, entry.ID)
 		if err != nil {
-			return models.Entry{}, nil, err
+			return models.Entry{}, false, nil, err
 		}
 		for _, ov := range overrides {
 			_, err = r.Pool.Exec(ctx, `
@@ -189,28 +190,27 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 				entry.ID, ov.FriendID, ov.IsHidden,
 			)
 			if err != nil {
-				return models.Entry{}, nil, err
+				return models.Entry{}, false, nil, err
 			}
 		}
 	}
 
 	ovRows, err := r.Pool.Query(ctx, `SELECT friend_id, is_hidden FROM entry_friend_visibility WHERE entry_id = $1`, entry.ID)
 	if err != nil {
-		return models.Entry{}, nil, err
+		return models.Entry{}, false, nil, err
 	}
 	defer ovRows.Close()
 	entry.FriendOverrides = make([]models.EntryFriendOverride, 0)
 	for ovRows.Next() {
 		var ov models.EntryFriendOverride
 		if err := ovRows.Scan(&ov.FriendID, &ov.IsHidden); err != nil {
-			return models.Entry{}, nil, err
+			return models.Entry{}, false, nil, err
 		}
 		entry.FriendOverrides = append(entry.FriendOverrides, ov)
 	}
 	entry.HasCustomVisibility = len(entry.FriendOverrides) > 0
 
 	r.getCache().InvalidateUser(userID)
-
 
 	var replaced []AttachmentURLs
 	if oldAtt.PhotoURL != nil && *oldAtt.PhotoURL != "" {
@@ -224,7 +224,7 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 		}
 	}
 
-	return entry, replaced, nil
+	return entry, isNew, replaced, nil
 }
 
 func (r Entries) ByDate(ctx context.Context, userID, date string) (models.Entry, error) {

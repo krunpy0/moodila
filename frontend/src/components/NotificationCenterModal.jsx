@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { getPushSubscriptionState, subscribeToPushNotifications, unsubscribeFromPushNotifications } from '../api/push'
 import { NotificationSkeleton } from './skeleton/PageSkeletons'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
+import NotificationSettingsModal from './NotificationSettingsModal'
 
 function formatRelativeTime(dateString, t) {
   if (!dateString) return ''
@@ -28,6 +29,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   const markReadMutation = useMarkNotificationsAsReadMutation()
   const { t } = useLanguage()
   const [pushState, setPushState] = useState({ supported: true, subscribed: false, permission: 'default', loading: false, error: '' })
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
   const modalRef = useRef(null)
 
   useModalKeyboard(onClose, isOpen, modalRef)
@@ -171,6 +173,14 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
             )}
             <button
               type="button"
+              aria-label={t('notificationSettings.title')}
+              onClick={() => setShowSettingsModal(true)}
+              className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+            >
+              <span className="material-symbols-outlined text-[20px]">tune</span>
+            </button>
+            <button
+              type="button"
               aria-label={t('common.close')}
               onClick={onClose}
               className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
@@ -195,20 +205,31 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
                   : t('notifications.enablePush')}
               </span>
             </div>
-            {pushState.permission !== 'denied' && (
-              <button
-                type="button"
-                onClick={handleTogglePush}
-                disabled={pushState.loading}
-                className="px-3 py-1 rounded-full text-label-small font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
-              >
-                {pushState.loading
-                  ? t('common.loading')
-                  : pushState.subscribed
-                  ? (t('common.disable') || 'Выключить')
-                  : t('notifications.enablePush')}
-              </button>
-            )}
+            <div className="flex items-center gap-xs">
+              {pushState.subscribed && (
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(true)}
+                  className="px-2.5 py-1 rounded-full text-label-small font-semibold text-primary hover:bg-primary/10 transition-colors"
+                >
+                  {t('notificationSettings.configure')}
+                </button>
+              )}
+              {pushState.permission !== 'denied' && (
+                <button
+                  type="button"
+                  onClick={handleTogglePush}
+                  disabled={pushState.loading}
+                  className="px-3 py-1 rounded-full text-label-small font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                >
+                  {pushState.loading
+                    ? t('common.loading')
+                    : pushState.subscribed
+                    ? (t('common.disable') || 'Выключить')
+                    : t('notifications.enablePush')}
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -276,6 +297,10 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
           )}
         </div>
       </div>
+      <NotificationSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+      />
     </div>
   )
 }

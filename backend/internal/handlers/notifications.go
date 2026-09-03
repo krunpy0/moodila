@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"moodshare/internal/models"
 	"moodshare/internal/repository"
 	"moodshare/internal/storage"
 
@@ -13,6 +14,7 @@ import (
 
 type Notifications struct {
 	Notifications repository.Notifications
+	Settings      repository.NotificationSettings
 	Storage       storage.S3
 }
 
@@ -86,8 +88,42 @@ func (h Notifications) MarkRead(c *gin.Context) {
 }
 
 
+func (h Notifications) GetSettings(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	settings, err := h.Settings.GetByUserID(c.Request.Context(), c.GetString("userID"))
+	if err != nil {
+		log.Printf("[ERROR] Notifications.GetSettings (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load notification settings"})
+		return
+	}
+	c.JSON(http.StatusOK, settings)
+}
+
+func (h Notifications) UpdateSettings(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+	var input models.NotificationSettingsInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid notification settings payload"})
+		return
+	}
+
+	settings, err := h.Settings.Update(c.Request.Context(), c.GetString("userID"), input)
+	if err != nil {
+		log.Printf("[ERROR] Notifications.UpdateSettings (user=%s): %v", c.GetString("userID"), err)
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update notification settings"})
+		return
+	}
+	c.JSON(http.StatusOK, settings)
+}
+
 func (h Notifications) available(c *gin.Context) bool {
-	if h.Notifications.Pool != nil {
+	if h.Notifications.Pool != nil || h.Settings.Pool != nil {
 		return true
 	}
 	c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})

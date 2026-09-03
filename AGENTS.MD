@@ -159,6 +159,8 @@ moodila/
 15. **`0015_create_friend_visibility.sql`** — Таблицы двухуровневой приватности:
     - `user_friend_visibility`: `(user_id, friend_id, hide_by_default, created_at, updated_at)`.
     - `entry_friend_visibility`: `(entry_id, friend_id, is_hidden, created_at)`.
+16. **`0016_create_purge_old_notifications_fn.sql`** — Функция очистки старых уведомлений (`purge_old_notifications`).
+17. **`0017_create_notification_settings.sql`** — Таблица `notification_settings` для кастомизации типов push-уведомлений.
 
 ---
 
@@ -320,6 +322,8 @@ OR (
 | **Уведомления**| `GET` | `/notifications` | Список уведомлений |
 | | `GET` | `/notifications/unread-count` | Количество непрочитанных событий для бейджа |
 | | `POST` | `/notifications/mark-read` | Отметка уведомлений прочитанными |
+| | `GET` | `/notifications/settings` | Получение настроек push-уведомлений |
+| | `PATCH` | `/notifications/settings` | Обновление настроек push-уведомлений |
 | | `GET` | `/notifications/vapid-public-key`| Получение публичного VAPID ключа |
 | | `POST` | `/notifications/push-subscription` | Регистрация браузерной Web Push подписки |
 | | `DELETE`| `/notifications/push-subscription` | Удаление Web Push подписки |
@@ -361,6 +365,7 @@ OR (
 ### Ключевые компоненты UI (`src/components/`):
 - `AppLayout.jsx`, `DesktopSidebar.jsx`, `BottomNav.jsx` — Адаптивный каркас приложения (Mobile-First + Desktop sidebar).
 - `HeaderBell.jsx` & `NotificationCenterModal.jsx` — Центр уведомлений в виде плавающей шторки с бейджем счетчика.
+- `NotificationSettingsModal.jsx` — Управление персональными категориями push-уведомлений.
 - `FriendPrivacyModal.jsx` — Модальное окно управления черным списком по умолчанию и списком исключений для постов.
 - `VoiceNotePlayer.jsx` — Плеер голосовых заметок с прогресс-баром и защитой от одновременного воспроизведения.
 - `AvatarCropModal.jsx` — Модалка обрезки аватара перед отправкой на S3.

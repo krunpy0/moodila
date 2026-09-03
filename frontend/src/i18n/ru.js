@@ -321,6 +321,25 @@ export const ru = {
     daysAgo: '{d} дн. назад',
   },
 
+  // Notification Settings
+  notificationSettings: {
+    title: 'Push-уведомления',
+    subtitle: 'Настройка категорий уведомлений',
+    configure: 'Настроить',
+    pushActiveDesc: 'Браузер подписан на уведомления',
+    pushInactiveDesc: 'Требуется разрешение браузера',
+    pushEnabledToast: 'Push-уведомления успешно включены',
+    pushDisabledToast: 'Push-уведомления отключены',
+    newPostsTitle: 'Новые записи друзей',
+    newPostsDesc: 'Уведомлять, когда друзья публикуют новую запись',
+    reactionsTitle: 'Реакции',
+    reactionsDesc: 'Когда кто-то ставит реакцию на вашу запись',
+    commentsTitle: 'Комментарии',
+    commentsDesc: 'Когда кто-то оставляет комментарий к вашей записи',
+    friendRequestsTitle: 'Заявки в друзья',
+    friendRequestsDesc: 'Входящие заявки и подтверждения дружбы',
+  },
+
   // Auth / Login / Register / Password Reset
   auth: {
     welcomeBack: 'С возвращением',

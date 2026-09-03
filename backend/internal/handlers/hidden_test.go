@@ -77,13 +77,13 @@ func TestHiddenEntriesE2E(t *testing.T) {
 	isTrue := true
 
 	// User A creates Entry 1 (public, is_hidden=false)
-	entry1, _, err := entriesRepo.Save(ctx, userA.ID, date1, 4, []string{"Calm"}, "Public note", nil, nil, nil, &isFalse, nil)
+	entry1, _, _, err := entriesRepo.Save(ctx, userA.ID, date1, 4, []string{"Calm"}, "Public note", nil, nil, nil, &isFalse, nil)
 	if err != nil {
 		t.Fatalf("save entry 1: %v", err)
 	}
 
 	// User A creates Entry 2 (hidden, is_hidden=true)
-	entry2, _, err := entriesRepo.Save(ctx, userA.ID, date2, 5, []string{"Secret"}, "Hidden note", nil, nil, nil, &isTrue, nil)
+	entry2, _, _, err := entriesRepo.Save(ctx, userA.ID, date2, 5, []string{"Secret"}, "Hidden note", nil, nil, nil, &isTrue, nil)
 	if err != nil {
 		t.Fatalf("save entry 2: %v", err)
 	}
@@ -232,7 +232,7 @@ func TestHiddenEntriesE2E(t *testing.T) {
 	}
 
 	// User A creates Entry 3 (no overrides) -> B should NOT see it, C SHOULD see it
-	_, _, err = entriesRepo.Save(ctx, userA.ID, date3, 3, []string{"Work"}, "Entry 3 default", nil, nil, nil, &isFalse, nil)
+	_, _, _, err = entriesRepo.Save(ctx, userA.ID, date3, 3, []string{"Work"}, "Entry 3 default", nil, nil, nil, &isFalse, nil)
 	if err != nil {
 		t.Fatalf("save entry 3: %v", err)
 	}
@@ -265,7 +265,7 @@ func TestHiddenEntriesE2E(t *testing.T) {
 
 	// 6. Post-level override test:
 	// User A creates Entry 4 with override: Friend B is explicitly visible (is_hidden = false), Friend C is hidden (is_hidden = true)
-	_, _, err = entriesRepo.Save(ctx, userA.ID, date4, 5, []string{"Special"}, "Entry 4 overrides", nil, nil, nil, &isFalse, []models.EntryFriendOverride{
+	_, _, _, err = entriesRepo.Save(ctx, userA.ID, date4, 5, []string{"Special"}, "Entry 4 overrides", nil, nil, nil, &isFalse, []models.EntryFriendOverride{
 		{FriendID: userB.ID, IsHidden: false},
 		{FriendID: userC.ID, IsHidden: true},
 	})

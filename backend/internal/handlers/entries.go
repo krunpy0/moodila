@@ -18,8 +18,9 @@ import (
 )
 
 type Entries struct {
-	Entries repository.Entries
-	Storage storage.S3
+	Entries       repository.Entries
+	Storage       storage.S3
+	Notifications repository.Notifications
 }
 
 type friendOverrideInput struct {
@@ -150,7 +151,7 @@ func (h Entries) Save(c *gin.Context) {
 		}
 	}
 
-	entry, replaced, err := h.Entries.Save(
+	entry, isNew, replaced, err := h.Entries.Save(
 		c.Request.Context(), userID, input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden, overrides,
 	)
 	if err != nil {
@@ -162,6 +163,17 @@ func (h Entries) Save(c *gin.Context) {
 	if len(replaced) > 0 {
 		h.cleanupAttachments(c.Request.Context(), userID, replaced)
 	}
+
+	if isNew && !entry.IsHidden {
+		go func(e models.Entry, uid string) {
+			bgCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			if err := h.Notifications.NotifyNewPost(bgCtx, uid, e); err != nil {
+				log.Printf("[WARN] NotifyNewPost failed (user=%s, entry=%s): %v", uid, e.ID, err)
+			}
+		}(entry, userID)
+	}
+
 	c.JSON(http.StatusOK, h.resolveEntry(entry))
 }
 

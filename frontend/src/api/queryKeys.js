@@ -13,6 +13,7 @@ export const queryKeys = {
   friendProfile: (id) => ['users', 'profile', id],
   notifications: ['notifications', 'list'],
   unreadCount: ['notifications', 'unreadCount'],
+  notificationSettings: ['notifications', 'settings'],
   unreadAnnouncements: ['announcements', 'unread'],
   adminAnnouncements: ['admin', 'announcements'],
   stats: (period = 'month') => ['stats', period],
