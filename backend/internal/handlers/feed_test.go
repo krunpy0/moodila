@@ -60,3 +60,34 @@ func TestFeedGetReactionsInvalidUUID(t *testing.T) {
 	}
 }
 
+func TestFeedDeleteCommentUnavailable(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Feed{Feed: repository.Feed{Pool: nil}}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest(http.MethodDelete, "/feed/comments/123", nil)
+
+	h.DeleteComment(c)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", w.Code)
+	}
+}
+
+func TestFeedDeleteCommentInvalidUUID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Feed{Feed: repository.Feed{Pool: &pgxpool.Pool{}}}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = gin.Params{{Key: "comment_id", Value: "invalid-uuid"}}
+	c.Request, _ = http.NewRequest(http.MethodDelete, "/feed/comments/invalid-uuid", nil)
+
+	h.DeleteComment(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 for invalid UUID, got %d", w.Code)
+	}
+}
+

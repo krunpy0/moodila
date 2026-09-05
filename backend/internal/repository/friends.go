@@ -11,6 +11,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var ErrUserNotFound = errors.New("user not found")
+
 type Friends struct {
 	Pool *pgxpool.Pool
 }
@@ -70,7 +72,17 @@ func (r Friends) Search(ctx context.Context, userID, query string) ([]models.Fri
 
 func (r Friends) Request(ctx context.Context, requesterID, addresseeID string) (models.Friendship, error) {
 	var friendship models.Friendship
-	err := r.Pool.QueryRow(ctx, `
+
+	var exists bool
+	err := r.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NULL)`, addresseeID).Scan(&exists)
+	if err != nil {
+		return friendship, err
+	}
+	if !exists {
+		return friendship, ErrUserNotFound
+	}
+
+	err = r.Pool.QueryRow(ctx, `
 		INSERT INTO friendships (requester_id, addressee_id)
 		VALUES ($1, $2)
 		ON CONFLICT (
@@ -112,6 +124,7 @@ func (r Friends) Pending(ctx context.Context, userID string) ([]models.FriendUse
 		FROM friendships f
 		JOIN users u ON u.id = f.requester_id
 		WHERE f.addressee_id = $1 AND f.status = 'pending'
+		  AND u.deleted_at IS NULL
 		ORDER BY f.created_at DESC`, userID)
 }
 
@@ -125,6 +138,7 @@ func (r Friends) Accepted(ctx context.Context, userID string) ([]models.FriendUs
 		END
 		WHERE (f.requester_id = $1 OR f.addressee_id = $1)
 		  AND f.status = 'accepted'
+		  AND u.deleted_at IS NULL
 		ORDER BY LOWER(u.display_name), u.username`, userID)
 }
 
@@ -161,6 +175,7 @@ func (r Friends) GetFriendsVisibilityDefaults(ctx context.Context, userID string
 		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = $1 AND ufv.friend_id = u.id
 		WHERE (f.requester_id = $1 OR f.addressee_id = $1)
 		  AND f.status = 'accepted'
+		  AND u.deleted_at IS NULL
 		ORDER BY LOWER(u.display_name), u.username`, userID)
 	if err != nil {
 		return nil, err

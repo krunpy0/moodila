@@ -364,7 +364,15 @@ func (r Feed) AddComment(ctx context.Context, viewerID, entryID, text string) (m
 }
 
 func (r Feed) DeleteComment(ctx context.Context, viewerID, commentID string) error {
-	commandTag, err := r.Pool.Exec(ctx, `DELETE FROM comments WHERE id = $1 AND user_id = $2`, commentID, viewerID)
+	commandTag, err := r.Pool.Exec(ctx, `
+		DELETE FROM comments
+		WHERE id = $1
+		  AND (
+		    user_id = $2
+		    OR entry_id IN (SELECT id FROM entries WHERE user_id = $2)
+		  )`,
+		commentID, viewerID,
+	)
 	if err != nil {
 		return err
 	}

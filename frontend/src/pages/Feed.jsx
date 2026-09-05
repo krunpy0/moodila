@@ -437,7 +437,12 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
           />
         </footer>
 
-        {showComments && <CommentsSection entryId={entry.id} />}
+        {showComments && (
+          <CommentsSection
+            entryId={entry.id}
+            postAuthorId={entry.author?.id}
+          />
+        )}
       </article>
     );
   }
@@ -521,7 +526,12 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
         />
       </footer>
 
-      {showComments && <CommentsSection entryId={entry.id} />}
+      {showComments && (
+        <CommentsSection
+          entryId={entry.id}
+          postAuthorId={entry.author?.id}
+        />
+      )}
     </article>
   );
 }
@@ -683,7 +693,7 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
   );
 }
 
-function CommentsSection({ entryId }) {
+function CommentsSection({ entryId, postAuthorId }) {
   const [commentText, setCommentText] = useState("");
   const commentsQuery = useCommentsQuery(entryId);
   const addMutation = useAddCommentMutation();
@@ -725,7 +735,9 @@ function CommentsSection({ entryId }) {
       ) : (
         <div className="space-y-md">
           {comments.map((comment) => {
-            const isOwner = currentUserId && comment.user_id === currentUserId;
+            const isOwner =
+              currentUserId &&
+              (comment.user_id === currentUserId || postAuthorId === currentUserId);
             const commentAuthor =
               comment.author.display_name || comment.author.username;
             return (

@@ -143,6 +143,10 @@ func (h Friends) Request(c *gin.Context) {
 		return
 	}
 	friendship, err := h.Friends.Request(c.Request.Context(), c.GetString("userID"), input.UserID)
+	if errors.Is(err, repository.ErrUserNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		c.JSON(http.StatusConflict, gin.H{"error": "friend request already exists"})
 		return
