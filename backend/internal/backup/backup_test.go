@@ -98,3 +98,61 @@ func TestSortTablesTopologically_Schema(t *testing.T) {
 		}
 	})
 }
+
+func TestFormatSQLValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    any
+		expected string
+	}{
+		{
+			name:     "nil value",
+			input:    nil,
+			expected: "NULL",
+		},
+		{
+			name:     "string with single quote",
+			input:    "it's cool",
+			expected: "'it''s cool'",
+		},
+		{
+			name:     "empty slice of strings",
+			input:    []string{},
+			expected: "'{}'",
+		},
+		{
+			name:     "slice of strings with single quotes",
+			input:    []string{"rock'n'roll", "don't"},
+			expected: `'{"rock''n''roll","don''t"}'`,
+		},
+		{
+			name:     "slice of strings with double quotes and backslash",
+			input:    []string{`he said "hi"`, `a\b`},
+			expected: `'{"he said \"hi\"","a\\b"}'`,
+		},
+		{
+			name:     "slice of interface with single quotes",
+			input:    []any{"tag's", 123},
+			expected: `'{"tag''s","123"}'`,
+		},
+		{
+			name:     "boolean true and false",
+			input:    true,
+			expected: "TRUE",
+		},
+		{
+			name:     "integer",
+			input:    42,
+			expected: "42",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := formatSQLValue(tt.input)
+			if actual != tt.expected {
+				t.Errorf("formatSQLValue(%#v) = %q, want %q", tt.input, actual, tt.expected)
+			}
+		})
+	}
+}

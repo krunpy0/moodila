@@ -401,16 +401,24 @@ func formatSQLValue(val interface{}) string {
 		// text[] etc.
 		var quoted []string
 		for _, s := range v {
-			esc := strings.ReplaceAll(s, `"`, `\"`)
+			esc := strings.ReplaceAll(s, `\`, `\\`)
+			esc = strings.ReplaceAll(esc, `"`, `\"`)
 			quoted = append(quoted, fmt.Sprintf(`"%s"`, esc))
 		}
-		return fmt.Sprintf("'{%s}'", strings.Join(quoted, ","))
+		joined := strings.Join(quoted, ",")
+		escaped := strings.ReplaceAll(joined, "'", "''")
+		return fmt.Sprintf("'{%s}'", escaped)
 	case []interface{}:
-		var parts []string
+		var quoted []string
 		for _, item := range v {
-			parts = append(parts, fmt.Sprintf("%v", item))
+			s := fmt.Sprintf("%v", item)
+			esc := strings.ReplaceAll(s, `\`, `\\`)
+			esc = strings.ReplaceAll(esc, `"`, `\"`)
+			quoted = append(quoted, fmt.Sprintf(`"%s"`, esc))
 		}
-		return fmt.Sprintf("'{%s}'", strings.Join(parts, ","))
+		joined := strings.Join(quoted, ",")
+		escaped := strings.ReplaceAll(joined, "'", "''")
+		return fmt.Sprintf("'{%s}'", escaped)
 	case int16, int32, int64, float32, float64, int:
 		return fmt.Sprintf("%v", v)
 	default:

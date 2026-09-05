@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -97,7 +98,7 @@ func (h Feed) Like(c *gin.Context) {
 		return
 	}
 
-	if result.LikedByMe {
+	if slices.Contains(result.MyReactions, reaction) {
 		if ownerID, err := h.Feed.GetEntryOwner(c.Request.Context(), entryID); err == nil && ownerID != "" {
 			_ = h.Notifications.Create(c.Request.Context(), ownerID, c.GetString("userID"), "like", &entryID, &reaction)
 		}
