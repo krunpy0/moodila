@@ -15,7 +15,7 @@ export default function Friends() {
   const { t } = useLanguage()
   const { notify } = useNotifications()
   const debouncedQuery = useDebounce(query, 300)
-  const searchTerm = debouncedQuery.trim().toLowerCase()
+  const searchTerm = debouncedQuery.trim().replace(/^@+/, '').trim()
   const friendsQuery = useFriendsQuery()
   const pendingQuery = usePendingFriendsQuery()
   const searchQuery = useUserSearchQuery(searchTerm)
@@ -28,7 +28,7 @@ export default function Friends() {
   const pending = pendingQuery.data || []
   const results = searchQuery.data || []
   const isLoading = friendsQuery.isLoading || pendingQuery.isLoading
-  const error = friendsQuery.error || pendingQuery.error || searchQuery.error
+  const error = friendsQuery.error || pendingQuery.error
 
   const handleSend = (userId) => {
     sendRequest.mutate(userId, {
@@ -93,7 +93,7 @@ export default function Friends() {
               <input
                 type="search"
                 value={query}
-                maxLength={24}
+                maxLength={60}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('friends.searchPlaceholder')}
                 className="w-full rounded-full border-0 bg-surface-container-low py-4 pl-12 pr-4 text-body-md text-on-surface outline-none cloud-shadow placeholder:text-outline focus:ring-2 focus:ring-primary/20"

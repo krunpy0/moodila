@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"moodshare/internal/models"
 
@@ -14,7 +15,18 @@ type Friends struct {
 	Pool *pgxpool.Pool
 }
 
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `%`, `\%`)
+	s = strings.ReplaceAll(s, `_`, `\_`)
+	return s
+}
+
 func (r Friends) Search(ctx context.Context, userID, query string) ([]models.FriendUser, error) {
+	escapedQuery := escapeLike(query)
+	prefixPattern := escapedQuery + "%"
+	containsPattern := "%" + escapedQuery + "%"
+
 	rows, err := r.Pool.Query(ctx, `
 		SELECT u.id, u.username, u.display_name, u.avatar_url,
 		       f.id, f.status,
@@ -23,11 +35,19 @@ func (r Friends) Search(ctx context.Context, userID, query string) ([]models.Fri
 		LEFT JOIN friendships f ON
 			LEAST(f.requester_id, f.addressee_id) = LEAST($1::uuid, u.id)
 			AND GREATEST(f.requester_id, f.addressee_id) = GREATEST($1::uuid, u.id)
-		WHERE u.id <> $1
-		  AND u.username ILIKE $2 || '%'
-		ORDER BY u.username
+		WHERE u.id <> $1::uuid
+		  AND u.deleted_at IS NULL
+		  AND (u.username ILIKE $2 OR u.display_name ILIKE $3)
+		ORDER BY
+			CASE
+				WHEN u.username ILIKE $2 THEN 0
+				WHEN u.display_name ILIKE $2 THEN 1
+				ELSE 2
+			END,
+			LOWER(u.display_name),
+			u.username
 		LIMIT 20`,
-		userID, query,
+		userID, prefixPattern, containsPattern,
 	)
 	if err != nil {
 		return nil, err

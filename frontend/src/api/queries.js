@@ -50,7 +50,15 @@ export const useCommentsQuery = (entryId, enabled = true) => useQuery({ queryKey
 export const useEntryReactionsQuery = (entryId, enabled = true) => useQuery({ queryKey: queryKeys.reactions(entryId), queryFn: () => getEntryReactions(entryId), enabled: Boolean(entryId) && enabled, staleTime: STALE_TIMES.DYNAMIC, retry: false, meta: { ignore404: true } })
 export const useProfileQuery = () => useQuery({ queryKey: queryKeys.profile, queryFn: getMyProfile, staleTime: STALE_TIMES.STANDARD })
 export const useFriendProfileQuery = (friendId, enabled = true) => useQuery({ queryKey: queryKeys.friendProfile(friendId), queryFn: () => getFriendProfile(friendId), enabled: Boolean(friendId) && enabled, staleTime: STALE_TIMES.STANDARD, retry: false })
-export const useUserSearchQuery = (query) => useQuery({ queryKey: ['users', 'search', query], queryFn: () => searchUsers(query), enabled: Boolean(query), staleTime: STALE_TIMES.DYNAMIC })
+export const useUserSearchQuery = (query) =>
+  useQuery({
+    queryKey: ['users', 'search', query],
+    queryFn: () => searchUsers(query),
+    enabled: Boolean(query),
+    staleTime: STALE_TIMES.DYNAMIC,
+    retry: false,
+    meta: { suppressToast: true },
+  })
 
 export const useNotificationsQuery = (enabled = true) => useQuery({ queryKey: queryKeys.notifications, queryFn: () => fetchNotifications(), enabled, staleTime: STALE_TIMES.DYNAMIC })
 export const useUnreadNotificationCountQuery = (enabled = true) => useQuery({ queryKey: queryKeys.unreadCount, queryFn: fetchUnreadNotificationCount, enabled, staleTime: STALE_TIMES.DYNAMIC })

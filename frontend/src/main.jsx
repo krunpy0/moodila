@@ -32,6 +32,7 @@ const queryClient = new QueryClient({
     onError: (error, query) => {
       if (error?.status === 404 && query?.meta?.ignore404) return
       if (error?.status === 401) return
+      if (query?.meta?.suppressToast || query?.meta?.silent) return
       
       // Capture 5xx or unexpected network/runtime exceptions in Sentry
       if (!error?.status || error.status >= 500) {

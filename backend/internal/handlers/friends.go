@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"moodshare/internal/models"
@@ -18,7 +17,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var usernameSearchPattern = regexp.MustCompile(`^[a-z0-9_.-]+$`)
+func cleanSearchQuery(raw string) string {
+	raw = strings.TrimSpace(raw)
+	raw = strings.TrimPrefix(raw, "@")
+	raw = strings.TrimSpace(raw)
+	runes := []rune(raw)
+	if len(runes) > 60 {
+		raw = string(runes[:60])
+	}
+	return raw
+}
 
 type Friends struct {
 	Friends       repository.Friends
@@ -106,9 +114,9 @@ func (h Friends) Search(c *gin.Context) {
 	if !h.available(c) {
 		return
 	}
-	query := strings.ToLower(strings.TrimSpace(c.Query("q")))
-	if len(query) < 1 || len(query) > 32 || !usernameSearchPattern.MatchString(query) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "q must contain 1-32 letters, numbers, underscores, hyphens, or dots"})
+	query := cleanSearchQuery(c.Query("q"))
+	if query == "" {
+		c.JSON(http.StatusOK, []models.FriendUser{})
 		return
 	}
 	users, err := h.Friends.Search(c.Request.Context(), c.GetString("userID"), query)
