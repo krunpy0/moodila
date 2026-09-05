@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 import {
   useInfiniteFeedQuery,
   useLikeEntryMutation,
@@ -41,7 +41,9 @@ export default function Feed() {
   const { t, language } = useLanguage();
   const { notify } = useNotifications();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const targetEntryId = searchParams.get("entry");
+  const scrolledTargetKeyRef = useRef(null);
 
   const friends = friendsQuery.data || [];
 
@@ -62,16 +64,27 @@ export default function Feed() {
     : [];
 
   useEffect(() => {
-    if (targetEntryId && entries.length > 0) {
+    if (!targetEntryId) {
+      scrolledTargetKeyRef.current = null;
+      return;
+    }
+
+    const navigationKey = `${location.key}:${targetEntryId}`;
+    if (scrolledTargetKeyRef.current === navigationKey) {
+      return;
+    }
+
+    if (entries.length > 0) {
       const timer = setTimeout(() => {
         const el = document.getElementById(`feed-entry-${targetEntryId}`);
         if (el) {
           el.scrollIntoView({ behavior: "smooth", block: "center" });
+          scrolledTargetKeyRef.current = navigationKey;
         }
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [targetEntryId, entries]);
+  }, [targetEntryId, entries, location.key]);
 
   const fetchNextPage = feedQuery.fetchNextPage;
   const hasNextPage = feedQuery.hasNextPage;
