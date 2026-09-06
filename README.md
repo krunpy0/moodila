@@ -93,14 +93,13 @@ moodila/
    cp .env.example .env
    ```
 
-3. Edit `.env` with your database and environment settings:
+3. Configure `backend/.env`. Set your PostgreSQL connection string (`DATABASE_URL` is required to run the API):
    ```env
-   PORT=8080
-   DATABASE_URL=postgresql://user:password@localhost:5432/moodila?sslmode=disable
-   JWT_SECRET=replace_with_a_secure_random_string
-   CORS_ORIGIN=http://localhost:5173
-   APP_ENV=development
+   DATABASE_URL=postgresql://postgres:<password>@localhost:5432/moodila
    ```
+   > Note: For local development over plain HTTP, set `COOKIE_SECURE=false` in `.env` (it defaults to `true` in `.env.example`).
+   
+   All other variables in `backend/.env.example` have working defaults for local development. See [Environment Variables](#environment-variables) for the full breakdown.
 
 4. Run the API server:
    ```bash
@@ -121,7 +120,11 @@ moodila/
    npm install
    ```
 
-3. (Optional) Create a `.env` file in `frontend/` if your backend runs on a non-default host or port:
+3. (Optional) Copy `.env.example` to `.env` if your backend runs on a non-default host or port:
+   ```bash
+   cp .env.example .env
+   ```
+   Default content:
    ```env
    VITE_API_URL=http://localhost:8080
    ```
@@ -132,6 +135,106 @@ moodila/
    ```
 
 5. Open your browser at `http://localhost:5173`.
+
+## Environment Variables
+
+### Backend (`backend/.env`)
+
+Configuration template from `backend/.env.example`:
+
+```env
+# HTTP port the API listens on
+PORT=8080
+
+# PostgreSQL connection URI (e.g. Supabase pooler or local Postgres) [REQUIRED]
+DATABASE_URL=
+
+# Secret used to sign JWTs (change this in production)
+JWT_SECRET=dev-secret-change-me
+
+# Allowed CORS origins (comma-separated)
+CORS_ORIGIN=http://localhost:5173
+
+# Public URL of this API, used for short-lived photo upload URLs
+API_PUBLIC_URL=http://localhost:8080
+
+# Application environment (development | production)
+APP_ENV=development
+
+# Cookie settings for auth (lax | none | strict)
+COOKIE_SAMESITE=lax
+# Optional shared domain (e.g. .yourdomain.com for subdomains)
+COOKIE_DOMAIN=
+# Secure flag for auth cookies (set false for plain HTTP local dev)
+COOKIE_SECURE=true
+
+# S3-compatible photo storage (AWS S3, Cloudflare R2, MinIO, Backblaze B2)
+# Leave S3_ENDPOINT empty for AWS S3
+S3_ENDPOINT=
+S3_REGION=us-east-1
+S3_BUCKET=entry-photos
+ACCESS_KEY_ID=
+SECRET_ACCESS_KEY=
+# Public CDN or bucket origin URL used to serve saved photos
+S3_PUBLIC_BASE_URL=
+# Set true only when provider requires path-style API URLs
+S3_FORCE_PATH_STYLE=false
+
+# Password Reset & Resend Email Configuration
+# TTL for password reset tokens in minutes
+RESET_TOKEN_TTL_MINUTES=30
+# Resend API key (if empty, reset links are printed to console in dev)
+RESEND_API_KEY=
+# Sender email address for Resend
+RESEND_FROM_EMAIL=onboarding@resend.dev
+# Frontend URL(s) used for constructing password reset links
+APP_BASE_URL=http://localhost:5173,http://localhost:5174
+
+# Google Drive Database Backups
+# OAuth2 Refresh Token (generate via: go run ./cmd/token)
+GDRIVE_REFRESH_TOKEN=
+GDRIVE_CLIENT_ID=
+GDRIVE_CLIENT_SECRET=
+# Service Account fallback (alternative to OAuth2)
+GDRIVE_CREDENTIALS_JSON=
+GDRIVE_CREDENTIALS_FILE=
+# Google Drive destination folder ID
+GDRIVE_FOLDER_ID=
+# Backup interval in hours
+BACKUP_INTERVAL_HOURS=3
+# Backup retention policy in days
+BACKUP_RETENTION_DAYS=7
+# Enable/disable automatic background backups
+ENABLE_AUTO_BACKUP=true
+
+# Web Push VAPID Keys (generate via: go run ./cmd/vapid-keygen)
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+# Contact URI for push service operators (RFC 8292)
+VAPID_SUBSCRIBER=mailto:admin@moodila.app
+
+# Sentry Monitoring (Backend Go)
+SENTRY_DSN=
+SENTRY_ENVIRONMENT=development
+SENTRY_RELEASE=moodshare@1.0.0
+# APM trace sample rate (0.0 to 1.0; recommended 0.0 in dev)
+SENTRY_TRACES_SAMPLE_RATE=0.1
+```
+
+### Frontend (`frontend/.env`)
+
+Configuration template from `frontend/.env.example`:
+
+```env
+# Backend API base URL
+VITE_API_URL=http://localhost:8080
+
+# Sentry Monitoring (optional)
+VITE_SENTRY_RELEASE=moodila-frontend@1.0.0
+# SENTRY_AUTH_TOKEN=
+# SENTRY_ORG=
+# SENTRY_PROJECT=
+```
 
 ## CLI Utilities
 
