@@ -161,6 +161,12 @@ moodila/
     - `entry_friend_visibility`: `(entry_id, friend_id, is_hidden, created_at)`.
 16. **`0016_create_purge_old_notifications_fn.sql`** — Функция очистки старых уведомлений (`purge_old_notifications`).
 17. **`0017_create_notification_settings.sql`** — Таблица `notification_settings` для кастомизации типов push-уведомлений.
+18. **`0018_rework_announcements.sql`** — Реворк подсистемы объявлений и админки:
+    - Добавлены поля `kind` (`standard` / `onboarding`), `display_type` (`modal` / `banner` / `feed_only`), `expires_at`, `cta_label`, `cta_url`, `is_pinned`.
+    - Создана таблица `announcement_user_state` для строгого разделения состояний `dismissed_at` (скрыть прерывающий интерфейс) и `read_at` (прочитано в архиве).
+    - Базовое правило изоляции истории для новичков: `a.published_at >= u.created_at`.
+    - Серверная инварианта `/announcements/active-prompt`: строго не более 1 активного промпта по детерминированному приоритету.
+    - CSRF-защита маршрутов `/admin`.
 
 ---
 

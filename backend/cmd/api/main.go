@@ -214,14 +214,21 @@ func main() {
 	authorized.POST("/notifications/push-subscription", mutationLimiter, pushNotificationsHandler.Subscribe)
 	authorized.DELETE("/notifications/push-subscription", mutationLimiter, pushNotificationsHandler.Unsubscribe)
 	authorized.GET("/announcements/unread", readLimiter, announcementsHandler.GetUnread)
+	authorized.GET("/announcements/active-prompt", readLimiter, announcementsHandler.GetActivePrompt)
+	authorized.GET("/announcements/inbox", readLimiter, announcementsHandler.GetInbox)
+	authorized.POST("/announcements/:id/dismiss", mutationLimiter, announcementsHandler.Dismiss)
+	authorized.POST("/announcements/:id/acknowledge", mutationLimiter, announcementsHandler.Acknowledge)
 	authorized.POST("/announcements/:id/read", mutationLimiter, announcementsHandler.MarkRead)
 
-	admin := router.Group("/admin", middleware.Auth(cfg.JWTSecret), middleware.Admin(usersRepo))
+	admin := router.Group("/admin", middleware.Auth(cfg.JWTSecret), middleware.CSRF(), middleware.Admin(usersRepo))
 	admin.GET("/announcements", readLimiter, announcementsHandler.ListAdmin)
+	admin.GET("/announcements/:id/stats", readLimiter, announcementsHandler.GetStatsAdmin)
 	admin.POST("/announcements", mutationLimiter, announcementsHandler.CreateAdmin)
 	admin.PATCH("/announcements/:id", mutationLimiter, announcementsHandler.UpdateAdmin)
 	admin.POST("/announcements/:id/publish", mutationLimiter, announcementsHandler.PublishAdmin)
+	admin.POST("/announcements/:id/unpublish", mutationLimiter, announcementsHandler.UnpublishAdmin)
 	admin.POST("/announcements/:id/archive", mutationLimiter, announcementsHandler.ArchiveAdmin)
+	admin.DELETE("/announcements/:id", mutationLimiter, announcementsHandler.DeleteAdmin)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

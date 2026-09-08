@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useUnreadNotificationCountQuery, queryKeys } from '../api/queries'
+import { useUnreadNotificationCountQuery, useAnnouncementsInboxQuery, queryKeys } from '../api/queries'
 import NotificationCenterModal from './NotificationCenterModal'
 import { useLanguage } from '../context/LanguageContext'
 
 export default function HeaderBell() {
   const [isOpen, setIsOpen] = useState(false)
   const { data } = useUnreadNotificationCountQuery()
+  const { data: inboxAnnouncements = [] } = useAnnouncementsInboxQuery()
   const { t } = useLanguage()
   const queryClient = useQueryClient()
-  const unreadCount = data?.unread_count || 0
+
+  const unreadNewsCount = inboxAnnouncements.filter((a) => !a.is_read).length
+  const unreadCount = (data?.unread_count || 0) + unreadNewsCount
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
@@ -17,6 +20,8 @@ export default function HeaderBell() {
       if (event.data && event.data.type === 'PUSH_NOTIFICATION_RECEIVED') {
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
         queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
+        queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
+        queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
         queryClient.invalidateQueries({ queryKey: ['feed'] })
         queryClient.invalidateQueries({ queryKey: queryKeys.pendingFriends })
       }

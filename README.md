@@ -1,4 +1,4 @@
-# Moodila
+    # Moodila
 
 A self-hosted social mood tracker and micro-journaling Progressive Web App (PWA). Built with a Go REST API and a React 19 frontend.
 
@@ -18,6 +18,7 @@ A self-hosted social mood tracker and micro-journaling Progressive Web App (PWA)
 ## Tech Stack
 
 ### Backend
+
 - **Language:** Go 1.24+
 - **Framework:** Gin
 - **Database:** PostgreSQL (raw SQL queries with `pgx/v5` connection pooling, no ORM)
@@ -27,6 +28,7 @@ A self-hosted social mood tracker and micro-journaling Progressive Web App (PWA)
 - **Monitoring:** Sentry Go SDK
 
 ### Frontend
+
 - **Framework:** React 19, Vite 8
 - **Routing:** React Router 7
 - **Server State:** TanStack React Query v5
@@ -84,24 +86,29 @@ moodila/
 ### 1. Backend Setup
 
 1. Navigate to the backend directory:
+
    ```bash
    cd backend
    ```
 
 2. Copy the example environment file and configure your credentials:
+
    ```bash
    cp .env.example .env
    ```
 
 3. Configure `backend/.env`. Set your PostgreSQL connection string (`DATABASE_URL` is required to run the API):
+
    ```env
    DATABASE_URL=postgresql://postgres:<password>@localhost:5432/moodila
    ```
+
    > Note: For local development over plain HTTP, set `COOKIE_SECURE=false` in `.env` (it defaults to `true` in `.env.example`).
-   
+
    All other variables in `backend/.env.example` have working defaults for local development. See [Environment Variables](#environment-variables) for the full breakdown.
 
 4. Run the API server:
+
    ```bash
    go run ./cmd/api
    ```
@@ -111,25 +118,31 @@ moodila/
 ### 2. Frontend Setup
 
 1. Open a new terminal and navigate to the frontend directory:
+
    ```bash
    cd frontend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. (Optional) Copy `.env.example` to `.env` if your backend runs on a non-default host or port:
+
    ```bash
    cp .env.example .env
    ```
+
    Default content:
+
    ```env
    VITE_API_URL=http://localhost:8080
    ```
 
 4. Start the development server:
+
    ```bash
    npm run dev
    ```
@@ -241,16 +254,19 @@ VITE_SENTRY_RELEASE=moodila-frontend@1.0.0
 The backend contains dedicated CLI utilities in `backend/cmd/`:
 
 - **Run migrations manually:**
+
   ```bash
   go run ./cmd/migrate
   ```
 
 - **Run manual database backup:**
+
   ```bash
   go run ./cmd/backup
   ```
 
 - **Generate Google Drive OAuth2 refresh token:**
+
   ```bash
   go run ./cmd/token
   ```
@@ -263,13 +279,16 @@ The backend contains dedicated CLI utilities in `backend/cmd/`:
 ## Production Build
 
 ### Frontend
+
 ```bash
 cd frontend
 npm run build
 ```
+
 Production assets are generated in `frontend/dist/`. Serve them using Nginx, Caddy, Cloudflare Pages, or Vercel.
 
 ### Backend
+
 ```bash
 cd backend
 go build -ldflags="-s -w" -o bin/api ./cmd/api

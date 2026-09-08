@@ -15,7 +15,10 @@ export const queryKeys = {
   unreadCount: ['notifications', 'unreadCount'],
   notificationSettings: ['notifications', 'settings'],
   unreadAnnouncements: ['announcements', 'unread'],
+  activePrompt: ['announcements', 'activePrompt'],
+  announcementsInbox: ['announcements', 'inbox'],
   adminAnnouncements: ['admin', 'announcements'],
+  announcementStats: (id) => ['admin', 'announcements', id, 'stats'],
   stats: (period = 'month') => ['stats', period],
   friendVisibilityDefaults: ['friends', 'visibilityDefaults'],
 }

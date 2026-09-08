@@ -7,7 +7,22 @@ import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
 import { queryKeys } from './queryKeys'
 
 import { fetchNotifications, fetchUnreadNotificationCount, markNotificationsAsRead, fetchNotificationSettings, updateNotificationSettings } from './notifications'
-import { archiveAdminAnnouncement, createAdminAnnouncement, getAdminAnnouncements, getUnreadAnnouncements, markAnnouncementRead, publishAdminAnnouncement, updateAdminAnnouncement } from './announcements'
+import {
+  acknowledgeAnnouncement,
+  archiveAdminAnnouncement,
+  createAdminAnnouncement,
+  deleteAdminAnnouncement,
+  dismissAnnouncement,
+  getActivePrompt,
+  getAdminAnnouncements,
+  getAdminAnnouncementStats,
+  getAnnouncementsInbox,
+  getUnreadAnnouncements,
+  markAnnouncementRead,
+  publishAdminAnnouncement,
+  unpublishAdminAnnouncement,
+  updateAdminAnnouncement,
+} from './announcements'
 
 export { queryKeys }
 
@@ -348,11 +363,59 @@ export function useMarkNotificationsAsReadMutation() {
 }
 
 
+export const useActivePromptQuery = (enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.activePrompt,
+    queryFn: getActivePrompt,
+    enabled,
+    staleTime: STALE_TIMES.REALTIME,
+  })
+
+export const useAnnouncementsInboxQuery = (enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.announcementsInbox,
+    queryFn: getAnnouncementsInbox,
+    enabled,
+    staleTime: STALE_TIMES.STANDARD,
+  })
+
 export const useUnreadAnnouncementsQuery = (enabled = true) =>
   useQuery({ queryKey: queryKeys.unreadAnnouncements, queryFn: getUnreadAnnouncements, enabled, staleTime: STALE_TIMES.STANDARD })
 
 export const useAdminAnnouncementsQuery = (enabled = true) =>
   useQuery({ queryKey: queryKeys.adminAnnouncements, queryFn: getAdminAnnouncements, enabled, staleTime: STALE_TIMES.REALTIME })
+
+export const useAdminAnnouncementStatsQuery = (id, enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.announcementStats(id),
+    queryFn: () => getAdminAnnouncementStats(id),
+    enabled: Boolean(id) && enabled,
+    staleTime: STALE_TIMES.REALTIME,
+  })
+
+export function useDismissAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: dismissAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
+    },
+  })
+}
+
+export function useAcknowledgeAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: acknowledgeAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
+      queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
+    },
+  })
+}
 
 export function useMarkAnnouncementReadMutation() {
   const queryClient = useQueryClient()
@@ -360,6 +423,8 @@ export function useMarkAnnouncementReadMutation() {
     mutationFn: markAnnouncementRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
+      queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
     },
   })
 }
@@ -391,6 +456,20 @@ export function usePublishAnnouncementMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
+      queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
+    },
+  })
+}
+
+export function useUnpublishAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: unpublishAdminAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
+      queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
     },
   })
 }
@@ -402,6 +481,20 @@ export function useArchiveAnnouncementMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadAnnouncements })
+      queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
+    },
+  })
+}
+
+export function useDeleteAnnouncementMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteAdminAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.adminAnnouncements })
+      queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
+      queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
     },
   })
 }
