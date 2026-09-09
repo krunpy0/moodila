@@ -77,13 +77,13 @@
   --color-on-error-container: 104 31 35;
 
   /* Desaturated Emotional Moods */
-  --color-mood-rad: 217 122 152;
-  --color-mood-rad-container: 247 221 231;
-  --color-on-mood-rad-container: 88 40 59;
+  --color-mood-rad: 132 168 121;
+  --color-mood-rad-container: 225 237 220;
+  --color-on-mood-rad-container: 41 65 38;
 
-  --color-mood-good: 132 168 121;
-  --color-mood-good-container: 225 237 220;
-  --color-on-mood-good-container: 41 65 38;
+  --color-mood-good: 200 147 58;
+  --color-mood-good-container: 247 238 216;
+  --color-on-mood-good-container: 84 57 18;
 
   --color-mood-meh: 168 160 138;
   --color-mood-meh-container: 236 233 220;
@@ -183,13 +183,13 @@
   --color-on-error-container: 255 218 219;
 
   /* Desaturated Emotional Moods Dark */
-  --color-mood-rad: 229 152 175;
-  --color-mood-rad-container: 88 40 59;
-  --color-on-mood-rad-container: 247 221 231;
+  --color-mood-rad: 157 192 146;
+  --color-mood-rad-container: 41 65 38;
+  --color-on-mood-rad-container: 225 237 220;
 
-  --color-mood-good: 157 192 146;
-  --color-mood-good-container: 41 65 38;
-  --color-on-mood-good-container: 225 237 220;
+  --color-mood-good: 223 171 84;
+  --color-mood-good-container: 84 57 18;
+  --color-on-mood-good-container: 247 238 216;
 
   --color-mood-meh: 191 184 164;
   --color-mood-meh-container: 71 67 45;

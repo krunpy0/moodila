@@ -399,7 +399,7 @@ OR (
    - Валидировать входящие UUID и входные данные на бэкенде, возвращая структурированные понятные ошибки `400 Bad Request`.
 5. **UI/UX и дизайн-система:**
    - Mobile-First верстка (оптимизирована под вьюпорт смартфонов `380–420px`, корректно масштабируется на десктоп).
-   - Следовать дизайн-системе **«Moodila — Soft Editorial»** и токенам из `design-reference/DESIGN.md` (цвета, типографика Plus Jakarta Sans, органические скругления `rounded-xs`..`rounded-xxl`, десатурированная палитра настроений Rad/Good/Meh/Bad/Awful, тени и анимации).
+   - Следовать дизайн-системе **«Moodila — Soft Editorial»** и токенам из `design-reference/DESIGN.md` (цвета, типографика Plus Jakarta Sans, органические скругления `rounded-xs`..`rounded-xxl`, десатурированная палитра настроений: Rad — sage leaf green `#84A879`, Good — warm golden amber `#C8933A`, Meh — warm oat `#A8A08A`, Bad — slate mist blue `#8796AC`, Awful — dusty cedar `#9A7C82`, тени и анимации).
    - Все тексты интерфейса обязательно добавлять в оба файла локализации: `src/i18n/ru.js` и `src/i18n/en.js`.
 6. **Принцип Ponytail (Lazy Senior Dev Mode):**
    - Не создавать ненужных абстракций и бойлерплейта.

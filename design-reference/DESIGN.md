@@ -96,13 +96,13 @@ colors:
   # They should feel like emotional states, not alerts.
   # ─────────────────────────────────────────
 
-  mood-rad: "#D97A98"
-  mood-rad-container: "#F7DDE7"
-  on-mood-rad-container: "#58283B"
+  mood-rad: "#84A879"
+  mood-rad-container: "#E1EDDC"
+  on-mood-rad-container: "#294126"
 
-  mood-good: "#84A879"
-  mood-good-container: "#E1EDDC"
-  on-mood-good-container: "#294126"
+  mood-good: "#C8933A"
+  mood-good-container: "#F7EED8"
+  on-mood-good-container: "#543912"
 
   mood-meh: "#A8A08A"
   mood-meh-container: "#ECE9DC"
@@ -378,8 +378,8 @@ opacity:
 - **Light Theme**: The base canvas is warm linen (`#F8F7F5`), layered with structured surface containers ranging from pure white (`surface-container-lowest: #FFFFFF`) to soft ecru (`surface-container-highest: #E4E1DC`).
 - **Dark Theme**: Deep, gentle charcoal canvas (`#171615`) with warm tinted containers (`#1C1B1A` to `#32302E`), avoiding harsh pitch blacks and neon contrasts.
 - **Mood System**:
-  - **Rad (5)**: Soft rose plum (`#D97A98` / container `#F7DDE7` / on-container `#58283B`)
-  - **Good (4)**: Sage leaf green (`#84A879` / container `#E1EDDC` / on-container `#294126`)
+  - **Rad (5)**: Sage leaf green (`#84A879` / container `#E1EDDC` / on-container `#294126`)
+  - **Good (4)**: Warm golden amber (`#C8933A` / container `#F7EED8` / on-container `#543912`)
   - **Meh (3)**: Warm oat stone (`#A8A08A` / container `#ECE9DC` / on-container `#47432D`)
   - **Bad (2)**: Slate mist blue (`#8796AC` / container `#E0E6EE` / on-container `#303B4B`)
   - **Awful (1)**: Dusty cedar mauvy (`#9A7C82` / container `#E9DEE1` / on-container `#462C31`)
