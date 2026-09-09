@@ -1,11 +1,8 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { getLocalDate } from "../api/client";
-import { logout } from "../api/auth";
 import {
-  queryKeys,
   useEntriesQuery,
   useEntrySummaryQuery,
   useProfileQuery,
@@ -20,8 +17,6 @@ import { useLanguage } from "../context/LanguageContext";
 export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), []);
   const month = formatMonth(today);
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { t, dateLocale, formatDate: formatDateLocale } = useLanguage();
   const profileQuery = useProfileQuery();
   const entriesQuery = useEntriesQuery(month);
@@ -101,9 +96,9 @@ export default function Home() {
 
   return (
     <AppLayout>
-      <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl bg-background pb-32 lg:pb-12 text-on-background px-0 lg:px-6 py-0 lg:py-6">
-        <header className="flex items-center justify-between px-container-margin py-md lg:hidden">
-          <div className="flex items-center gap-sm">
+      <div className="w-full min-h-screen bg-gradient-to-b from-[#F7EDE7] via-[#FAF6F3] to-background dark:from-[#261F23] dark:via-[#1D1B1A] dark:to-background">
+        <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl pb-32 lg:pb-12 text-on-background px-0 lg:px-6 py-0 lg:py-6">
+          <header className="flex items-center justify-between px-container-margin py-md lg:hidden">
             <Link
               to="/profile"
               className="block shrink-0 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/40"
@@ -113,43 +108,20 @@ export default function Home() {
                 <img
                   src={user.avatar_url}
                   alt={displayName || t("nav.profile")}
-                  className="h-10 w-10 shrink-0 rounded-full object-cover"
+                  className="h-11 w-11 shrink-0 rounded-full object-cover"
                 />
               ) : (
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
                   {initials || (
-                    <span className="material-symbols-outlined text-[20px]">
+                    <span className="material-symbols-outlined text-[22px]">
                       person
                     </span>
                   )}
                 </div>
               )}
             </Link>
-            <h1 className="text-headline-lg-mobile font-headline-lg-mobile">
-              Moodila
-            </h1>
-          </div>
-          <div className="flex items-center gap-xs">
             <HeaderBell />
-            <button
-              type="button"
-              aria-label={t("common.logout")}
-              title={t("common.logout")}
-              onClick={async () => {
-                await logout().catch(() => {});
-                queryClient.setQueryData(queryKeys.session, null);
-                queryClient.removeQueries({ queryKey: queryKeys.session });
-                queryClient.clear();
-                navigate("/login", { replace: true });
-              }}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow"
-            >
-              <span className="material-symbols-outlined text-[20px]">
-                logout
-              </span>
-            </button>
-          </div>
-        </header>
+          </header>
 
         <div className="space-y-lg px-container-margin lg:px-0">
           {isLoading ? (
@@ -190,22 +162,29 @@ export default function Home() {
                   </section>
                 )}
 
-                <section className="relative overflow-hidden rounded-xl lg:rounded-xxl bg-primary-container p-lg lg:p-8 xl:p-10 shadow-card border border-outline-variant/20">
-                  <div className="relative z-10 flex max-w-full flex-col items-start gap-md lg:gap-lg">
-                    <h2 className="text-headline-xl lg:text-display-md lg:leading-tight font-bold text-on-primary-container">
+                <section className="space-y-md pt-1 pb-1">
+                  <div className="space-y-1">
+                    <p className="text-[20px] sm:text-[22px] font-medium text-on-surface-variant">
                       {greetingText()}
                       {displayName ? `, ${displayName}` : ""}
+                    </p>
+                    <h2 className="text-[28px] sm:text-[34px] lg:text-display-md font-bold text-on-surface tracking-tight leading-[1.2]">
+                      {t("home.howIsItGoing")}
                     </h2>
-                    <Link
-                      to="/entries/new"
-                      className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm lg:px-8 lg:py-3.5 text-label-lg lg:text-body-lg font-bold text-on-primary shadow-card hover:opacity-95 transition-[opacity,transform] duration-normal ease-out hover:-translate-y-0.5"
-                    >
-                      {t("home.journalToday")}
-                      <span className="material-symbols-outlined text-[18px] lg:text-[22px]">
-                        edit
-                      </span>
-                    </Link>
                   </div>
+                  <Link
+                    to="/entries/new"
+                    className="group flex w-full items-center justify-between rounded-full bg-[#EBA6B9] hover:bg-[#e499ad] dark:bg-primary-container dark:hover:bg-primary-container/90 p-2 pl-6 pr-2 shadow-card hover:shadow-floating transition-all duration-normal ease-out hover:-translate-y-0.5 active:scale-[0.99]"
+                  >
+                    <span className="text-body-md sm:text-body-lg font-bold text-[#351D28] dark:text-on-primary-container">
+                      {t("home.journalToday")}
+                    </span>
+                    <span className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-white dark:bg-surface-container-lowest text-on-surface shadow-xs transition-transform duration-fast group-hover:scale-105">
+                      <span className="material-symbols-outlined text-[20px] sm:text-[22px]">
+                        north_east
+                      </span>
+                    </span>
+                  </Link>
                 </section>
 
                 <section className="space-y-md">
@@ -411,7 +390,8 @@ export default function Home() {
           )}
         </div>
       </main>
-    </AppLayout>
+    </div>
+  </AppLayout>
   );
 }
 

@@ -93,6 +93,7 @@ export const ru = {
 
   // Home Page
   home: {
+    howIsItGoing: 'Как ваши дела?',
     journalToday: 'Записать день',
     thisWeekMood: 'Настроение за неделю',
     moodSummary: 'Итоги месяца',

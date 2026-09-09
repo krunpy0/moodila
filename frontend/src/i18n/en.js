@@ -93,6 +93,7 @@ export const en = {
 
   // Home Page
   home: {
+    howIsItGoing: "How is it going?",
     journalToday: "Journal today",
     thisWeekMood: "This week’s mood",
     moodSummary: "Mood summary",
