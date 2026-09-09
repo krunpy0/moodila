@@ -1,4 +1,4 @@
-    # Moodila
+# Moodila
 
 A self-hosted social mood tracker and micro-journaling Progressive Web App (PWA). Built with a Go REST API and a React 19 frontend.
 
