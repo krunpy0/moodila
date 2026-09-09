@@ -103,6 +103,7 @@ export const TAG_CATEGORIES = [
       "Lonely",
       "Drained",
       "Emotional",
+      "Dirty",
     ],
   },
 ];

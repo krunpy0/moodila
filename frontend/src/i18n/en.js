@@ -88,6 +88,7 @@ export const en = {
       Happy: "Happy",
       Excited: "Excited",
       Optimistic: "Optimistic",
+      Dirty: "Dirty",
     },
   },
 
@@ -309,7 +310,6 @@ export const en = {
     deleting: "Deleting…",
   },
 
-
   // Notification Settings
   notificationSettings: {
     title: "Push Notifications",
@@ -355,7 +355,8 @@ export const en = {
     resetTokenInvalid: "Password reset link is invalid or missing token.",
     requestNewLink: "Request a new link",
     saveNewPassword: "Save new password",
-    passwordResetSuccess: "Password changed successfully. Please log in with your new password.",
+    passwordResetSuccess:
+      "Password changed successfully. Please log in with your new password.",
   },
 
   // Confirm Account Deletion
@@ -365,12 +366,14 @@ export const en = {
     invalidToken: "Account deletion link is invalid or missing a valid token.",
     backToLogin: "Back to sign in",
     areYouSure: "Are you absolutely sure?",
-    warningDetails: "Deleting your account will anonymize your profile, hide all your journal entries, and remove your friend connections in Moodila.",
+    warningDetails:
+      "Deleting your account will anonymize your profile, hide all your journal entries, and remove your friend connections in Moodila.",
     confirmBtn: "Confirm Account Deletion",
     deleting: "Deleting account…",
     cancelBtn: "Cancel and keep my account",
     successMessage: "Your Moodila account has been successfully deleted.",
-    errorMessage: "Failed to confirm account deletion. The token may be invalid or expired.",
+    errorMessage:
+      "Failed to confirm account deletion. The token may be invalid or expired.",
   },
 
   // PWA Install Prompt
@@ -410,7 +413,8 @@ export const en = {
     subtitle: "Manage system announcements and platform broadcasts",
     adminMode: "Admin Mode",
     accessDenied: "Access Denied",
-    accessDeniedDesc: "You do not have administrator permissions to view this page.",
+    accessDeniedDesc:
+      "You do not have administrator permissions to view this page.",
     createAnnouncement: "Create Announcement",
     editAnnouncement: "Edit Announcement",
     fieldTitle: "Title",
@@ -453,7 +457,8 @@ export const en = {
     archive: "Archive",
     delete: "Delete",
     deleteConfirmTitle: "Delete Announcement",
-    deleteConfirmDesc: "Are you sure you want to permanently delete this announcement? This action cannot be undone.",
+    deleteConfirmDesc:
+      "Are you sure you want to permanently delete this announcement? This action cannot be undone.",
     readsCount: "Reads",
     dismissesCount: "Dismisses",
     livePreview: "Live Preview",
@@ -464,7 +469,8 @@ export const en = {
     statsTabAll: "All",
     statsTabRead: "Read",
     statsTabDismissed: "Dismissed",
-    statsNoInteractions: "No user interactions recorded for this announcement yet.",
+    statsNoInteractions:
+      "No user interactions recorded for this announcement yet.",
     statsReadAt: "Read",
     statsDismissedAt: "Dismissed",
     statsBoth: "Read & Dismissed",
