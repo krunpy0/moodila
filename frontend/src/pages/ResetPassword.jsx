@@ -64,18 +64,18 @@ export default function ResetPassword() {
           </p>
         </div>
 
-        <div className="bg-white rounded-[24px] p-lg cloud-shadow">
+        <div className="bg-surface-container-lowest rounded-xl lg:rounded-xxl p-lg shadow-card border border-outline-variant/20">
           {!token ? (
             <div className="flex flex-col gap-md text-center">
               <p
-                className="px-sm py-xs rounded-md bg-error-container text-on-error-container text-body-sm font-body-sm"
+                className="px-sm py-xs rounded-xl bg-error-container text-on-error-container text-body-sm font-body-sm border border-error/20"
                 role="alert"
               >
                 {t("auth.resetTokenInvalid")}
               </p>
               <Link
                 to="/forgot-password"
-                className="mt-xs h-12 rounded-lg bg-primary-container text-on-primary-container text-label-lg font-label-lg flex items-center justify-center"
+                className="mt-xs h-12 rounded-full bg-primary text-on-primary text-label-lg font-bold shadow-sm hover:bg-primary/90 flex items-center justify-center transition-all"
               >
                 {t("auth.requestNewLink")}
               </Link>
@@ -93,7 +93,7 @@ export default function ResetPassword() {
 
               {error && (
                 <p
-                  className="px-sm py-xs rounded-md bg-error-container text-on-error-container text-body-sm font-body-sm"
+                  className="px-sm py-xs rounded-xl bg-error-container text-on-error-container text-body-sm font-body-sm border border-error/20"
                   role="alert"
                 >
                   {error}
@@ -103,7 +103,7 @@ export default function ResetPassword() {
               <button
                 type="submit"
                 disabled={resetMutation.isPending}
-                className="mt-xs h-12 rounded-lg bg-primary-container text-on-primary-container text-label-lg font-label-lg disabled:opacity-60"
+                className="mt-xs h-12 rounded-full bg-primary text-on-primary text-label-lg font-bold shadow-sm hover:bg-primary/90 disabled:opacity-60 transition-all active:scale-[0.99]"
               >
                 {resetMutation.isPending
                   ? t("common.loading")

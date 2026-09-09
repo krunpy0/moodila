@@ -6,37 +6,47 @@ const APP_MOODS = {
   5: {
     value: 5,
     icon: "sentiment_very_satisfied",
-    label: "Great",
-    color: "text-tertiary",
-    bg: "bg-tertiary-container/40",
+    label: "Rad",
+    color: "text-mood-rad",
+    bg: "bg-mood-rad-container",
+    border: "border-mood-rad/20",
+    onContainer: "text-on-mood-rad-container",
   },
   4: {
     value: 4,
     icon: "sentiment_satisfied",
     label: "Good",
-    color: "text-primary",
-    bg: "bg-primary-container/30",
+    color: "text-mood-good",
+    bg: "bg-mood-good-container",
+    border: "border-mood-good/20",
+    onContainer: "text-on-mood-good-container",
   },
   3: {
     value: 3,
     icon: "sentiment_neutral",
-    label: "Okay",
-    color: "text-secondary",
-    bg: "bg-secondary-container/30",
+    label: "Meh",
+    color: "text-mood-meh",
+    bg: "bg-mood-meh-container",
+    border: "border-mood-meh/20",
+    onContainer: "text-on-mood-meh-container",
   },
   2: {
     value: 2,
     icon: "sentiment_dissatisfied",
-    label: "Low",
-    color: "text-amber-600",
-    bg: "bg-amber-500/20",
+    label: "Bad",
+    color: "text-mood-bad",
+    bg: "bg-mood-bad-container",
+    border: "border-mood-bad/20",
+    onContainer: "text-on-mood-bad-container",
   },
   1: {
     value: 1,
     icon: "sentiment_very_dissatisfied",
-    label: "Rough",
-    color: "text-error",
-    bg: "bg-error-container/30",
+    label: "Awful",
+    color: "text-mood-awful",
+    bg: "bg-mood-awful-container",
+    border: "border-mood-awful/20",
+    onContainer: "text-on-mood-awful-container",
   },
 };
 
@@ -362,7 +372,7 @@ export default function Landing() {
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface max-w-3xl leading-[1.2] md:leading-[1.2]">
               Track your day. <br className="hidden sm:inline" />
               Share it with people who{" "}
-              <span className="text-[#fce4ec]">actually care.</span>
+              <span className="text-primary">actually care.</span>
             </h1>
           </ScrollReveal>
 
@@ -444,7 +454,7 @@ export default function Landing() {
               </div>
 
               {/* Mood Selector Card (1:1 with AddEntry.jsx) */}
-              <section className="rounded-[24px] bg-white p-lg cloud-shadow">
+              <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15">
                 <h3 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
                   How are you feeling today?
                 </h3>
@@ -521,7 +531,7 @@ export default function Landing() {
               </section>
 
               {/* Summary Textarea Card (1:1 with AddEntry.jsx) */}
-              <section className="rounded-[24px] bg-white p-lg cloud-shadow">
+              <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15">
                 <label
                   htmlFor="demo-entry-text"
                   className="mb-md block text-label-lg font-label-lg text-on-surface-variant"
@@ -571,7 +581,7 @@ export default function Landing() {
               </section>
 
               {/* Privacy Switch Section (1:1 with AddEntry.jsx) */}
-              <section className="flex items-center justify-between rounded-[24px] bg-white p-lg cloud-shadow">
+              <section className="flex items-center justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15">
                 <div className="flex items-center gap-md">
                   <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
                     {demoIsHidden ? "lock" : "public"}
@@ -662,7 +672,7 @@ export default function Landing() {
             delay={100}
             className="flex-1 flex flex-col"
           >
-            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
               <div>
                 {/* Header inside mockup 1 */}
                 <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
@@ -759,7 +769,7 @@ export default function Landing() {
             delay={250}
             className="flex-1 flex flex-col"
           >
-            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
               <div>
                 {/* Feed Card Mockup Header */}
                 <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
@@ -842,7 +852,7 @@ export default function Landing() {
             delay={400}
             className="flex-1 flex flex-col"
           >
-            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
               <div>
                 <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
                   <span className="text-label-sm font-semibold text-on-surface-variant">
@@ -923,7 +933,7 @@ export default function Landing() {
             delay={550}
             className="flex-1 flex flex-col"
           >
-            <div className="flex-1 flex flex-col justify-between bg-white rounded-[24px] p-md lg:p-lg cloud-shadow border border-outline-variant/30 relative z-10 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
               <div>
                 {/* Header Bell with animated badge */}
                 <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
@@ -1011,12 +1021,12 @@ export default function Landing() {
 
           {/* View Switcher Tabs */}
           <ScrollReveal animation="scale-up" delay={150}>
-            <div className="mt-md inline-flex p-1 rounded-2xl bg-surface-container cloud-shadow mb-lg">
+            <div className="mt-md inline-flex p-1 rounded-2xl bg-surface-container border border-outline-variant/20 shadow-subtle mb-lg">
               <button
                 onClick={() => setActiveTab("home")}
                 className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
                   activeTab === "home"
-                    ? "bg-white text-on-surface shadow-xs scale-105"
+                    ? "bg-surface-container-lowest text-on-surface shadow-subtle scale-105"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
@@ -1026,7 +1036,7 @@ export default function Landing() {
                 onClick={() => setActiveTab("calendar")}
                 className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
                   activeTab === "calendar"
-                    ? "bg-white text-on-surface shadow-xs scale-105"
+                    ? "bg-surface-container-lowest text-on-surface shadow-subtle scale-105"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
@@ -1036,7 +1046,7 @@ export default function Landing() {
                 onClick={() => setActiveTab("feed")}
                 className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
                   activeTab === "feed"
-                    ? "bg-white text-on-surface shadow-xs scale-105"
+                    ? "bg-surface-container-lowest text-on-surface shadow-subtle scale-105"
                     : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
@@ -1098,7 +1108,7 @@ export default function Landing() {
                         See more
                       </span>
                     </div>
-                    <div className="flex justify-between gap-xs overflow-x-auto rounded-[24px] bg-white/40 p-md cloud-shadow">
+                    <div className="flex justify-between gap-xs overflow-x-auto rounded-xl lg:rounded-xxl bg-surface-container-lowest/60 p-md shadow-card border border-outline-variant/15">
                       {[
                         { day: "Mon", mood: 5 },
                         { day: "Tue", mood: 4 },
@@ -1525,7 +1535,7 @@ export default function Landing() {
                     </p>
                   </header>
 
-                  <div className="rounded-[24px] bg-white p-md cloud-shadow space-y-sm">
+                  <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md shadow-card border border-outline-variant/15 space-y-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-xs">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-tertiary-container text-tertiary font-bold">
@@ -1578,7 +1588,7 @@ export default function Landing() {
                     </div>
                   </div>
 
-                  <div className="rounded-[24px] bg-white p-md cloud-shadow space-y-sm">
+                  <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md shadow-card border border-outline-variant/15 space-y-sm">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-xs">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-secondary font-bold">
@@ -1691,7 +1701,7 @@ export default function Landing() {
             const isOpen = openFaq === index;
             return (
               <ScrollReveal key={index} animation="fade-up" delay={index * 100}>
-                <div className="bg-white rounded-2xl border border-outline-variant/30 cloud-shadow overflow-hidden transition-all duration-300 hover:border-outline-variant/60">
+                <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-card overflow-hidden transition-all duration-300 hover:border-outline-variant/60">
                   <button
                     onClick={() => setOpenFaq(isOpen ? null : index)}
                     className="w-full p-md text-left flex items-center justify-between font-bold text-on-surface text-body-md md:text-lg hover:bg-surface-container-low transition-colors"

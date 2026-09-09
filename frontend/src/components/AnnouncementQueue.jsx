@@ -163,12 +163,12 @@ export default function AnnouncementQueue() {
           aria-modal="true"
           aria-labelledby="announcement-title"
           onClick={isCritical ? undefined : (isDirectModal ? handleModalAcknowledge : handleCloseDetailModal)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
         >
           <div
             ref={modalRef}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-[28px] bg-surface-container-lowest p-6 cloud-shadow flex flex-col gap-4 border border-outline-variant/20 max-h-[85vh]"
+            className="w-full max-w-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-6 shadow-modal flex flex-col gap-4 border border-outline-variant/20 max-h-[85vh]"
           >
             {/* Modal Header */}
             <div className="flex items-start gap-3 w-full">

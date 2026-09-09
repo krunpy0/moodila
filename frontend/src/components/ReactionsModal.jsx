@@ -31,7 +31,7 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/56 backdrop-blur-sm p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -39,7 +39,7 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-label={t('reactions.title')}
-        className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-[24px] bg-surface-container-lowest cloud-shadow border border-outline-variant/15 overflow-hidden transition-all animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-md max-h-[80vh] flex flex-col rounded-xl lg:rounded-xxl bg-surface-container-lowest shadow-modal border border-outline-variant/20 overflow-hidden transition-all animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

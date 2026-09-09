@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useStatsQuery } from "../api/queries";
 import AppLayout from "../components/AppLayout";
 import MoodIcon from "../components/MoodIcon";
@@ -36,7 +36,7 @@ export default function Stats() {
               type="button"
               onClick={() => safeNavigateBack(navigate, "/home")}
               aria-label={t("common.back")}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow active:scale-95 transition-transform"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant shadow-card border border-outline-variant/20 active:scale-95 transition-transform"
             >
               <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             </button>
@@ -52,35 +52,30 @@ export default function Stats() {
         </header>
 
         {isLoading ? (
-          <div className="px-container-margin lg:px-0 py-md">
-            <StatsSkeleton />
-          </div>
+          <StatsSkeleton />
         ) : isError ? (
           <div className="px-container-margin py-8 text-center text-error">
-            <p className="text-body-md font-semibold">{t("common.error")}</p>
-            <p className="text-body-sm">{error?.message}</p>
+            {error?.message || t("common.error")}
           </div>
         ) : (
-          <div className="px-container-margin space-y-lg lg:px-0">
-            {/* Top Auto-generated Insights (2-3 cards if available) */}
+          <div className="px-container-margin space-y-lg">
+            {/* Algorithmic Personalized Insights Carousel/List */}
             {insights.length > 0 && (
-              <section className="space-y-sm" aria-label="Mood Insights">
-                <h2 className="text-label-lg font-bold text-on-surface flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-primary text-[20px]">lightbulb</span>
-                  {t("stats.insightsHeader")}
+              <section className="space-y-sm">
+                <h2 className="text-label-lg font-bold text-on-surface-variant flex items-center gap-1.5 uppercase">
+                  <span className="material-symbols-outlined text-[18px] text-primary">psychology</span>
+                  {t("stats.insightsTitle")}
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
-                  {insights.map((insight) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                  {insights.map((insight, idx) => (
                     <div
-                      key={insight.id}
-                      className="flex items-start gap-md rounded-[24px] bg-primary-container/25 p-md lg:p-6 cloud-shadow border border-primary/10"
+                      key={insight.id || idx}
+                      className="flex items-start gap-md rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-md shadow-card"
                     >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-container text-primary">
-                        <span className="material-symbols-outlined text-[20px]">
-                          {insight.type === "day_pattern" ? "today" : "auto_awesome"}
-                        </span>
+                      <span className="material-symbols-outlined text-[24px] text-primary shrink-0 mt-0.5">
+                        {insight.type === "positive" ? "trending_up" : insight.type === "negative" ? "trending_down" : "lightbulb"}
                       </span>
-                      <div className="flex-1">
+                      <div>
                         <p className="text-body-md font-medium text-on-surface leading-snug">
                           {getLocalizedInsightText(insight, t)}
                         </p>
@@ -92,7 +87,7 @@ export default function Stats() {
             )}
 
             {/* Line Chart & Period Switcher */}
-            <section className="rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-md lg:p-8 cloud-shadow space-y-md">
+            <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-sm">
                 <div>
                   <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
@@ -133,7 +128,7 @@ export default function Stats() {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
               {/* Mood Distribution */}
-              <section className="lg:col-span-6 rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-md lg:p-8 cloud-shadow space-y-md">
+              <section className="lg:col-span-6 rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
                 <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">pie_chart</span>
                   {t("stats.moodDistribution")}
@@ -145,6 +140,13 @@ export default function Stats() {
                       percentage: 0,
                     };
                     const moodInfo = getMoodInfo(level, t);
+                    const moodBarColors = {
+                      5: "bg-mood-rad",
+                      4: "bg-mood-good",
+                      3: "bg-mood-meh",
+                      2: "bg-mood-bad",
+                      1: "bg-mood-awful",
+                    };
                     return (
                       <div key={level} className="flex items-center gap-sm">
                         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${moodInfo.bg}`}>
@@ -155,7 +157,7 @@ export default function Stats() {
                         </div>
                         <div className="flex-1 h-3 rounded-full bg-surface-container-low overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-primary transition-all duration-500"
+                            className={`h-full rounded-full ${moodBarColors[level] || "bg-primary"} transition-all duration-500`}
                             style={{ width: `${dist.percentage}%` }}
                           />
                         </div>
@@ -169,17 +171,17 @@ export default function Stats() {
               </section>
 
               {/* Day-of-Week Pattern */}
-              <section className="lg:col-span-6 rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-md lg:p-8 cloud-shadow space-y-md">
+              <section className="lg:col-span-6 rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
                 <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">calendar_view_week</span>
                   {t("stats.dayOfWeekPattern")}
                 </h2>
-                <DayOfWeekBarChart data={dayOfWeekAverages} t={t} language={language} />
+                <DayOfWeekBarChart data={dayOfWeekAverages} language={language} />
               </section>
             </div>
 
             {/* Tag Correlation */}
-            <section className="rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-md lg:p-8 cloud-shadow space-y-md">
+            <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-xs">
                 <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">tag</span>
@@ -194,8 +196,8 @@ export default function Stats() {
               {(highestTag || lowestTag) && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
                   {highestTag && (
-                    <div className="flex items-center gap-md rounded-[20px] bg-primary-container/30 p-md cloud-shadow">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-on-primary">
+                    <div className="flex items-center gap-md rounded-lg bg-primary-container/30 border border-outline-variant/20 p-md shadow-subtle">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary">
                         <span className="material-symbols-outlined">sentiment_very_satisfied</span>
                       </span>
                       <div>
@@ -210,8 +212,8 @@ export default function Stats() {
                   )}
 
                   {lowestTag && (
-                    <div className="flex items-center gap-md rounded-[20px] bg-secondary-container/30 p-md cloud-shadow">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-secondary text-on-secondary">
+                    <div className="flex items-center gap-md rounded-lg bg-secondary-container/30 border border-outline-variant/20 p-md shadow-subtle">
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-on-secondary">
                         <span className="material-symbols-outlined">sentiment_dissatisfied</span>
                       </span>
                       <div>
@@ -242,7 +244,7 @@ export default function Stats() {
                     {validTags.map((item) => (
                       <div
                         key={item.tag}
-                        className="flex items-center justify-between rounded-2xl bg-surface-container-low p-sm px-md transition-colors"
+                        className="flex items-center justify-between rounded-md bg-surface-container-low border border-outline-variant/15 p-sm px-md transition-colors"
                       >
                         <span className="text-body-md font-bold text-primary truncate max-w-[150px]">
                           #{getLocalizedTag(item.tag, t)}
@@ -263,7 +265,7 @@ export default function Stats() {
             </section>
 
             {/* Annual Heatmap (GitHub Contribution Style) */}
-            <section className="rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-md lg:p-8 cloud-shadow space-y-md">
+            <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
               <div className="flex items-center justify-between">
                 <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">grid_on</span>
@@ -287,7 +289,7 @@ export default function Stats() {
 }
 
 /* Mood Line Chart SVG Component */
-function MoodLineChart({ series, period, t }) {
+function MoodLineChart({ series, period }) {
   if (!series || series.length === 0) return null;
 
   const validPoints = series.map((pt, index) => {
@@ -490,11 +492,11 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
   }, [weeks]);
 
   const moodColors = {
-    1: "bg-red-400 border-red-500/40 dark:bg-red-500/80",
-    2: "bg-orange-300 border-orange-400/40 dark:bg-orange-400/80",
-    3: "bg-amber-300 border-amber-400/40 dark:bg-amber-400/80",
-    4: "bg-emerald-300 border-emerald-400/40 dark:bg-emerald-400/80",
-    5: "bg-emerald-500 border-emerald-600/40 dark:bg-emerald-600",
+    1: "bg-mood-awful border-mood-awful/40",
+    2: "bg-mood-bad border-mood-bad/40",
+    3: "bg-mood-meh border-mood-meh/40",
+    4: "bg-mood-good border-mood-good/40",
+    5: "bg-mood-rad border-mood-rad/40",
   };
 
   const formatDate = (dateStr) => {

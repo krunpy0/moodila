@@ -47,7 +47,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-container-margin backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm animate-fade-in"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
@@ -56,7 +56,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md"
+        className="w-full max-w-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-modal border border-outline-variant/20 space-y-md"
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-sm">

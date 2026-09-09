@@ -38,12 +38,12 @@ export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) 
       role="dialog"
       aria-modal="true"
       onClick={onCancel}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-4 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-md flex-col overflow-hidden rounded-[28px] bg-surface-container-lowest cloud-shadow"
+        className="flex w-full max-w-md flex-col overflow-hidden rounded-xl lg:rounded-xxl bg-surface-container-lowest shadow-modal border border-outline-variant/20"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-surface-container-low px-lg py-md">

@@ -52,11 +52,11 @@ export const ru = {
     3: 'Нормально',
     4: 'Хорошо',
     5: 'Отлично',
-    short1: 'Очень низкое',
-    short2: 'Низкое',
-    short3: 'Нейтральное',
-    short4: 'Хорошее',
-    short5: 'Отличное',
+    short1: 'Ужасно',
+    short2: 'Плохо',
+    short3: 'Нормально',
+    short4: 'Хорошо',
+    short5: 'Отлично',
     categories: {
       positive: 'Позитивные',
       neutral: 'Нейтральные',
@@ -302,24 +302,6 @@ export const ru = {
     deleting: 'Удаление...',
   },
 
-  // Notifications
-  notifications: {
-    title: 'Уведомления',
-    markAllRead: 'Прочитать все',
-    empty: 'Пока нет уведомлений',
-    enablePush: 'Включить Push-уведомления',
-    pushEnabled: 'Push-уведомления активны',
-    pushPermissionDenied: 'Уведомления заблокированы в настройках браузера',
-    pushNotSupported: 'Push-уведомления не поддерживаются',
-    friendRequestSent: '{name} хочет добавить вас в друзья.',
-    friendRequestAccepted: '{name} принял(а) вашу заявку в друзья.',
-    likedEntry: '{name} оценил(а) вашу запись.',
-    commentedEntry: '{name} оставил(а) комментарий.',
-    justNow: 'Только что',
-    minutesAgo: '{m} мин. назад',
-    hoursAgo: '{h} ч. назад',
-    daysAgo: '{d} дн. назад',
-  },
 
   // Notification Settings
   notificationSettings: {

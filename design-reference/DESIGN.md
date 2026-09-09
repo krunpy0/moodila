@@ -1,173 +1,400 @@
 ---
-name: Serene Pulse
+name: "Moodila — Soft Editorial"
+
 colors:
-  surface: '#fbf9f8'
-  surface-dim: '#dcd9d9'
-  surface-bright: '#fbf9f8'
-  surface-container-lowest: '#ffffff'
-  surface-container-low: '#f6f3f2'
-  surface-container: '#f0eded'
-  surface-container-high: '#eae8e7'
-  surface-container-highest: '#e4e2e1'
-  on-surface: '#1b1c1c'
-  on-surface-variant: '#4d4447'
-  inverse-surface: '#303030'
-  inverse-on-surface: '#f3f0f0'
-  outline: '#7f7478'
-  outline-variant: '#d0c3c7'
-  surface-tint: '#6b5a60'
-  primary: '#6b5a60'
-  on-primary: '#ffffff'
-  primary-container: '#fce4ec'
-  on-primary-container: '#76646b'
-  inverse-primary: '#d7c1c8'
-  secondary: '#526069'
-  on-secondary: '#ffffff'
-  secondary-container: '#d3e2ed'
-  on-secondary-container: '#56656e'
-  tertiary: '#636037'
-  on-tertiary: '#ffffff'
-  tertiary-container: '#f2ecb8'
-  on-tertiary-container: '#6e6b41'
-  error: '#ba1a1a'
-  on-error: '#ffffff'
-  error-container: '#ffdad6'
-  on-error-container: '#93000a'
-  primary-fixed: '#f4dce4'
-  primary-fixed-dim: '#d7c1c8'
-  on-primary-fixed: '#25181e'
-  on-primary-fixed-variant: '#524249'
-  secondary-fixed: '#d6e5ef'
-  secondary-fixed-dim: '#bac9d3'
-  on-secondary-fixed: '#0f1d25'
-  on-secondary-fixed-variant: '#3b4951'
-  tertiary-fixed: '#eae4b1'
-  tertiary-fixed-dim: '#cdc897'
-  on-tertiary-fixed: '#1e1c00'
-  on-tertiary-fixed-variant: '#4b4822'
-  background: '#fbf9f8'
-  on-background: '#1b1c1c'
-  surface-variant: '#e4e2e1'
+  # ─────────────────────────────────────────
+  # LIGHT THEME
+  # ─────────────────────────────────────────
+
+  background: "#F8F7F5"
+  on-background: "#181817"
+
+  surface: "#F8F7F5"
+  surface-dim: "#E5E2DE"
+  surface-bright: "#FFFFFF"
+
+  surface-container-lowest: "#FFFFFF"
+  surface-container-low: "#FCFBFA"
+  surface-container: "#F3F1EE"
+  surface-container-high: "#ECE9E5"
+  surface-container-highest: "#E4E1DC"
+
+  surface-variant: "#E4E1DC"
+
+  on-surface: "#181817"
+  on-surface-variant: "#6A6661"
+
+  outline: "#8E8982"
+  outline-variant: "#D8D4CF"
+
+  inverse-surface: "#242321"
+  inverse-on-surface: "#F6F4F1"
+
+  # Brand
+  primary: "#8C5C70"
+  on-primary: "#FFFFFF"
+
+  primary-container: "#F2DDE5"
+  on-primary-container: "#553342"
+
+  inverse-primary: "#E8BFD0"
+
+  primary-fixed: "#F2DDE5"
+  primary-fixed-dim: "#D8B2C2"
+
+  on-primary-fixed: "#301A25"
+  on-primary-fixed-variant: "#6E4354"
+
+  # Calm / secondary
+  secondary: "#61727A"
+  on-secondary: "#FFFFFF"
+
+  secondary-container: "#DCE7EA"
+  on-secondary-container: "#35464D"
+
+  secondary-fixed: "#DCE7EA"
+  secondary-fixed-dim: "#BCCDD2"
+
+  on-secondary-fixed: "#16272D"
+  on-secondary-fixed-variant: "#465860"
+
+  # Focus / tertiary
+  tertiary: "#8A7642"
+  on-tertiary: "#FFFFFF"
+
+  tertiary-container: "#EEE5C9"
+  on-tertiary-container: "#4F431F"
+
+  tertiary-fixed: "#EEE5C9"
+  tertiary-fixed-dim: "#D5C79D"
+
+  on-tertiary-fixed: "#2A240D"
+  on-tertiary-fixed-variant: "#62552E"
+
+  # Semantic
+  success: "#68856F"
+  on-success: "#FFFFFF"
+
+  success-container: "#DCEBDD"
+  on-success-container: "#28432F"
+
+  warning: "#A77A45"
+  on-warning: "#FFFFFF"
+
+  warning-container: "#F4E4CF"
+  on-warning-container: "#5F421F"
+
+  error: "#B85C60"
+  on-error: "#FFFFFF"
+
+  error-container: "#F7DADB"
+  on-error-container: "#681F23"
+
+  # ─────────────────────────────────────────
+  # MOOD COLORS
+  # Intentionally softer and slightly desaturated.
+  # They should feel like emotional states, not alerts.
+  # ─────────────────────────────────────────
+
+  mood-rad: "#D97A98"
+  mood-rad-container: "#F7DDE7"
+  on-mood-rad-container: "#58283B"
+
+  mood-good: "#84A879"
+  mood-good-container: "#E1EDDC"
+  on-mood-good-container: "#294126"
+
+  mood-meh: "#A8A08A"
+  mood-meh-container: "#ECE9DC"
+  on-mood-meh-container: "#47432D"
+
+  mood-bad: "#8796AC"
+  mood-bad-container: "#E0E6EE"
+  on-mood-bad-container: "#303B4B"
+
+  mood-awful: "#9A7C82"
+  mood-awful-container: "#E9DEE1"
+  on-mood-awful-container: "#462C31"
+
+  # ─────────────────────────────────────────
+  # DARK THEME
+  # ─────────────────────────────────────────
+
+  dark-background: "#171615"
+  dark-on-background: "#F1EFEC"
+
+  dark-surface: "#171615"
+  dark-surface-dim: "#111110"
+  dark-surface-bright: "#292827"
+
+  dark-surface-container-lowest: "#111110"
+  dark-surface-container-low: "#1C1B1A"
+  dark-surface-container: "#222120"
+  dark-surface-container-high: "#292827"
+  dark-surface-container-highest: "#32302E"
+
+  dark-surface-variant: "#32302E"
+
+  dark-on-surface: "#F1EFEC"
+  dark-on-surface-variant: "#B9B4AE"
+
+  dark-outline: "#9D9791"
+  dark-outline-variant: "#484541"
+
+  dark-inverse-surface: "#F1EFEC"
+  dark-inverse-on-surface: "#242321"
+
+  dark-primary: "#D8A1B5"
+  dark-on-primary: "#402331"
+
+  dark-primary-container: "#633F4E"
+  dark-on-primary-container: "#F5DCE5"
+
+  dark-inverse-primary: "#8C5C70"
+
+  dark-secondary: "#A8BBC1"
+  dark-on-secondary: "#243237"
+
+  dark-secondary-container: "#3C4C52"
+  dark-on-secondary-container: "#DCE8EB"
+
+  dark-tertiary: "#D0BE83"
+  dark-on-tertiary: "#38300E"
+
+  dark-tertiary-container: "#5A5029"
+  dark-on-tertiary-container: "#F0E5BB"
+
+  dark-error: "#ED9A9D"
+  dark-on-error: "#5C161A"
+
+  dark-error-container: "#762B2F"
+  dark-on-error-container: "#FFDADB"
+
+
 typography:
-  headline-xl:
-    fontFamily: Plus Jakarta Sans
+
+  # ─────────────────────────────────────────
+  # DISPLAY
+  # Large editorial headings.
+  # ─────────────────────────────────────────
+
+  display-xl:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 48px
+    fontWeight: "700"
+    lineHeight: 52px
+    letterSpacing: "-0.045em"
+
+  display-lg:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 40px
+    fontWeight: "700"
+    lineHeight: 44px
+    letterSpacing: "-0.04em"
+
+  display-md:
+    fontFamily: "Plus Jakarta Sans"
     fontSize: 32px
-    fontWeight: '700'
-    lineHeight: 40px
-    letterSpacing: -0.02em
+    fontWeight: "700"
+    lineHeight: 38px
+    letterSpacing: "-0.035em"
+
+  # ─────────────────────────────────────────
+  # HEADLINES
+  # ─────────────────────────────────────────
+
+  headline-xl:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 28px
+    fontWeight: "700"
+    lineHeight: 34px
+    letterSpacing: "-0.025em"
+
   headline-lg:
-    fontFamily: Plus Jakarta Sans
+    fontFamily: "Plus Jakarta Sans"
     fontSize: 24px
-    fontWeight: '600'
-    lineHeight: 32px
-    letterSpacing: -0.01em
-  headline-lg-mobile:
-    fontFamily: Plus Jakarta Sans
-    fontSize: 22px
-    fontWeight: '600'
-    lineHeight: 28px
-  body-md:
-    fontFamily: Plus Jakarta Sans
-    fontSize: 16px
-    fontWeight: '400'
+    fontWeight: "700"
+    lineHeight: 30px
+    letterSpacing: "-0.02em"
+
+  headline-md:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 20px
+    fontWeight: "650"
+    lineHeight: 26px
+    letterSpacing: "-0.015em"
+
+  headline-sm:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 18px
+    fontWeight: "650"
     lineHeight: 24px
+    letterSpacing: "-0.01em"
+
+  # Mobile variants
+
+  headline-xl-mobile:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 25px
+    fontWeight: "700"
+    lineHeight: 31px
+    letterSpacing: "-0.025em"
+
+  headline-lg-mobile:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 22px
+    fontWeight: "700"
+    lineHeight: 28px
+    letterSpacing: "-0.02em"
+
+  # ─────────────────────────────────────────
+  # BODY
+  # ─────────────────────────────────────────
+
+  body-lg:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 17px
+    fontWeight: "400"
+    lineHeight: 27px
+    letterSpacing: "-0.005em"
+
+  body-md:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 15px
+    fontWeight: "400"
+    lineHeight: 23px
+
   body-sm:
-    fontFamily: Plus Jakarta Sans
-    fontSize: 14px
-    fontWeight: '400'
-    lineHeight: 20px
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 13px
+    fontWeight: "400"
+    lineHeight: 19px
+
+  # ─────────────────────────────────────────
+  # LABELS
+  # ─────────────────────────────────────────
+
   label-lg:
-    fontFamily: Plus Jakarta Sans
+    fontFamily: "Plus Jakarta Sans"
     fontSize: 14px
-    fontWeight: '600'
+    fontWeight: "650"
+    lineHeight: 18px
+    letterSpacing: "-0.005em"
+
+  label-md:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 13px
+    fontWeight: "650"
     lineHeight: 16px
-    letterSpacing: 0.01em
+    letterSpacing: "0em"
+
   label-sm:
-    fontFamily: Plus Jakarta Sans
-    fontSize: 12px
-    fontWeight: '500'
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 11px
+    fontWeight: "650"
     lineHeight: 14px
+    letterSpacing: "0.015em"
+
+  overline:
+    fontFamily: "Plus Jakarta Sans"
+    fontSize: 10px
+    fontWeight: "700"
+    lineHeight: 13px
+    letterSpacing: "0.08em"
+    textTransform: "uppercase"
+
+
 rounded:
-  sm: 0.25rem
-  DEFAULT: 0.5rem
-  md: 0.75rem
-  lg: 1rem
-  xl: 1.5rem
-  full: 9999px
+  xs: "0.5rem"
+  sm: "0.75rem"
+  DEFAULT: "1rem"
+  md: "1.25rem"
+  lg: "1.5rem"
+  xl: "1.75rem"
+  xxl: "2rem"
+  full: "9999px"
+
+
 spacing:
-  base: 4px
-  xs: 8px
-  sm: 12px
-  md: 16px
-  lg: 24px
-  xl: 32px
-  container-margin: 20px
-  gutter: 12px
+  base: "4px"
+
+  xs: "8px"
+  sm: "12px"
+  md: "16px"
+  lg: "24px"
+  xl: "32px"
+  xxl: "40px"
+  xxxl: "48px"
+
+  container-margin-mobile: "16px"
+  container-margin: "24px"
+  container-margin-large: "32px"
+
+  gutter-mobile: "12px"
+  gutter: "16px"
+  gutter-large: "24px"
+
+
+elevation:
+
+  none:
+    boxShadow: "none"
+
+  subtle:
+    boxShadow: "0 1px 2px rgba(24, 23, 23, 0.03)"
+
+  card:
+    boxShadow: "0 4px 20px rgba(24, 23, 23, 0.05)"
+
+  floating:
+    boxShadow: "0 10px 36px rgba(24, 23, 23, 0.09)"
+
+  modal:
+    boxShadow: "0 20px 60px rgba(24, 23, 23, 0.16)"
+
+
+motion:
+
+  fast: "140ms"
+  normal: "200ms"
+  slow: "320ms"
+
+  easing-standard: "cubic-bezier(0.2, 0, 0, 1)"
+  easing-emphasized: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+
+
+opacity:
+  disabled: 0.42
+  muted: 0.64
+  subtle: 0.78
+  overlay: 0.56
 ---
 
-## Brand & Style
+## Brand & Philosophy: Moodila — Soft Editorial
 
-The design system is centered on emotional wellness and gentle social connection. It employs a **Soft Minimalist** aesthetic that prioritizes psychological safety and ease of use. By combining generous whitespace with warm, organic forms, the interface creates a digital sanctuary for reflection. 
+**Moodila — Soft Editorial** transforms the emotional journaling experience into a warm, tactile, and literary digital artifact. It pairs warm, comforting earth-toned surfaces with expressive typography, generous rounded forms, and desaturated mood hues that feel like emotional states rather than binary alerts.
 
-The brand personality is empathetic and non-judgmental. It avoids the clinical coldness of traditional health apps in favor of a conversational, "lived-in" feel. The emotional response should be one of immediate relief and quiet optimism, achieved through a "squishy" tactile language and a palette that mimics the soft light of golden hour.
+### 1. Color System & Surfaces
+- **Light Theme**: The base canvas is warm linen (`#F8F7F5`), layered with structured surface containers ranging from pure white (`surface-container-lowest: #FFFFFF`) to soft ecru (`surface-container-highest: #E4E1DC`).
+- **Dark Theme**: Deep, gentle charcoal canvas (`#171615`) with warm tinted containers (`#1C1B1A` to `#32302E`), avoiding harsh pitch blacks and neon contrasts.
+- **Mood System**:
+  - **Rad (5)**: Soft rose plum (`#D97A98` / container `#F7DDE7` / on-container `#58283B`)
+  - **Good (4)**: Sage leaf green (`#84A879` / container `#E1EDDC` / on-container `#294126`)
+  - **Meh (3)**: Warm oat stone (`#A8A08A` / container `#ECE9DC` / on-container `#47432D`)
+  - **Bad (2)**: Slate mist blue (`#8796AC` / container `#E0E6EE` / on-container `#303B4B`)
+  - **Awful (1)**: Dusty cedar mauvy (`#9A7C82` / container `#E9DEE1` / on-container `#462C31`)
 
-## Colors
+### 2. Typography Hierarchy
+Set in **Plus Jakarta Sans** (with fallback to Manrope for extended Cyrillic coverage).
+- **Display**: Expressive titles with tight letter-spacing (`-0.045em` to `-0.035em`) for landing heroes and celebration banners.
+- **Headlines**: Elegant section and page titles (`28px` to `18px`).
+- **Body**: Generously spaced reading copy (`15px / 23px` standard, `17px / 27px` large).
+- **Labels & Overlines**: Structured metadata chips with weights `600–700`.
 
-This design system utilizes a foundation of soft, descriptive pastels. The primary colors are not used for branding alone, but serve as functional indicators of emotional states (e.g., Pink for Joy, Blue for Calm, Yellow for Focus).
+### 3. Geometry & Shapes
+- **Soft Editorial Radii**: Organic rounded contours starting from `xs: 8px` to `DEFAULT: 16px`, `lg: 24px`, and `xxl: 32px`.
+- **Interactive Pills**: Buttons, active navigation items, and emotion chips use `rounded-full (9999px)` for thumb-friendly touch targets.
 
-- **Light Mode (Default):** Uses a warm off-white for the canvas to reduce eye strain. Surfaces are pure white to create subtle separation.
-- **Dark Mode:** Employs a deep charcoal (`#333333`) canvas. Accent pastels (Pink `#fce4ec`, Blue `#e3f2fd`, Yellow `#fff9c4`) are utilized to maintain legibility and a soft character against the dark background without causing glare.
-- **Text:** Deep neutrals provide high legibility in the default light mode, maintaining a gentle contrast ratio that avoids eye fatigue.
-
-## Typography
-
-The system uses **Plus Jakarta Sans** for English/Latin text and **Manrope** as the primary font for Russian/Cyrillic text (specified via CSS font stack `font-family: "Plus Jakarta Sans", "Manrope", sans-serif`). Since Plus Jakarta Sans lacks Cyrillic glyphs, Cyrillic characters seamlessly fall back to Manrope while retaining Plus Jakarta Sans for Latin characters.
-
-**Headlines** are set with tight letter-spacing and bold weights to feel impactful yet approachable. The "Greetings" header is the primary focal point of the home screen, using `headline-xl` to establish a personal connection immediately.
-
-**Body text** maintains generous line height to ensure journals and thoughts are easy to read. **Labels** use a slightly heavier weight (`500`-`600`) to remain legible even when placed on soft pastel backgrounds.
-
-## Layout & Spacing
-
-This design system follows a **fluid grid** model optimized for mobile-first interactions. It uses a 4px baseline grid to ensure consistent vertical rhythm.
-
-- **Margins:** Screens utilize a 20px outer margin to provide breathing room.
-- **Grid:** A 4-column layout is used for mobile, while tablets transition to a 12-column layout. 
-- **Component Spacing:** Elements within cards (like Mood Indicators or Stats) use `12px` (sm) or `16px` (md) gaps to maintain a tight but breathable grouping.
-- **Reflow:** On larger devices, cards for "Mood Stability" and "Stress Level" should sit side-by-side (2-column), whereas on mobile they stack vertically for better thumb reach.
-
-## Elevation & Depth
-
-Visual hierarchy is achieved through **Tonal Layering** and **Ambient Shadows** rather than borders. 
-
-- **Level 0 (Background):** The base canvas (warm off-white).
-- **Level 1 (Floating Cards):** White surfaces, slightly separated from the background. These use a "Cloud Shadow"—an extremely soft, diffused drop shadow to suggest elevation.
-- **Level 2 (Interactive Elements):** Buttons and active chips. These use a slightly more pronounced shadow or subtle outer glow to indicate "pressability."
-
-Avoid harsh 1px borders. If separation is needed between similar colors, use a tonal shift that is only 5% darker/lighter than the surface color.
-
-## Shapes
-
-The shape language is dominated by high-radius curves to evoke comfort. 
-
-- **Standard Elements:** Buttons and input fields use `16px` (`rounded-lg`).
-- **Primary Containers:** Floating cards and bottom sheets use `24px` (`rounded-xl`).
-- **Interactive Pill:** The bottom navigation and mood chips use a full-pill radius (`999px`) to distinguish them as high-frequency interaction points.
-- **Mood Icons:** Always circular to maintain the "emoji" metaphor.
-
-## Components
-
-### Mood Indicators
-Circular icons with a diameter of 48px. Each mood color has a 10% opacity background of its specific pastel hex, with a centered emoji or custom expressive icon.
-
-### Navigation
-A floating pill-style bar positioned 16px from the bottom. It should have a backdrop blur (20px) and a semi-transparent light surface. Icons should be line-art style, filling in with a soft glow when active.
-
-### Cards
-Cards are the primary container for all content. They should have `24px` padding and `24px` corner radii. Content within cards is grouped logically with `12px` spacing.
-
-### Widgets (Stats)
-Small, square-ish cards used for "Mood Stability" and "Stress Level". These utilize minimalist sparkline charts with smoothed (bezier) paths. The text inside should follow the `label-sm` and `headline-lg` hierarchy for data visualization.
-
-### Buttons
-Primary buttons use the pastel accent colors. Text should remain a dark neutral even on colored buttons to maintain the soft look. Avoid pure black text on buttons.
+### 4. Elevation & Motion
+- Hierarchy is established through warm ambient diffusion shadows (`card: 0 4px 20px rgba(24, 23, 23, 0.05)`) and subtle hairline borders (`outline-variant`).
+- Motion uses calibrated cubic-bezier easing (`easing-standard: cubic-bezier(0.2, 0, 0, 1)`) with brisk 140ms–200ms durations.

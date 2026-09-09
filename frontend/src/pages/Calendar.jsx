@@ -343,7 +343,7 @@ export default function Calendar() {
         >
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
             {/* Left 7 columns: Month Calendar Grid */}
-            <div className="lg:col-span-7 lg:bg-surface-container-lowest lg:p-6 lg:rounded-[32px] lg:cloud-shadow">
+            <div className="lg:col-span-7 lg:bg-surface-container-lowest lg:p-6 lg:rounded-xl xl:lg:rounded-xxl lg:shadow-card lg:border lg:border-outline-variant/20">
               <div className="grid grid-cols-7 text-center select-none">
                 {weekdays.map((day) => (
                   <span
@@ -366,7 +366,7 @@ export default function Calendar() {
                     return (
                       <span
                         key={dateKey}
-                        className="flex h-[76px] lg:h-28 xl:h-32 items-start justify-center pt-1 lg:pt-3 text-body-md lg:text-body-lg font-body-md text-on-surface-variant/20"
+                        className="flex h-[76px] lg:h-28 xl:h-32 items-start justify-center pt-1 lg:pt-3 text-body-md lg:text-body-lg font-body-md text-on-surface-variant/20 select-none"
                       >
                         {date.getDate()}
                       </span>
@@ -384,19 +384,21 @@ export default function Calendar() {
                           day: "numeric",
                           year: "numeric",
                         })}`}
-                        className={`flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 rounded-2xl transition-all text-body-md font-body-md text-on-surface-variant/30 ${
-                          isSelected ? "bg-primary-container/20 ring-2 ring-primary" : ""
-                        }`}
+                        className="flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-all text-body-md font-body-md text-on-surface-variant/40"
                       >
                         <span className="lg:text-body-lg lg:font-semibold">{date.getDate()}</span>
-                        <span className="h-10 w-10 lg:h-12 lg:w-12 rounded-full bg-surface-container-low" />
+                        <span className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-[14px] lg:rounded-[18px] bg-surface-container-low/60 border border-outline-variant/15 text-on-surface-variant/25 ${
+                          isSelected ? "lg:ring-2 lg:ring-primary lg:ring-offset-2 lg:ring-offset-surface-container-lowest" : ""
+                        }`}>
+                          <span className="material-symbols-outlined text-[16px] lg:text-[20px] select-none opacity-40">add</span>
+                        </span>
                       </button>
                     );
                   }
 
                   const cellInner = (
                     <>
-                      <span className={`flex items-center gap-0.5 lg:text-body-lg ${today ? "font-bold text-primary" : ""}`}>
+                      <span className={`flex items-center gap-0.5 lg:text-body-lg font-medium ${today ? "font-bold text-primary" : "text-on-surface/90"}`}>
                         {date.getDate()}
                         {!selectedFriend && entry?.is_hidden ? (
                           <span className="material-symbols-outlined text-[13px] lg:text-[15px] text-on-surface-variant/80" title={t('common.hiddenFromFriends')}>
@@ -409,11 +411,19 @@ export default function Calendar() {
                         ) : null}
                       </span>
 
-                      <span className={`flex h-10 w-10 lg:h-12 lg:w-12 items-center justify-center rounded-full transition-transform group-hover:scale-105 ${mood ? `${mood.bg} ${today ? "ring-2 lg:ring-4 ring-primary" : ""}` : "border-2 border-dashed border-outline-variant text-outline-variant"}`}>
+                      <span
+                        className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-[14px] lg:rounded-[18px] transition-all group-hover:scale-105 ${
+                          mood
+                            ? mood.bg
+                            : "bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-on-surface-variant/80"
+                        } ${
+                          isSelected ? "lg:ring-2 lg:ring-primary lg:ring-offset-2 lg:ring-offset-surface-container-lowest" : ""
+                        }`}
+                      >
                         {entry ? (
                           <MoodIcon mood={entry.mood} className="text-[20px] lg:text-[26px]" />
                         ) : (
-                          <span className="material-symbols-outlined text-[20px] lg:text-[24px]">add</span>
+                          <span className="material-symbols-outlined text-[16px] lg:text-[20px] select-none font-normal">add</span>
                         )}
                       </span>
                     </>
@@ -429,9 +439,7 @@ export default function Calendar() {
                           setMobileInspectorOpen(true);
                         }}
                         aria-label={`${friendName(selectedFriend)}`}
-                        className={`group flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 rounded-2xl transition-all text-body-md font-body-md active:scale-95 ${
-                          isSelected ? "bg-primary-container/20 ring-2 ring-primary" : ""
-                        }`}
+                        className="group flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-all text-body-md font-body-md active:scale-95 hover:bg-surface-container-low/40"
                       >
                         {cellInner}
                       </button>
@@ -446,9 +454,7 @@ export default function Calendar() {
                         setSelectedDate(dateKey);
                         setMobileInspectorOpen(true);
                       }}
-                      className={`group w-full h-[76px] lg:h-28 xl:h-32 flex flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-2xl transition-all text-body-md font-body-md hover:bg-surface-container-low/60 ${
-                        isSelected ? "bg-primary-container/30 ring-2 ring-primary" : ""
-                      }`}
+                      className="group w-full h-[76px] lg:h-28 xl:h-32 flex flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-all text-body-md font-body-md hover:bg-surface-container-low/40 active:scale-95"
                     >
                       {cellInner}
                     </button>
@@ -458,7 +464,7 @@ export default function Calendar() {
             </div>
 
             {/* Right 5 columns: Day Detail Inspector (Desktop Only) */}
-            <div className="hidden lg:block lg:col-span-5 bg-surface-container-lowest p-8 rounded-[32px] cloud-shadow min-h-[480px]">
+            <div className="hidden lg:block lg:col-span-5 bg-surface-container-lowest p-8 rounded-xl lg:rounded-xxl shadow-card border border-outline-variant/20 min-h-[480px]">
               {(() => {
                 const activeDateStr = selectedDate || getLocalDate();
                 const activeEntry = entriesByDate[activeDateStr];
@@ -650,7 +656,7 @@ export default function Calendar() {
                     {entry ? (
                       <div className="flex items-center gap-md flex-1 min-w-0">
                         <span
-                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${mood.bg} ${
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] ${mood.bg} ${
                             today ? "ring-2 ring-primary/40" : ""
                           }`}
                         >
@@ -720,7 +726,7 @@ export default function Calendar() {
                       </div>
                     ) : future ? (
                       <div className="flex items-center gap-md flex-1 min-w-0 py-1">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant/30">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-surface-container-low/60 border border-outline-variant/10 text-on-surface-variant/30">
                           <span className="material-symbols-outlined text-[22px]">event</span>
                         </span>
                         <span className="text-body-sm font-medium text-on-surface-variant/40">
@@ -729,7 +735,7 @@ export default function Calendar() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-md flex-1 min-w-0">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-outline-variant/60 text-outline-variant group-hover:border-primary group-hover:text-primary transition-colors">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-primary transition-colors">
                           <span className="material-symbols-outlined text-[22px]">add</span>
                         </span>
                         <div className="flex flex-col flex-1 min-w-0">
@@ -830,7 +836,7 @@ export default function Calendar() {
               </button>
             </div>
             <div className="mb-md flex items-center gap-sm">
-              <span className={`flex h-12 w-12 items-center justify-center rounded-full ${getMoodInfo(selectedFriendEntry.mood, t).bg}`}>
+              <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${getMoodInfo(selectedFriendEntry.mood, t).bg}`}>
                 <MoodIcon mood={selectedFriendEntry.mood} className="text-[26px]" />
               </span>
               <div className="flex flex-wrap gap-xs">
@@ -871,7 +877,7 @@ export default function Calendar() {
               transform: isInspectorDragging ? `translateX(${inspectorDragX}px)` : 'translateX(0px)',
               transition: isInspectorDragging ? 'none' : 'transform 0.2s ease-out',
             }}
-            className={`w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-[32px] sm:rounded-[32px] bg-surface-container-lowest p-lg cloud-shadow select-none ${inspectorSlideAnim}`}
+            className={`w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-xxl sm:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-modal select-none ${inspectorSlideAnim}`}
           >
             <div className="mx-auto mb-xs h-1.5 w-12 rounded-full bg-surface-container-high" />
 

@@ -16,17 +16,17 @@ export default function BottomNav() {
   return (
     <nav
       aria-label={t('nav.home')}
-      className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-40px)] max-w-md -translate-x-1/2 items-center justify-around rounded-full bg-surface/90 px-4 py-2 cloud-shadow backdrop-blur-xl lg:hidden"
+      className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-32px)] max-w-md -translate-x-1/2 items-center justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-3 py-2 shadow-floating backdrop-blur-xl lg:hidden"
     >
       {items.map(([to, icon, labelKey]) => {
         const active = to && pathname === to
         const label = t(labelKey)
-        const classes = `flex h-12 w-12 items-center justify-center rounded-full transition-colors ${
+        const classes = `flex h-11 w-11 items-center justify-center rounded-full transition-all duration-normal ${
           icon === 'add'
-            ? 'h-14 w-14 bg-on-background text-background shadow-lg'
+            ? 'h-13 w-13 bg-primary text-on-primary shadow-card hover:scale-105 active:scale-95'
             : active
-              ? 'bg-primary-container text-on-primary-container'
-              : 'text-on-surface-variant'
+              ? 'bg-primary-container text-on-primary-container font-semibold'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
         }`
 
         return to ? (

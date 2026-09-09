@@ -226,7 +226,7 @@ export default function Profile() {
               {editing && (
                 <form
                   onSubmit={save}
-                  className="mb-8 space-y-md rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow"
+                  className="mb-8 space-y-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20"
                 >
                   <div>
                     <p className="text-label-lg text-on-surface-variant">
@@ -321,7 +321,7 @@ export default function Profile() {
                       <Link
                         key={entry.id}
                         to={`/entries/new?date=${entry.date}`}
-                        className={`flex min-h-[140px] flex-col justify-between rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow ${
+                        className={`flex min-h-[140px] flex-col justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 ${
                           isRich ? "col-span-2" : ""
                         }`}
                       >
@@ -384,13 +384,13 @@ export default function Profile() {
                   })}
                 </div>
                 {profile.recent_entries?.length === 0 && (
-                  <p className="rounded-[24px] bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant">
+                  <p className="rounded-xl bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant border border-outline-variant/15">
                     {t("home.emptyRecent")}
                   </p>
                 )}
               </section>
 
-              <section className="mb-8 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
+              <section className="mb-8 rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
                 <div className="mb-md flex items-center justify-between">
                   <h2 className="text-label-lg font-semibold text-on-surface-variant">
                     {t("friends.myFriends")}
@@ -461,7 +461,7 @@ export default function Profile() {
                 )}
               </section>
 
-              <section className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
+              <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
                 <h2 className="mb-md text-label-lg text-on-surface-variant">
                   {t("profile.appSettings")}
                 </h2>
@@ -658,7 +658,7 @@ function ThemeToggle() {
 
 function Avatar({ user, large = false }) {
   const classes = large
-    ? "h-[112px] w-[112px] text-headline-lg cloud-shadow"
+    ? "h-[112px] w-[112px] text-headline-lg shadow-card border-2 border-outline-variant/20"
     : "h-10 w-10 text-body-md";
   const initials = (user.display_name || user.username || "?")
     .split(/\s+/)

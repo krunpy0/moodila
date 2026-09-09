@@ -55,7 +55,7 @@ export default function ConfirmAccountDeletion() {
           </p>
         </div>
 
-        <div className="rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md">
+        <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20 space-y-md">
           {!token ? (
             <div className="flex flex-col gap-md text-center">
               <p className="rounded-xl bg-error-container/60 p-sm text-body-sm font-medium text-on-error-container" role="alert">

@@ -4,9 +4,9 @@ import SkeletonText from './SkeletonText'
 
 export function HomeSkeleton() {
   return <div className="space-y-lg" role="status" aria-label="Loading your journal">
-    <section className="rounded-[24px] bg-primary-container p-lg cloud-shadow"><Skeleton width="58%" height="2rem" /><Skeleton className="mt-md" width="9.5rem" height="2.5rem" borderRadius="9999px" /></section>
-    <section className="space-y-md"><div className="flex justify-between"><Skeleton width="8rem" height="1rem" /><Skeleton width="3.5rem" height="0.875rem" /></div><div className="flex justify-between gap-sm rounded-[24px] bg-white/40 p-md cloud-shadow">{Array.from({ length: 7 }, (_, i) => <div key={i} className="flex flex-col items-center gap-xs"><SkeletonCircle size="3rem" /><Skeleton width="1.75rem" height="0.75rem" /></div>)}</div></section>
-    <section className="grid grid-cols-2 gap-md"><div className="col-span-2 rounded-[24px] bg-white p-lg cloud-shadow"><Skeleton width="9rem" height="1.75rem" /><Skeleton className="mt-sm" width="5rem" height="2.5rem" /><Skeleton className="mt-xs" width="13rem" height="0.875rem" /></div>{Array.from({ length: 2 }, (_, i) => <div key={i} className="min-h-[140px] rounded-[24px] bg-surface-container-low p-lg"><Skeleton width="70%" height="0.75rem" /><Skeleton className="mt-auto translate-y-14" width="80%" height="1.75rem" /></div>)}</section>
+    <section className="rounded-xl lg:rounded-xxl bg-primary-container p-lg shadow-card border border-primary/20"><Skeleton width="58%" height="2rem" /><Skeleton className="mt-md" width="9.5rem" height="2.5rem" borderRadius="9999px" /></section>
+    <section className="space-y-md"><div className="flex justify-between"><Skeleton width="8rem" height="1rem" /><Skeleton width="3.5rem" height="0.875rem" /></div><div className="flex justify-between gap-sm rounded-xl lg:rounded-xxl bg-surface-container-lowest/60 p-md shadow-card border border-outline-variant/15">{Array.from({ length: 7 }, (_, i) => <div key={i} className="flex flex-col items-center gap-xs"><SkeletonCircle size="3rem" /><Skeleton width="1.75rem" height="0.75rem" /></div>)}</div></section>
+    <section className="grid grid-cols-2 gap-md"><div className="col-span-2 rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15"><Skeleton width="9rem" height="1.75rem" /><Skeleton className="mt-sm" width="5rem" height="2.5rem" /><Skeleton className="mt-xs" width="13rem" height="0.875rem" /></div>{Array.from({ length: 2 }, (_, i) => <div key={i} className="min-h-[140px] rounded-xl lg:rounded-xxl bg-surface-container-low p-lg border border-outline-variant/15"><Skeleton width="70%" height="0.75rem" /><Skeleton className="mt-auto translate-y-14" width="80%" height="1.75rem" /></div>)}</section>
     <section className="space-y-md"><div className="flex justify-between"><Skeleton width="7rem" height="1rem" /><Skeleton width="5rem" height="1.5rem" borderRadius="9999px" /></div><div className="space-y-sm">{Array.from({ length: 2 }, (_, i) => <EntrySkeleton key={i} />)}</div></section>
   </div>
 }
@@ -24,12 +24,12 @@ export function FriendsSkeleton() {
 }
 
 export function ProfileSkeleton() {
-  return <div className="space-y-8" role="status" aria-label="Loading profile"><section className="flex flex-col items-center"><SkeletonCircle size="7rem" /><Skeleton className="mt-md" width="11rem" height="2.5rem" /><Skeleton className="mt-xs" width="7rem" height="1rem" /></section><section><div className="mb-md flex justify-between"><Skeleton width="9rem" height="1.75rem" /><Skeleton width="3.5rem" height="1rem" /></div><div className="grid grid-cols-2 gap-md">{Array.from({ length: 4 }, (_, i) => <div key={i} className="min-h-[140px] rounded-[24px] bg-white p-lg cloud-shadow"><Skeleton width="45%" height="0.75rem" /><Skeleton className="mt-10" width="100%" height="0.875rem" /><Skeleton className="mt-xs" width="72%" height="0.875rem" /></div>)}</div></section><section className="rounded-[24px] bg-white p-lg cloud-shadow"><Skeleton width="5rem" height="1rem" /><div className="mt-md space-y-sm">{Array.from({ length: 3 }, (_, i) => <div key={i} className="flex items-center gap-sm"><SkeletonCircle size="2.5rem" /><div className="flex-1"><Skeleton width="55%" height="1rem" /><Skeleton className="mt-xs" width="36%" height="0.75rem" /></div></div>)}</div></section></div>
+  return <div className="space-y-8" role="status" aria-label="Loading profile"><section className="flex flex-col items-center"><SkeletonCircle size="7rem" /><Skeleton className="mt-md" width="11rem" height="2.5rem" /><Skeleton className="mt-xs" width="7rem" height="1rem" /></section><section><div className="mb-md flex justify-between"><Skeleton width="9rem" height="1.75rem" /><Skeleton width="3.5rem" height="1rem" /></div><div className="grid grid-cols-2 gap-md">{Array.from({ length: 4 }, (_, i) => <div key={i} className="min-h-[140px] rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15"><Skeleton width="45%" height="0.75rem" /><Skeleton className="mt-10" width="100%" height="0.875rem" /><Skeleton className="mt-xs" width="72%" height="0.875rem" /></div>)}</div></section><section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15"><Skeleton width="5rem" height="1rem" /><div className="mt-md space-y-sm">{Array.from({ length: 3 }, (_, i) => <div key={i} className="flex items-center gap-sm"><SkeletonCircle size="2.5rem" /><div className="flex-1"><Skeleton width="55%" height="1rem" /><Skeleton className="mt-xs" width="36%" height="0.75rem" /></div></div>)}</div></section></div>
 }
 
 export function AddEntrySkeleton() {
   return <div className="space-y-lg mt-4" role="status" aria-label="Loading entry form">
-    <section className="rounded-[24px] bg-white p-lg cloud-shadow space-y-md">
+    <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 space-y-md">
       <Skeleton width="40%" height="1.25rem" />
       <div className="flex items-center justify-between py-xs">
         {Array.from({ length: 5 }, (_, i) => (
@@ -45,7 +45,7 @@ export function AddEntrySkeleton() {
         </div>
       </div>
     </section>
-    <section className="rounded-[24px] bg-white p-lg cloud-shadow space-y-md">
+    <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 space-y-md">
       <Skeleton width="35%" height="1.25rem" />
       <Skeleton width="100%" height="12rem" borderRadius="16px" />
       <div className="flex items-center gap-md border-t border-surface-container pt-md">
@@ -60,7 +60,7 @@ export function StatsSkeleton() {
   return <div className="space-y-lg" role="status" aria-label="Loading stats">
     <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
       {Array.from({ length: 3 }, (_, i) => (
-        <div key={i} className="flex items-start gap-md rounded-[24px] bg-white p-md cloud-shadow">
+        <div key={i} className="flex items-start gap-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md shadow-card border border-outline-variant/15">
           <SkeletonCircle size="2.5rem" />
           <div className="flex-1 space-y-2">
             <Skeleton width="80%" height="1rem" />
@@ -69,7 +69,7 @@ export function StatsSkeleton() {
         </div>
       ))}
     </section>
-    <section className="rounded-[24px] bg-white p-lg cloud-shadow space-y-md">
+    <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 space-y-md">
       <div className="flex justify-between items-center">
         <Skeleton width="40%" height="1.5rem" />
         <Skeleton width="6rem" height="2rem" borderRadius="9999px" />
@@ -95,7 +95,7 @@ export function NotificationSkeleton() {
 
 export function AdminSkeleton() {
   return <div className="space-y-lg" role="status" aria-label="Loading admin panel">
-    <section className="rounded-[24px] bg-white p-lg cloud-shadow space-y-md">
+    <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 space-y-md">
       <Skeleton width="40%" height="1.5rem" />
       <Skeleton width="100%" height="2.5rem" borderRadius="12px" />
       <Skeleton width="100%" height="5rem" borderRadius="12px" />
@@ -104,7 +104,7 @@ export function AdminSkeleton() {
     <section className="space-y-md">
       <Skeleton width="30%" height="1.25rem" />
       {Array.from({ length: 3 }, (_, i) => (
-        <div key={i} className="rounded-[24px] bg-white p-lg cloud-shadow space-y-xs">
+        <div key={i} className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 space-y-xs">
           <Skeleton width="50%" height="1.25rem" />
           <Skeleton width="85%" height="0.875rem" />
         </div>
@@ -113,9 +113,9 @@ export function AdminSkeleton() {
   </div>
 }
 
-export function EntrySkeleton() { return <div className="flex min-h-[88px] items-center gap-md rounded-[24px] bg-white p-md cloud-shadow"><Skeleton borderRadius="20px" width="3.5rem" height="3.5rem" /><div className="flex-1"><Skeleton width="55%" height="1rem" /><Skeleton className="mt-xs" width="88%" height="0.875rem" /></div></div> }
-export function FeedCardSkeleton() { return <article className="rounded-[24px] bg-white p-lg cloud-shadow"><div className="flex items-center gap-sm"><SkeletonCircle /><div className="flex-1"><Skeleton width="45%" height="1rem" /><Skeleton className="mt-xs" width="62%" height="0.75rem" /></div><SkeletonCircle size="2.75rem" /></div><div className="mt-md"><Skeleton width="5rem" height="1.75rem" borderRadius="9999px" /><SkeletonText className="mt-sm" lines={2} /></div><Skeleton className="mt-md" width="4.5rem" height="1.75rem" borderRadius="9999px" /></article> }
-export function FriendRowSkeleton() { return <div className="flex min-h-[112px] items-center gap-md rounded-[24px] bg-white p-lg cloud-shadow"><SkeletonCircle size="3.5rem" /><div className="flex-1"><Skeleton width="52%" height="1rem" /><Skeleton className="mt-xs" width="36%" height="0.75rem" /></div><SkeletonCircle size="2.5rem" /></div> }
+export function EntrySkeleton() { return <div className="flex min-h-[88px] items-center gap-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md shadow-card border border-outline-variant/15"><Skeleton borderRadius="20px" width="3.5rem" height="3.5rem" /><div className="flex-1"><Skeleton width="55%" height="1rem" /><Skeleton className="mt-xs" width="88%" height="0.875rem" /></div></div> }
+export function FeedCardSkeleton() { return <article className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15"><div className="flex items-center gap-sm"><SkeletonCircle /><div className="flex-1"><Skeleton width="45%" height="1rem" /><Skeleton className="mt-xs" width="62%" height="0.75rem" /></div><SkeletonCircle size="2.75rem" /></div><div className="mt-md"><Skeleton width="5rem" height="1.75rem" borderRadius="9999px" /><SkeletonText className="mt-sm" lines={2} /></div><Skeleton className="mt-md" width="4.5rem" height="1.75rem" borderRadius="9999px" /></article> }
+export function FriendRowSkeleton() { return <div className="flex min-h-[112px] items-center gap-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15"><SkeletonCircle size="3.5rem" /><div className="flex-1"><Skeleton width="52%" height="1rem" /><Skeleton className="mt-xs" width="36%" height="0.75rem" /></div><SkeletonCircle size="2.5rem" /></div> }
 
 export function FriendPrivacySkeleton() {
   return (

@@ -170,7 +170,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 pt-12 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-inverse-surface/56 pt-12 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
@@ -179,7 +179,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
         aria-modal="true"
         aria-label={t('notifications.title', 'Notifications')}
         onClick={(e) => e.stopPropagation()}
-        className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-3xl bg-surface-container-lowest shadow-2xl overflow-hidden mx-container-margin"
+        className="relative flex max-h-[85vh] w-full max-w-md flex-col rounded-xl lg:rounded-xxl bg-surface-container-lowest shadow-modal border border-outline-variant/20 overflow-hidden mx-container-margin"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/30 px-lg py-md">

@@ -53,7 +53,7 @@ export default function Auth() {
   return (
     <main className="min-h-screen bg-background text-on-background px-container-margin py-xl flex items-center justify-center">
       <section
-        className="w-full max-w-md lg:max-w-4xl lg:grid lg:grid-cols-2 bg-surface-container-lowest rounded-[32px] cloud-shadow overflow-hidden"
+        className="w-full max-w-md lg:max-w-4xl lg:grid lg:grid-cols-2 bg-surface-container-lowest rounded-xl lg:rounded-xxl shadow-modal border border-outline-variant/20 overflow-hidden"
         aria-labelledby="auth-title"
       >
         {/* Left Side Branding Card (Desktop) */}
@@ -119,8 +119,8 @@ export default function Auth() {
                   onClick={() => switchMode(item)}
                   className={`h-11 rounded-full text-label-lg font-label-lg transition-colors ${
                     mode === item
-                      ? "bg-white text-on-surface shadow-sm"
-                      : "text-on-surface-variant"
+                      ? "bg-surface-container-lowest text-on-surface shadow-subtle font-semibold"
+                      : "text-on-surface-variant hover:text-on-surface"
                   }`}
                 >
                   {item === "login"
@@ -186,7 +186,7 @@ export default function Auth() {
 
               {error && (
                 <p
-                  className="px-sm py-xs rounded-2xl bg-error-container text-on-error-container text-body-sm font-body-sm"
+                  className="px-sm py-xs rounded-xl bg-error-container text-on-error-container text-body-sm font-body-sm border border-error/20"
                   role="alert"
                 >
                   {error}
@@ -196,7 +196,7 @@ export default function Auth() {
               <button
                 type="submit"
                 disabled={authMutation.isPending}
-                className="mt-xs h-12 rounded-full bg-primary-container text-on-primary-container text-label-lg font-label-lg disabled:opacity-60 hover:opacity-90 transition-opacity"
+                className="mt-xs h-12 rounded-full bg-primary text-on-primary text-label-lg font-bold shadow-sm hover:bg-primary/90 disabled:opacity-60 transition-all active:scale-[0.99]"
               >
                 {authMutation.isPending
                   ? t("common.loading")
@@ -218,7 +218,7 @@ function Field({ label, ...props }) {
       {label}
       <input
         {...props}
-        className="h-12 w-full rounded-2xl bg-surface-container-low px-md text-body-md font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary-fixed-dim"
+        className="h-12 w-full rounded-xl bg-surface-container-low border border-outline-variant/20 px-md text-body-md font-body-md text-on-surface outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
       />
     </label>
   );

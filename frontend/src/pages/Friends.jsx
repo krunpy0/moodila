@@ -96,7 +96,7 @@ export default function Friends() {
                 maxLength={60}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('friends.searchPlaceholder')}
-                className="w-full rounded-full border-0 bg-surface-container-low py-4 pl-12 pr-4 text-body-md text-on-surface outline-none cloud-shadow placeholder:text-outline focus:ring-2 focus:ring-primary/20"
+                className="w-full rounded-full border border-outline-variant/20 bg-surface-container-low py-4 pl-12 pr-4 text-body-md text-on-surface outline-none shadow-card placeholder:text-outline focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </label>
 
@@ -206,7 +206,7 @@ function UserCard({ user, children }) {
   const profileLink = isSelf ? '/profile' : `/profile/${user.id}`
   const canViewProfile = isSelf || isFriend
   return (
-    <div className="flex min-h-[112px] items-center justify-between gap-sm rounded-[24px] border border-surface-container bg-white p-lg cloud-shadow">
+    <div className="flex min-h-[112px] items-center justify-between gap-sm rounded-xl lg:rounded-xxl border border-outline-variant/20 bg-surface-container-lowest p-lg shadow-card">
       {canViewProfile ? (
         <Link to={profileLink} className="flex min-w-0 flex-1 items-center gap-md rounded-xl transition-opacity hover:opacity-80">
           <Avatar user={user} />
@@ -318,7 +318,7 @@ function CircleButton({ label, icon, primary = false, ...props }) {
 
 function Empty({ text }) {
   return (
-    <p className="rounded-[24px] bg-surface-container-low px-lg py-md text-center text-body-sm text-on-surface-variant">
+    <p className="rounded-xl bg-surface-container-low px-lg py-md text-center text-body-sm text-on-surface-variant border border-outline-variant/15">
       {text}
     </p>
   )

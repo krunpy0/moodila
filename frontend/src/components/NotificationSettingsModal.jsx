@@ -98,7 +98,7 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-container-margin backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -107,7 +107,7 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md max-h-[85vh] flex flex-col rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md overflow-hidden"
+        className="w-full max-w-md max-h-[85vh] flex flex-col rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-modal border border-outline-variant/20 space-y-md overflow-hidden"
       >
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -220,7 +220,7 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface-container-lowest shadow-subtle ring-0 transition duration-200 ease-in-out ${
                       item.enabled ? 'translate-x-5' : 'translate-x-0.5'
                     } mt-0.5`}
                   />

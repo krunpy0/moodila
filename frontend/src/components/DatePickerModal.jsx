@@ -88,12 +88,12 @@ export default function DatePickerModal({ isOpen, onClose, selectedDate, onSelec
       role="dialog"
       aria-modal="true"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-[24px] bg-white p-lg cloud-shadow space-y-md text-on-surface animate-in zoom-in-95 duration-150"
+        className="w-full max-w-sm rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-modal border border-outline-variant/20 space-y-md text-on-surface animate-in zoom-in-95 duration-150"
       >
         {/* Header with Month Navigation */}
         <div className="flex items-center justify-between pb-xs border-b border-surface-container">
@@ -148,7 +148,7 @@ export default function DatePickerModal({ isOpen, onClose, selectedDate, onSelec
                 type="button"
                 disabled={isFuture}
                 onClick={() => handleSelectDay(day)}
-                className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-body-sm transition-all active:scale-95 ${
+                className={`mx-auto flex h-9 w-9 items-center justify-center rounded-xl text-body-sm transition-all active:scale-95 ${
                   isSelected
                     ? 'bg-primary text-on-primary font-bold shadow-md scale-105'
                     : isToday

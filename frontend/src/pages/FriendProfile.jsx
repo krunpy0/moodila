@@ -56,7 +56,7 @@ export default function FriendProfile() {
           {profileQuery.isLoading && <ProfileSkeleton />}
 
           {profileQuery.error && (
-            <div className="rounded-[24px] bg-white p-lg cloud-shadow text-center space-y-md">
+            <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20 text-center space-y-md">
               <span className="material-symbols-outlined text-[48px] text-error">
                 lock
               </span>
@@ -95,7 +95,7 @@ export default function FriendProfile() {
                 className="grid grid-cols-2 gap-md"
                 aria-labelledby="friend-summary-title"
               >
-                <div className="col-span-2 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
+                <div className="col-span-2 rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
                   <h2
                     id="friend-summary-title"
                     className="text-headline-lg font-headline-lg text-on-surface"
@@ -114,7 +114,7 @@ export default function FriendProfile() {
                     {t("home.totalLoggedMonth")}
                   </p>
                 </div>
-                <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-lg">
+                <div className="flex min-h-[120px] flex-col justify-between rounded-xl lg:rounded-xxl bg-primary-container/30 p-lg border border-primary/10">
                   <span className="text-label-sm font-label-sm text-on-surface-variant">
                     {t("home.dominantMood")}
                   </span>
@@ -134,7 +134,7 @@ export default function FriendProfile() {
                     </span>
                   </div>
                 </div>
-                <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-lg">
+                <div className="flex min-h-[120px] flex-col justify-between rounded-xl lg:rounded-xxl bg-secondary-container/30 p-lg border border-secondary/10">
                   <span className="text-label-sm font-label-sm text-on-surface-variant">
                     {t("home.mostUsedTag")}
                   </span>
@@ -171,7 +171,7 @@ export default function FriendProfile() {
                     return (
                       <div
                         key={entry.id}
-                        className={`flex min-h-[140px] flex-col justify-between rounded-[24px] bg-white p-lg cloud-shadow ${
+                        className={`flex min-h-[140px] flex-col justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 ${
                           isRich ? "col-span-2" : ""
                         }`}
                       >
@@ -214,7 +214,7 @@ export default function FriendProfile() {
                   })}
                 </div>
                 {entries.length === 0 && (
-                  <p className="rounded-[24px] bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant">
+                  <p className="rounded-xl bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant border border-outline-variant/15">
                     {t("home.emptyRecent")}
                   </p>
                 )}

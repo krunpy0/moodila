@@ -4,103 +4,215 @@
 @tailwind utilities;
 
 :root {
-  --color-background: 251 249 248;
-  --color-surface: 251 249 248;
-  --color-surface-dim: 220 217 217;
-  --color-surface-bright: 251 249 248;
+  --color-background: 248 247 245;
+  --color-on-background: 24 24 23;
+
+  --color-surface: 248 247 245;
+  --color-surface-dim: 229 226 222;
+  --color-surface-bright: 255 255 255;
+
   --color-surface-container-lowest: 255 255 255;
-  --color-surface-container-low: 246 243 242;
-  --color-surface-container: 240 237 237;
-  --color-surface-container-high: 234 232 231;
-  --color-surface-container-highest: 228 226 225;
-  --color-on-surface: 27 28 28;
-  --color-on-surface-variant: 77 68 71;
-  --color-inverse-surface: 48 48 48;
-  --color-inverse-on-surface: 243 240 240;
-  --color-outline: 127 116 120;
-  --color-outline-variant: 208 195 199;
-  --color-surface-tint: 107 90 96;
-  --color-primary: 107 90 96;
+  --color-surface-container-low: 252 251 250;
+  --color-surface-container: 243 241 238;
+  --color-surface-container-high: 236 233 229;
+  --color-surface-container-highest: 228 225 220;
+
+  --color-surface-variant: 228 225 220;
+  --color-surface-tint: 140 92 112;
+
+  --color-on-surface: 24 24 23;
+  --color-on-surface-variant: 106 102 97;
+
+  --color-outline: 142 137 130;
+  --color-outline-variant: 216 212 207;
+
+  --color-inverse-surface: 36 35 33;
+  --color-inverse-on-surface: 246 244 241;
+
+  /* Brand Primary */
+  --color-primary: 140 92 112;
   --color-on-primary: 255 255 255;
-  --color-primary-container: 252 228 236;
-  --color-on-primary-container: 118 100 107;
-  --color-inverse-primary: 215 193 200;
-  --color-secondary: 82 96 105;
+  --color-primary-container: 242 221 229;
+  --color-on-primary-container: 85 51 66;
+  --color-inverse-primary: 232 191 208;
+  --color-primary-fixed: 242 221 229;
+  --color-primary-fixed-dim: 216 178 194;
+  --color-on-primary-fixed: 48 26 37;
+  --color-on-primary-fixed-variant: 110 67 84;
+
+  /* Calm Secondary */
+  --color-secondary: 97 114 122;
   --color-on-secondary: 255 255 255;
-  --color-secondary-container: 211 226 237;
-  --color-on-secondary-container: 86 101 110;
-  --color-tertiary: 99 96 55;
+  --color-secondary-container: 220 231 234;
+  --color-on-secondary-container: 53 70 77;
+  --color-secondary-fixed: 220 231 234;
+  --color-secondary-fixed-dim: 188 205 210;
+  --color-on-secondary-fixed: 22 39 45;
+  --color-on-secondary-fixed-variant: 70 88 96;
+
+  /* Focus Tertiary */
+  --color-tertiary: 138 118 66;
   --color-on-tertiary: 255 255 255;
-  --color-tertiary-container: 242 236 184;
-  --color-on-tertiary-container: 110 107 65;
-  --color-error: 186 26 26;
+  --color-tertiary-container: 238 229 201;
+  --color-on-tertiary-container: 79 67 31;
+  --color-tertiary-fixed: 238 229 201;
+  --color-tertiary-fixed-dim: 213 199 157;
+  --color-on-tertiary-fixed: 42 36 13;
+  --color-on-tertiary-fixed-variant: 98 85 46;
+
+  /* Semantic */
+  --color-success: 104 133 111;
+  --color-on-success: 255 255 255;
+  --color-success-container: 220 235 221;
+  --color-on-success-container: 40 67 47;
+
+  --color-warning: 167 122 69;
+  --color-on-warning: 255 255 255;
+  --color-warning-container: 244 228 207;
+  --color-on-warning-container: 95 66 31;
+
+  --color-error: 184 92 96;
   --color-on-error: 255 255 255;
-  --color-error-container: 255 218 214;
-  --color-on-error-container: 147 0 10;
-  --color-primary-fixed: 244 220 228;
-  --color-primary-fixed-dim: 215 193 200;
-  --color-on-primary-fixed: 37 24 30;
-  --color-on-primary-fixed-variant: 82 66 73;
-  --color-secondary-fixed: 214 229 239;
-  --color-secondary-fixed-dim: 186 201 211;
-  --color-on-secondary-fixed: 15 29 37;
-  --color-on-secondary-fixed-variant: 59 73 81;
-  --color-tertiary-fixed: 234 228 177;
-  --color-tertiary-fixed-dim: 205 200 151;
-  --color-on-tertiary-fixed: 30 28 0;
-  --color-on-tertiary-fixed-variant: 75 72 34;
-  --color-surface-variant: 228 226 225;
-  --color-on-background: 27 28 28;
+  --color-error-container: 247 218 219;
+  --color-on-error-container: 104 31 35;
+
+  /* Desaturated Emotional Moods */
+  --color-mood-rad: 217 122 152;
+  --color-mood-rad-container: 247 221 231;
+  --color-on-mood-rad-container: 88 40 59;
+
+  --color-mood-good: 132 168 121;
+  --color-mood-good-container: 225 237 220;
+  --color-on-mood-good-container: 41 65 38;
+
+  --color-mood-meh: 168 160 138;
+  --color-mood-meh-container: 236 233 220;
+  --color-on-mood-meh-container: 71 67 45;
+
+  --color-mood-bad: 135 150 172;
+  --color-mood-bad-container: 224 230 238;
+  --color-on-mood-bad-container: 48 59 75;
+
+  --color-mood-awful: 154 124 130;
+  --color-mood-awful-container: 233 222 225;
+  --color-on-mood-awful-container: 70 44 49;
+
+  /* Elevation Shadows */
+  --shadow-color-subtle: rgba(24, 23, 23, 0.03);
+  --shadow-color-card: rgba(24, 23, 23, 0.05);
+  --shadow-color-floating: rgba(24, 23, 23, 0.09);
+  --shadow-color-modal: rgba(24, 23, 23, 0.16);
+
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
 }
 
 .dark {
-  --color-background: 24 23 23;
-  --color-surface: 24 23 23;
-  --color-surface-dim: 18 17 17;
-  --color-surface-bright: 58 56 57;
-  --color-surface-container-lowest: 35 33 34;
-  --color-surface-container-low: 42 40 41;
-  --color-surface-container: 48 46 47;
-  --color-surface-container-high: 56 54 55;
-  --color-surface-container-highest: 66 64 65;
-  --color-on-surface: 243 240 240;
-  --color-on-surface-variant: 208 195 199;
-  --color-inverse-surface: 243 240 240;
-  --color-inverse-on-surface: 27 28 28;
-  --color-outline: 153 142 146;
-  --color-outline-variant: 77 68 71;
-  --color-surface-tint: 215 193 200;
-  --color-primary: 215 193 200;
-  --color-on-primary: 59 44 50;
-  --color-primary-container: 65 42 50;
-  --color-on-primary-container: 252 228 236;
-  --color-inverse-primary: 107 90 96;
-  --color-secondary: 186 201 211;
-  --color-on-secondary: 36 50 58;
-  --color-secondary-container: 39 54 66;
-  --color-on-secondary-container: 214 229 239;
-  --color-tertiary: 205 200 151;
-  --color-on-tertiary: 50 48 17;
-  --color-tertiary-container: 61 58 31;
-  --color-on-tertiary-container: 234 228 177;
-  --color-error: 255 180 171;
-  --color-on-error: 105 0 5;
-  --color-error-container: 147 0 10;
-  --color-on-error-container: 255 218 214;
-  --color-primary-fixed: 82 66 73;
-  --color-primary-fixed-dim: 59 44 50;
-  --color-on-primary-fixed: 252 228 236;
-  --color-on-primary-fixed-variant: 215 193 200;
-  --color-secondary-fixed: 59 73 81;
-  --color-secondary-fixed-dim: 36 50 58;
-  --color-on-secondary-fixed: 214 229 239;
-  --color-on-secondary-fixed-variant: 186 201 211;
-  --color-tertiary-fixed: 234 228 177;
-  --color-tertiary-fixed-dim: 205 200 151;
-  --color-on-tertiary-fixed: 234 228 177;
-  --color-on-tertiary-fixed-variant: 205 200 151;
-  --color-surface-variant: 66 64 65;
-  --color-on-background: 243 240 240;
+  --color-background: 23 22 21;
+  --color-on-background: 241 239 236;
+
+  --color-surface: 23 22 21;
+  --color-surface-dim: 17 17 16;
+  --color-surface-bright: 41 40 39;
+
+  --color-surface-container-lowest: 17 17 16;
+  --color-surface-container-low: 28 27 26;
+  --color-surface-container: 34 33 32;
+  --color-surface-container-high: 41 40 39;
+  --color-surface-container-highest: 50 48 46;
+
+  --color-surface-variant: 50 48 46;
+  --color-surface-tint: 216 161 181;
+
+  --color-on-surface: 241 239 236;
+  --color-on-surface-variant: 185 180 174;
+
+  --color-outline: 157 151 145;
+  --color-outline-variant: 72 69 65;
+
+  --color-inverse-surface: 241 239 236;
+  --color-inverse-on-surface: 36 35 33;
+
+  /* Brand Primary Dark */
+  --color-primary: 216 161 181;
+  --color-on-primary: 64 35 49;
+  --color-primary-container: 99 63 78;
+  --color-on-primary-container: 245 220 229;
+  --color-inverse-primary: 140 92 112;
+  --color-primary-fixed: 242 221 229;
+  --color-primary-fixed-dim: 216 178 194;
+  --color-on-primary-fixed: 48 26 37;
+  --color-on-primary-fixed-variant: 110 67 84;
+
+  /* Calm Secondary Dark */
+  --color-secondary: 168 187 193;
+  --color-on-secondary: 36 50 55;
+  --color-secondary-container: 60 76 82;
+  --color-on-secondary-container: 220 232 235;
+  --color-secondary-fixed: 220 231 234;
+  --color-secondary-fixed-dim: 188 205 210;
+  --color-on-secondary-fixed: 22 39 45;
+  --color-on-secondary-fixed-variant: 70 88 96;
+
+  /* Focus Tertiary Dark */
+  --color-tertiary: 208 190 131;
+  --color-on-tertiary: 56 48 14;
+  --color-tertiary-container: 90 80 41;
+  --color-on-tertiary-container: 240 229 187;
+  --color-tertiary-fixed: 238 229 201;
+  --color-tertiary-fixed-dim: 213 199 157;
+  --color-on-tertiary-fixed: 42 36 13;
+  --color-on-tertiary-fixed-variant: 98 85 46;
+
+  /* Semantic Dark */
+  --color-success: 136 176 144;
+  --color-on-success: 31 56 36;
+  --color-success-container: 50 82 57;
+  --color-on-success-container: 220 235 221;
+
+  --color-warning: 208 159 100;
+  --color-on-warning: 66 42 9;
+  --color-warning-container: 102 69 27;
+  --color-on-warning-container: 244 228 207;
+
+  --color-error: 237 154 157;
+  --color-on-error: 92 22 26;
+  --color-error-container: 118 43 47;
+  --color-on-error-container: 255 218 219;
+
+  /* Desaturated Emotional Moods Dark */
+  --color-mood-rad: 229 152 175;
+  --color-mood-rad-container: 88 40 59;
+  --color-on-mood-rad-container: 247 221 231;
+
+  --color-mood-good: 157 192 146;
+  --color-mood-good-container: 41 65 38;
+  --color-on-mood-good-container: 225 237 220;
+
+  --color-mood-meh: 191 184 164;
+  --color-mood-meh-container: 71 67 45;
+  --color-on-mood-meh-container: 236 233 220;
+
+  --color-mood-bad: 164 178 198;
+  --color-mood-bad-container: 48 59 75;
+  --color-on-mood-bad-container: 224 230 238;
+
+  --color-mood-awful: 181 151 157;
+  --color-mood-awful-container: 70 44 49;
+  --color-on-mood-awful-container: 233 222 225;
+
+  /* Elevation Shadows Dark */
+  --shadow-color-subtle: rgba(0, 0, 0, 0.25);
+  --shadow-color-card: rgba(0, 0, 0, 0.35);
+  --shadow-color-floating: rgba(0, 0, 0, 0.45);
+  --shadow-color-modal: rgba(0, 0, 0, 0.6);
+
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
 }
 
 @layer base {
@@ -112,11 +224,11 @@
     -webkit-tap-highlight-color: transparent;
     background-color: rgb(var(--color-background));
     color: rgb(var(--color-on-surface));
-    transition: background-color 0.25s ease, color 0.25s ease;
+    transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1), color 200ms cubic-bezier(0.2, 0, 0, 1);
   }
 }
 
-/* Shared bits from the design references (design-reference/*.html). */
+/* Shared bits from the design references */
 .material-symbols-outlined {
   font-variation-settings:
     "FILL" 0,
@@ -126,11 +238,11 @@
 }
 
 .cloud-shadow {
-  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--elevation-card);
 }
 
 .dark .cloud-shadow {
-  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--elevation-card);
 }
 
 .dark .bg-white {

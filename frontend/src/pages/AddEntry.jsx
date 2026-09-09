@@ -321,8 +321,8 @@ export default function AddEntry() {
           <AddEntrySkeleton />
         ) : (
           <form onSubmit={submit} className="space-y-lg px-container-margin lg:px-0 mt-4">
-        <section className="rounded-[24px] bg-white p-lg cloud-shadow">
-          <h2 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
+        <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
+          <h2 className="mb-md text-label-lg font-bold text-on-surface-variant">
             {t('addEntry.title')}
           </h2>
           <div className="mb-lg flex items-center justify-between">
@@ -337,8 +337,8 @@ export default function AddEntry() {
                   title={moodInfo.label}
                   aria-pressed={selected}
                   onClick={() => setForm((current) => ({ ...current, mood: item.value }))}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-transform active:scale-95 ${item.bg} ${
-                    selected ? 'ring-4 ring-primary/40 scale-105' : 'opacity-80 hover:opacity-100'
+                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-all duration-normal active:scale-95 ${item.bg} ${
+                    selected ? 'ring-4 ring-primary/40 scale-105 shadow-card' : 'opacity-80 hover:opacity-100 hover:scale-105'
                   }`}
                 >
                   <MoodIcon mood={item.value} className="text-[28px]" filled={selected} />
@@ -346,10 +346,10 @@ export default function AddEntry() {
               )
             })}
           </div>
-          <div className="space-y-sm border-t border-surface-container pt-md">
+          <div className="space-y-sm border-t border-outline-variant/15 pt-md">
             {TAG_CATEGORIES.map((category) => (
               <div key={category.key}>
-                <span className="mb-xs block text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60">
+                <span className="mb-xs block text-overline font-bold uppercase tracking-wider text-on-surface-variant/70">
                   {t(`moods.categories.${category.key}`, category.label)}
                 </span>
                 <div className="flex flex-wrap gap-xs">
@@ -361,9 +361,9 @@ export default function AddEntry() {
                         type="button"
                         aria-pressed={selected}
                         onClick={() => toggleTag(tag)}
-                        className={`rounded-full px-md py-xs text-label-sm font-label-sm transition-colors ${
+                        className={`rounded-full px-md py-xs text-label-sm font-medium transition-all duration-fast ${
                           selected
-                            ? 'bg-primary-container text-primary font-semibold'
+                            ? 'bg-primary-container text-on-primary-container font-semibold shadow-xs'
                             : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                         }`}
                       >
@@ -377,7 +377,7 @@ export default function AddEntry() {
           </div>
         </section>
 
-        <section className="rounded-[24px] bg-white p-lg cloud-shadow">
+        <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
           <label htmlFor="entry-text" className="mb-md block text-label-lg font-label-lg text-on-surface-variant">
             {t('addEntry.optionalNote')}
           </label>
@@ -486,13 +486,13 @@ export default function AddEntry() {
           </div>
         </section>
 
-        <section className="flex items-center justify-between rounded-[24px] bg-white p-lg cloud-shadow">
+        <section className="flex items-center justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
           <div className="flex items-center gap-md">
             <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
               {form.is_hidden ? 'lock' : 'public'}
             </span>
             <div>
-              <span className="block text-body-md font-label-lg text-on-surface">
+              <span className="block text-body-md font-bold text-on-surface">
                 {t('addEntry.hideFromFriends')}
               </span>
               <span className="block text-body-sm text-on-surface-variant">
@@ -515,12 +515,12 @@ export default function AddEntry() {
                 })
               }
             }}
-            className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
               form.is_hidden ? 'bg-primary' : 'bg-surface-container-highest'
             }`}
           >
             <span
-              className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
+              className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-subtle transition-transform duration-normal ${
                 form.is_hidden ? 'translate-x-6 text-on-primary-container' : 'translate-x-0 text-on-surface-variant'
               }`}
             >
@@ -532,7 +532,7 @@ export default function AddEntry() {
         </section>
 
         {!form.is_hidden && friendsList.length > 0 && (
-          <section className="rounded-[24px] bg-white p-lg cloud-shadow space-y-md animate-in fade-in duration-200">
+          <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20 space-y-md animate-in fade-in duration-200">
             <div className="flex items-center justify-between">
               <button
                 type="button"
@@ -649,7 +649,7 @@ export default function AddEntry() {
         <button
           type="submit"
           disabled={futureDate || saveMutation.isPending}
-          className="h-14 w-full rounded-full bg-primary text-label-lg font-label-lg text-on-primary disabled:opacity-60"
+          className="h-14 w-full rounded-full bg-primary text-label-lg font-bold text-on-primary shadow-card hover:opacity-95 active:scale-[0.99] transition-all duration-normal disabled:opacity-disabled"
         >
           {saveMutation.isPending ? t('addEntry.savingEntry') : t('addEntry.saveEntry')}
         </button>
@@ -658,7 +658,7 @@ export default function AddEntry() {
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
-            className="flex h-14 w-full items-center justify-center gap-xs rounded-full border border-error/30 bg-error-container/20 text-label-lg font-label-lg text-error hover:bg-error-container/40"
+            className="flex h-14 w-full items-center justify-center gap-xs rounded-full border border-error/30 bg-error-container/30 text-label-lg font-bold text-on-error-container hover:bg-error-container/50 transition-all duration-fast"
           >
             <span className="material-symbols-outlined text-[20px]">delete</span>
             <span>{t('common.delete')}</span>
@@ -670,22 +670,22 @@ export default function AddEntry() {
             role="dialog"
             aria-modal="true"
             onClick={() => setShowDeleteModal(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-xs animate-in fade-in duration-fast"
           >
             <div
               ref={deleteModalRef}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-[24px] bg-white p-lg cloud-shadow space-y-md text-center"
+              className="w-full max-w-sm rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-modal space-y-md text-center"
             >
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error-container/40 text-error">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-error-container text-on-error-container">
                 <span className="material-symbols-outlined text-[28px]">delete</span>
               </div>
-              <h2 className="text-headline-lg font-headline-lg text-on-surface">{t('common.delete')}?</h2>
+              <h2 className="text-headline-lg font-bold text-on-surface">{t('common.delete')}?</h2>
               <div className="flex gap-sm pt-xs">
                 <button
                   type="button"
                   onClick={() => setShowDeleteModal(false)}
-                  className="flex-1 rounded-full bg-surface-container-high py-3 text-label-lg font-label-lg text-on-surface"
+                  className="flex-1 rounded-full bg-surface-container-high py-3 text-label-lg font-bold text-on-surface hover:bg-surface-container-highest transition-colors duration-fast"
                 >
                   {t('common.cancel')}
                 </button>
@@ -705,7 +705,7 @@ export default function AddEntry() {
                       },
                     })
                   }}
-                  className="flex-1 rounded-full bg-error py-3 text-label-lg font-label-lg text-on-error disabled:opacity-60"
+                  className="flex-1 rounded-full bg-error py-3 text-label-lg font-bold text-on-error shadow-card hover:opacity-95 transition-opacity duration-fast disabled:opacity-disabled"
                 >
                   {deleteMutation.isPending ? t('common.loading') : t('common.delete')}
                 </button>

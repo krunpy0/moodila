@@ -158,7 +158,7 @@ export default function Home() {
               {/* Left Column: Hero Greeting, Week Mood, Recent Logs */}
               <div className="lg:col-span-7 space-y-lg flex flex-col justify-between">
                 {summary.entry_count === 0 && (
-                  <section className="rounded-[24px] lg:rounded-[32px] bg-white p-lg lg:p-8 cloud-shadow border border-primary/20 space-y-sm animate-in fade-in">
+                  <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg lg:p-8 shadow-card border border-primary/20 space-y-sm animate-in fade-in">
                     <div className="flex items-center gap-sm">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
                         <span className="material-symbols-outlined text-[24px]">waving_hand</span>
@@ -189,15 +189,15 @@ export default function Home() {
                   </section>
                 )}
 
-                <section className="relative overflow-hidden rounded-[24px] lg:rounded-[32px] bg-primary-container p-lg lg:p-8 xl:p-10 cloud-shadow">
+                <section className="relative overflow-hidden rounded-xl lg:rounded-xxl bg-primary-container p-lg lg:p-8 xl:p-10 shadow-card border border-outline-variant/20">
                   <div className="relative z-10 flex max-w-full flex-col items-start gap-md lg:gap-lg">
-                    <h2 className="text-headline-lg font-headline-lg lg:text-3xl xl:text-4xl lg:leading-tight font-bold text-on-primary-container">
+                    <h2 className="text-headline-xl lg:text-display-md lg:leading-tight font-bold text-on-primary-container">
                       {greetingText()}
                       {displayName ? `, ${displayName}` : ""}
                     </h2>
                     <Link
                       to="/entries/new"
-                      className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm lg:px-8 lg:py-4 text-label-lg font-label-lg lg:text-body-lg lg:font-bold text-on-primary shadow-md hover:opacity-90 transition-all hover:scale-[1.02]"
+                      className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm lg:px-8 lg:py-3.5 text-label-lg lg:text-body-lg font-bold text-on-primary shadow-card hover:opacity-95 transition-all duration-normal hover:scale-[1.02]"
                     >
                       {t("home.journalToday")}
                       <span className="material-symbols-outlined text-[18px] lg:text-[22px]">
@@ -209,11 +209,11 @@ export default function Home() {
 
                 <section className="space-y-md">
                   <div className="flex items-end justify-between">
-                    <h2 className="text-label-lg font-label-lg lg:text-body-lg lg:font-bold text-on-surface-variant">
+                    <h2 className="text-label-lg lg:text-body-lg font-bold text-on-surface-variant">
                       {t("home.thisWeekMood")}
                     </h2>
                   </div>
-                  <div className="flex justify-between gap-sm overflow-x-auto rounded-[24px] lg:rounded-[32px] bg-white/40 p-md lg:p-6 cloud-shadow">
+                  <div className="flex justify-between gap-sm overflow-x-auto rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-6 shadow-card">
                     {week.map((date) => {
                       const key = formatDate(date);
                       const entry = entriesByDate[key];
@@ -226,11 +226,11 @@ export default function Home() {
                           to={isFuture ? "#" : `/entries/new?date=${key}`}
                           aria-disabled={isFuture}
                           onClick={(event) => isFuture && event.preventDefault()}
-                          className={`flex min-w-12 lg:min-w-16 flex-1 flex-col items-center gap-xs lg:gap-sm transition-transform hover:scale-105 ${isFuture ? "opacity-40" : ""}`}
+                          className={`flex min-w-12 lg:min-w-16 flex-1 flex-col items-center gap-xs lg:gap-sm transition-transform duration-fast hover:scale-105 ${isFuture ? "opacity-40" : ""}`}
                         >
                           <span
                             className={`flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-full ${
-                              mood ? mood.bg : "bg-surface-variant"
+                              mood ? mood.bg : "bg-surface-container-high"
                             } ${isToday ? "ring-2 lg:ring-4 ring-primary" : ""}`}
                           >
                             {entry ? (
@@ -242,7 +242,7 @@ export default function Home() {
                             )}
                           </span>
                           <span
-                            className={`text-label-sm font-label-sm lg:text-body-md flex items-center gap-0.5 ${isToday ? "font-bold text-primary" : "text-on-surface-variant"}`}
+                            className={`text-label-sm lg:text-body-md flex items-center gap-0.5 ${isToday ? "font-bold text-primary" : "text-on-surface-variant"}`}
                           >
                             {date.toLocaleDateString(dateLocale, { weekday: "short" })}
                             {entry?.is_hidden && (
@@ -262,7 +262,7 @@ export default function Home() {
                   {/* Prominent Stats Button */}
                   <Link
                     to="/stats"
-                    className="flex items-center justify-between gap-md rounded-[20px] lg:rounded-[28px] bg-primary text-on-primary p-md lg:p-5 cloud-shadow hover:shadow-md hover:opacity-95 transition-all hover:scale-[1.01] active:scale-[0.98] group"
+                    className="flex items-center justify-between gap-md rounded-lg lg:rounded-xl bg-primary text-on-primary p-md lg:p-5 shadow-card hover:shadow-floating transition-all duration-normal hover:scale-[1.01] active:scale-[0.98] group"
                   >
                     <div className="flex items-center gap-sm lg:gap-md">
                       <div className="flex h-10 w-10 lg:h-12 lg:w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-on-primary">
@@ -274,7 +274,7 @@ export default function Home() {
                         {t("home.viewDetailedStats")}
                       </span>
                     </div>
-                    <div className="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 items-center justify-center rounded-full bg-white/20 transition-transform group-hover:translate-x-1">
+                    <div className="flex h-9 w-9 lg:h-10 lg:w-10 shrink-0 items-center justify-center rounded-full bg-white/20 transition-transform duration-fast group-hover:translate-x-1">
                       <span className="material-symbols-outlined text-[20px] lg:text-[24px]">
                         arrow_forward
                       </span>
@@ -284,10 +284,10 @@ export default function Home() {
 
                 <section className="space-y-md flex-1 flex flex-col justify-end">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-label-lg font-label-lg lg:text-body-lg lg:font-bold uppercase text-on-surface-variant">
+                    <h2 className="text-label-lg lg:text-body-lg font-bold uppercase text-on-surface-variant">
                       {t("home.recentLogs")}
                     </h2>
-                    <span className="rounded-full bg-surface-container px-sm py-xs lg:px-md lg:py-sm text-label-sm font-label-sm lg:text-body-sm text-on-surface-variant font-medium">
+                    <span className="rounded-full bg-surface-container px-sm py-xs lg:px-md lg:py-sm text-label-sm lg:text-body-sm text-on-surface-variant font-medium">
                       {t("home.thisMonth")}
                     </span>
                   </div>
@@ -298,10 +298,10 @@ export default function Home() {
                         <Link
                           key={entry.date}
                           to={`/entries/new?date=${entry.date}`}
-                          className="flex items-center gap-md lg:gap-lg rounded-[24px] lg:rounded-[28px] bg-white p-md lg:p-6 cloud-shadow hover:shadow-md transition-all hover:scale-[1.01]"
+                          className="flex items-center gap-md lg:gap-lg rounded-lg lg:rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-6 shadow-card hover:shadow-floating transition-all duration-normal hover:scale-[1.01]"
                         >
                           <span
-                            className={`flex h-14 w-14 lg:h-16 lg:w-16 shrink-0 items-center justify-center rounded-[20px] lg:rounded-[24px] ${mood.bg}`}
+                            className={`flex h-14 w-14 lg:h-16 lg:w-16 shrink-0 items-center justify-center rounded-md lg:rounded-lg ${mood.bg}`}
                           >
                             <MoodIcon mood={entry.mood} className="text-[32px] lg:text-[38px]" />
                           </span>
@@ -310,7 +310,7 @@ export default function Home() {
                               <strong className="truncate text-body-md lg:text-headline-sm text-on-surface font-bold">
                                 {getLocalizedTag(entry.tags[0], t) || mood.label}
                               </strong>
-                              <span className="flex shrink-0 items-center gap-1 text-label-sm font-label-sm lg:text-body-sm text-on-surface-variant/60">
+                              <span className="flex shrink-0 items-center gap-1 text-label-sm lg:text-body-sm text-on-surface-variant/60">
                                 {entry.is_hidden && (
                                   <span
                                     className="material-symbols-outlined text-[13px] lg:text-[15px]"
@@ -332,7 +332,7 @@ export default function Home() {
                     {!isLoading && !error && recent.length === 0 && (
                       <Link
                         to="/entries/new"
-                        className="flex min-h-24 lg:min-h-32 items-center justify-center rounded-[24px] lg:rounded-[28px] bg-white p-md lg:p-6 text-body-sm lg:text-body-md text-on-surface-variant cloud-shadow"
+                        className="flex min-h-24 lg:min-h-32 items-center justify-center rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md lg:p-6 text-body-sm lg:text-body-md text-on-surface-variant shadow-card border border-outline-variant/15 hover:border-outline-variant/30 transition-all"
                       >
                         {t("home.emptyRecent")}
                       </Link>
@@ -347,29 +347,29 @@ export default function Home() {
                   className="grid grid-cols-2 gap-md lg:gap-lg"
                   aria-labelledby="summary-title"
                 >
-                  <div className="col-span-2 rounded-[24px] lg:rounded-[32px] bg-surface-container-lowest p-lg lg:p-8 cloud-shadow flex flex-col justify-between">
+                  <div className="col-span-2 rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg lg:p-8 shadow-card flex flex-col justify-between">
                     <div>
                       <h2
                         id="summary-title"
-                        className="text-headline-lg font-headline-lg lg:text-2xl font-bold text-on-surface"
+                        className="text-headline-lg lg:text-2xl font-bold text-on-surface"
                       >
                         {t("home.moodSummary")}
                       </h2>
-                      <p className="mt-1 text-body-sm font-body-sm lg:text-body-md text-on-surface-variant">
+                      <p className="mt-1 text-body-sm lg:text-body-md text-on-surface-variant">
                         {t("home.totalLoggedMonth")}
                       </p>
                     </div>
                     <div className="mt-md lg:mt-lg flex items-baseline gap-xs">
-                      <span className="text-headline-xl font-headline-xl lg:text-5xl xl:text-6xl font-bold text-on-surface leading-none">
+                      <span className="text-headline-xl lg:text-5xl xl:text-6xl font-bold text-on-surface leading-none">
                         {summary.entry_count}
                       </span>
-                      <span className="text-body-md font-body-md lg:text-headline-sm text-on-surface-variant font-medium">
+                      <span className="text-body-md lg:text-headline-sm text-on-surface-variant font-medium">
                         {t("home.entries")}
                       </span>
                     </div>
                   </div>
-                  <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-[24px] lg:rounded-[32px] bg-primary-container/30 p-lg lg:p-8 cloud-shadow">
-                    <span className="text-label-sm font-label-sm lg:text-body-sm font-medium text-on-surface-variant">
+                  <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-xl lg:rounded-xxl bg-primary-container/30 border border-outline-variant/20 p-lg lg:p-8 shadow-card">
+                    <span className="text-label-sm lg:text-body-sm font-medium text-on-surface-variant">
                       {t("home.dominantMood")}
                     </span>
                     <div className="flex items-center gap-xs lg:gap-sm mt-2 min-w-0">
@@ -383,8 +383,8 @@ export default function Home() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-[24px] lg:rounded-[32px] bg-secondary-container/30 p-lg lg:p-8 cloud-shadow">
-                    <span className="text-label-sm font-label-sm lg:text-body-sm font-medium text-on-surface-variant">
+                  <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-xl lg:rounded-xxl bg-secondary-container/30 border border-outline-variant/20 p-lg lg:p-8 shadow-card">
+                    <span className="text-label-sm lg:text-body-sm font-medium text-on-surface-variant">
                       {t("home.mostUsedTag")}
                     </span>
                     <div className="flex items-center gap-xs lg:gap-sm mt-2 min-w-0">

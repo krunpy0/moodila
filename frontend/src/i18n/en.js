@@ -47,16 +47,16 @@ export const en = {
 
   // Moods & Tags
   moods: {
-    1: "Rough",
-    2: "Low",
-    3: "Okay",
+    1: "Awful",
+    2: "Bad",
+    3: "Meh",
     4: "Good",
-    5: "Great",
-    short1: "Very Low",
-    short2: "Low",
-    short3: "Neutral",
+    5: "Rad",
+    short1: "Awful",
+    short2: "Bad",
+    short3: "Meh",
     short4: "Good",
-    short5: "Great",
+    short5: "Rad",
     categories: {
       positive: "Positive",
       neutral: "Neutral",
@@ -308,24 +308,6 @@ export const en = {
     deleting: "Deleting...",
   },
 
-  // Notifications
-  notifications: {
-    title: "Notifications",
-    markAllRead: "Mark all as read",
-    empty: "No notifications yet",
-    enablePush: "Enable Push Notifications",
-    pushEnabled: "Push notifications active",
-    pushPermissionDenied: "Notifications blocked in browser settings",
-    pushNotSupported: "Push notifications not supported",
-    friendRequestSent: "{name} sent you a friend request.",
-    friendRequestAccepted: "{name} accepted your friend request.",
-    likedEntry: "{name} liked your entry.",
-    commentedEntry: "{name} commented on your entry.",
-    justNow: "Just now",
-    minutesAgo: "{m}m ago",
-    hoursAgo: "{h}h ago",
-    daysAgo: "{d}d ago",
-  },
 
   // Notification Settings
   notificationSettings: {
@@ -418,6 +400,7 @@ export const en = {
     friendRequestAccepted: "accepted your friend request",
     likedEntry: "liked your entry",
     commentedEntry: "commented on your entry",
+    pushNotSupported: "Push notifications not supported",
   },
 
   // Admin & Announcements

@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { logout } from "../api/auth";
 import { queryKeys, useProfileQuery } from "../api/queries";
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
 import HeaderBell from "./HeaderBell";
 
 const navItems = [
@@ -18,6 +19,7 @@ export default function DesktopSidebar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t, language, toggleLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const profileQuery = useProfileQuery();
 
   const user = profileQuery.data?.user;
@@ -42,7 +44,7 @@ export default function DesktopSidebar() {
   return (
     <aside
       aria-label="Desktop Sidebar"
-      className="hidden lg:flex flex-col w-72 h-screen sticky top-0 bg-surface-container-lowest cloud-shadow border-r border-outline-variant/15 p-6 z-40 shrink-0 select-none justify-between overflow-y-auto"
+      className="hidden lg:flex flex-col w-72 h-screen sticky top-0 bg-surface-container-lowest shadow-card border-r border-outline-variant/20 p-6 z-40 shrink-0 select-none justify-between overflow-y-auto"
     >
       {/* Top Header & Branding */}
       <div className="space-y-6">
@@ -51,14 +53,14 @@ export default function DesktopSidebar() {
             to="/home"
             className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl p-1"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl items-center bg-primary-container text-on-primary-container shadow-xs transition-transform group-hover:scale-105">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-container text-on-primary-container shadow-xs transition-transform duration-fast group-hover:scale-105">
               <span className="text-[24px]">🌸</span>
             </div>
             <div>
               <span className="text-headline-lg font-bold text-on-surface tracking-tight block leading-tight">
                 Moodila
               </span>
-              <span className="text-label-sm text-on-surface-variant/70 font-medium block">
+              <span className="text-label-sm text-on-surface-variant font-medium block">
                 {language === "ru" ? "Дневник настроения" : "Mood Journal"}
               </span>
             </div>
@@ -70,7 +72,7 @@ export default function DesktopSidebar() {
         {user && (
           <Link
             to="/profile"
-            className="flex items-center gap-3 p-3 rounded-[20px] bg-surface-container-low hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            className="flex items-center gap-3 p-3 rounded-md bg-surface-container-low hover:bg-surface-container transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             {user.avatar_url ? (
               <img
@@ -101,7 +103,7 @@ export default function DesktopSidebar() {
         {/* Primary CTA button */}
         <Link
           to="/entries/new"
-          className="flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-full bg-primary text-on-primary font-semibold text-label-lg shadow-md hover:opacity-95 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-full bg-primary text-on-primary font-semibold text-label-lg shadow-card hover:opacity-95 active:scale-[0.98] transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         >
           <span className="material-symbols-outlined text-[20px]">
             add_circle
@@ -118,7 +120,7 @@ export default function DesktopSidebar() {
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-body-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-md font-medium text-body-md transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                   active
                     ? "bg-primary-container text-on-primary-container font-bold shadow-xs"
                     : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
@@ -140,7 +142,7 @@ export default function DesktopSidebar() {
           {user?.is_admin && (
             <Link
               to="/admin"
-              className={`flex items-center gap-3 px-4 py-3 rounded-2xl font-medium text-body-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-md font-medium text-body-md transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 pathname === "/admin"
                   ? "bg-primary-container text-on-primary-container font-bold shadow-xs"
                   : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
@@ -163,22 +165,37 @@ export default function DesktopSidebar() {
       </div>
 
       {/* Bottom Footer Actions */}
-      <div className="pt-6 border-t border-outline-variant/15 space-y-2">
-        <div className="flex items-center justify-between px-2">
-          {/* Language Switcher */}
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            title={
-              language === "ru" ? "Switch to English" : "Переключить на русский"
-            }
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-label-sm font-semibold transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              language
-            </span>
-            <span>{language.toUpperCase()}</span>
-          </button>
+      <div className="pt-6 border-t border-outline-variant/20 space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            {/* Language Switcher */}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              title={
+                language === "ru" ? "Switch to English" : "Переключить на русский"
+              }
+              className="flex items-center gap-1.5 px-3 py-2 rounded-sm bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container text-label-sm font-semibold transition-colors duration-fast"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                language
+              </span>
+              <span>{language.toUpperCase()}</span>
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Light theme" : "Dark theme"}
+              aria-label={theme === "dark" ? "Light theme" : "Dark theme"}
+              className="flex h-9 w-9 items-center justify-center rounded-sm bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-fast"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {theme === "dark" ? "light_mode" : "dark_mode"}
+              </span>
+            </button>
+          </div>
 
           {/* Logout button */}
           <button
@@ -186,9 +203,9 @@ export default function DesktopSidebar() {
             onClick={handleLogout}
             title={t("common.logout")}
             aria-label={t("common.logout")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-container-low text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-sm bg-surface-container-low text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors duration-fast"
           >
-            <span className="material-symbols-outlined text-[20px]">
+            <span className="material-symbols-outlined text-[18px]">
               logout
             </span>
           </button>

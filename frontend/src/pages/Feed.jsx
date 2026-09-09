@@ -344,11 +344,11 @@ export default function Feed() {
 }
 
 const moodTintBg = {
-  1: "bg-error-container/30",
-  2: "bg-primary-container/40",
-  3: "bg-surface-container-high/50",
-  4: "bg-secondary-container/40",
-  5: "bg-tertiary-container/40",
+  1: "bg-mood-awful-container/40 border-mood-awful/20",
+  2: "bg-mood-bad-container/40 border-mood-bad/20",
+  3: "bg-mood-meh-container/40 border-mood-meh/20",
+  4: "bg-mood-good-container/40 border-mood-good/20",
+  5: "bg-mood-rad-container/40 border-mood-rad/20",
 };
 
 function FeedCard({ entry, onReact, isHighlighted = false }) {
@@ -381,8 +381,8 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
     return (
       <article
         id={`feed-entry-${entry.id}`}
-        className={`rounded-[24px] p-lg cloud-shadow transition-all duration-300 ${moodTintBg[entry.mood] || "bg-surface-container-high/50"} ${
-          isHighlighted ? "ring-2 ring-primary shadow-xl scale-[1.01]" : ""
+        className={`rounded-xl lg:rounded-xxl p-lg shadow-card border transition-all duration-normal ${moodTintBg[entry.mood] || "bg-surface-container-high/50 border-outline-variant/20"} ${
+          isHighlighted ? "ring-2 ring-primary shadow-floating scale-[1.01]" : ""
         }`}
       >
         <header className="flex items-center gap-sm">
@@ -410,7 +410,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
             <MoodIcon mood={entry.mood} className="text-[36px]" />
           </span>
           <span
-            className={`rounded-full px-md py-xs text-label-lg font-label-lg ${moodInfo.bg} ${moodInfo.color}`}
+            className={`rounded-full px-md py-xs text-label-lg font-bold ${moodInfo.bg} ${moodInfo.color}`}
           >
             {moodInfo.label}
           </span>
@@ -419,7 +419,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
               {entry.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full bg-surface-container-lowest/60 px-sm py-xs text-label-sm text-on-surface-variant"
+                  className="rounded-full bg-surface-container-lowest/70 px-sm py-xs text-label-sm text-on-surface-variant"
                 >
                   {getLocalizedTag(tag, t)}
                 </span>
@@ -450,8 +450,8 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
   return (
     <article
       id={`feed-entry-${entry.id}`}
-      className={`rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow transition-all duration-300 ${
-        isHighlighted ? "ring-2 ring-primary shadow-xl scale-[1.01]" : ""
+      className={`rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-card transition-all duration-normal ${
+        isHighlighted ? "ring-2 ring-primary shadow-floating scale-[1.01]" : ""
       }`}
     >
       <header className="flex items-center gap-sm">
