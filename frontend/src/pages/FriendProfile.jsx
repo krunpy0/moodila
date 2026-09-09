@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useParams, useNavigate, Link, Navigate } from "react-router-dom";
 import { useFriendProfileQuery, useProfileQuery } from "../api/queries";
 import AppLayout from "../components/AppLayout";

@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { logout } from "../api/auth";
@@ -5,6 +6,7 @@ import { queryKeys, useProfileQuery } from "../api/queries";
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
 import HeaderBell from "./HeaderBell";
+import BrandMark from "./BrandMark";
 
 const navItems = [
   ["/home", "home", "nav.home"],
@@ -53,8 +55,8 @@ export default function DesktopSidebar() {
             to="/home"
             className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl p-1"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-container text-on-primary-container shadow-xs transition-transform duration-fast group-hover:scale-105">
-              <span className="text-[24px]">🌸</span>
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-container text-on-primary-container shadow-xs transition-transform duration-fast group-hover:-translate-y-0.5">
+              <BrandMark className="w-6 h-6 text-primary" />
             </div>
             <div>
               <span className="text-headline-lg font-bold text-on-surface tracking-tight block leading-tight">
@@ -103,7 +105,7 @@ export default function DesktopSidebar() {
         {/* Primary CTA button */}
         <Link
           to="/entries/new"
-          className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-full bg-primary text-on-primary font-semibold text-label-lg shadow-card hover:opacity-95 active:scale-[0.98] transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-full bg-primary text-on-primary font-semibold text-label-lg shadow-card hover:opacity-95 active:scale-[0.98] transition-[opacity,transform] duration-normal ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         >
           <span className="material-symbols-outlined text-[20px]">
             add_circle
@@ -120,7 +122,7 @@ export default function DesktopSidebar() {
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-4 py-3 rounded-md font-medium text-body-md transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-md font-medium text-body-md transition-colors duration-fast ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                   active
                     ? "bg-primary-container text-on-primary-container font-bold shadow-xs"
                     : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"

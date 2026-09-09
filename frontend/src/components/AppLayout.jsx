@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import DesktopSidebar from './DesktopSidebar'
 import BottomNav from './BottomNav'
 

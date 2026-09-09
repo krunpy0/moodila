@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStatsQuery } from "../api/queries";
@@ -95,7 +96,7 @@ export default function Stats() {
                     {t("stats.moodDynamics")}
                   </h2>
                   {stats?.overall_avg_mood && (
-                    <p className="text-label-sm text-on-surface-variant/70 mt-0.5">
+                    <p className="text-label-sm text-on-surface-variant/70 mt-0.5 tabular-nums">
                       {t("stats.avgMood")}: <strong className="text-primary font-bold">{stats.overall_avg_mood} / 5</strong> ({stats.total_entries} {t("stats.entriesCount")})
                     </p>
                   )}
@@ -121,19 +122,19 @@ export default function Stats() {
               </div>
 
               {/* Mood Line Chart SVG */}
-              <div className="w-full pt-2">
-                <MoodLineChart series={moodSeries} period={period} t={t} />
+              <div className="pt-sm">
+                <MoodLineChart series={moodSeries} period={period} language={language} />
               </div>
             </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-md lg:gap-8">
               {/* Mood Distribution */}
               <section className="lg:col-span-6 rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
                 <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">pie_chart</span>
                   {t("stats.moodDistribution")}
                 </h2>
-                <div className="space-y-sm">
+                <div className="space-y-sm pt-xs">
                   {[5, 4, 3, 2, 1].map((level) => {
                     const dist = moodDistribution.find((d) => d.mood === level) || {
                       count: 0,
@@ -157,11 +158,11 @@ export default function Stats() {
                         </div>
                         <div className="flex-1 h-3 rounded-full bg-surface-container-low overflow-hidden">
                           <div
-                            className={`h-full rounded-full ${moodBarColors[level] || "bg-primary"} transition-all duration-500`}
-                            style={{ width: `${dist.percentage}%` }}
+                            className={`h-full w-full rounded-full ${moodBarColors[level] || "bg-primary"} origin-left transition-transform duration-500 ease-out`}
+                            style={{ transform: `scaleX(${dist.percentage / 100})` }}
                           />
                         </div>
-                        <span className="w-16 text-right text-label-sm font-bold text-on-surface-variant">
+                        <span className="w-16 text-right text-label-sm font-bold text-on-surface-variant tabular-nums">
                           {dist.percentage}% ({dist.count})
                         </span>
                       </div>

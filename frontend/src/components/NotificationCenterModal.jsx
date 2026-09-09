@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -30,7 +31,7 @@ function formatRelativeTime(dateString, t) {
 
 const severityBadgeStyles = {
   critical: 'bg-error-container/40 text-error border-error/20',
-  warning: 'bg-tertiary-container/40 text-amber-600 dark:text-amber-400 border-amber-500/20',
+  warning: 'bg-warning-container/40 text-warning border-warning/20',
   info: 'bg-primary-container/40 text-primary border-primary/20',
 }
 
@@ -145,7 +146,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
         return (
           <>
             <span className="font-semibold text-on-surface">{actorName}</span>{' '}
-            {t('notifications.commentedEntry', { name: '' }).trim()} &quot;{item.content}&quot;
+            {t('notifications.commentedEntry', { name: '' }).trim()} “{item.content}”
           </>
         )
       default:

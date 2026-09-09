@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useEntriesQuery, useFriendEntriesQuery, useFriendsQuery } from "../api/queries";
@@ -269,7 +270,7 @@ export default function Calendar() {
                 setViewMode("week");
               }
             }}
-            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
+            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-colors duration-fast ease-out ${
               viewMode === "week"
                 ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
                 : "text-on-surface-variant hover:text-on-surface"
@@ -285,7 +286,7 @@ export default function Calendar() {
                 setViewMode("month");
               }
             }}
-            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
+            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-colors duration-fast ease-out ${
               viewMode === "month"
                 ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
                 : "text-on-surface-variant hover:text-on-surface"
@@ -366,7 +367,7 @@ export default function Calendar() {
                     return (
                       <span
                         key={dateKey}
-                        className="flex h-[76px] lg:h-28 xl:h-32 items-start justify-center pt-1 lg:pt-3 text-body-md lg:text-body-lg font-body-md text-on-surface-variant/20 select-none"
+                        className="flex h-20 lg:h-28 xl:h-32 items-start justify-center pt-1 lg:pt-3 text-body-md lg:text-body-lg font-body-md text-on-surface-variant/20 select-none tabular-nums"
                       >
                         {date.getDate()}
                       </span>
@@ -384,9 +385,9 @@ export default function Calendar() {
                           day: "numeric",
                           year: "numeric",
                         })}`}
-                        className="flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-all text-body-md font-body-md text-on-surface-variant/40"
+                        className="flex h-20 lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-colors duration-fast ease-out text-body-md font-body-md text-on-surface-variant/40"
                       >
-                        <span className="lg:text-body-lg lg:font-semibold">{date.getDate()}</span>
+                        <span className="lg:text-body-lg lg:font-semibold tabular-nums">{date.getDate()}</span>
                         <span className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-[14px] lg:rounded-[18px] bg-surface-container-low/60 border border-outline-variant/15 text-on-surface-variant/25 ${
                           isSelected ? "lg:ring-2 lg:ring-primary lg:ring-offset-2 lg:ring-offset-surface-container-lowest" : ""
                         }`}>
@@ -398,7 +399,7 @@ export default function Calendar() {
 
                   const cellInner = (
                     <>
-                      <span className={`flex items-center gap-0.5 lg:text-body-lg font-medium ${today ? "font-bold text-primary" : "text-on-surface/90"}`}>
+                      <span className={`flex items-center gap-0.5 lg:text-body-lg font-medium tabular-nums ${today ? "font-bold text-primary" : "text-on-surface/90"}`}>
                         {date.getDate()}
                         {!selectedFriend && entry?.is_hidden ? (
                           <span className="material-symbols-outlined text-[13px] lg:text-[15px] text-on-surface-variant/80" title={t('common.hiddenFromFriends')}>
@@ -412,7 +413,7 @@ export default function Calendar() {
                       </span>
 
                       <span
-                        className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-[14px] lg:rounded-[18px] transition-all group-hover:scale-105 ${
+                        className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-[14px] lg:rounded-[18px] transition-[transform,background-color,border-color] duration-fast ease-out group-hover:-translate-y-0.5 ${
                           mood
                             ? mood.bg
                             : "bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-on-surface-variant/80"

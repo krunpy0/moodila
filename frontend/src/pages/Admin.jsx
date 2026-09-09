@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import AppLayout from '../components/AppLayout'
@@ -269,7 +270,7 @@ export default function Admin() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder={t('admin.fieldTitlePlaceholder', 'e.g. Scheduled Maintenance or New Feature')}
-                className="h-[50px] w-full rounded-2xl border-0 bg-surface-container px-4 text-body-md text-on-surface outline-none transition-all focus:bg-surface-container-low focus:ring-2 focus:ring-primary shadow-subtle"
+                className="h-12 w-full rounded-2xl border-0 bg-surface-container px-4 text-body-md text-on-surface outline-none transition-colors duration-fast ease-out focus:bg-surface-container-low focus:ring-2 focus:ring-primary shadow-subtle"
               />
             </div>
 
@@ -283,8 +284,8 @@ export default function Admin() {
                 rows={3}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder={t('admin.fieldBodyPlaceholder', 'Enter detailed announcement message...')}
-                className="w-full rounded-2xl border-0 bg-surface-container p-4 text-body-md text-on-surface outline-none transition-all focus:bg-surface-container-low focus:ring-2 focus:ring-primary shadow-subtle resize-none"
+                placeholder={t('admin.fieldBodyPlaceholder', 'Enter detailed announcement message…')}
+                className="w-full rounded-2xl border-0 bg-surface-container p-4 text-body-md text-on-surface outline-none transition-colors duration-fast ease-out focus:bg-surface-container-low focus:ring-2 focus:ring-primary shadow-subtle resize-none"
               />
             </div>
 
@@ -297,7 +298,7 @@ export default function Admin() {
                 <select
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
-                  className="h-[48px] w-full rounded-2xl border-0 bg-surface-container px-3.5 text-body-md text-on-surface outline-none transition-all focus:ring-2 focus:ring-primary shadow-subtle"
+                  className="h-12 w-full rounded-2xl border-0 bg-surface-container px-3.5 text-body-md text-on-surface outline-none transition-colors duration-fast ease-out focus:ring-2 focus:ring-primary shadow-subtle"
                 >
                   <option value="info">Info</option>
                   <option value="warning">Warning</option>
@@ -427,7 +428,7 @@ export default function Admin() {
                     </div>
                     <div className="pl-10 text-body-sm text-on-surface-variant">
                       <p className="line-clamp-2 leading-relaxed">
-                        {body || 'Detailed preview announcement message goes here with full readability...'}
+                        {body || 'Detailed preview announcement message goes here with full readability…'}
                       </p>
                     </div>
                     {ctaLabel && (
@@ -447,7 +448,7 @@ export default function Admin() {
                       <h3 className="text-title-medium font-bold text-on-surface pt-1">{title || 'Preview Title'}</h3>
                     </div>
                     <div className="max-h-36 overflow-y-auto pr-1 text-body-sm text-on-surface-variant whitespace-pre-wrap leading-relaxed border-y border-outline-variant/15 py-2">
-                      {body || 'Detailed preview body text with long message and full scrollability...'}
+                      {body || 'Detailed preview body text with long message and full scrollability…'}
                     </div>
                     <div className="flex flex-col gap-2 pt-1">
                       {ctaLabel && (
@@ -467,9 +468,9 @@ export default function Admin() {
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="h-12 w-full rounded-2xl bg-primary text-label-lg font-semibold text-on-primary shadow-card hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-50"
+              className="h-12 w-full rounded-2xl bg-primary text-label-lg font-semibold text-on-primary shadow-card hover:bg-primary/90 active:scale-[0.99] transition-[background-color,transform,opacity] duration-fast ease-out disabled:opacity-50"
             >
-              {createMutation.isPending ? t('common.saving', 'Saving...') : t('admin.createDraft', 'Create Draft')}
+              {createMutation.isPending ? t('common.saving', 'Saving…') : t('admin.createDraft', 'Create Draft')}
             </button>
           </form>
         </section>
@@ -937,7 +938,7 @@ function AnnouncementStatsModal({ item, onClose, modalRef, t }) {
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low border border-outline-variant/20">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning-container/30 text-warning">
               <span className="material-symbols-outlined text-[20px]">close</span>
             </div>
             <div>
@@ -1052,7 +1053,7 @@ function AnnouncementStatsModal({ item, onClose, modalRef, t }) {
                   </span>
                 )}
                 {u.dismissed_at && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-small font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-400">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-small font-semibold bg-warning-container/40 text-on-warning-container">
                     <span className="material-symbols-outlined text-[13px]">close</span>
                     <span>{t('admin.statsDismissedAt', 'Dismissed')}: {new Date(u.dismissed_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                   </span>
@@ -1082,7 +1083,7 @@ function severityBadgeClass(severity) {
     case 'critical':
       return 'bg-error-container/40 text-error'
     case 'warning':
-      return 'bg-tertiary-container/40 text-amber-600 dark:text-amber-400'
+      return 'bg-warning-container/40 text-warning'
     case 'info':
     default:
       return 'bg-primary-container/40 text-primary'

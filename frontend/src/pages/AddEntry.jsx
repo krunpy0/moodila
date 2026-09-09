@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
@@ -307,7 +308,7 @@ export default function AddEntry() {
             <button
               type="button"
               onClick={() => setShowDatePicker(true)}
-              className="relative mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3.5 py-1 text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-all cursor-pointer group shadow-xs"
+              className="relative mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3.5 py-1 text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-high active:scale-[0.98] transition-colors duration-fast ease-out cursor-pointer group shadow-xs"
             >
               <span className="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
               <span>{formatDate(date, { day: 'numeric', month: 'long', year: 'numeric' })}</span>
@@ -337,8 +338,8 @@ export default function AddEntry() {
                   title={moodInfo.label}
                   aria-pressed={selected}
                   onClick={() => setForm((current) => ({ ...current, mood: item.value }))}
-                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-all duration-normal active:scale-95 ${item.bg} ${
-                    selected ? 'ring-4 ring-primary/40 scale-105 shadow-card' : 'opacity-80 hover:opacity-100 hover:scale-105'
+                  className={`flex h-12 w-12 items-center justify-center rounded-full transition-[opacity,transform,box-shadow] duration-normal ease-out active:scale-95 ${item.bg} ${
+                    selected ? 'ring-4 ring-primary/40 shadow-card' : 'opacity-80 hover:opacity-100 hover:-translate-y-0.5'
                   }`}
                 >
                   <MoodIcon mood={item.value} className="text-[28px]" filled={selected} />
@@ -392,11 +393,11 @@ export default function AddEntry() {
           />
           <div className="mt-1 flex justify-end">
             <span
-              className={`text-label-sm transition-colors duration-300 ${
+              className={`text-label-sm transition-colors duration-300 tabular-nums ${
                 (5000 - (form.text?.length || 0)) <= 50
-                  ? "text-red-500 font-semibold"
+                  ? "text-error font-semibold"
                   : (5000 - (form.text?.length || 0)) <= 100
-                  ? "text-amber-500 font-medium"
+                  ? "text-warning font-medium"
                   : "text-on-surface-variant/60"
               }`}
             >

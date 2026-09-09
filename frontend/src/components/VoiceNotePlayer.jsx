@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { apiURL } from '../api/client'
 import { notifyAudioPlaybackStarted, subscribeAudioPlaybackStart } from '../utils/audioManager'
@@ -148,7 +149,7 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
         {/* Waveform & Info */}
         <div className="flex flex-1 flex-col gap-1 min-w-0">
           <div className="flex items-center justify-between gap-2 min-w-0">
-            <span className="text-label-sm font-medium text-on-surface-variant font-mono min-w-0 truncate">
+            <span className="text-label-sm font-medium text-on-surface-variant font-sans tabular-nums min-w-0 truncate">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
             <div className="flex items-center gap-xs shrink-0">

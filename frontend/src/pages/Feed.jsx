@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
 import {
@@ -139,10 +140,7 @@ export default function Feed() {
       <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl bg-background pb-32 lg:pb-12 text-on-background px-0 lg:px-6 py-0 lg:py-6">
         <header className="flex items-center justify-between px-container-margin py-md lg:px-0">
           <div>
-            <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">
-              {t("feed.title")}
-            </p>
-            <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface">
+            <h1 className="text-headline-xl font-headline-xl text-on-surface">
               {t("feed.title")}
             </h1>
             <p className="mt-xs text-body-sm text-on-surface-variant">
@@ -381,8 +379,8 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
     return (
       <article
         id={`feed-entry-${entry.id}`}
-        className={`rounded-xl lg:rounded-xxl p-lg shadow-card border transition-all duration-normal ${moodTintBg[entry.mood] || "bg-surface-container-high/50 border-outline-variant/20"} ${
-          isHighlighted ? "ring-2 ring-primary shadow-floating scale-[1.01]" : ""
+        className={`rounded-xl lg:rounded-xxl p-lg shadow-card border transition-[background-color,border-color,box-shadow] duration-normal ${moodTintBg[entry.mood] || "bg-surface-container-high/50 border-outline-variant/20"} ${
+          isHighlighted ? "ring-2 ring-primary shadow-floating" : ""
         }`}
       >
         <header className="flex items-center gap-sm">
@@ -450,8 +448,8 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
   return (
     <article
       id={`feed-entry-${entry.id}`}
-      className={`rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-card transition-all duration-normal ${
-        isHighlighted ? "ring-2 ring-primary shadow-floating scale-[1.01]" : ""
+      className={`rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-card transition-[box-shadow,border-color] duration-normal ${
+        isHighlighted ? "ring-2 ring-primary shadow-floating" : ""
       }`}
     >
       <header className="flex items-center gap-sm">
@@ -560,7 +558,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                   onReact(entry.id, reac);
                   setEmojiPickerOpen(false);
                 }}
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:scale-125 active:scale-95 ${
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-fast ease-out hover:-translate-y-0.5 active:translate-y-0 ${
                   isMine
                     ? "bg-primary-container/70 ring-1 ring-primary/30"
                     : "hover:bg-surface-container-low"

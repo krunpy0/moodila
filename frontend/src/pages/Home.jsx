@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -197,7 +198,7 @@ export default function Home() {
                     </h2>
                     <Link
                       to="/entries/new"
-                      className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm lg:px-8 lg:py-3.5 text-label-lg lg:text-body-lg font-bold text-on-primary shadow-card hover:opacity-95 transition-all duration-normal hover:scale-[1.02]"
+                      className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm lg:px-8 lg:py-3.5 text-label-lg lg:text-body-lg font-bold text-on-primary shadow-card hover:opacity-95 transition-[opacity,transform] duration-normal ease-out hover:-translate-y-0.5"
                     >
                       {t("home.journalToday")}
                       <span className="material-symbols-outlined text-[18px] lg:text-[22px]">
@@ -226,7 +227,7 @@ export default function Home() {
                           to={isFuture ? "#" : `/entries/new?date=${key}`}
                           aria-disabled={isFuture}
                           onClick={(event) => isFuture && event.preventDefault()}
-                          className={`flex min-w-12 lg:min-w-16 flex-1 flex-col items-center gap-xs lg:gap-sm transition-transform duration-fast hover:scale-105 ${isFuture ? "opacity-40" : ""}`}
+                          className={`flex min-w-12 lg:min-w-16 flex-1 flex-col items-center gap-xs lg:gap-sm transition-transform duration-fast ease-out hover:-translate-y-0.5 ${isFuture ? "opacity-40" : ""}`}
                         >
                           <span
                             className={`flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-full ${

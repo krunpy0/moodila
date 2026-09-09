@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -17,9 +18,9 @@ const severityConfig = {
   },
   warning: {
     icon: 'warning',
-    colorClass: 'text-amber-600 dark:text-amber-400',
-    bgClass: 'bg-tertiary-container/30',
-    borderClass: 'border-amber-500/30',
+    colorClass: 'text-warning',
+    bgClass: 'bg-warning-container/30',
+    borderClass: 'border-warning/30',
   },
   info: {
     icon: 'info',

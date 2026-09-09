@@ -1,3 +1,4 @@
+/* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { Link, useLocation } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
 
@@ -16,14 +17,14 @@ export default function BottomNav() {
   return (
     <nav
       aria-label={t('nav.home')}
-      className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-32px)] max-w-md -translate-x-1/2 items-center justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-3 py-2 shadow-floating backdrop-blur-xl lg:hidden"
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-50 flex w-[calc(100%-32px)] max-w-md -translate-x-1/2 items-center justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-3 py-2 shadow-floating backdrop-blur-xl lg:hidden"
     >
       {items.map(([to, icon, labelKey]) => {
         const active = to && pathname === to
         const label = t(labelKey)
-        const classes = `flex h-11 w-11 items-center justify-center rounded-full transition-all duration-normal ${
+        const classes = `flex h-11 w-11 items-center justify-center rounded-full transition-colors transition-transform duration-normal ease-out ${
           icon === 'add'
-            ? 'h-13 w-13 bg-primary text-on-primary shadow-card hover:scale-105 active:scale-95'
+            ? 'h-12 w-12 bg-primary text-on-primary shadow-card hover:-translate-y-0.5 active:translate-y-0'
             : active
               ? 'bg-primary-container text-on-primary-container font-semibold'
               : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'
