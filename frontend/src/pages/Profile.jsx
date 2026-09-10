@@ -1,5 +1,5 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys, useProfileQuery, useUpdateProfileMutation } from "../api/queries";
@@ -193,11 +193,11 @@ export default function Profile() {
             type="button"
             aria-label={t("common.back")}
             onClick={() => safeNavigateBack(navigate, "/home")}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-primary"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-primary hover:bg-surface-container-low transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             <span className="material-symbols-outlined">arrow_back</span>
           </button>
-          <h1 className="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">
+          <h1 className="text-headline-lg-mobile text-on-surface">
             {t("profile.title")}
           </h1>
           <div className="flex items-center gap-xs">
@@ -207,7 +207,7 @@ export default function Profile() {
               aria-label={t("profile.editProfile")}
               onClick={beginEdit}
               disabled={!user}
-              className="flex h-11 w-11 items-center justify-center rounded-full text-primary disabled:opacity-40"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-primary hover:bg-surface-container-low transition-colors duration-fast disabled:opacity-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span className="material-symbols-outlined">edit</span>
             </button>
@@ -228,7 +228,7 @@ export default function Profile() {
                   <Avatar user={editing ? form : user} large />
                   {editing && (
                     <label
-                      className={`absolute bottom-1 right-1 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-md transition-transform active:scale-95 ${
+                      className={`absolute bottom-1 right-1 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-primary-container text-on-primary-container shadow-subtle transition-transform duration-fast active:scale-95 focus-within:ring-2 focus-within:ring-primary ${
                         isUploadingAvatar ? "cursor-wait opacity-60" : ""
                       }`}
                     >
@@ -248,7 +248,7 @@ export default function Profile() {
                     </label>
                   )}
                 </div>
-                <h2 className="text-headline-xl font-headline-xl text-on-surface">
+                <h2 className="text-headline-xl text-on-surface">
                   {editing
                     ? form.display_name || user.username
                     : user.display_name || user.username}
@@ -261,7 +261,7 @@ export default function Profile() {
               {editing && (
                 <form
                   onSubmit={save}
-                  className="mb-8 space-y-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20"
+                  className="mb-8 space-y-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md sm:p-lg shadow-card border border-outline-variant/20"
                 >
                   <div>
                     <p className="text-label-lg text-on-surface-variant">
@@ -289,7 +289,7 @@ export default function Profile() {
                         type="button"
                         onClick={removeAvatar}
                         disabled={isUploadingAvatar}
-                        className="mt-sm text-label-lg text-primary disabled:opacity-50"
+                        className="mt-sm text-label-lg text-primary disabled:opacity-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
                       >
                         {t("common.remove")}
                       </button>
@@ -303,7 +303,7 @@ export default function Profile() {
                       onChange={(e) =>
                         setForm({ ...form, display_name: e.target.value })
                       }
-                      className="mt-xs w-full rounded-xl bg-surface-container-low px-md py-sm text-body-md outline-none focus:ring-2 focus:ring-primary/20"
+                      className="mt-xs w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-md py-sm text-body-md outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
                       required
                     />
                   </label>
@@ -312,14 +312,14 @@ export default function Profile() {
                       type="button"
                       onClick={cancelEdit}
                       disabled={isUploadingAvatar}
-                      className="flex-1 rounded-full bg-surface-container-highest py-sm text-label-lg text-on-surface-variant disabled:opacity-50"
+                      className="flex-1 rounded-full bg-surface-container-highest py-sm text-label-lg text-on-surface-variant disabled:opacity-disabled transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       {t("common.cancel")}
                     </button>
                     <button
                       type="submit"
                       disabled={update.isPending || isUploadingAvatar}
-                      className="flex-1 rounded-full bg-primary py-sm text-label-lg text-on-primary disabled:opacity-50"
+                      className="flex-1 rounded-full bg-primary py-sm text-label-lg text-on-primary shadow-subtle disabled:opacity-disabled transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       {isUploadingAvatar
                         ? t("common.uploading")
@@ -338,15 +338,18 @@ export default function Profile() {
 
               <section className="mb-8">
                 <div className="mb-md flex items-center justify-between">
-                  <h2 className="text-headline-lg font-headline-lg text-on-surface">
+                  <h2 className="text-headline-md text-on-surface">
                     {t("profile.recentEntries")}
                   </h2>
-                  <Link to="/calendar" className="text-label-lg text-primary">
+                  <Link
+                    to="/calendar"
+                    className="text-label-lg text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
+                  >
                     {t("common.seeAll")}
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 gap-md">
-                  {(profile.recent_entries || []).map((entry) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm sm:gap-md">
+                  {(profile.recent_entries || []).slice(0, 4).map((entry) => {
                     const isRich = Boolean(
                       entry.audio_url ||
                       (entry.photo_url && (entry.audio_url || entry.text)) ||
@@ -356,12 +359,12 @@ export default function Profile() {
                       <Link
                         key={entry.id}
                         to={`/entries/new?date=${entry.date}`}
-                        className={`flex min-h-[140px] flex-col justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 ${
-                          isRich ? "col-span-2" : ""
+                        className={`flex min-h-[140px] flex-col justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md sm:p-lg shadow-card border border-outline-variant/15 transition-all duration-normal hover:shadow-floating focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                          isRich ? "sm:col-span-2" : ""
                         }`}
                       >
                         <div className="flex items-start justify-between">
-                          <span className="flex items-center gap-1 text-label-sm text-on-surface-variant">
+                          <span className="flex items-center gap-1 text-label-sm tabular-nums text-on-surface-variant">
                             {entry.is_hidden ? (
                               <span
                                 className="material-symbols-outlined text-[13px]"
@@ -419,21 +422,21 @@ export default function Profile() {
                   })}
                 </div>
                 {profile.recent_entries?.length === 0 && (
-                  <p className="rounded-xl bg-surface-container-low p-lg text-center text-body-sm text-on-surface-variant border border-outline-variant/15">
+                  <p className="rounded-xl bg-surface-container-low p-md sm:p-lg text-center text-body-sm text-on-surface-variant border border-outline-variant/15">
                     {t("home.emptyRecent")}
                   </p>
                 )}
               </section>
 
-              <section className="mb-8 rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
+              <section className="mb-8 rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md sm:p-lg shadow-card border border-outline-variant/20">
                 <div className="mb-md flex items-center justify-between">
-                  <h2 className="text-label-lg font-semibold text-on-surface-variant">
+                  <h2 className="text-headline-md text-on-surface">
                     {t("friends.myFriends")}
                   </h2>
                   <div className="flex items-center gap-xs">
                     <Link
                       to="/friends"
-                      className="flex items-center gap-xs rounded-full bg-primary-container px-md py-1.5 text-label-sm font-semibold text-on-primary-container transition-transform active:scale-95 hover:bg-primary-container/80 shadow-xs"
+                      className="flex items-center gap-xs rounded-full bg-primary-container px-md py-1.5 text-label-sm font-semibold text-on-primary-container transition-transform duration-fast active:scale-95 hover:bg-primary-container/90 shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       <span className="material-symbols-outlined text-[16px]">
                         person_add
@@ -443,7 +446,7 @@ export default function Profile() {
                     {(profile.friends || []).length > 0 && (
                       <Link
                         to="/friends"
-                        className="text-label-sm font-medium text-on-surface-variant hover:text-primary transition-colors px-xs"
+                        className="text-label-sm font-medium text-on-surface-variant hover:text-primary transition-colors px-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
                       >
                         {t("common.seeAll")}
                       </Link>
@@ -456,7 +459,7 @@ export default function Profile() {
                       <Link
                         key={friend.id}
                         to={`/profile/${friend.id}`}
-                        className="flex items-center gap-sm rounded-xl p-xs transition-colors hover:bg-surface-container-low active:bg-surface-container"
+                        className="flex items-center gap-sm rounded-xl p-xs transition-colors hover:bg-surface-container-low active:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       >
                         <Avatar user={friend} />
                         <div>
@@ -485,7 +488,7 @@ export default function Profile() {
                     </p>
                     <Link
                       to="/friends"
-                      className="mt-xs inline-flex items-center gap-xs rounded-full bg-primary px-md py-xs text-label-sm font-semibold text-on-primary shadow-xs hover:opacity-90 transition-all active:scale-95"
+                      className="mt-xs inline-flex items-center gap-xs rounded-full bg-primary px-md py-xs text-label-sm font-semibold text-on-primary shadow-subtle hover:opacity-90 transition-transform duration-fast active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       <span className="material-symbols-outlined text-[16px]">
                         person_add
@@ -496,153 +499,174 @@ export default function Profile() {
                 )}
               </section>
 
-              <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
-                <h2 className="mb-md text-label-lg text-on-surface-variant">
+              <section className="space-y-md">
+                <h2 className="text-headline-md text-on-surface">
                   {t("profile.appSettings")}
                 </h2>
 
-                {/* Language switch */}
-                <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
-                  <span className="flex items-center gap-sm text-body-md text-on-surface">
-                    <span className="material-symbols-outlined text-on-surface-variant">
-                      translate
-                    </span>
-                    {t("profile.language")}
-                  </span>
-                  <LanguageToggle />
-                </div>
+                {/* Category 1: Preferences */}
+                <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md sm:p-lg shadow-card border border-outline-variant/20">
+                  <h3 className="mb-xs text-label-sm font-bold uppercase tracking-wider text-on-surface-variant">
+                    {t("profile.preferences")}
+                  </h3>
 
-                {/* Theme toggle */}
-                <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
-                  <span className="flex items-center gap-sm text-body-md text-on-surface">
-                    <span className="material-symbols-outlined text-on-surface-variant">
-                      palette
-                    </span>
-                    {t("profile.darkTheme")}
-                  </span>
-                  <ThemeToggle />
-                </div>
-
-                {/* Vibration toggle */}
-                <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
-                  <span className="flex items-center gap-sm text-body-md text-on-surface">
-                    <span className="material-symbols-outlined text-on-surface-variant">
-                      vibration
-                    </span>
-                    {t("profile.vibration")}
-                  </span>
-                  <HapticsToggle />
-                </div>
-
-                {/* Friend privacy settings */}
-                <div className="border-t border-surface-container-low pt-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      haptics.selection();
-                      setShowFriendPrivacyModal(true);
-                    }}
-                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity"
-                  >
-                    <span className="flex items-center gap-sm">
+                  {/* Language switch */}
+                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
+                    <span className="flex items-center gap-sm text-body-md text-on-surface">
                       <span className="material-symbols-outlined text-on-surface-variant">
-                        visibility_off
+                        translate
                       </span>
-                      {t("friendPrivacy.title")}
+                      {t("profile.language")}
                     </span>
-                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                      chevron_right
-                    </span>
-                  </button>
-                </div>
+                    <LanguageToggle />
+                  </div>
 
-                {/* Push notification settings */}
-                <div className="border-t border-surface-container-low pt-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      haptics.selection();
-                      setShowNotificationSettingsModal(true);
-                    }}
-                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity"
-                  >
-                    <span className="flex items-center gap-sm">
+                  {/* Theme toggle */}
+                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
+                    <span className="flex items-center gap-sm text-body-md text-on-surface">
                       <span className="material-symbols-outlined text-on-surface-variant">
-                        notifications
+                        palette
                       </span>
-                      {t("notificationSettings.title")}
+                      {t("profile.darkTheme")}
                     </span>
-                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                      chevron_right
-                    </span>
-                  </button>
-                </div>
+                    <ThemeToggle />
+                  </div>
 
-                {/* Change password */}
-                <div className="border-t border-surface-container-low pt-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      haptics.selection();
-                      setShowChangePassword((prev) => !prev);
-                    }}
-                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface"
-                  >
-                    <span className="flex items-center gap-sm">
+                  {/* Vibration toggle */}
+                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
+                    <span className="flex items-center gap-sm text-body-md text-on-surface">
                       <span className="material-symbols-outlined text-on-surface-variant">
-                        lock
+                        vibration
                       </span>
-                      {t("profile.changePassword")}
+                      {t("profile.vibration")}
                     </span>
-                    <span className="material-symbols-outlined text-on-surface-variant">
-                      {showChangePassword ? "expand_less" : "expand_more"}
-                    </span>
-                  </button>
-                  {showChangePassword && <ChangePasswordForm />}
+                    <HapticsToggle />
+                  </div>
                 </div>
 
-                {/* Logout */}
-                <div className="border-t border-surface-container-low pt-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      haptics.selection();
-                      setShowLogoutModal(true);
-                    }}
-                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:text-error active:opacity-80 transition-colors"
-                  >
-                    <span className="flex items-center gap-sm">
+                {/* Category 2: Privacy & Security */}
+                <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md sm:p-lg shadow-card border border-outline-variant/20">
+                  <h3 className="mb-xs text-label-sm font-bold uppercase tracking-wider text-on-surface-variant">
+                    {t("profile.privacyAndSecurity")}
+                  </h3>
+
+                  {/* Friend privacy settings */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        haptics.selection();
+                        setShowFriendPrivacyModal(true);
+                      }}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          visibility_off
+                        </span>
+                        {t("friendPrivacy.title")}
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        chevron_right
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Push notification settings */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        haptics.selection();
+                        setShowNotificationSettingsModal(true);
+                      }}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          notifications
+                        </span>
+                        {t("notificationSettings.title")}
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        chevron_right
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Change password */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        haptics.selection();
+                        setShowChangePassword((prev) => !prev);
+                      }}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          lock
+                        </span>
+                        {t("profile.changePassword")}
+                      </span>
                       <span className="material-symbols-outlined text-on-surface-variant">
-                        logout
+                        {showChangePassword ? "expand_less" : "expand_more"}
                       </span>
-                      {t("common.logout")}
-                    </span>
-                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                      chevron_right
-                    </span>
-                  </button>
+                    </button>
+                    {showChangePassword && <ChangePasswordForm />}
+                  </div>
                 </div>
 
-                {/* Delete account */}
-                <div className="border-t border-surface-container-low pt-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      haptics.warning();
-                      setShowDeleteModal(true);
-                    }}
-                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-error transition-opacity hover:opacity-80"
-                  >
-                    <span className="flex items-center gap-sm">
-                      <span className="material-symbols-outlined text-error">
-                        delete_forever
+                {/* Category 3: Account / Danger Zone */}
+                <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md sm:p-lg shadow-card border border-outline-variant/20">
+                  <h3 className="mb-xs text-label-sm font-bold uppercase tracking-wider text-error">
+                    {t("profile.account")}
+                  </h3>
+
+                  {/* Logout */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        haptics.selection();
+                        setShowLogoutModal(true);
+                      }}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:text-error active:opacity-80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          logout
+                        </span>
+                        {t("common.logout")}
                       </span>
-                      {t("profile.deleteAccount")}
-                    </span>
-                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                      chevron_right
-                    </span>
-                  </button>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        chevron_right
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Delete account */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        haptics.warning();
+                        setShowDeleteModal(true);
+                      }}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-error hover:opacity-80 active:opacity-60 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-error">
+                          delete_forever
+                        </span>
+                        {t("profile.deleteAccount")}
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        chevron_right
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </section>
               <NotificationSettingsModal
@@ -692,25 +716,52 @@ function LanguageToggle() {
       aria-checked={isRu}
       aria-label="Toggle language (English / Русский)"
       onClick={handleToggle}
-      className="flex items-center gap-1 rounded-full bg-surface-container-highest p-1 text-label-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="flex items-center gap-1 rounded-full bg-surface-container-highest p-1 text-label-sm font-semibold transition-colors duration-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
     >
       <span
-        className={`rounded-full px-2.5 py-1 transition-all ${
+        className={`rounded-full px-2.5 py-1 transition-colors duration-fast ${
           !isRu
-            ? "bg-primary text-on-primary shadow-sm"
+            ? "bg-primary text-on-primary shadow-subtle"
             : "text-on-surface-variant hover:text-on-surface"
         }`}
       >
         EN
       </span>
       <span
-        className={`rounded-full px-2.5 py-1 transition-all ${
+        className={`rounded-full px-2.5 py-1 transition-colors duration-fast ${
           isRu
-            ? "bg-primary text-on-primary shadow-sm"
+            ? "bg-primary text-on-primary shadow-subtle"
             : "text-on-surface-variant hover:text-on-surface"
         }`}
       >
         RU
+      </span>
+    </button>
+  );
+}
+
+function ToggleSwitch({ checked, onChange, label, iconOn, iconOff }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-normal ease-standard focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+        checked ? "bg-primary" : "bg-surface-container-highest"
+      }`}
+    >
+      <span
+        className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-subtle transition-transform duration-normal ease-standard ${
+          checked
+            ? "translate-x-6 text-on-primary-container"
+            : "translate-x-0 text-on-surface-variant"
+        }`}
+      >
+        <span className="material-symbols-outlined text-[16px]">
+          {checked ? iconOn : iconOff}
+        </span>
       </span>
     </button>
   );
@@ -727,28 +778,13 @@ function ThemeToggle() {
   };
 
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={isDark}
-      aria-label={t("profile.darkTheme")}
-      onClick={handleToggle}
-      className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-        isDark ? "bg-primary" : "bg-surface-container-highest"
-      }`}
-    >
-      <span
-        className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
-          isDark
-            ? "translate-x-6 text-on-primary-container"
-            : "translate-x-0 text-on-surface-variant"
-        }`}
-      >
-        <span className="material-symbols-outlined text-[16px]">
-          {isDark ? "dark_mode" : "light_mode"}
-        </span>
-      </span>
-    </button>
+    <ToggleSwitch
+      checked={isDark}
+      onChange={handleToggle}
+      label={t("profile.darkTheme")}
+      iconOn="dark_mode"
+      iconOff="light_mode"
+    />
   );
 }
 
@@ -766,36 +802,28 @@ function HapticsToggle() {
   };
 
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={enabled}
-      aria-label={t("profile.vibration")}
-      onClick={handleToggle}
-      className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-        enabled ? "bg-primary" : "bg-surface-container-highest"
-      }`}
-    >
-      <span
-        className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
-          enabled
-            ? "translate-x-6 text-on-primary-container"
-            : "translate-x-0 text-on-surface-variant"
-        }`}
-      >
-        <span className="material-symbols-outlined text-[16px]">
-          {enabled ? "vibration" : "smartphone"}
-        </span>
-      </span>
-    </button>
+    <ToggleSwitch
+      checked={enabled}
+      onChange={handleToggle}
+      label={t("profile.vibration")}
+      iconOn="vibration"
+      iconOff="smartphone"
+    />
   );
 }
 
 function Avatar({ user, large = false }) {
+  const [imgError, setImgError] = useState(false);
+  const avatarUrl = user?.avatar_url;
+
+  useEffect(() => {
+    setImgError(false);
+  }, [avatarUrl]);
+
   const classes = large
-    ? "h-[112px] w-[112px] text-headline-lg shadow-card border-2 border-outline-variant/20"
+    ? "h-[112px] w-[112px] text-headline-lg shadow-card border border-outline-variant/30"
     : "h-10 w-10 text-body-md";
-  const initials = (user.display_name || user.username || "?")
+  const initials = (user?.display_name || user?.username || "?")
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
@@ -803,14 +831,15 @@ function Avatar({ user, large = false }) {
     .join("")
     .toUpperCase();
 
-  if (user.avatar_url) {
+  if (avatarUrl && !imgError) {
     return (
       <span
         className={`inline-block ${classes} shrink-0 overflow-hidden rounded-full`}
       >
         <img
-          src={user.avatar_url}
-          alt=""
+          src={avatarUrl}
+          alt={user?.display_name || user?.username || "Avatar"}
+          onError={() => setImgError(true)}
           className="h-full w-full object-cover"
         />
       </span>

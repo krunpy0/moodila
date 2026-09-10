@@ -105,7 +105,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
             <button
               type="button"
               onClick={handleClose}
-              className="mt-md w-full rounded-full bg-primary py-sm text-label-lg font-semibold text-on-primary shadow-sm"
+              className="mt-md w-full rounded-full bg-primary py-sm text-label-lg font-semibold text-on-primary shadow-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {t('common.close')}
             </button>
@@ -132,12 +132,13 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
                   placeholder={t('deleteAccountModal.passwordConfirm')}
                   required
                   disabled={isPending}
-                  className="w-full rounded-xl bg-surface-container-low px-md py-sm pr-10 text-body-md outline-none transition-all focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+                  className="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-md py-sm pr-10 text-body-md outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-disabled"
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? t('common.hidePassword', 'Hide password') : t('common.showPassword', 'Show password')}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-full p-1"
                 >
                   <span className="material-symbols-outlined text-[20px]">
                     {showPassword ? "visibility_off" : "visibility"}
@@ -160,14 +161,14 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
                 type="button"
                 onClick={handleClose}
                 disabled={isPending}
-                className="flex-1 rounded-full bg-surface-container-highest py-sm text-label-lg font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:opacity-50"
+                className="flex-1 rounded-full bg-surface-container-highest py-sm text-label-lg font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high disabled:opacity-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 {t('common.cancel')}
               </button>
               <button
                 type="submit"
                 disabled={isPending || !password}
-                className="flex-1 rounded-full bg-error py-sm text-label-lg font-semibold text-on-error shadow-sm transition-opacity hover:opacity-95 disabled:opacity-50"
+                className="flex-1 rounded-full bg-error py-sm text-label-lg font-semibold text-on-error shadow-subtle transition-opacity hover:opacity-95 disabled:opacity-disabled focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
               >
                 {isPending ? t('deleteAccountModal.deleting') : t('deleteAccountModal.confirmBtn')}
               </button>

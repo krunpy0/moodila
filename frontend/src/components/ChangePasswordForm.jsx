@@ -95,7 +95,7 @@ export default function ChangePasswordForm() {
       <button
         type="submit"
         disabled={mutation.isPending}
-        className="mt-xs h-12 rounded-lg bg-primary text-on-primary text-label-lg font-label-lg disabled:opacity-60 transition-transform active:scale-[0.99]"
+        className="mt-xs h-12 rounded-full bg-primary text-on-primary text-label-lg font-semibold shadow-subtle disabled:opacity-disabled transition-transform duration-fast active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
         {mutation.isPending ? t('changePassword.updating') : t('changePassword.submit')}
       </button>
