@@ -622,8 +622,8 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-sm">
-        <div className="flex flex-wrap items-center gap-xs">
+      <div className="flex items-center justify-between gap-sm">
+        <div className="flex items-center gap-xs min-w-0 flex-1 overflow-x-auto scrollbar-none py-0.5">
           {reactions.length > 0 ? (
             reactions.map((r) => (
               <ReactionChip
@@ -641,7 +641,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                 onReact(entry.id, "❤️");
               }}
               aria-label="Add reaction"
-              className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+              className="flex shrink-0 items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             >
               <ReactionIcon reaction="❤️" className="text-[18px]" />
               <span>0</span>
@@ -655,7 +655,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
               setEmojiPickerOpen((prev) => !prev);
             }}
             aria-label={t("reactions.title")}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors duration-fast hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors duration-fast hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             title={t("reactions.title")}
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -670,7 +670,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                 haptics.selection();
                 setReactionsModalOpen(true);
               }}
-              className="flex items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors duration-fast px-xs py-0.5 rounded-full hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+              className="flex shrink-0 items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors duration-fast px-xs py-0.5 rounded-full hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
               title={t("reactions.longPressHint")}
             >
               <span className="material-symbols-outlined text-[16px]">
@@ -688,7 +688,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
             haptics.selection();
             setShowComments((prev) => !prev);
           }}
-          className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          className="flex shrink-0 items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
         >
           <span className="material-symbols-outlined text-[19px]">
             chat_bubble
@@ -747,7 +747,7 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
       }}
       onTouchMove={handleCancel}
       title={t("reactions.longPressHint")}
-      className={`flex items-center gap-xs rounded-full px-sm py-xs text-label-sm transition-[background-color,transform,color] duration-fast active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+      className={`flex shrink-0 items-center gap-xs rounded-full px-sm py-xs text-label-sm transition-[background-color,transform,color] duration-fast active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
         reactionItem.reacted_by_me
           ? "bg-primary-container text-on-primary-container font-semibold ring-1 ring-primary/30 shadow-xs"
           : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
