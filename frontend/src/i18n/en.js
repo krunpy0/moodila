@@ -280,6 +280,7 @@ export const en = {
     recentEntries: "Recent entries",
     appSettings: "App settings",
     darkTheme: "Dark theme",
+    vibration: "Haptic feedback (vibration)",
     language: "Language",
     languageName: "English",
     changePassword: "Change password",

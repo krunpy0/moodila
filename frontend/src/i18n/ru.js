@@ -282,6 +282,7 @@ export const ru = {
     recentEntries: "Недавние записи",
     appSettings: "Настройки приложения",
     darkTheme: "Тёмная тема",
+    vibration: "Вибрация и тактильный отклик",
     language: "Язык",
     languageName: "Русский",
     changePassword: "Сменить пароль",

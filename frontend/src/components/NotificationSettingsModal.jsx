@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
 import { useNotifications } from './Notifications'
 import { NotificationSettingsSkeleton } from './skeleton/PageSkeletons'
+import { haptics } from '../utils/haptics'
 
 export default function NotificationSettingsModal({ isOpen, onClose }) {
   const { t } = useLanguage()
@@ -33,6 +34,7 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
   if (!isOpen) return null
 
   const handleTogglePushPermission = async () => {
+    haptics.impact()
     setPushState((prev) => ({ ...prev, loading: true }))
     try {
       if (pushState.subscribed) {
@@ -45,6 +47,7 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
         notify(t('notificationSettings.pushEnabledToast', 'Push-уведомления подключены'))
       }
     } catch (err) {
+      haptics.error()
       setPushState((prev) => ({ ...prev, loading: false }))
       notify(err.message || t('common.error'), 'error')
     }
@@ -52,6 +55,7 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
 
   const handleToggleSetting = (key) => {
     if (!settings) return
+    haptics.selection()
     const currentVal = settings[key] !== false
     const nextVal = !currentVal
 
@@ -59,6 +63,7 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
       { [key]: nextVal },
       {
         onError: (err) => {
+          haptics.error()
           notify(err.message || t('common.error'), 'error')
         },
       }
@@ -129,7 +134,10 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              haptics.selection()
+              onClose()
+            }}
             aria-label={t('common.close')}
             className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >

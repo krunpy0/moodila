@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useUnreadNotificationCountQuery, useAnnouncementsInboxQuery, queryKeys } from '../api/queries'
 import NotificationCenterModal from './NotificationCenterModal'
 import { useLanguage } from '../context/LanguageContext'
+import { haptics } from '../utils/haptics'
 
 export default function HeaderBell() {
   const [isOpen, setIsOpen] = useState(false)
@@ -36,7 +37,10 @@ export default function HeaderBell() {
         type="button"
         aria-label={t('notifications.title')}
         title={t('notifications.title')}
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          haptics.selection()
+          setIsOpen(true)
+        }}
         className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow transition-transform active:scale-95"
       >
         <span className="material-symbols-outlined text-[20px]">notifications</span>

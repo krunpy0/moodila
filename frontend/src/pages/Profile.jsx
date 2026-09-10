@@ -19,6 +19,7 @@ import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import { safeNavigateBack } from "../utils/navigation";
+import { haptics, isHapticsEnabled, setHapticsEnabled } from "../utils/haptics";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export default function Profile() {
   const user = profile?.user;
 
   const beginEdit = () => {
+    haptics.selection();
     const currentAvatar = user?.avatar_url || "";
     setInitialAvatarUrl(currentAvatar);
     setForm({
@@ -53,6 +55,7 @@ export default function Profile() {
   };
 
   const cancelEdit = async () => {
+    haptics.selection();
     const tempUrl = form?.avatar_url;
     setEditing(false);
     setAvatarStatus("");
@@ -71,6 +74,7 @@ export default function Profile() {
     const oldAvatar = initialAvatarUrl;
     update.mutate(form, {
       onSuccess: () => {
+        haptics.success();
         setEditing(false);
         setAvatarStatus("");
         notify(t("common.success"));
@@ -80,10 +84,14 @@ export default function Profile() {
           );
         }
       },
+      onError: () => {
+        haptics.error();
+      },
     });
   };
 
   const removeAvatar = async () => {
+    haptics.warning();
     const currentAvatar = form?.avatar_url;
     setForm((current) => ({
       ...current,
@@ -104,12 +112,14 @@ export default function Profile() {
     event.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
+      haptics.error();
       const msg = t("addEntry.maxPhotoSize");
       setAvatarStatus(msg);
       notify(msg, "error");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
+      haptics.error();
       const msg = t("addEntry.maxPhotoSize");
       setAvatarStatus(msg);
       notify(msg, "error");
@@ -124,6 +134,7 @@ export default function Profile() {
   };
 
   const handleCropCancel = () => {
+    haptics.selection();
     setCropImageSrc(null);
   };
 
@@ -143,7 +154,9 @@ export default function Profile() {
       const readyMsg = t("profile.photoReady");
       setAvatarStatus(readyMsg);
       notify(readyMsg);
+      haptics.success();
     } catch (error) {
+      haptics.error();
       setAvatarStatus(error.message);
       notify(error.message, "error");
     } finally {
@@ -489,11 +502,25 @@ export default function Profile() {
                   <ThemeToggle />
                 </div>
 
+                {/* Vibration toggle */}
+                <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
+                  <span className="flex items-center gap-sm text-body-md text-on-surface">
+                    <span className="material-symbols-outlined text-on-surface-variant">
+                      vibration
+                    </span>
+                    {t("profile.vibration")}
+                  </span>
+                  <HapticsToggle />
+                </div>
+
                 {/* Friend privacy settings */}
                 <div className="border-t border-surface-container-low pt-xs">
                   <button
                     type="button"
-                    onClick={() => setShowFriendPrivacyModal(true)}
+                    onClick={() => {
+                      haptics.selection();
+                      setShowFriendPrivacyModal(true);
+                    }}
                     className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity"
                   >
                     <span className="flex items-center gap-sm">
@@ -512,7 +539,10 @@ export default function Profile() {
                 <div className="border-t border-surface-container-low pt-xs">
                   <button
                     type="button"
-                    onClick={() => setShowNotificationSettingsModal(true)}
+                    onClick={() => {
+                      haptics.selection();
+                      setShowNotificationSettingsModal(true);
+                    }}
                     className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity"
                   >
                     <span className="flex items-center gap-sm">
@@ -531,7 +561,10 @@ export default function Profile() {
                 <div className="border-t border-surface-container-low pt-xs">
                   <button
                     type="button"
-                    onClick={() => setShowChangePassword((prev) => !prev)}
+                    onClick={() => {
+                      haptics.selection();
+                      setShowChangePassword((prev) => !prev);
+                    }}
                     className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface"
                   >
                     <span className="flex items-center gap-sm">
@@ -551,7 +584,10 @@ export default function Profile() {
                 <div className="border-t border-surface-container-low pt-xs">
                   <button
                     type="button"
-                    onClick={() => setShowDeleteModal(true)}
+                    onClick={() => {
+                      haptics.warning();
+                      setShowDeleteModal(true);
+                    }}
                     className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-error transition-opacity hover:opacity-80"
                   >
                     <span className="flex items-center gap-sm">
@@ -595,13 +631,18 @@ function LanguageToggle() {
   const { language, toggleLanguage } = useLanguage();
   const isRu = language === "ru";
 
+  const handleToggle = () => {
+    haptics.selection();
+    toggleLanguage();
+  };
+
   return (
     <button
       type="button"
       role="switch"
       aria-checked={isRu}
       aria-label="Toggle language (English / Русский)"
-      onClick={toggleLanguage}
+      onClick={handleToggle}
       className="flex items-center gap-1 rounded-full bg-surface-container-highest p-1 text-label-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <span
@@ -631,13 +672,18 @@ function ThemeToggle() {
   const { t } = useLanguage();
   const isDark = theme === "dark";
 
+  const handleToggle = () => {
+    haptics.selection();
+    toggleTheme();
+  };
+
   return (
     <button
       type="button"
       role="switch"
       aria-checked={isDark}
       aria-label={t("profile.darkTheme")}
-      onClick={toggleTheme}
+      onClick={handleToggle}
       className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
         isDark ? "bg-primary" : "bg-surface-container-highest"
       }`}
@@ -651,6 +697,45 @@ function ThemeToggle() {
       >
         <span className="material-symbols-outlined text-[16px]">
           {isDark ? "dark_mode" : "light_mode"}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function HapticsToggle() {
+  const [enabled, setEnabled] = useState(() => isHapticsEnabled());
+  const { t } = useLanguage();
+
+  const handleToggle = () => {
+    const next = !enabled;
+    setEnabled(next);
+    setHapticsEnabled(next);
+    if (next) {
+      haptics.impact();
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={enabled}
+      aria-label={t("profile.vibration")}
+      onClick={handleToggle}
+      className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+        enabled ? "bg-primary" : "bg-surface-container-highest"
+      }`}
+    >
+      <span
+        className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
+          enabled
+            ? "translate-x-6 text-on-primary-container"
+            : "translate-x-0 text-on-surface-variant"
+        }`}
+      >
+        <span className="material-symbols-outlined text-[16px]">
+          {enabled ? "vibration" : "smartphone"}
         </span>
       </span>
     </button>

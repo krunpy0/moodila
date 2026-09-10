@@ -10,6 +10,7 @@ import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
+import { haptics } from "../utils/haptics";
 
 const weekdaysEn = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"];
 const weekdaysRu = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
@@ -96,6 +97,7 @@ export default function Calendar() {
 
   const navigateInspectorDate = (delta) => {
     if (!selectedDate) return;
+    haptics.selection();
     const [y, m, d] = selectedDate.split('-').map(Number);
     const currentDate = new Date(y, m - 1, d);
     const targetDate = addDays(currentDate, delta);
@@ -162,6 +164,7 @@ export default function Calendar() {
     const diffY = touchEnd.y - touchStart.y;
 
     if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+      haptics.selection();
       if (diffX < 0) {
         if (viewMode === "month") {
           setMonth((current) => addMonths(current, 1));
@@ -260,6 +263,7 @@ export default function Calendar() {
           <button
             type="button"
             onClick={() => {
+              haptics.selection();
               if (viewMode !== "week") {
                 const today = new Date();
                 if (month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear()) {
@@ -281,6 +285,7 @@ export default function Calendar() {
           <button
             type="button"
             onClick={() => {
+              haptics.selection();
               if (viewMode !== "month") {
                 setMonth(startOfMonth(weekStart));
                 setViewMode("month");
@@ -302,6 +307,7 @@ export default function Calendar() {
           type="button"
           aria-label={viewMode === "month" ? "Previous month" : "Previous week"}
           onClick={() => {
+            haptics.selection();
             if (viewMode === "month") {
               setMonth((current) => addMonths(current, -1));
             } else {
@@ -324,6 +330,7 @@ export default function Calendar() {
           type="button"
           aria-label={viewMode === "month" ? "Next month" : "Next week"}
           onClick={() => {
+            haptics.selection();
             if (viewMode === "month") {
               setMonth((current) => addMonths(current, 1));
             } else {
@@ -379,7 +386,10 @@ export default function Calendar() {
                       <button
                         key={dateKey}
                         type="button"
-                        onClick={() => setSelectedDate(dateKey)}
+                        onClick={() => {
+                          haptics.selection();
+                          setSelectedDate(dateKey);
+                        }}
                         aria-label={`${date.toLocaleDateString(dateLocale, {
                           month: "long",
                           day: "numeric",
@@ -436,6 +446,7 @@ export default function Calendar() {
                         key={dateKey}
                         type="button"
                         onClick={() => {
+                          haptics.selection();
                           setSelectedDate(dateKey);
                           setMobileInspectorOpen(true);
                         }}
@@ -452,6 +463,7 @@ export default function Calendar() {
                       key={dateKey}
                       type="button"
                       onClick={() => {
+                        haptics.selection();
                         setSelectedDate(dateKey);
                         setMobileInspectorOpen(true);
                       }}
@@ -770,6 +782,7 @@ export default function Calendar() {
                     key={dateKey}
                     type="button"
                     onClick={() => {
+                      haptics.selection();
                       setSelectedDate(dateKey);
                       setMobileInspectorOpen(true);
                     }}
@@ -789,6 +802,7 @@ export default function Calendar() {
                   key={dateKey}
                   type="button"
                   onClick={() => {
+                    haptics.selection();
                     setSelectedDate(dateKey);
                     setMobileInspectorOpen(true);
                   }}
@@ -928,7 +942,10 @@ export default function Calendar() {
                     <button
                       type="button"
                       aria-label={t('common.close')}
-                      onClick={() => setMobileInspectorOpen(false)}
+                      onClick={() => {
+                        haptics.selection();
+                        setMobileInspectorOpen(false);
+                      }}
                       className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant"
                     >
                       <span className="material-symbols-outlined">close</span>

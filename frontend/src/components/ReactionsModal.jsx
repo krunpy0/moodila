@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext'
 import ReactionIcon from './ReactionIcon'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
 import { ReactionsSkeleton } from './skeleton/PageSkeletons'
+import { haptics } from '../utils/haptics'
 
 export default function ReactionsModal({ entryId, isOpen, onClose }) {
   const { data: reactors = [], isLoading, isError } = useEntryReactionsQuery(entryId, isOpen)
@@ -57,7 +58,10 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              haptics.selection()
+              onClose()
+            }}
             aria-label={t('common.close')}
             className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
           >
@@ -70,7 +74,10 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
           <div className="flex items-center gap-xs px-lg py-xs overflow-x-auto border-b border-outline-variant/15 scrollbar-none">
             <button
               type="button"
-              onClick={() => setSelectedEmoji('ALL')}
+              onClick={() => {
+                haptics.selection()
+                setSelectedEmoji('ALL')
+              }}
               className={`flex items-center gap-xs rounded-full px-sm py-1 text-label-sm font-semibold transition-colors shrink-0 ${
                 selectedEmoji === 'ALL'
                   ? 'bg-primary text-on-primary'
@@ -84,7 +91,10 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
               <button
                 key={emoji}
                 type="button"
-                onClick={() => setSelectedEmoji(emoji)}
+                onClick={() => {
+                  haptics.selection()
+                  setSelectedEmoji(emoji)
+                }}
                 className={`flex items-center gap-xs rounded-full px-sm py-1 text-label-sm font-semibold transition-colors shrink-0 ${
                   selectedEmoji === emoji
                     ? 'bg-primary text-on-primary'

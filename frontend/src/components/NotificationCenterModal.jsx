@@ -12,6 +12,7 @@ import { getPushSubscriptionState, subscribeToPushNotifications, unsubscribeFrom
 import { NotificationSkeleton } from './skeleton/PageSkeletons'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
 import NotificationSettingsModal from './NotificationSettingsModal'
+import { haptics } from '../utils/haptics'
 
 function formatRelativeTime(dateString, t) {
   if (!dateString) return ''
@@ -77,10 +78,12 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   const unreadNewsCount = inboxAnnouncements.filter((a) => !a.is_read).length
 
   const handleMarkAllRead = () => {
+    haptics.success()
     markReadMutation.mutate([])
   }
 
   const handleNotificationClick = (item) => {
+    haptics.selection()
     if (!item.is_read) {
       markReadMutation.mutate([item.id])
     }
@@ -99,6 +102,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   }
 
   const handleAnnouncementClick = (item) => {
+    haptics.selection()
     if (!item.is_read) {
       markAnnouncementReadMutation.mutate(item.id)
     }
@@ -106,6 +110,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
 
   const handleAnnouncementCTA = (item, e) => {
     e.stopPropagation()
+    haptics.selection()
     if (!item.is_read) {
       markAnnouncementReadMutation.mutate(item.id)
     }
@@ -204,7 +209,10 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
             <button
               type="button"
               aria-label={t('notificationSettings.title', 'Settings')}
-              onClick={() => setShowSettingsModal(true)}
+              onClick={() => {
+                haptics.selection()
+                setShowSettingsModal(true)
+              }}
               className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]">tune</span>
@@ -212,7 +220,10 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
             <button
               type="button"
               aria-label={t('common.close', 'Close')}
-              onClick={onClose}
+              onClick={() => {
+                haptics.selection()
+                onClose()
+              }}
               className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]">close</span>
@@ -224,7 +235,10 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
         <div className="flex border-b border-outline-variant/30 px-lg pt-2 gap-4 bg-surface-container-lowest">
           <button
             type="button"
-            onClick={() => setActiveTab('notifications')}
+            onClick={() => {
+              haptics.selection()
+              setActiveTab('notifications')
+            }}
             className={`pb-3 text-label-large font-semibold transition-all relative flex items-center gap-1.5 ${
               activeTab === 'notifications'
                 ? 'text-primary border-b-2 border-primary'
@@ -240,7 +254,10 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('news')}
+            onClick={() => {
+              haptics.selection()
+              setActiveTab('news')
+            }}
             className={`pb-3 text-label-large font-semibold transition-all relative flex items-center gap-1.5 ${
               activeTab === 'news'
                 ? 'text-primary border-b-2 border-primary'

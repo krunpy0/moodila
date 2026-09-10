@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { apiURL } from '../api/client'
 import { notifyAudioPlaybackStarted, subscribeAudioPlaybackStart } from '../utils/audioManager'
+import { haptics } from '../utils/haptics'
 
 const WAVEFORM_HEIGHTS = [
   35, 60, 40, 75, 50, 90, 65, 40, 80, 100, 70, 45, 85, 95, 60, 40, 75, 50, 85, 90, 60, 40, 55, 35, 65, 80, 45, 30
@@ -69,6 +70,7 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
 
   const togglePlay = (e) => {
     if (e) e.stopPropagation()
+    haptics.selection()
     if (!audioRef.current) return
     if (isPlaying) {
       audioRef.current.pause()
@@ -82,6 +84,7 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
 
   const cycleSpeed = (e) => {
     if (e) e.stopPropagation()
+    haptics.selection()
     const nextSpeed = speed === 1 ? 1.5 : speed === 1.5 ? 2 : 1
     setSpeed(nextSpeed)
     if (audioRef.current) {
@@ -91,6 +94,7 @@ export default function VoiceNotePlayer({ audioUrl, blob, duration: initialDurat
 
   const handleSeek = (index, e) => {
     if (e) e.stopPropagation()
+    haptics.selection()
     if (!audioRef.current || !duration || isNaN(duration)) return
     const targetRatio = (index + 1) / WAVEFORM_HEIGHTS.length
     const targetTime = targetRatio * duration

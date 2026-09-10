@@ -4,6 +4,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { useModalKeyboard } from "../hooks/useModalKeyboard";
 import { useNotifications } from "./Notifications";
 import { FriendPrivacySkeleton } from "./skeleton/PageSkeletons";
+import { haptics } from "../utils/haptics";
 
 export default function FriendPrivacyModal({ isOpen, onClose }) {
   const { t } = useLanguage();
@@ -17,6 +18,7 @@ export default function FriendPrivacyModal({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   const handleToggle = (friend) => {
+    haptics.selection();
     const nextVal = !friend.hide_by_default;
     setVisibilityMutation.mutate(
       { friendId: friend.id, hideByDefault: nextVal },
@@ -25,6 +27,7 @@ export default function FriendPrivacyModal({ isOpen, onClose }) {
           notify(nextVal ? t('friendPrivacy.hidden') : t('friendPrivacy.visible'));
         },
         onError: (err) => {
+          haptics.error();
           notify(err.message || t('common.error'), 'error');
         },
       }
@@ -65,7 +68,10 @@ export default function FriendPrivacyModal({ isOpen, onClose }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              haptics.selection();
+              onClose();
+            }}
             aria-label={t('common.close')}
             className="flex h-11 w-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >

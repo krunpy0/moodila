@@ -15,6 +15,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { AddEntrySkeleton } from '../components/skeleton/PageSkeletons'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
 import { safeNavigateBack } from '../utils/navigation'
+import { haptics } from '../utils/haptics'
 
 export default function AddEntry() {
   const [params, setSearchParams] = useSearchParams()
@@ -55,12 +56,14 @@ export default function AddEntry() {
     event.target.value = ''
     if (!file) return
     if (!file.type.startsWith('image/')) {
+      haptics.error()
       const msg = t('addEntry.maxPhotoSize')
       setStatus(msg)
       notify(msg, 'error')
       return
     }
     if (file.size > 10 * 1024 * 1024) {
+      haptics.error()
       const msg = t('addEntry.maxPhotoSize')
       setStatus(msg)
       notify(msg, 'error')
@@ -73,7 +76,9 @@ export default function AddEntry() {
       setForm((current) => ({ ...current, photo_url: photoURL }))
       setStatus(t('addEntry.photoUploaded'))
       notify(t('addEntry.photoUploaded'))
+      haptics.success()
     } catch (error) {
+      haptics.error()
       setStatus(error.message)
       notify(error.message, 'error')
     } finally {
@@ -126,6 +131,7 @@ export default function AddEntry() {
   }
 
   const toggleFriendOverride = (friend) => {
+    haptics.selection()
     const currentHidden = isFriendHidden(friend)
     const nextHidden = !currentHidden
     setFriendOverridesMap((prev) => ({
@@ -135,17 +141,19 @@ export default function AddEntry() {
   }
 
   const resetFriendOverrides = () => {
+    haptics.selection()
     setFriendOverridesMap({})
   }
 
-
-  const toggleTag = (tag) =>
+  const toggleTag = (tag) => {
+    haptics.selection()
     setForm((current) => ({
       ...current,
       tags: current.tags.includes(tag)
         ? current.tags.filter((item) => item !== tag)
         : [...current.tags, tag],
     }))
+  }
 
   const getSupportedMimeType = () => {
     if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) return ''
@@ -164,11 +172,13 @@ export default function AddEntry() {
 
   const startRecording = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
+      haptics.error()
       notify('Microphone access is not supported in your browser.', 'error')
       return
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      haptics.recordStart()
       audioChunksRef.current = []
       const mimeType = getSupportedMimeType()
       const recorderOptions = mimeType ? { mimeType } : undefined
@@ -208,12 +218,14 @@ export default function AddEntry() {
         }
       }, 200)
     } catch (err) {
+      haptics.error()
       console.error('Microphone error:', err)
       notify('Could not access microphone.', 'error')
     }
   }
 
   const stopRecording = () => {
+    haptics.recordStop()
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()
     }
@@ -222,6 +234,7 @@ export default function AddEntry() {
   }
 
   const clearAudio = () => {
+    haptics.warning()
     setAudioBlob(null)
     setAudioDuration(null)
     setForm((current) => ({ ...current, audio_url: null, audio_duration: null }))
@@ -230,10 +243,12 @@ export default function AddEntry() {
   const submit = async (event) => {
     event.preventDefault()
     if (futureDate) {
+      haptics.error()
       notify('Future entries are not available.', 'error')
       return
     }
     if (!form.mood) {
+      haptics.error()
       const msg = t('addEntry.selectMood')
       setStatus(msg)
       notify(msg, 'error')
@@ -260,6 +275,7 @@ export default function AddEntry() {
         payload.audio_url = uploadedAudioUrl
         payload.audio_duration = audioDuration || 1
       } catch (err) {
+        haptics.error()
         setStatus(err.message)
         notify(err.message, 'error')
         return
@@ -269,15 +285,19 @@ export default function AddEntry() {
     setStatus(t('addEntry.savingEntry'))
     saveMutation.mutate(payload, {
       onSuccess: (saved) => {
+        haptics.success()
         notify(t('common.success'))
         navigate(`/calendar?month=${saved.date.slice(0, 7)}`, { replace: true })
       },
-      onError: (error) => setStatus(error.message),
+      onError: (error) => {
+        haptics.error()
+        setStatus(error.message)
+      },
     })
   }
 
-
   const removePhoto = async () => {
+    haptics.warning()
     const urlToRemove = form.photo_url
     setForm((current) => ({ ...current, photo_url: null }))
     if (urlToRemove) {
@@ -307,7 +327,10 @@ export default function AddEntry() {
             </h1>
             <button
               type="button"
-              onClick={() => setShowDatePicker(true)}
+              onClick={() => {
+                haptics.selection()
+                setShowDatePicker(true)
+              }}
               className="relative mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-surface-container px-3.5 py-1 text-label-sm font-label-sm text-on-surface-variant hover:bg-surface-container-high active:scale-[0.98] transition-colors duration-fast ease-out cursor-pointer group shadow-xs"
             >
               <span className="material-symbols-outlined text-[16px] text-primary">calendar_today</span>
@@ -337,7 +360,10 @@ export default function AddEntry() {
                   aria-label={`${moodInfo.label}`}
                   title={moodInfo.label}
                   aria-pressed={selected}
-                  onClick={() => setForm((current) => ({ ...current, mood: item.value }))}
+                  onClick={() => {
+                    haptics.impact()
+                    setForm((current) => ({ ...current, mood: item.value }))
+                  }}
                   className={`flex h-12 w-12 items-center justify-center rounded-full transition-[opacity,transform,box-shadow] duration-normal ease-out active:scale-95 ${item.bg} ${
                     selected ? 'ring-4 ring-primary/40 shadow-card' : 'opacity-80 hover:opacity-100 hover:-translate-y-0.5'
                   }`}
@@ -658,7 +684,10 @@ export default function AddEntry() {
         {entryQuery.data && (
           <button
             type="button"
-            onClick={() => setShowDeleteModal(true)}
+            onClick={() => {
+              haptics.warning()
+              setShowDeleteModal(true)
+            }}
             className="flex h-14 w-full items-center justify-center gap-xs rounded-full border border-error/30 bg-error-container/30 text-label-lg font-bold text-on-error-container hover:bg-error-container/50 transition-all duration-fast"
           >
             <span className="material-symbols-outlined text-[20px]">delete</span>
@@ -670,7 +699,10 @@ export default function AddEntry() {
           <div
             role="dialog"
             aria-modal="true"
-            onClick={() => setShowDeleteModal(false)}
+            onClick={() => {
+              haptics.selection()
+              setShowDeleteModal(false)
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-xs animate-in fade-in duration-fast"
           >
             <div
@@ -685,7 +717,10 @@ export default function AddEntry() {
               <div className="flex gap-sm pt-xs">
                 <button
                   type="button"
-                  onClick={() => setShowDeleteModal(false)}
+                  onClick={() => {
+                    haptics.selection()
+                    setShowDeleteModal(false)
+                  }}
                   className="flex-1 rounded-full bg-surface-container-high py-3 text-label-lg font-bold text-on-surface hover:bg-surface-container-highest transition-colors duration-fast"
                 >
                   {t('common.cancel')}
@@ -694,13 +729,16 @@ export default function AddEntry() {
                   type="button"
                   disabled={deleteMutation.isPending}
                   onClick={() => {
+                    haptics.warning()
                     const targetId = entryQuery.data?.id || date
                     deleteMutation.mutate(targetId, {
                       onSuccess: () => {
+                        haptics.success()
                         notify(t('common.success'))
                         navigate('/calendar', { replace: true })
                       },
                       onError: (err) => {
+                        haptics.error()
                         notify(err.message, 'error')
                         setShowDeleteModal(false)
                       },

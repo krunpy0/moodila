@@ -13,6 +13,7 @@ import { HomeSkeleton } from "../components/skeleton/PageSkeletons";
 import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
+import { haptics } from "../utils/haptics";
 
 export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), []);
@@ -174,6 +175,7 @@ export default function Home() {
                   </div>
                   <Link
                     to="/entries/new"
+                    onClick={() => haptics.impact()}
                     className="group flex w-full items-center justify-between rounded-full bg-[#EBA6B9] hover:bg-[#e499ad] dark:bg-primary-container dark:hover:bg-primary-container/90 p-2 pl-6 pr-2 shadow-card hover:shadow-floating transition-all duration-normal ease-out hover:-translate-y-0.5 active:scale-[0.99]"
                   >
                     <span className="text-body-md sm:text-body-lg font-bold text-[#351D28] dark:text-on-primary-container">
@@ -205,7 +207,13 @@ export default function Home() {
                           key={key}
                           to={isFuture ? "#" : `/entries/new?date=${key}`}
                           aria-disabled={isFuture}
-                          onClick={(event) => isFuture && event.preventDefault()}
+                          onClick={(event) => {
+                            if (isFuture) {
+                              event.preventDefault();
+                              return;
+                            }
+                            haptics.selection();
+                          }}
                           className={`flex min-w-12 lg:min-w-16 flex-1 flex-col items-center gap-xs lg:gap-sm transition-transform duration-fast ease-out hover:-translate-y-0.5 ${isFuture ? "opacity-40" : ""}`}
                         >
                           <span
@@ -242,6 +250,7 @@ export default function Home() {
                   {/* Prominent Stats Button */}
                   <Link
                     to="/stats"
+                    onClick={() => haptics.selection()}
                     className="flex items-center justify-between gap-md rounded-lg lg:rounded-xl bg-primary text-on-primary p-md lg:p-5 shadow-card hover:shadow-floating transition-all duration-normal hover:scale-[1.01] active:scale-[0.98] group"
                   >
                     <div className="flex items-center gap-sm lg:gap-md">

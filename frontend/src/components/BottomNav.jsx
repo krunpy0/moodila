@@ -1,6 +1,7 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { Link, useLocation } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
+import { haptics } from '../utils/haptics'
 
 const items = [
   ['/home', 'home', 'nav.home'],
@@ -31,7 +32,20 @@ export default function BottomNav() {
         }`
 
         return to ? (
-          <Link key={labelKey} to={to} aria-label={label} title={label} className={classes}>
+          <Link
+            key={labelKey}
+            to={to}
+            aria-label={label}
+            title={label}
+            className={classes}
+            onClick={() => {
+              if (icon === 'add') {
+                haptics.impact()
+              } else {
+                haptics.selection()
+              }
+            }}
+          >
             <span
               className="material-symbols-outlined"
               style={active ? { fontVariationSettings: "'FILL' 1" } : undefined}

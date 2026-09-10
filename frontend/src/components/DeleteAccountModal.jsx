@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { requestAccountDeletion } from "../api/auth";
 import { useLanguage } from "../context/LanguageContext";
 import { useModalKeyboard } from "../hooks/useModalKeyboard";
+import { haptics } from "../utils/haptics";
 
 export default function DeleteAccountModal({ isOpen, onClose }) {
   const { t } = useLanguage();
@@ -13,6 +14,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
   const modalRef = useRef(null);
 
   const handleClose = () => {
+    haptics.selection();
     setPassword("");
     setError("");
     setSuccessMessage("");
@@ -30,6 +32,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
     setSuccessMessage("");
 
     if (!password) {
+      haptics.error();
       setError(t('deleteAccountModal.passwordConfirm'));
       return;
     }
@@ -37,8 +40,10 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
     setIsPending(true);
     try {
       const response = await requestAccountDeletion(password);
+      haptics.warning();
       setSuccessMessage(response.message || t('common.success'));
     } catch (err) {
+      haptics.error();
       setError(err.message || t('common.error'));
     } finally {
       setIsPending(false);

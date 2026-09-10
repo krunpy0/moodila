@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 import { getLocalDate } from '../api/client'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
+import { haptics } from '../utils/haptics'
 
 export default function DatePickerModal({ isOpen, onClose, selectedDate, onSelectDate, maxDate = getLocalDate() }) {
   const { t, language } = useLanguage()
@@ -31,6 +32,7 @@ export default function DatePickerModal({ isOpen, onClose, selectedDate, onSelec
   const firstDayOfWeek = firstDayRaw === 0 ? 6 : firstDayRaw - 1
 
   const handlePrevMonth = () => {
+    haptics.selection()
     if (viewMonth === 0) {
       setViewMonth(11)
       setViewYear((y) => y - 1)
@@ -44,6 +46,7 @@ export default function DatePickerModal({ isOpen, onClose, selectedDate, onSelec
     const isCurrentOrFutureMonth = viewYear > today.getFullYear() || (viewYear === today.getFullYear() && viewMonth >= today.getMonth())
     if (isCurrentOrFutureMonth) return
 
+    haptics.selection()
     if (viewMonth === 11) {
       setViewMonth(0)
       setViewYear((y) => y + 1)
@@ -67,6 +70,7 @@ export default function DatePickerModal({ isOpen, onClose, selectedDate, onSelec
     const dateStr = `${viewYear}-${mStr}-${dStr}`
 
     if (dateStr <= maxDate) {
+      haptics.selection()
       onSelectDate(dateStr)
       onClose()
     }
@@ -75,6 +79,7 @@ export default function DatePickerModal({ isOpen, onClose, selectedDate, onSelec
   const handleTodayClick = () => {
     const today = getLocalDate()
     if (today <= maxDate) {
+      haptics.selection()
       onSelectDate(today)
       onClose()
     }

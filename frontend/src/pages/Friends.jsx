@@ -9,6 +9,7 @@ import { FriendsSkeleton, FriendRowSkeleton } from '../components/skeleton/PageS
 import { useLanguage } from '../context/LanguageContext'
 import { useDebounce } from '../hooks/useDebounce'
 import { safeNavigateBack } from '../utils/navigation'
+import { haptics } from '../utils/haptics'
 
 export default function Friends() {
   const [query, setQuery] = useState('')
@@ -32,32 +33,53 @@ export default function Friends() {
   const error = friendsQuery.error || pendingQuery.error
 
   const handleSend = (userId) => {
+    haptics.impact()
     sendRequest.mutate(userId, {
-      onError: (err) => notify(err.message, 'error'),
+      onSuccess: () => haptics.success(),
+      onError: (err) => {
+        haptics.error()
+        notify(err.message, 'error')
+      },
     })
   }
 
   const handleCancel = (userId) => {
+    haptics.warning()
     cancelRequest.mutate(userId, {
-      onError: (err) => notify(err.message, 'error'),
+      onError: (err) => {
+        haptics.error()
+        notify(err.message, 'error')
+      },
     })
   }
 
   const handleUnfriend = (userId) => {
+    haptics.warning()
     unfriend.mutate(userId, {
-      onError: (err) => notify(err.message, 'error'),
+      onError: (err) => {
+        haptics.error()
+        notify(err.message, 'error')
+      },
     })
   }
 
   const handleDecline = (friendshipId) => {
+    haptics.warning()
     declineRequest.mutate(friendshipId, {
-      onError: (err) => notify(err.message, 'error'),
+      onError: (err) => {
+        haptics.error()
+        notify(err.message, 'error')
+      },
     })
   }
 
   const handleAccept = (friendshipId) => {
+    haptics.success()
     acceptRequest.mutate(friendshipId, {
-      onError: (err) => notify(err.message, 'error'),
+      onError: (err) => {
+        haptics.error()
+        notify(err.message, 'error')
+      },
     })
   }
 

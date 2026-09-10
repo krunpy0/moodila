@@ -23,6 +23,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { getLocalDate } from "../api/client";
 import ReactionsModal from "../components/ReactionsModal";
 import ReactionIcon from "../components/ReactionIcon";
+import { haptics } from "../utils/haptics";
 
 const emojiReactions = ["❤️", "👏", "💡", "😁", "🔥"];
 
@@ -49,6 +50,7 @@ export default function Feed() {
   const friends = friendsQuery.data || [];
 
   const handleToggleIncludeSelf = () => {
+    haptics.selection();
     setIncludeSelf((prev) => {
       const next = !prev;
       try {
@@ -127,10 +129,14 @@ export default function Feed() {
   }, [hasNextPage]);
 
   const handleReact = (entryId, reaction) => {
+    haptics.impact();
     likeMutation.mutate(
       { entryId, reaction },
       {
-        onError: (err) => notify(err.message, "error"),
+        onError: (err) => {
+          haptics.error();
+          notify(err.message, "error");
+        },
       },
     );
   };
@@ -555,6 +561,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                 key={reac}
                 type="button"
                 onClick={() => {
+                  haptics.impact();
                   onReact(entry.id, reac);
                   setEmojiPickerOpen(false);
                 }}
@@ -585,7 +592,10 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
           ) : (
             <button
               type="button"
-              onClick={() => onReact(entry.id, "❤️")}
+              onClick={() => {
+                haptics.impact();
+                onReact(entry.id, "❤️");
+              }}
               aria-label="Add reaction"
               className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-all hover:bg-surface-container active:scale-95"
             >
@@ -596,7 +606,10 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
 
           <button
             type="button"
-            onClick={() => setEmojiPickerOpen((prev) => !prev)}
+            onClick={() => {
+              haptics.selection();
+              setEmojiPickerOpen((prev) => !prev);
+            }}
             aria-label={t("reactions.title")}
             className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container"
             title={t("reactions.title")}
@@ -609,7 +622,10 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
           {totalCount > 0 && (
             <button
               type="button"
-              onClick={() => setReactionsModalOpen(true)}
+              onClick={() => {
+                haptics.selection();
+                setReactionsModalOpen(true);
+              }}
               className="flex items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors px-xs py-0.5 rounded-full hover:bg-surface-container-low"
               title={t("reactions.longPressHint")}
             >
@@ -622,7 +638,10 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
 
         <button
           type="button"
-          onClick={() => setShowComments((prev) => !prev)}
+          onClick={() => {
+            haptics.selection();
+            setShowComments((prev) => !prev);
+          }}
           className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container shrink-0"
         >
           <span className="material-symbols-outlined text-[19px]">
@@ -651,6 +670,7 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
     isLongPressRef.current = false;
     timerRef.current = setTimeout(() => {
       isLongPressRef.current = true;
+      haptics.heavy();
       if (onLongPress) onLongPress();
     }, 450);
   };
@@ -658,6 +678,7 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
   const handleEnd = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!isLongPressRef.current) {
+      haptics.impact();
       onToggle();
     }
   };
@@ -709,18 +730,28 @@ function CommentsSection({ entryId, postAuthorId }) {
     addMutation.mutate(
       { entryId, text: trimmed },
       {
-        onSuccess: () => setCommentText(""),
-        onError: (err) => notify(err.message, "error"),
+        onSuccess: () => {
+          haptics.success();
+          setCommentText("");
+        },
+        onError: (err) => {
+          haptics.error();
+          notify(err.message, "error");
+        },
       },
     );
   };
 
   const handleDelete = (commentId) => {
     if (!deleteMutation.isPending) {
+      haptics.warning();
       deleteMutation.mutate(
         { commentId, entryId },
         {
-          onError: (err) => notify(err.message, "error"),
+          onError: (err) => {
+            haptics.error();
+            notify(err.message, "error");
+          },
         },
       );
     }
