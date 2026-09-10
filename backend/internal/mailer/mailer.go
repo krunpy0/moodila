@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -46,6 +47,11 @@ func (m Mailer) SendPasswordResetEmail(toEmail string, resetURL string, ttlMinut
 	}
 
 	subject := "Reset your password — Moodila"
+	logoURL := "https://moodila.app/favicon.png"
+	if u, err := url.Parse(resetURL); err == nil && u.Scheme != "" && u.Host != "" {
+		logoURL = fmt.Sprintf("%s://%s/favicon.png", u.Scheme, u.Host)
+	}
+
 	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
 <html>
 <head>
@@ -57,8 +63,8 @@ func (m Mailer) SendPasswordResetEmail(toEmail string, resetURL string, ttlMinut
   <table width="100%%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 32px;">
     <tr>
       <td align="center" style="padding-bottom: 24px;">
-        <div style="width: 56px; height: 56px; border-radius: 50%%; background-color: #fce4ec; display: inline-block; line-height: 56px; font-size: 28px;">
-          🌸
+        <div style="width: 56px; height: 56px; border-radius: 16px; overflow: hidden; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.06); background-color: #fce4ec;">
+          <img src="%s" width="56" height="56" alt="Moodila" style="display: block; width: 56px; height: 56px; border-radius: 16px; object-fit: cover;" />
         </div>
         <h1 style="margin: 16px 0 8px 0; font-size: 24px; font-weight: 700; color: #1b1c1c;">Moodila</h1>
         <p style="margin: 0; font-size: 14px; color: #4d4447;">Password Reset Request</p>
@@ -88,7 +94,7 @@ func (m Mailer) SendPasswordResetEmail(toEmail string, resetURL string, ttlMinut
     </tr>
   </table>
 </body>
-</html>`, resetURL, ttlMinutes, resetURL, resetURL)
+</html>`, logoURL, resetURL, ttlMinutes, resetURL, resetURL)
 
 	reqData := resendRequest{
 		From:    m.FromEmail,

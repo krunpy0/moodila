@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useSessionQuery } from '../api/queries'
 import Landing from './Landing'
+import AppLogo from '../components/AppLogo'
 
 export default function RootRoute() {
   const { data, isLoading, isError } = useSessionQuery(true)
@@ -22,9 +23,7 @@ export default function RootRoute() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center text-on-surface-variant gap-md">
-        <div className="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-[30px] animate-pulse">
-          <span>🌸</span>
-        </div>
+        <AppLogo className="w-16 h-16 rounded-2xl shadow-card animate-pulse" />
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       </div>
     )

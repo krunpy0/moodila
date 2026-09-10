@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { login, register } from "../api/auth";
 import { queryKeys, useSessionQuery } from "../api/queries";
 import { useLanguage } from "../context/LanguageContext";
+import AppLogo from "../components/AppLogo";
 
 export default function Auth() {
   const [mode, setMode] = useState("login");
@@ -59,9 +60,7 @@ export default function Auth() {
         {/* Left Side Branding Card (Desktop) */}
         <div className="hidden lg:flex flex-col justify-between p-10 bg-primary-container/30 border-r border-outline-variant/15 select-none">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-primary-container flex items-center justify-center text-[28px] shadow-xs">
-              <span>🌸</span>
-            </div>
+            <AppLogo className="w-12 h-12 rounded-2xl shadow-xs shrink-0" />
             <div>
               <h1 className="text-headline-lg font-bold text-on-surface">
                 Moodila
@@ -90,9 +89,7 @@ export default function Auth() {
         {/* Right Side Auth Form */}
         <div className="p-6 lg:p-10 flex flex-col justify-center">
           <div className="mb-lg text-center lg:hidden">
-            <div className="mx-auto mb-md w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-[30px]">
-              <span aria-hidden="true">🌸</span>
-            </div>
+            <AppLogo className="mx-auto mb-md w-16 h-16 rounded-2xl shadow-xs" />
             <h1
               id="auth-title"
               className="text-headline-xl font-headline-xl text-on-surface"

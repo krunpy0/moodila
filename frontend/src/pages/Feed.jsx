@@ -24,6 +24,7 @@ import { getLocalDate } from "../api/client";
 import ReactionsModal from "../components/ReactionsModal";
 import ReactionIcon from "../components/ReactionIcon";
 import { haptics } from "../utils/haptics";
+import { useSafeTap } from "../hooks/useSafeTap";
 
 const emojiReactions = ["❤️", "👏", "💡", "😁", "🔥"];
 
@@ -634,69 +635,28 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
               />
             ))
           ) : (
-            <button
-              type="button"
-              onClick={() => {
-                haptics.impact();
-                onReact(entry.id, "❤️");
-              }}
-              aria-label="Add reaction"
-              className="flex shrink-0 items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-            >
-              <ReactionIcon reaction="❤️" className="text-[18px]" />
-              <span>0</span>
-            </button>
+            <ZeroReactionButton onReact={() => onReact(entry.id, "❤️")} />
           )}
 
-          <button
-            type="button"
-            onClick={() => {
-              haptics.selection();
-              setEmojiPickerOpen((prev) => !prev);
-            }}
-            aria-label={t("reactions.title")}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors duration-fast hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+          <AddReactionButton
+            onClick={() => setEmojiPickerOpen((prev) => !prev)}
             title={t("reactions.title")}
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              add_reaction
-            </span>
-          </button>
+          />
 
           {totalCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                haptics.selection();
-                setReactionsModalOpen(true);
-              }}
-              className="flex shrink-0 items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors duration-fast px-xs py-0.5 rounded-full hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+            <ViewReactionsButton
+              onClick={() => setReactionsModalOpen(true)}
               title={t("reactions.longPressHint")}
-            >
-              <span className="material-symbols-outlined text-[16px]">
-                group
-              </span>
-            </button>
+            />
           )}
         </div>
 
-        <button
-          type="button"
-          aria-expanded={showComments}
-          aria-label={t("feed.commentsCount", { count: entry.comment_count || 0 })}
-          onClick={() => {
-            haptics.selection();
-            setShowComments((prev) => !prev);
-          }}
-          className="flex shrink-0 items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
-        >
-          <span className="material-symbols-outlined text-[19px]">
-            chat_bubble
-          </span>
-          <span>
-            {t("feed.commentsCount", { count: entry.comment_count || 0 })}
-          </span>
-        </button>
+        <CommentsToggleButton
+          showComments={showComments}
+          count={t("feed.commentsCount", { count: entry.comment_count || 0 })}
+          onToggle={() => setShowComments((prev) => !prev)}
+          label={t("feed.commentsCount", { count: entry.comment_count || 0 })}
+        />
       </div>
 
       <ReactionsModal
@@ -708,46 +668,113 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
   );
 }
 
-function ReactionChip({ reactionItem, onToggle, onLongPress }) {
-  const timerRef = useRef(null);
-  const isLongPressRef = useRef(false);
-  const { t } = useLanguage();
-
-  const handleStart = () => {
-    isLongPressRef.current = false;
-    timerRef.current = setTimeout(() => {
-      isLongPressRef.current = true;
-      haptics.heavy();
-      if (onLongPress) onLongPress();
-    }, 450);
-  };
-
-  const handleEnd = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (!isLongPressRef.current) {
-      haptics.impact();
-      onToggle();
-    }
-  };
-
-  const handleCancel = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  };
+function ZeroReactionButton({ onReact }) {
+  const tapProps = useSafeTap({
+    onTap: onReact,
+  });
 
   return (
     <button
       type="button"
-      onMouseDown={handleStart}
-      onMouseUp={handleEnd}
-      onMouseLeave={handleCancel}
-      onTouchStart={handleStart}
-      onTouchEnd={(e) => {
-        e.preventDefault();
-        handleEnd();
-      }}
-      onTouchMove={handleCancel}
+      {...tapProps}
+      aria-label="Add reaction"
+      className="flex shrink-0 items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container active:scale-95 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+    >
+      <ReactionIcon reaction="❤️" className="text-[18px]" />
+      <span>0</span>
+    </button>
+  );
+}
+
+function AddReactionButton({ onClick, title }) {
+  const tapProps = useSafeTap({
+    onTap: () => {
+      haptics.selection();
+      onClick();
+    },
+  });
+
+  return (
+    <button
+      type="button"
+      {...tapProps}
+      aria-label={title}
+      title={title}
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors duration-fast hover:bg-surface-container active:scale-95 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+    >
+      <span className="material-symbols-outlined text-[18px]">
+        add_reaction
+      </span>
+    </button>
+  );
+}
+
+function ViewReactionsButton({ onClick, title }) {
+  const tapProps = useSafeTap({
+    onTap: () => {
+      haptics.selection();
+      onClick();
+    },
+  });
+
+  return (
+    <button
+      type="button"
+      {...tapProps}
+      className="flex shrink-0 items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors duration-fast px-xs py-0.5 rounded-full hover:bg-surface-container-low active:scale-95 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+      title={title}
+    >
+      <span className="material-symbols-outlined text-[16px]">
+        group
+      </span>
+    </button>
+  );
+}
+
+function CommentsToggleButton({ showComments, count, onToggle, label }) {
+  const tapProps = useSafeTap({
+    onTap: () => {
+      haptics.selection();
+      onToggle();
+    },
+  });
+
+  return (
+    <button
+      type="button"
+      {...tapProps}
+      aria-expanded={showComments}
+      aria-label={label}
+      className="flex shrink-0 items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container active:scale-95 ml-auto select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
+    >
+      <span className="material-symbols-outlined text-[19px]">
+        chat_bubble
+      </span>
+      <span>{count}</span>
+    </button>
+  );
+}
+
+function ReactionChip({ reactionItem, onToggle, onLongPress }) {
+  const { t } = useLanguage();
+
+  const tapProps = useSafeTap({
+    onTap: onToggle,
+    onLongPress: onLongPress
+      ? () => {
+          haptics.heavy();
+          onLongPress();
+        }
+      : undefined,
+    longPressDelay: 450,
+  });
+
+  return (
+    <button
+      type="button"
+      {...tapProps}
       title={t("reactions.longPressHint")}
-      className={`flex shrink-0 items-center gap-xs rounded-full px-sm py-xs text-label-sm transition-[background-color,transform,color] duration-fast active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+      className={`flex shrink-0 items-center gap-xs rounded-full px-sm py-xs text-label-sm transition-[background-color,transform,color] duration-fast active:scale-95 cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
         reactionItem.reacted_by_me
           ? "bg-primary-container text-on-primary-container font-semibold ring-1 ring-primary/30 shadow-xs"
           : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"

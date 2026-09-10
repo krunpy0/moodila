@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import AppLogo from "../components/AppLogo";
 
 // Mood definitions matching utils/moods.js 1:1
 const APP_MOODS = {
@@ -295,11 +296,9 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link
             to="/landing"
-            className="flex items-center gap-xs text-headline-lg font-bold text-on-surface hover:opacity-90 transition-opacity"
+            className="flex items-center gap-2 text-headline-lg font-bold text-on-surface hover:opacity-90 transition-opacity"
           >
-            <span className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-xl cloud-shadow transition-transform hover:scale-105">
-              🌸
-            </span>
+            <AppLogo className="w-10 h-10 rounded-2xl cloud-shadow transition-transform hover:scale-105" />
             <span className="tracking-tight">Moodila</span>
           </Link>
 
@@ -1087,8 +1086,9 @@ export default function Landing() {
 
                   <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
                     <div className="relative z-10 flex max-w-full flex-col items-start gap-md">
-                      <h2 className="text-headline-lg font-headline-lg text-on-primary-container font-bold">
-                        Good evening, Alex 🌸
+                      <h2 className="text-headline-lg font-headline-lg text-on-primary-container font-bold flex items-center gap-2">
+                        <span>Good evening, Alex</span>
+                        <AppLogo className="w-7 h-7 rounded-lg shadow-xs" />
                       </h2>
                       <div className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md">
                         Journal today
@@ -1727,9 +1727,7 @@ export default function Landing() {
       <section className="px-container-margin py-20 bg-gradient-to-r from-primary-container/50 via-secondary-container/50 to-tertiary-container/50 text-center relative overflow-hidden">
         <ScrollReveal animation="scale-up">
           <div className="max-w-3xl mx-auto relative z-10">
-            <span className="text-4xl mb-sm block animate-bounce duration-1000">
-              🌸
-            </span>
+            <AppLogo className="w-16 h-16 mx-auto mb-sm rounded-2xl shadow-card animate-bounce duration-1000 block" />
             <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
               Ready for a calm, mindful routine?
             </h2>
@@ -1753,10 +1751,8 @@ export default function Landing() {
       <footer className="px-container-margin py-lg border-t border-outline-variant/20 bg-background text-on-surface-variant text-body-sm">
         <ScrollReveal animation="fade-up">
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-md">
-            <div className="flex items-center gap-xs font-bold text-on-surface">
-              <span className="w-6 h-6 rounded-full bg-primary-container flex items-center justify-center text-xs">
-                🌸
-              </span>
+            <div className="flex items-center gap-2 font-bold text-on-surface">
+              <AppLogo className="w-6 h-6 rounded-md" />
               <span>Moodila</span>
             </div>
 

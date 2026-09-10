@@ -6,6 +6,7 @@ import { queryKeys, useProfileQuery } from "../api/queries";
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
 import HeaderBell from "./HeaderBell";
+import AppLogo from "./AppLogo";
 
 const navItems = [
   ["/home", "home", "nav.home"],
@@ -54,9 +55,7 @@ export default function DesktopSidebar() {
             to="/home"
             className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl p-1"
           >
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-container text-on-primary-container shadow-xs transition-transform duration-fast group-hover:-translate-y-0.5">
-              <span className="text-xl" aria-hidden="true">🌸</span>
-            </div>
+            <AppLogo className="h-11 w-11 rounded-2xl shadow-xs transition-transform duration-fast group-hover:-translate-y-0.5 shrink-0" />
             <div>
               <span className="text-headline-lg font-bold text-on-surface tracking-tight block leading-tight">
                 Moodila
