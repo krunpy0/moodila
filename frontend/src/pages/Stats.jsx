@@ -1,4 +1,4 @@
-/* Hallmark · designed-as-app · design-system: DESIGN.md */
+/* Hallmark · macrostructure: Stat-Led · tone: soft-editorial · design-system: DESIGN.md */
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStatsQuery } from "../api/queries";
@@ -27,25 +27,28 @@ export default function Stats() {
   const highestTag = stats?.highest_tag;
   const lowestTag = stats?.lowest_tag;
 
+  const heroMoodLevel = stats?.overall_avg_mood ? Math.round(stats.overall_avg_mood) : 3;
+  const heroMoodInfo = getMoodInfo(heroMoodLevel, t);
+
   return (
     <AppLayout>
-      <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl bg-background pb-32 lg:pb-12 text-on-surface px-0 lg:px-6 py-0 lg:py-6">
+      <main className="mx-auto min-h-screen w-full max-w-md md:max-w-2xl lg:max-w-5xl xl:max-w-6xl bg-background pb-32 lg:pb-12 text-on-surface px-container-margin-mobile md:px-container-margin py-xs md:py-sm">
         {/* Header */}
-        <header className="px-container-margin py-md flex items-center justify-between">
+        <header className="py-md flex items-center justify-between">
           <div className="flex items-center gap-sm">
             <button
               type="button"
               onClick={() => safeNavigateBack(navigate, "/home")}
               aria-label={t("common.back")}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant shadow-card border border-outline-variant/20 active:scale-95 transition-transform"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant shadow-subtle border border-outline-variant/25 active:scale-95 transition-transform"
             >
               <span className="material-symbols-outlined text-[20px]">arrow_back</span>
             </button>
             <div>
-              <h1 className="text-headline-lg font-headline-lg lg:text-3xl font-bold">
+              <h1 className="text-headline-lg font-headline-lg lg:text-3xl font-bold tracking-tight">
                 {t("stats.title")}
               </h1>
-              <p className="text-label-sm font-label-sm text-on-surface-variant/70">
+              <p className="text-label-sm font-label-sm text-on-surface-variant">
                 {t("stats.subtitle")}
               </p>
             </div>
@@ -55,63 +58,57 @@ export default function Stats() {
         {isLoading ? (
           <StatsSkeleton />
         ) : isError ? (
-          <div className="px-container-margin py-8 text-center text-error">
+          <div className="py-8 text-center text-error">
             {error?.message || t("common.error")}
           </div>
         ) : (
-          <div className="px-container-margin space-y-lg">
-            {/* Algorithmic Personalized Insights Carousel/List */}
-            {insights.length > 0 && (
-              <section className="space-y-sm">
-                <h2 className="text-label-lg font-bold text-on-surface-variant flex items-center gap-1.5 uppercase">
-                  <span className="material-symbols-outlined text-[18px] text-primary">psychology</span>
-                  {t("stats.insightsTitle")}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
-                  {insights.map((insight, idx) => (
-                    <div
-                      key={insight.id || idx}
-                      className="flex items-start gap-md rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-md shadow-card"
-                    >
-                      <span className="material-symbols-outlined text-[24px] text-primary shrink-0 mt-0.5">
-                        {insight.type === "positive" ? "trending_up" : insight.type === "negative" ? "trending_down" : "lightbulb"}
-                      </span>
+          <div className="space-y-lg">
+            {/* Editorial Hero Summary & Dynamics Chart */}
+            <section className="rounded-2xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 lg:p-8 shadow-card space-y-md">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-md">
+                <div className="flex items-center gap-md">
+                  {stats?.overall_avg_mood ? (
+                    <>
+                      <div className={`flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl ${heroMoodInfo.bg}`}>
+                        <MoodIcon mood={heroMoodLevel} className="text-[28px]" />
+                      </div>
                       <div>
-                        <p className="text-body-md font-medium text-on-surface leading-snug">
-                          {getLocalizedInsightText(insight, t)}
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-display-md font-bold tracking-tight text-on-surface tabular-nums">
+                            {Number(stats.overall_avg_mood).toFixed(1)}
+                          </span>
+                          <span className="text-body-md font-semibold text-on-surface-variant">/ 5</span>
+                          <span className={`text-label-md font-bold px-2.5 py-0.5 rounded-full ${heroMoodInfo.bg} ${heroMoodInfo.onContainer}`}>
+                            {heroMoodInfo.label}
+                          </span>
+                        </div>
+                        <p className="text-label-sm font-medium text-on-surface-variant tabular-nums mt-0.5">
+                          {t("stats.avgMood")} • {stats.total_entries} {t("stats.entriesCount")}
                         </p>
                       </div>
+                    </>
+                  ) : (
+                    <div>
+                      <h2 className="text-headline-sm font-bold text-on-surface">
+                        {t("stats.moodDynamics")}
+                      </h2>
+                      <p className="text-label-sm text-on-surface-variant">
+                        {t("stats.noStatsData")}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Line Chart & Period Switcher */}
-            <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-sm">
-                <div>
-                  <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">show_chart</span>
-                    {t("stats.moodDynamics")}
-                  </h2>
-                  {stats?.overall_avg_mood && (
-                    <p className="text-label-sm text-on-surface-variant/70 mt-0.5 tabular-nums">
-                      {t("stats.avgMood")}: <strong className="text-primary font-bold">{stats.overall_avg_mood} / 5</strong> ({stats.total_entries} {t("stats.entriesCount")})
-                    </p>
                   )}
                 </div>
 
                 {/* Period Switcher */}
-                <div className="flex rounded-full bg-surface-container-low p-1 self-start sm:self-auto">
+                <div className="flex rounded-full bg-surface-container-low p-1 self-start sm:self-auto border border-outline-variant/15">
                   {["week", "month", "year"].map((p) => (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setPeriod(p)}
-                      className={`px-md py-1.5 text-label-md font-label-md rounded-full transition-all ${
+                      className={`px-3.5 py-1.5 text-label-md font-semibold rounded-full transition-colors ${
                         period === p
-                          ? "bg-surface-container-lowest text-on-surface font-bold cloud-shadow"
+                          ? "bg-surface-container-lowest text-on-surface font-bold shadow-subtle"
                           : "text-on-surface-variant hover:text-on-surface"
                       }`}
                     >
@@ -121,19 +118,60 @@ export default function Stats() {
                 </div>
               </div>
 
-              {/* Mood Line Chart SVG */}
-              <div className="pt-sm">
-                <MoodLineChart series={moodSeries} period={period} language={language} />
+              {/* Mood Line Chart SVG (Tactile stroke, labeled Y-axis, clean intervals) */}
+              <div className="pt-xs">
+                <MoodLineChart series={moodSeries} />
               </div>
             </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-md lg:gap-8">
+            {/* Observations & Patterns List */}
+            {insights.length > 0 && (
+              <section className="space-y-sm">
+                <div className="flex items-center gap-1.5 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[18px] text-primary">psychology</span>
+                  <h2 className="text-label-lg font-bold tracking-wider uppercase">
+                    {t("stats.insightsTitle")}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
+                  {insights.map((insight, idx) => {
+                    const isPositive = insight.type === "positive" || String(insight.template_key).includes("higher");
+                    const isNegative = insight.type === "negative" || String(insight.template_key).includes("lower");
+                    const iconName = isPositive ? "trending_up" : isNegative ? "trending_down" : "auto_awesome";
+                    const badgeClass = isPositive
+                      ? "text-mood-rad bg-mood-rad-container"
+                      : isNegative
+                      ? "text-mood-bad bg-mood-bad-container"
+                      : "text-primary bg-primary-container";
+
+                    return (
+                      <div
+                        key={insight.id || idx}
+                        className="flex items-start gap-md rounded-xl bg-surface-container-low border border-outline-variant/15 p-md shadow-subtle"
+                      >
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badgeClass} mt-0.5`}>
+                          <span className="material-symbols-outlined text-[18px]">{iconName}</span>
+                        </span>
+                        <p className="text-body-md font-medium text-on-surface leading-snug">
+                          {getLocalizedInsightText(insight, t)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Mood Balance & Weekly Rhythm Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-md lg:gap-6">
               {/* Mood Distribution */}
-              <section className="lg:col-span-6 rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
-                <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">pie_chart</span>
-                  {t("stats.moodDistribution")}
-                </h2>
+              <section className="lg:col-span-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[20px]">pie_chart</span>
+                  <h2 className="text-headline-sm font-bold text-on-surface">
+                    {t("stats.moodDistribution")}
+                  </h2>
+                </div>
                 <div className="space-y-sm pt-xs">
                   {[5, 4, 3, 2, 1].map((level) => {
                     const dist = moodDistribution.find((d) => d.mood === level) || {
@@ -150,15 +188,15 @@ export default function Stats() {
                     };
                     return (
                       <div key={level} className="flex items-center gap-sm">
-                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${moodInfo.bg}`}>
-                          <MoodIcon mood={level} className="text-[20px]" />
+                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${moodInfo.bg}`}>
+                          <MoodIcon mood={level} className="text-[18px]" />
                         </span>
-                        <div className="min-w-24 text-body-sm font-medium text-on-surface truncate">
+                        <div className="w-20 text-body-sm font-medium text-on-surface truncate">
                           {moodInfo.label}
                         </div>
                         <div className="flex-1 h-3 rounded-full bg-surface-container-low overflow-hidden">
                           <div
-                            className={`h-full w-full rounded-full ${moodBarColors[level] || "bg-primary"} origin-left transition-transform duration-500 ease-out`}
+                            className={`h-full w-full rounded-full ${moodBarColors[level] || "bg-primary"} origin-left transition-transform duration-300 ease-out`}
                             style={{ transform: `scaleX(${dist.percentage / 100})` }}
                           />
                         </div>
@@ -172,57 +210,67 @@ export default function Stats() {
               </section>
 
               {/* Day-of-Week Pattern */}
-              <section className="lg:col-span-6 rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
-                <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">calendar_view_week</span>
-                  {t("stats.dayOfWeekPattern")}
-                </h2>
-                <DayOfWeekBarChart data={dayOfWeekAverages} language={language} />
+              <section className="lg:col-span-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[20px]">calendar_view_week</span>
+                  <h2 className="text-headline-sm font-bold text-on-surface">
+                    {t("stats.dayOfWeekPattern")}
+                  </h2>
+                </div>
+                <DayOfWeekBarChart data={dayOfWeekAverages} language={language} t={t} />
               </section>
             </div>
 
-            {/* Tag Correlation */}
-            <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
+            {/* Tag Influence & Context */}
+            <section className="rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-xs">
-                <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">tag</span>
-                  {t("stats.tagCorrelation")}
-                </h2>
-                <span className="text-label-sm text-on-surface-variant/70 italic">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[20px]">tag</span>
+                  <h2 className="text-headline-sm font-bold text-on-surface">
+                    {t("stats.tagCorrelation")}
+                  </h2>
+                </div>
+                <span className="text-label-sm text-on-surface-variant font-medium">
                   {t("stats.minTagDataNote")}
                 </span>
               </div>
 
-              {/* Top / Bottom Tag Highlight Cards (only shown if data exists) */}
+              {/* Top / Bottom Tag Highlight Cards */}
               {(highestTag || lowestTag) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                   {highestTag && (
-                    <div className="flex items-center gap-md rounded-lg bg-primary-container/30 border border-outline-variant/20 p-md shadow-subtle">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-on-primary">
-                        <span className="material-symbols-outlined">sentiment_very_satisfied</span>
+                    <div className="flex items-center gap-md rounded-xl bg-mood-rad-container/25 border border-mood-rad/20 p-md shadow-subtle">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mood-rad text-on-primary">
+                        <MoodIcon mood={5} className="text-[22px]" />
                       </span>
-                      <div>
-                        <span className="text-label-sm font-medium text-on-surface-variant">
+                      <div className="min-w-0">
+                        <span className="text-label-sm font-semibold text-on-mood-rad-container block">
                           {t("stats.highestMoodTag")}
                         </span>
-                        <p className="text-body-lg font-bold text-on-surface">
-                          #{getLocalizedTag(highestTag.tag, t)} ({highestTag.avg_mood})
+                        <p className="text-body-md font-bold text-on-surface truncate">
+                          #{getLocalizedTag(highestTag.tag, t)}{" "}
+                          <span className="text-mood-rad font-bold tabular-nums">
+                            ({Number(highestTag.avg_mood).toFixed(1)})
+                          </span>
                         </p>
                       </div>
                     </div>
                   )}
 
                   {lowestTag && (
-                    <div className="flex items-center gap-md rounded-lg bg-secondary-container/30 border border-outline-variant/20 p-md shadow-subtle">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-on-secondary">
-                        <span className="material-symbols-outlined">sentiment_dissatisfied</span>
+                    <div className="flex items-center gap-md rounded-xl bg-mood-awful-container/25 border border-mood-awful/20 p-md shadow-subtle">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mood-awful text-on-primary">
+                        <MoodIcon mood={1} className="text-[22px]" />
                       </span>
-                      <div>
-                        <span className="text-label-sm font-medium text-on-surface-variant">
+                      <div className="min-w-0">
+                        <span className="text-label-sm font-semibold text-on-mood-awful-container block">
                           {t("stats.lowestMoodTag")}
                         </span>
-                        <p className="text-body-lg font-bold text-on-surface">
-                          #{getLocalizedTag(lowestTag.tag, t)} ({lowestTag.avg_mood})
+                        <p className="text-body-md font-bold text-on-surface truncate">
+                          #{getLocalizedTag(lowestTag.tag, t)}{" "}
+                          <span className="text-mood-awful font-bold tabular-nums">
+                            ({Number(lowestTag.avg_mood).toFixed(1)})
+                          </span>
                         </p>
                       </div>
                     </div>
@@ -230,31 +278,31 @@ export default function Stats() {
                 </div>
               )}
 
-              {/* Tags Table / List (only show tags with has_enough_data) */}
+              {/* Tags Grid / List */}
               {(() => {
                 const validTags = tagCorrelation.filter((item) => item.has_enough_data);
                 if (validTags.length === 0) {
                   return (
-                    <p className="py-4 text-center text-body-sm text-on-surface-variant/70 italic">
+                    <div className="py-6 text-center text-body-sm text-on-surface-variant font-medium">
                       {t("stats.insufficientData")}
-                    </p>
+                    </div>
                   );
                 }
                 return (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-sm pt-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-xs pt-xs">
                     {validTags.map((item) => (
                       <div
                         key={item.tag}
-                        className="flex items-center justify-between rounded-md bg-surface-container-low border border-outline-variant/15 p-sm px-md transition-colors"
+                        className="flex items-center justify-between rounded-lg bg-surface-container-low border border-outline-variant/15 py-2 px-3 transition-colors hover:bg-surface-container"
                       >
-                        <span className="text-body-md font-bold text-primary truncate max-w-[150px]">
+                        <span className="text-body-md font-semibold text-on-surface truncate max-w-[140px]">
                           #{getLocalizedTag(item.tag, t)}
                         </span>
-                        <div className="flex items-center gap-xs">
-                          <span className="text-body-md font-bold text-on-surface">
-                            {item.avg_mood}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-body-md font-bold text-on-surface tabular-nums">
+                            {Number(item.avg_mood).toFixed(1)}
                           </span>
-                          <span className="text-label-sm text-on-surface-variant/60">
+                          <span className="text-label-sm text-on-surface-variant tabular-nums">
                             ({item.entry_count})
                           </span>
                         </div>
@@ -265,13 +313,15 @@ export default function Stats() {
               })()}
             </section>
 
-            {/* Annual Heatmap (GitHub Contribution Style) */}
-            <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-8 shadow-card space-y-md">
+            {/* Annual Heatmap (Moodila Emotional Spectrum) */}
+            <section className="rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
               <div className="flex items-center justify-between">
-                <h2 className="text-headline-sm font-bold text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">grid_on</span>
-                  {t("stats.annualHeatmap")}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-[20px]">grid_on</span>
+                  <h2 className="text-headline-sm font-bold text-on-surface">
+                    {t("stats.annualHeatmap")}
+                  </h2>
+                </div>
               </div>
 
               {/* Heatmap Component */}
@@ -290,89 +340,96 @@ export default function Stats() {
 }
 
 /* Mood Line Chart SVG Component */
-function MoodLineChart({ series, period }) {
-  if (!series || series.length === 0) return null;
+function MoodLineChart({ series }) {
+  if (!series || series.length === 0) {
+    return null;
+  }
+
+  // Width is 360, X-margin left is 34, right margin is 346
+  const plotLeft = 34;
+  const plotRight = 346;
+  const plotWidth = plotRight - plotLeft;
 
   const validPoints = series.map((pt, index) => {
-    const x = (index / (series.length - 1 || 1)) * 300 + 20;
-    const y = pt.mood ? 75 - ((pt.mood - 1) / 4) * 55 : 75;
+    const x = (index / (series.length - 1 || 1)) * plotWidth + plotLeft;
+    const y = pt.mood ? 80 - ((pt.mood - 1) / 4) * 60 : 80;
     return { ...pt, x, y, hasVal: pt.mood !== null };
   });
 
   const loggedPoints = validPoints.filter((p) => p.hasVal);
   const pathD = getSmoothPath(loggedPoints);
 
-  const areaD =
-    loggedPoints.length > 0
-      ? `${pathD} L ${loggedPoints[loggedPoints.length - 1].x},85 L ${loggedPoints[0].x},85 Z`
-      : "";
+  // Smart decimation for X-axis labels to prevent overlap
+  const total = validPoints.length;
+  const shouldShowLabel = (i) => {
+    if (total <= 7) return true;
+    if (total <= 14) return i % 2 === 0 || i === total - 1;
+    if (total <= 31) return i % 5 === 0 || i === total - 1;
+    return i % Math.ceil(total / 6) === 0 || i === total - 1;
+  };
+
+  const isDense = total > 31;
 
   return (
     <div className="relative w-full">
-      <svg viewBox="0 0 340 105" className="w-full overflow-visible">
-        <defs>
-          <linearGradient id="lineAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgb(var(--color-primary))" stopOpacity="0.3" />
-            <stop offset="100%" stopColor="rgb(var(--color-primary))" stopOpacity="0.0" />
-          </linearGradient>
-        </defs>
-
-        {/* Grid lines */}
+      <svg viewBox="0 0 360 115" className="w-full overflow-visible">
+        {/* Y-axis Grid lines & Level labels */}
         {[1, 2, 3, 4, 5].map((level) => {
-          const y = 75 - ((level - 1) / 4) * 55;
+          const y = 80 - ((level - 1) / 4) * 60;
           return (
             <g key={level}>
+              <text
+                x={plotLeft - 8}
+                y={y + 3}
+                textAnchor="end"
+                className="fill-on-surface-variant text-[10px] font-semibold tabular-nums select-none"
+              >
+                {level}
+              </text>
               <line
-                x1="20"
+                x1={plotLeft}
                 y1={y}
-                x2="320"
+                x2={plotRight}
                 y2={y}
                 stroke="currentColor"
-                strokeDasharray="2 2"
-                className="text-outline-variant/25"
+                strokeDasharray="3 3"
+                className="text-outline-variant/30"
                 strokeWidth="0.8"
               />
             </g>
           );
         })}
 
-        {/* Gradient Fill */}
-        {loggedPoints.length > 0 && <path d={areaD} fill="url(#lineAreaGrad)" />}
-
-        {/* Bezier Path */}
+        {/* Clean, tactile Bézier Path (no area gradient slop) */}
         {loggedPoints.length > 0 && (
           <path
             d={pathD}
             fill="none"
             stroke="rgb(var(--color-primary))"
-            strokeWidth="3"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         )}
 
-        {/* Points & Labels */}
+        {/* Data points & X-axis Labels */}
         {validPoints.map((pt, i) => (
           <g key={i}>
             {pt.hasVal && (
-              <>
-                <circle
-                  cx={pt.x}
-                  cy={pt.y}
-                  r="5"
-                  className="fill-surface-container-lowest stroke-primary"
-                  strokeWidth="2.5"
-                />
-                <circle cx={pt.x} cy={pt.y} r="2" className="fill-primary" />
-              </>
+              <circle
+                cx={pt.x}
+                cy={pt.y}
+                r={isDense ? "2.5" : "3.5"}
+                className="fill-surface-container-lowest stroke-primary"
+                strokeWidth={isDense ? "1.5" : "2"}
+              />
             )}
-            {/* Show x label periodically */}
-            {(period !== "month" || i % 4 === 0 || i === validPoints.length - 1) && (
+            {shouldShowLabel(i) && (
               <text
                 x={pt.x}
-                y="98"
+                y="104"
                 textAnchor="middle"
-                className="fill-on-surface-variant/60 text-[9px] font-medium"
+                className="fill-on-surface-variant text-[10px] font-medium tabular-nums select-none"
               >
                 {pt.label}
               </text>
@@ -385,31 +442,40 @@ function MoodLineChart({ series, period }) {
 }
 
 /* Day-of-Week Bar Chart Component */
-function DayOfWeekBarChart({ data, t, language }) {
+function DayOfWeekBarChart({ data, language }) {
   const daysRu = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
   const daysEn = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
   const dayLabels = language === "ru" ? daysRu : daysEn;
 
+  function getDayMoodColor(avg) {
+    if (!avg || avg <= 0) return "bg-surface-container-high";
+    if (avg >= 4.2) return "bg-mood-rad";
+    if (avg >= 3.4) return "bg-mood-good";
+    if (avg >= 2.6) return "bg-mood-meh";
+    if (avg >= 1.8) return "bg-mood-bad";
+    return "bg-mood-awful";
+  }
+
   return (
-    <div className="flex items-end justify-between gap-xs pt-4 h-48">
+    <div className="flex items-end justify-between gap-1 sm:gap-2 pt-3 h-48">
       {Array.from({ length: 7 }, (_, i) => i + 1).map((dow, idx) => {
         const item = data.find((d) => d.day === dow);
         const avg = item?.avg_mood || 0;
-        const heightPct = (avg / 5) * 100;
+        const heightPct = avg > 0 ? (avg / 5) * 100 : 8;
+        const barColor = getDayMoodColor(avg);
+
         return (
-          <div key={dow} className="flex-1 flex flex-col items-center h-full justify-end gap-1">
-            {avg > 0 ? (
-              <span className="text-[11px] font-bold text-primary">{avg}</span>
-            ) : (
-              <span className="text-[11px] text-on-surface-variant/40">—</span>
-            )}
+          <div key={dow} className="flex-1 flex flex-col items-center h-full justify-end gap-1.5">
+            <span className="text-[11px] font-bold tabular-nums text-on-surface">
+              {avg > 0 ? Number(avg).toFixed(1) : "—"}
+            </span>
             <div className="w-full max-w-[28px] bg-surface-container-low rounded-t-xl h-32 flex items-end overflow-hidden p-0.5">
               <div
-                className="w-full bg-primary rounded-t-lg transition-all duration-500"
+                className={`w-full rounded-t-lg transition-[height] duration-300 ease-out ${barColor}`}
                 style={{ height: `${heightPct}%` }}
               />
             </div>
-            <span className="text-label-sm font-bold text-on-surface-variant/70 mt-1">
+            <span className="text-label-sm font-semibold text-on-surface-variant mt-0.5">
               {dayLabels[idx]}
             </span>
           </div>
@@ -419,7 +485,7 @@ function DayOfWeekBarChart({ data, t, language }) {
   );
 }
 
-/* Annual Heatmap Component (GitHub Contribution Style) */
+/* Annual Heatmap Component (Soft Editorial Mood Spectrum) */
 function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
   const scrollRef = useRef(null);
   const { language } = useLanguage();
@@ -516,7 +582,7 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
 
   if (!heatmapData || heatmapData.length === 0) {
     return (
-      <div className="py-8 text-center text-body-sm text-on-surface-variant/70 italic">
+      <div className="py-8 text-center text-body-sm text-on-surface-variant font-medium">
         {t("stats.noData")}
       </div>
     );
@@ -543,7 +609,7 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
           {monthHeaders.map((header) => (
             <div
               key={`${header.monthIdx}-${header.weekIdx}`}
-              className="text-[10px] font-medium text-on-surface-variant/70 whitespace-nowrap overflow-visible leading-none pb-1"
+              className="text-[11px] font-medium text-on-surface-variant whitespace-nowrap overflow-visible leading-none pb-1"
               style={{
                 gridRow: 1,
                 gridColumnStart: header.weekIdx + 2,
@@ -557,7 +623,7 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
           {dayLabels.map((label, dIdx) => (
             <div
               key={dIdx}
-              className="sticky left-0 bg-surface-container-lowest z-20 pr-2 flex items-center justify-end text-[10px] font-medium text-on-surface-variant/60 leading-none border-r border-outline-variant/10 shadow-[2px_0_4px_rgba(0,0,0,0.03)] min-w-[24px]"
+              className="sticky left-0 bg-surface-container-lowest z-20 pr-2 flex items-center justify-end text-[11px] font-medium text-on-surface-variant leading-none border-r border-outline-variant/10 shadow-[2px_0_4px_rgba(0,0,0,0.03)] min-w-[24px]"
               style={{
                 gridRow: dIdx + 2,
                 gridColumn: 1,
@@ -596,14 +662,14 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
                     gridRow: dIdx + 2,
                     gridColumn: wIdx + 2,
                   }}
-                  className={`h-3 w-3 rounded-[2px] border transition-all ${
+                  className={`h-3 w-3 rounded-[2px] border transition-colors focus:outline-none ${
                     hasMood
                       ? moodColors[day.mood]
                       : "bg-surface-container-low border-outline-variant/20 dark:bg-surface-container/60 hover:border-outline-variant/60"
                   } ${
                     isSelected
-                      ? "ring-2 ring-primary ring-offset-1 ring-offset-surface-container-lowest z-10 scale-125"
-                      : "hover:scale-125 hover:z-10"
+                      ? "ring-2 ring-primary ring-offset-1 ring-offset-surface-container-lowest z-10"
+                      : "hover:ring-1 hover:ring-primary/60"
                   }`}
                 />
               );
@@ -612,20 +678,20 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
         </div>
       </div>
 
-      {/* Selected Day Tooltip Detail */}
+      {/* Selected Day Floating Detail */}
       {activeDay && (
-        <div className="flex items-center justify-between rounded-2xl bg-surface-container-low p-3 text-body-sm cloud-shadow animate-fade-in border border-outline-variant/15">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-3 text-body-sm shadow-subtle border border-outline-variant/20">
+          <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
             <div>
               <span className="font-semibold text-on-surface">{formatDate(activeDay.date)}</span>
-              <span className="text-on-surface-variant/70 mx-1.5">•</span>
+              <span className="text-on-surface-variant mx-1.5">•</span>
               {activeDay.mood ? (
-                <span className="font-bold text-primary">
+                <span className="font-bold text-primary tabular-nums">
                   {t(`moods.${activeDay.mood}`)} ({activeDay.mood}/5)
                 </span>
               ) : (
-                <span className="text-on-surface-variant/70">{t("stats.noData")}</span>
+                <span className="text-on-surface-variant">{t("stats.noData")}</span>
               )}
             </div>
           </div>
@@ -640,23 +706,21 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
         </div>
       )}
 
-      {/* GitHub-style Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-sm text-label-sm text-on-surface-variant/80 pt-xs border-t border-outline-variant/15">
-        <span className="font-medium text-[12px]">{t("stats.heatmapLegend")}</span>
-        <div className="flex items-center gap-1.5 text-[11px]">
-          <span className="text-on-surface-variant/70 mr-0.5">{t("stats.less", "Less")}</span>
-          <span
-            className="h-3 w-3 rounded-[2px] bg-surface-container-low border border-outline-variant/20 dark:bg-surface-container/60"
-            title={t("stats.noData")}
-          />
-          {[1, 2, 3, 4, 5].map((m) => (
-            <span
-              key={m}
-              className={`h-3 w-3 rounded-[2px] border ${moodColors[m]}`}
-              title={`${m}/5`}
-            />
-          ))}
-          <span className="text-on-surface-variant/70 ml-0.5">{t("stats.more", "More")}</span>
+      {/* Soft Editorial Mood Spectrum Legend (Replaces GitHub Less/More) */}
+      <div className="flex flex-wrap items-center justify-between gap-sm text-label-sm text-on-surface-variant pt-xs border-t border-outline-variant/15">
+        <span className="font-semibold text-label-sm">{t("stats.heatmapLegend")}</span>
+        <div className="flex items-center gap-2 text-label-sm">
+          <span className="text-on-surface-variant font-medium">{t("stats.spectrumAwful", "Awful")}</span>
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((m) => (
+              <span
+                key={m}
+                className={`h-3 w-3 rounded-[2px] border ${moodColors[m]}`}
+                title={`${m}/5`}
+              />
+            ))}
+          </div>
+          <span className="text-on-surface-variant font-medium">{t("stats.spectrumRad", "Rad")}</span>
         </div>
       </div>
     </div>

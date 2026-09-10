@@ -76,26 +76,26 @@
   --color-error-container: 247 218 219;
   --color-on-error-container: 104 31 35;
 
-  /* Desaturated Emotional Moods */
-  --color-mood-rad: 132 168 121;
-  --color-mood-rad-container: 225 237 220;
-  --color-on-mood-rad-container: 41 65 38;
+  /* Desaturated Emotional Moods (Ordered Red to Green: 1 Awful -> 5 Rad) */
+  --color-mood-rad: 46 150 94;
+  --color-mood-rad-container: 220 244 231;
+  --color-on-mood-rad-container: 18 69 46;
 
-  --color-mood-good: 200 147 58;
-  --color-mood-good-container: 247 238 216;
-  --color-on-mood-good-container: 84 57 18;
+  --color-mood-good: 107 160 62;
+  --color-mood-good-container: 232 244 220;
+  --color-on-mood-good-container: 44 71 21;
 
-  --color-mood-meh: 168 160 138;
-  --color-mood-meh-container: 236 233 220;
-  --color-on-mood-meh-container: 71 67 45;
+  --color-mood-meh: 204 148 37;
+  --color-mood-meh-container: 252 242 216;
+  --color-on-mood-meh-container: 97 68 14;
 
-  --color-mood-bad: 135 150 172;
-  --color-mood-bad-container: 224 230 238;
-  --color-on-mood-bad-container: 48 59 75;
+  --color-mood-bad: 217 114 48;
+  --color-mood-bad-container: 252 233 220;
+  --color-on-mood-bad-container: 107 48 13;
 
-  --color-mood-awful: 154 124 130;
-  --color-mood-awful-container: 233 222 225;
-  --color-on-mood-awful-container: 70 44 49;
+  --color-mood-awful: 204 82 82;
+  --color-mood-awful-container: 250 227 227;
+  --color-on-mood-awful-container: 104 31 35;
 
   /* Elevation Shadows */
   --shadow-color-subtle: rgba(24, 23, 23, 0.03);
@@ -182,26 +182,26 @@
   --color-error-container: 118 43 47;
   --color-on-error-container: 255 218 219;
 
-  /* Desaturated Emotional Moods Dark */
-  --color-mood-rad: 157 192 146;
-  --color-mood-rad-container: 41 65 38;
-  --color-on-mood-rad-container: 225 237 220;
+  /* Desaturated Emotional Moods Dark (Ordered Red to Green: 1 Awful -> 5 Rad) */
+  --color-mood-rad: 82 201 143;
+  --color-mood-rad-container: 18 69 46;
+  --color-on-mood-rad-container: 220 244 231;
 
-  --color-mood-good: 223 171 84;
-  --color-mood-good-container: 84 57 18;
-  --color-on-mood-good-container: 247 238 216;
+  --color-mood-good: 147 201 103;
+  --color-mood-good-container: 42 69 20;
+  --color-on-mood-good-container: 232 244 220;
 
-  --color-mood-meh: 191 184 164;
-  --color-mood-meh-container: 71 67 45;
-  --color-on-mood-meh-container: 236 233 220;
+  --color-mood-meh: 232 181 72;
+  --color-mood-meh-container: 92 65 14;
+  --color-on-mood-meh-container: 252 242 216;
 
-  --color-mood-bad: 164 178 198;
-  --color-mood-bad-container: 48 59 75;
-  --color-on-mood-bad-container: 224 230 238;
+  --color-mood-bad: 240 148 89;
+  --color-mood-bad-container: 99 44 12;
+  --color-on-mood-bad-container: 252 233 220;
 
-  --color-mood-awful: 181 151 157;
-  --color-mood-awful-container: 70 44 49;
-  --color-on-mood-awful-container: 233 222 225;
+  --color-mood-awful: 235 125 125;
+  --color-mood-awful-container: 92 28 28;
+  --color-on-mood-awful-container: 250 227 227;
 
   /* Elevation Shadows Dark */
   --shadow-color-subtle: rgba(0, 0, 0, 0.25);

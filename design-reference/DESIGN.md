@@ -96,25 +96,25 @@ colors:
   # They should feel like emotional states, not alerts.
   # ─────────────────────────────────────────
 
-  mood-rad: "#84A879"
-  mood-rad-container: "#E1EDDC"
-  on-mood-rad-container: "#294126"
+  mood-rad: "#2E965E"
+  mood-rad-container: "#DCF4E7"
+  on-mood-rad-container: "#12452E"
 
-  mood-good: "#C8933A"
-  mood-good-container: "#F7EED8"
-  on-mood-good-container: "#543912"
+  mood-good: "#6BA03E"
+  mood-good-container: "#E8F4DC"
+  on-mood-good-container: "#2C4715"
 
-  mood-meh: "#A8A08A"
-  mood-meh-container: "#ECE9DC"
-  on-mood-meh-container: "#47432D"
+  mood-meh: "#CC9425"
+  mood-meh-container: "#FCF2D8"
+  on-mood-meh-container: "#61440E"
 
-  mood-bad: "#8796AC"
-  mood-bad-container: "#E0E6EE"
-  on-mood-bad-container: "#303B4B"
+  mood-bad: "#D97230"
+  mood-bad-container: "#FCE9DC"
+  on-mood-bad-container: "#6B300D"
 
-  mood-awful: "#9A7C82"
-  mood-awful-container: "#E9DEE1"
-  on-mood-awful-container: "#462C31"
+  mood-awful: "#CC5252"
+  mood-awful-container: "#FAE3E3"
+  on-mood-awful-container: "#681F23"
 
   # ─────────────────────────────────────────
   # DARK THEME
@@ -378,11 +378,11 @@ opacity:
 - **Light Theme**: The base canvas is warm linen (`#F8F7F5`), layered with structured surface containers ranging from pure white (`surface-container-lowest: #FFFFFF`) to soft ecru (`surface-container-highest: #E4E1DC`).
 - **Dark Theme**: Deep, gentle charcoal canvas (`#171615`) with warm tinted containers (`#1C1B1A` to `#32302E`), avoiding harsh pitch blacks and neon contrasts.
 - **Mood System**:
-  - **Rad (5)**: Sage leaf green (`#84A879` / container `#E1EDDC` / on-container `#294126`)
-  - **Good (4)**: Warm golden amber (`#C8933A` / container `#F7EED8` / on-container `#543912`)
-  - **Meh (3)**: Warm oat stone (`#A8A08A` / container `#ECE9DC` / on-container `#47432D`)
-  - **Bad (2)**: Slate mist blue (`#8796AC` / container `#E0E6EE` / on-container `#303B4B`)
-  - **Awful (1)**: Dusty cedar mauvy (`#9A7C82` / container `#E9DEE1` / on-container `#462C31`)
+  - **Rad (5)**: Rich emerald green (`#2E965E` / container `#DCF4E7` / on-container `#12452E`)
+  - **Good (4)**: Fresh leaf green (`#6BA03E` / container `#E8F4DC` / on-container `#2C4715`)
+  - **Meh (3)**: Warm golden amber (`#CC9425` / container `#FCF2D8` / on-container `#61440E`)
+  - **Bad (2)**: Terracotta orange (`#D97230` / container `#FCE9DC` / on-container `#6B300D`)
+  - **Awful (1)**: Crimson terracotta red (`#CC5252` / container `#FAE3E3` / on-container `#681F23`)
 
 ### 2. Typography Hierarchy
 Set in **Plus Jakarta Sans** (with fallback to Manrope for extended Cyrillic coverage).
