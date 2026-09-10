@@ -21,6 +21,7 @@
   - 📢 **Системные анонсы и Admin-панель:** Создание, редактирование, публикация и архивация объявлений администратором (`/admin`), глобальная очередь отображения непрочитанных анонсов для пользователей (`AnnouncementQueue`).
   - 🛡️ **Безопасность и аккаунт:** JWT-авторизация с версионированием токенов (`token_version` для мгновенной инвалидации всех сессий), защита от CSRF, многоуровневый Rate Limiting, восстановление пароля и подтверждение удаления аккаунта через одноразовые токены на почту (Resend API).
   - ☁️ **Автобэкапы:** Фоновый планировщик бэкапов PostgreSQL в Google Drive с поддержкой OAuth2 Refresh Token / Service Account и автоматической ротацией по сроку давности.
+  - 📳 **Тактильный отклик (Haptic Feedback):** Нативная тактильная отдача для мобильных устройств на базе Web Vibration API с поддержкой iOS Safari и PWA через полифил `ios-vibrator-pro-max` (паттерны для навигации, настроений, сохранения, удаления, реакций и записи аудио с тумблером в профиле).
   - 🌐 **Локализация и темы:** Полная поддержка русского (`ru`) и английского (`en`) языков, темная и светлая темы с сохранением в `localStorage`.
 
 ---
@@ -50,6 +51,7 @@
 | **Сетевой слой и кеш** | TanStack React Query v5 (`^5.101.4`) | Кеширование, фоновая синхронизация, optimistic updates |
 | **Стилизация** | Tailwind CSS 3 (`^3.4.19`) + `index.css` | Дизайн-токены, CSS-переменные для темной/светлой темы |
 | **PWA** | `vite-plugin-pwa` (`^1.3.0`) + Workbox | Офлайн-кеширование статики, Service Worker для Web Push |
+| **iOS Тактильность** | `ios-vibrator-pro-max` (`^3.0.3`) | Полифил Web Vibration API (`navigator.vibrate`) для iOS Safari и PWA |
 | **Линтер** | Oxlint (`^1.71.0`) | Сверхбыстрый линтинг JavaScript/JSX |
 | **UI Утилиты** | `react-easy-crop` (`^6.2.3`) | Интерактивный кроп аватаров перед отправкой в S3 |
 | **Мониторинг** | `@sentry/react` (`^10.70.0`) + `@sentry/vite-plugin` | Отслеживание клиентских ошибок, Error Boundary, source maps |
@@ -113,7 +115,7 @@ moodila/
 │   │   │   ├── ru.js                # Русская локализация
 │   │   │   └── en.js                # Английская локализация
 │   │   ├── pages/                   # Страницы приложения (Home, AddEntry, Calendar, Stats, Friends, FriendProfile, Feed, Profile, Admin, Landing, Auth, etc.)
-│   │   ├── utils/                   # Утилиты (audioManager, moods, navigation, cropImage, offlineStore, haptics)
+│   │   ├── utils/                   # Утилиты (audioManager, moods, navigation, cropImage, offlineStore, haptics с iOS-полифилом)
 │   │   ├── App.jsx / main.jsx       # Конфигурация роутинга и провайдеров
 │   │   └── index.css                # Глобальные стили Tailwind
 │   ├── package.json

@@ -2,7 +2,9 @@
  * Haptic feedback utility for mobile devices using the Web Vibration API (navigator.vibrate).
  * Supports configurable patterns (selection, impact, heavy, success, warning, error)
  * and honors user preferences persisted in localStorage.
+ * Includes iOS/macOS Safari polyfill via ios-vibrator-pro-max.
  */
+import 'ios-vibrator-pro-max';
 
 const STORAGE_KEY = 'moodshare_haptics_enabled';
 
