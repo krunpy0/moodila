@@ -20,17 +20,13 @@ export default function Calendar() {
   const [month, setMonth] = useState(startOfMonth(new Date()));
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
   const [selectedFriend, setSelectedFriend] = useState(null);
-  const [selectedFriendEntry, setSelectedFriendEntry] = useState(null);
   const [selectedDate, setSelectedDate] = useState(getLocalDate());
   const [friendMenuOpen, setFriendMenuOpen] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
-
-  const [inspectorDragX, setInspectorDragX] = useState(0);
-  const [isInspectorDragging, setIsInspectorDragging] = useState(false);
   const [inspectorSlideAnim, setInspectorSlideAnim] = useState('');
-  const inspectorTouchStartRef = useRef(null);
+  const friendMenuRef = useRef(null);
 
   const { t, language, dateLocale, formatDate: formatDateLocale } = useLanguage();
   const weekdays = language === "ru" ? weekdaysRu : weekdaysEn;
@@ -42,6 +38,7 @@ export default function Calendar() {
   const isMultiMonthWeek = viewMode === "week" && weekStartMonthKey !== weekEndMonthKey;
 
   const friendsQuery = useFriendsQuery();
+  const friends = useMemo(() => friendsQuery.data || [], [friendsQuery.data]);
 
   const ownMonthEntriesQuery = useEntriesQuery(viewMode === "month" ? monthKey : weekStartMonthKey);
   const ownEndMonthEntriesQuery = useEntriesQuery(isMultiMonthWeek ? weekEndMonthKey : null, isMultiMonthWeek);
@@ -66,7 +63,6 @@ export default function Calendar() {
     return [...mainList, ...secondaryList];
   }, [activeEntriesQuery.data, activeEndEntriesQuery.data, isMultiMonthWeek]);
 
-  const friends = friendsQuery.data || [];
   const isLoading = activeEntriesQuery.isLoading || friendsQuery.isLoading;
   const error = activeEntriesQuery.error || friendsQuery.error;
 
@@ -78,15 +74,68 @@ export default function Calendar() {
       if (found) {
         setSelectedFriend(found);
       }
-    } else if (!friendIdParam && selectedFriend) {
+    } else if (!friendIdParam) {
       setSelectedFriend(null);
     }
   }, [friendIdParam, friends]);
+
+  useEffect(() => {
+    if (!friendMenuOpen) return;
+    const handleClickOutside = (e) => {
+      if (friendMenuRef.current && !friendMenuRef.current.contains(e.target)) {
+        setFriendMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [friendMenuOpen]);
 
   const entriesByDate = useMemo(
     () => Object.fromEntries(entries.map((entry) => [entry.date, entry])),
     [entries],
   );
+
+  const monthSummary = useMemo(() => {
+    if (viewMode !== "month" || entries.length === 0) return null;
+    const validEntries = entries.filter((e) => e.mood);
+    if (validEntries.length === 0) return null;
+
+    const moodCounts = {};
+    const tagCounts = {};
+    validEntries.forEach((e) => {
+      moodCounts[e.mood] = (moodCounts[e.mood] || 0) + 1;
+      if (e.tags && Array.isArray(e.tags)) {
+        e.tags.forEach((tag) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      }
+    });
+
+    let dominantMood = null;
+    let maxMoodCount = 0;
+    Object.entries(moodCounts).forEach(([m, count]) => {
+      if (count > maxMoodCount) {
+        maxMoodCount = count;
+        dominantMood = Number(m);
+      }
+    });
+
+    let topTag = null;
+    let maxTagCount = 0;
+    Object.entries(tagCounts).forEach(([tag, count]) => {
+      if (count > maxTagCount) {
+        maxTagCount = count;
+        topTag = tag;
+      }
+    });
+
+    return {
+      totalEntries: validEntries.length,
+      dominantMood,
+      dominantMoodInfo: dominantMood ? getMoodInfo(dominantMood, t) : null,
+      topTag,
+    };
+  }, [entries, viewMode, t]);
 
   const days = useMemo(() => {
     if (viewMode === "week") {
@@ -117,34 +166,6 @@ export default function Calendar() {
     setTimeout(() => {
       setInspectorSlideAnim('');
     }, 200);
-  };
-
-  const handleInspectorTouchStart = (e) => {
-    inspectorTouchStartRef.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-    setIsInspectorDragging(true);
-  };
-
-  const handleInspectorTouchMove = (e) => {
-    if (!inspectorTouchStartRef.current) return;
-    const diffX = e.touches[0].clientX - inspectorTouchStartRef.current.x;
-    const diffY = e.touches[0].clientY - inspectorTouchStartRef.current.y;
-    if (Math.abs(diffX) > Math.abs(diffY)) {
-      setInspectorDragX(diffX);
-    }
-  };
-
-  const handleInspectorTouchEnd = () => {
-    if (inspectorDragX < -50) {
-      navigateInspectorDate(1);
-    } else if (inspectorDragX > 50) {
-      navigateInspectorDate(-1);
-    }
-    setInspectorDragX(0);
-    setIsInspectorDragging(false);
-    inspectorTouchStartRef.current = null;
   };
 
   const handleTouchStart = (e) => {
@@ -185,7 +206,7 @@ export default function Calendar() {
   return (
     <AppLayout>
       <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl bg-background pb-28 lg:pb-12 text-on-surface px-0 lg:px-6 py-0 lg:py-6">
-      <header className="px-container-margin py-md">
+      <header className="px-container-margin py-md" ref={friendMenuRef}>
         {selectedFriend ? (
           <div className="rounded-[24px] bg-surface-container-lowest p-md cloud-shadow">
             <button
@@ -211,7 +232,11 @@ export default function Calendar() {
               <div className="mt-md border-t border-outline-variant pt-md">
                 <button
                   type="button"
-                  onClick={() => { setSelectedFriend(null); setSelectedFriendEntry(null); setFriendMenuOpen(false); setSearchParams({}, { replace: true }); }}
+                  onClick={() => {
+                    setSelectedFriend(null);
+                    setFriendMenuOpen(false);
+                    setSearchParams({}, { replace: true });
+                  }}
                   className="flex w-full items-center gap-sm rounded-xl p-2 text-left hover:bg-surface-container-low"
                 >
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-container text-primary">
@@ -223,10 +248,17 @@ export default function Calendar() {
                   <button
                     type="button"
                     key={friend.id}
-                    onClick={() => { setSelectedFriend(friend); setSelectedFriendEntry(null); setFriendMenuOpen(false); setSearchParams({ friend: friend.id }, { replace: true }); }}
+                    onClick={() => {
+                      setSelectedFriend(friend);
+                      setFriendMenuOpen(false);
+                      setSearchParams({ friend: friend.id }, { replace: true });
+                    }}
                     className="mt-xs flex w-full items-center justify-between rounded-xl p-2 text-left hover:bg-surface-container-low"
                   >
-                    <span className="flex items-center gap-sm"><FriendAvatar friend={friend} /><span className="text-body-md font-body-md">{friendName(friend)}</span></span>
+                    <span className="flex items-center gap-sm">
+                      <FriendAvatar friend={friend} />
+                      <span className="text-body-md font-body-md">{friendName(friend)}</span>
+                    </span>
                     <span className="material-symbols-outlined text-on-surface-variant/20">chevron_right</span>
                   </button>
                 ))}
@@ -240,7 +272,7 @@ export default function Calendar() {
             onClick={() => setFriendMenuOpen((open) => !open)}
             className="flex w-full items-center justify-between rounded-[24px] bg-surface-container-lowest p-md text-left cloud-shadow active:scale-[0.98]"
           >
-            <span className="text-headline-lg-mobile font-headline-lg-mobile">{t('calendar.myCalendar')}</span>
+            <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold">{t('calendar.myCalendar')}</span>
             <span className="material-symbols-outlined text-primary">expand_more</span>
           </button>
         )}
@@ -248,8 +280,20 @@ export default function Calendar() {
           <div className="mt-xs rounded-[24px] bg-surface-container-lowest p-md cloud-shadow">
             <p className="mb-xs text-label-sm font-label-sm text-on-surface-variant/60">{t('calendar.myCalendar')}</p>
             {friends.length ? friends.map((friend) => (
-              <button type="button" key={friend.id} onClick={() => { setSelectedFriend(friend); setSelectedFriendEntry(null); setFriendMenuOpen(false); setSearchParams({ friend: friend.id }, { replace: true }); }} className="flex w-full items-center justify-between rounded-xl p-2 text-left hover:bg-surface-container-low">
-                <span className="flex items-center gap-sm"><FriendAvatar friend={friend} /><span className="text-body-md font-body-md">{friendName(friend)}</span></span>
+              <button
+                type="button"
+                key={friend.id}
+                onClick={() => {
+                  setSelectedFriend(friend);
+                  setFriendMenuOpen(false);
+                  setSearchParams({ friend: friend.id }, { replace: true });
+                }}
+                className="flex w-full items-center justify-between rounded-xl p-2 text-left hover:bg-surface-container-low"
+              >
+                <span className="flex items-center gap-sm">
+                  <FriendAvatar friend={friend} />
+                  <span className="text-body-md font-body-md">{friendName(friend)}</span>
+                </span>
                 <span className="material-symbols-outlined text-on-surface-variant/20">chevron_right</span>
               </button>
             )) : <p className="p-2 text-body-sm font-body-sm text-on-surface-variant">{t('friends.noFriends')}</p>}
@@ -259,9 +303,11 @@ export default function Calendar() {
 
       {isLoading ? <section className="px-container-margin pt-md"><CalendarSkeleton /></section> : <>
       <section className="mb-lg px-container-margin" aria-label="Calendar view">
-        <div className="flex gap-1 rounded-full bg-surface-container-low p-1">
+        <div className="flex gap-1 rounded-full bg-surface-container-low p-1" role="tablist">
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "week"}
             onClick={() => {
               haptics.selection();
               if (viewMode !== "week") {
@@ -274,16 +320,18 @@ export default function Calendar() {
                 setViewMode("week");
               }
             }}
-            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-colors duration-fast ease-out ${
+            className={`flex-1 rounded-full py-2 text-label-lg transition-all duration-fast ease-out ${
               viewMode === "week"
-                ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
+                ? "bg-surface-container-lowest text-on-surface shadow-subtle font-bold"
                 : "text-on-surface-variant hover:text-on-surface"
             }`}
           >
-            {language === 'ru' ? 'Неделя' : 'Week'}
+            {t('calendar.week')}
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "month"}
             onClick={() => {
               haptics.selection();
               if (viewMode !== "month") {
@@ -291,13 +339,13 @@ export default function Calendar() {
                 setViewMode("month");
               }
             }}
-            className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-colors duration-fast ease-out ${
+            className={`flex-1 rounded-full py-2 text-label-lg transition-all duration-fast ease-out ${
               viewMode === "month"
-                ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
+                ? "bg-surface-container-lowest text-on-surface shadow-subtle font-bold"
                 : "text-on-surface-variant hover:text-on-surface"
             }`}
           >
-            {language === 'ru' ? 'Месяц' : 'Month'}
+            {t('calendar.month')}
           </button>
         </div>
       </section>
@@ -314,16 +362,16 @@ export default function Calendar() {
               setWeekStart((current) => addWeeks(current, -1));
             }
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95 transition-transform"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-colors"
         >
           <span className="material-symbols-outlined">chevron_left</span>
         </button>
-        <h2 className="text-headline-lg-mobile font-headline-lg-mobile capitalize">
+        <h2 className="text-headline-md lg:text-headline-lg font-bold text-on-surface">
           {viewMode === "month"
-            ? month.toLocaleDateString(dateLocale, {
+            ? capitalizeFirstLetter(month.toLocaleDateString(dateLocale, {
                 month: "long",
                 year: "numeric",
-              })
+              }))
             : formatWeekHeader(weekStart, weekEnd, dateLocale)}
         </h2>
         <button
@@ -337,7 +385,7 @@ export default function Calendar() {
               setWeekStart((current) => addWeeks(current, 1));
             }
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95 transition-transform"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high active:scale-95 transition-colors"
         >
           <span className="material-symbols-outlined">chevron_right</span>
         </button>
@@ -351,12 +399,12 @@ export default function Calendar() {
         >
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
             {/* Left 7 columns: Month Calendar Grid */}
-            <div className="lg:col-span-7 lg:bg-surface-container-lowest lg:p-6 lg:rounded-xl xl:lg:rounded-xxl lg:shadow-card lg:border lg:border-outline-variant/20">
+            <div className="lg:col-span-7 lg:bg-surface-container-lowest lg:p-6 lg:rounded-xl xl:rounded-xxl lg:shadow-card lg:border lg:border-outline-variant/15">
               <div className="grid grid-cols-7 text-center select-none">
                 {weekdays.map((day) => (
                   <span
                     key={day}
-                    className="pb-sm text-label-sm font-label-sm lg:text-body-md lg:font-bold text-on-surface-variant/60"
+                    className="pb-sm text-label-sm font-bold text-on-surface-variant/70"
                   >
                     {day}
                   </span>
@@ -374,7 +422,7 @@ export default function Calendar() {
                     return (
                       <span
                         key={dateKey}
-                        className="flex h-20 lg:h-28 xl:h-32 items-start justify-center pt-1 lg:pt-3 text-body-md lg:text-body-lg font-body-md text-on-surface-variant/20 select-none tabular-nums"
+                        className="flex h-20 lg:h-28 xl:h-32 items-start justify-center pt-1 lg:pt-3 text-body-md lg:text-body-lg text-on-surface-variant/20 select-none tabular-nums"
                       >
                         {date.getDate()}
                       </span>
@@ -383,27 +431,20 @@ export default function Calendar() {
 
                   if (future) {
                     return (
-                      <button
+                      <div
                         key={dateKey}
-                        type="button"
-                        onClick={() => {
-                          haptics.selection();
-                          setSelectedDate(dateKey);
-                        }}
                         aria-label={`${date.toLocaleDateString(dateLocale, {
                           month: "long",
                           day: "numeric",
                           year: "numeric",
                         })}`}
-                        className="flex h-20 lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-colors duration-fast ease-out text-body-md font-body-md text-on-surface-variant/40"
+                        className="flex h-20 lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl text-body-md text-on-surface-variant/35 select-none"
                       >
-                        <span className="lg:text-body-lg lg:font-semibold tabular-nums">{date.getDate()}</span>
-                        <span className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-[14px] lg:rounded-[18px] bg-surface-container-low/60 border border-outline-variant/15 text-on-surface-variant/25 ${
-                          isSelected ? "lg:ring-2 lg:ring-primary lg:ring-offset-2 lg:ring-offset-surface-container-lowest" : ""
-                        }`}>
-                          <span className="material-symbols-outlined text-[16px] lg:text-[20px] select-none opacity-40">add</span>
+                        <span className="lg:text-body-lg font-medium tabular-nums">{date.getDate()}</span>
+                        <span className="flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-full bg-surface-container-low/40 border border-outline-variant/10 text-on-surface-variant/20">
+                          <span className="h-1.5 w-1.5 rounded-full bg-outline-variant/30" />
                         </span>
-                      </button>
+                      </div>
                     );
                   }
 
@@ -412,21 +453,21 @@ export default function Calendar() {
                       <span className={`flex items-center gap-0.5 lg:text-body-lg font-medium tabular-nums ${today ? "font-bold text-primary" : "text-on-surface/90"}`}>
                         {date.getDate()}
                         {!selectedFriend && entry?.is_hidden ? (
-                          <span className="material-symbols-outlined text-[13px] lg:text-[15px] text-on-surface-variant/80" title={t('common.hiddenFromFriends')}>
+                          <span className="material-symbols-outlined text-[14px] lg:text-[16px] text-on-surface-variant" title={t('common.hiddenFromFriends')}>
                             lock
                           </span>
                         ) : !selectedFriend && entry?.has_custom_visibility ? (
-                          <span className="material-symbols-outlined text-[13px] lg:text-[15px] text-primary" title={t('addEntry.customVisibilityBadge')}>
+                          <span className="material-symbols-outlined text-[14px] lg:text-[16px] text-primary" title={t('addEntry.customVisibilityBadge')}>
                             group
                           </span>
                         ) : null}
                       </span>
 
                       <span
-                        className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-[14px] lg:rounded-[18px] transition-[transform,background-color,border-color] duration-fast ease-out group-hover:-translate-y-0.5 ${
+                        className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-full transition-[transform,background-color,border-color] duration-fast ease-out group-hover:-translate-y-0.5 ${
                           mood
                             ? mood.bg
-                            : "bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-on-surface-variant/80"
+                            : "bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-on-surface-variant"
                         } ${
                           isSelected ? "lg:ring-2 lg:ring-primary lg:ring-offset-2 lg:ring-offset-surface-container-lowest" : ""
                         }`}
@@ -434,29 +475,11 @@ export default function Calendar() {
                         {entry ? (
                           <MoodIcon mood={entry.mood} className="text-[20px] lg:text-[26px]" />
                         ) : (
-                          <span className="material-symbols-outlined text-[16px] lg:text-[20px] select-none font-normal">add</span>
+                          <span className="material-symbols-outlined text-[16px] lg:text-[20px] select-none font-normal opacity-60 group-hover:opacity-100">add</span>
                         )}
                       </span>
                     </>
                   );
-
-                  if (selectedFriend) {
-                    return (
-                      <button
-                        key={dateKey}
-                        type="button"
-                        onClick={() => {
-                          haptics.selection();
-                          setSelectedDate(dateKey);
-                          setMobileInspectorOpen(true);
-                        }}
-                        aria-label={`${friendName(selectedFriend)}`}
-                        className="group flex h-[76px] lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-all text-body-md font-body-md active:scale-95 hover:bg-surface-container-low/40"
-                      >
-                        {cellInner}
-                      </button>
-                    );
-                  }
 
                   return (
                     <button
@@ -467,17 +490,68 @@ export default function Calendar() {
                         setSelectedDate(dateKey);
                         setMobileInspectorOpen(true);
                       }}
-                      className="group w-full h-[76px] lg:h-28 xl:h-32 flex flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl transition-all text-body-md font-body-md hover:bg-surface-container-low/40 active:scale-95"
+                      className="group w-full h-[76px] lg:h-28 xl:h-32 flex flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl text-body-md transition-colors duration-fast hover:bg-surface-container-low/50 active:scale-[0.98]"
                     >
                       {cellInner}
                     </button>
                   );
                 })}
               </div>
+
+              {/* Monthly Mood Summary */}
+              {monthSummary && (
+                <div className="mt-lg border-t border-outline-variant/20 pt-md">
+                  <div className="flex items-center justify-between mb-sm">
+                    <h3 className="text-headline-sm font-bold text-on-surface flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-primary text-[20px]">insights</span>
+                      {t('calendar.monthSummary')}
+                    </h3>
+                    <span className="text-label-md text-on-surface-variant">
+                      <span className="font-bold text-on-surface">{monthSummary.totalEntries}</span> {t('calendar.entriesCount')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-sm pt-xs">
+                    {monthSummary.dominantMoodInfo && (
+                      <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-sm border border-outline-variant/10">
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${monthSummary.dominantMoodInfo.bg}`}>
+                          <MoodIcon mood={monthSummary.dominantMood} className="text-[22px]" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-overline text-on-surface-variant/70">{t('calendar.dominantMood')}</p>
+                          <p className="text-body-md font-bold text-on-surface truncate">{monthSummary.dominantMoodInfo.label}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {monthSummary.topTag ? (
+                      <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-sm border border-outline-variant/10">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container/40 text-primary">
+                          <span className="material-symbols-outlined text-[20px]">tag</span>
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-overline text-on-surface-variant/70">{t('calendar.topTag')}</p>
+                          <p className="text-body-md font-bold text-on-surface truncate">#{getLocalizedTag(monthSummary.topTag, t)}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-sm border border-outline-variant/10">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container text-on-surface-variant/40">
+                          <span className="material-symbols-outlined text-[20px]">tag</span>
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-overline text-on-surface-variant/70">{t('calendar.topTag')}</p>
+                          <p className="text-body-sm text-on-surface-variant/60">—</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right 5 columns: Day Detail Inspector (Desktop Only) */}
-            <div className="hidden lg:block lg:col-span-5 bg-surface-container-lowest p-8 rounded-xl lg:rounded-xxl shadow-card border border-outline-variant/20 min-h-[480px]">
+            <div className="hidden lg:block lg:col-span-5 bg-surface-container-lowest p-6 lg:p-8 rounded-xl lg:rounded-2xl shadow-card border border-outline-variant/15 min-h-[480px]">
               {(() => {
                 const activeDateStr = selectedDate || getLocalDate();
                 const activeEntry = entriesByDate[activeDateStr];
@@ -489,12 +563,12 @@ export default function Calendar() {
                 return (
                   <div className="flex flex-col h-full justify-between space-y-6">
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between pb-4 border-b border-outline-variant/40">
+                      <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
                         <div>
-                          <span className="text-label-sm font-label-sm uppercase tracking-wider text-on-surface-variant/70">
+                          <span className="text-overline text-on-surface-variant/70">
                             {isTodayDate ? t('common.today') : t('calendar.inspectorDate')}
                           </span>
-                          <h3 className="text-2xl font-bold text-on-surface">
+                          <h3 className="text-headline-lg font-bold text-on-surface">
                             {formattedDateStr}
                           </h3>
                         </div>
@@ -515,11 +589,11 @@ export default function Calendar() {
                         <div className="space-y-6 animate-in fade-in duration-200">
                           {/* Mood & Tag Header */}
                           <div className="flex items-center gap-4">
-                            <span className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl ${activeMood.bg}`}>
-                              <MoodIcon mood={activeEntry.mood} className="text-[36px]" />
+                            <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${activeMood.bg}`}>
+                              <MoodIcon mood={activeEntry.mood} className="text-[32px]" />
                             </span>
                             <div>
-                              <h4 className="text-xl font-bold text-on-surface">
+                              <h4 className="text-headline-md font-bold text-on-surface">
                                 {activeMood.label}
                               </h4>
                               <p className="text-body-sm text-on-surface-variant">
@@ -529,7 +603,7 @@ export default function Calendar() {
                           </div>
 
                           {/* Text Note */}
-                          <div className="rounded-2xl bg-surface-container-low/50 p-5">
+                          <div className="rounded-lg bg-surface-container-low/60 p-md border border-outline-variant/10">
                             <p className="whitespace-pre-wrap text-body-md text-on-surface leading-relaxed">
                               {activeEntry.text || <span className="italic text-on-surface-variant/60">{t('home.noNote')}</span>}
                             </p>
@@ -539,7 +613,7 @@ export default function Calendar() {
                           {activeEntry.tags?.length > 0 && (
                             <div className="flex flex-wrap gap-2">
                               {activeEntry.tags.map((tag) => (
-                                <span key={tag} className="rounded-xl bg-primary-container/60 px-3 py-1 text-label-md font-semibold text-primary">
+                                <span key={tag} className="rounded-md bg-primary-container/60 px-3 py-1 text-label-md font-semibold text-primary">
                                   #{getLocalizedTag(tag, t)}
                                 </span>
                               ))}
@@ -547,11 +621,11 @@ export default function Calendar() {
                           )}
 
                           {activeEntry.photo_url && (
-                            <div className="overflow-hidden rounded-2xl">
+                            <div className="overflow-hidden rounded-lg">
                               <ImageWithSkeleton
                                 src={activeEntry.photo_url}
                                 alt={`Photo for ${formattedDateStr}`}
-                                className="w-full h-auto rounded-2xl object-contain"
+                                className="w-full h-auto rounded-lg object-contain"
                                 skeletonHeightClass="h-48"
                               />
                             </div>
@@ -563,15 +637,15 @@ export default function Calendar() {
                         </div>
                       ) : isFutureDate ? (
                         <div className="flex flex-col items-center justify-center py-12 text-center text-on-surface-variant/50 space-y-3">
-                          <span className="material-symbols-outlined text-[48px]">event_busy</span>
+                          <span className="material-symbols-outlined text-[44px]">event_busy</span>
                           <p className="text-body-md font-medium">
                             {t('calendar.futureDateInfo')}
                           </p>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
-                          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant/40">
-                            <span className="material-symbols-outlined text-[32px]">edit_calendar</span>
+                          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant/40">
+                            <span className="material-symbols-outlined text-[28px]">edit_calendar</span>
                           </span>
                           <div className="space-y-1">
                             <p className="text-body-lg font-semibold text-on-surface">
@@ -587,16 +661,16 @@ export default function Calendar() {
 
                     {/* Bottom Action for inspect panel */}
                     {!selectedFriend && !isFutureDate && (
-                      <div className="pt-4 border-t border-outline-variant/40">
+                      <div className="pt-4 border-t border-outline-variant/30">
                         <Link
                           to={`/entries/new?date=${activeDateStr}`}
-                          className="flex items-center justify-center gap-2 w-full rounded-2xl bg-primary py-3.5 px-6 text-label-lg font-bold text-on-primary shadow-sm hover:opacity-95 transition-opacity"
+                          className="flex items-center justify-center gap-2 w-full rounded-full bg-primary py-3 px-6 text-label-lg font-bold text-on-primary shadow-subtle hover:opacity-95 active:scale-[0.98] transition-all"
                         >
                           <span className="material-symbols-outlined text-[20px]">
                             {activeEntry ? "edit" : "add"}
                           </span>
                           <span>
-                            {activeEntry ? t('common.edit') : t('home.journalToday')}
+                            {activeEntry ? t('common.edit') : isTodayDate ? t('home.journalToday') : t('calendar.journalForDate')}
                           </span>
                         </Link>
                       </div>
@@ -625,158 +699,159 @@ export default function Calendar() {
           {/* Weekly Day-by-Day Flow */}
           <div className="space-y-sm select-none">
             <div className="flex items-center justify-between px-1 pb-xs">
-              <h3 className="text-label-lg font-bold text-on-surface flex items-center gap-1">
-                <span className="material-symbols-outlined text-[18px] text-primary">view_day</span>
-                {language === 'ru' ? 'Записи недели' : 'Weekly Flow'}
+              <h3 className="text-label-lg font-bold text-on-surface flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[20px] text-primary">view_day</span>
+                {t('calendar.weeklyFlow')}
               </h3>
             </div>
 
-            {days.map(({ date }) => {
-              const dateKey = formatDate(date);
-              const entry = entriesByDate[dateKey];
-              const mood = entry && getMoodInfo(entry.mood, t);
-              const todayKey = getLocalDate();
-              const today = dateKey === todayKey;
-              const future = dateKey > todayKey;
-              const weekdayName = date.toLocaleDateString(dateLocale, { weekday: "short" });
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-sm">
+              {days.map(({ date }) => {
+                const dateKey = formatDate(date);
+                const entry = entriesByDate[dateKey];
+                const mood = entry && getMoodInfo(entry.mood, t);
+                const todayKey = getLocalDate();
+                const today = dateKey === todayKey;
+                const future = dateKey > todayKey;
+                const weekdayName = date.toLocaleDateString(dateLocale, { weekday: "short" });
 
-              const cardContent = (
-                <div
-                  className={`group relative flex items-center justify-between rounded-[24px] p-md transition-all duration-200 ${
-                    today
-                      ? "bg-surface-container-lowest ring-2 ring-primary cloud-shadow"
-                      : "bg-surface-container-lowest cloud-shadow hover:bg-surface-container-low/60"
-                  } ${future ? "opacity-60" : ""}`}
-                >
-                  <div className="flex items-center gap-md flex-1 min-w-0">
-                    {/* Date Box */}
-                    <div
-                      className={`flex flex-col items-center justify-center rounded-2xl px-3 py-2 min-w-[54px] shrink-0 transition-colors ${
-                        today
-                          ? "bg-primary text-on-primary font-bold cloud-shadow"
-                          : "bg-surface-container-low text-on-surface"
-                      }`}
-                    >
-                      <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">
-                        {weekdayName}
-                      </span>
-                      <span className="text-xl font-bold leading-none mt-0.5">
-                        {date.getDate()}
-                      </span>
-                    </div>
-
-                    {/* Mood & Entry Info */}
-                    {entry ? (
-                      <div className="flex items-center gap-md flex-1 min-w-0">
-                        <span
-                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] ${mood.bg} ${
-                            today ? "ring-2 ring-primary/40" : ""
-                          }`}
-                        >
-                          <MoodIcon mood={entry.mood} className="text-[26px]" />
+                const cardContent = (
+                  <div
+                    className={`group relative flex items-center justify-between rounded-[24px] p-md transition-all duration-200 ${
+                      today
+                        ? "bg-surface-container-lowest ring-2 ring-primary cloud-shadow"
+                        : "bg-surface-container-lowest cloud-shadow hover:bg-surface-container-low/60"
+                    } ${future ? "opacity-60" : ""}`}
+                  >
+                    <div className="flex items-center gap-md flex-1 min-w-0">
+                      {/* Date Box */}
+                      <div
+                        className={`flex flex-col items-center justify-center rounded-2xl px-3 py-2 min-w-[54px] shrink-0 transition-colors ${
+                          today
+                            ? "bg-primary text-on-primary font-bold shadow-subtle"
+                            : "bg-surface-container-low text-on-surface"
+                        }`}
+                      >
+                        <span className="text-overline uppercase tracking-wider opacity-80 leading-tight">
+                          {weekdayName}
                         </span>
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <div className="flex items-center gap-xs">
-                            <span className="text-label-lg font-bold text-on-surface">
-                              {mood.label}
-                            </span>
-                            {!selectedFriend && entry.is_hidden ? (
-                              <span
-                                className="material-symbols-outlined text-[14px] text-on-surface-variant/70"
-                                title={t('common.hiddenFromFriends')}
-                              >
-                                lock
+                        <span className="text-headline-sm font-bold leading-tight mt-0.5">
+                          {date.getDate()}
+                        </span>
+                      </div>
+
+                      {/* Mood & Entry Info */}
+                      {entry ? (
+                        <div className="flex items-center gap-md flex-1 min-w-0">
+                          <span
+                            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${mood.bg} ${
+                              today ? "ring-2 ring-primary/40" : ""
+                            }`}
+                          >
+                            <MoodIcon mood={entry.mood} className="text-[26px]" />
+                          </span>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <div className="flex items-center gap-xs">
+                              <span className="text-label-lg font-bold text-on-surface">
+                                {mood.label}
                               </span>
-                            ) : !selectedFriend && entry.has_custom_visibility ? (
-                              <span
-                                className="material-symbols-outlined text-[14px] text-primary"
-                                title={t('addEntry.customVisibilityBadge')}
-                              >
-                                group
-                              </span>
-                            ) : null}
-                            {today && (
-                              <span className="ml-auto sm:ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                                {t('common.today').toUpperCase()}
-                              </span>
-                            )}
-                          </div>
-                          {entry.text ? (
-                            <p className="text-body-sm text-on-surface-variant/90 truncate mt-0.5">
-                              {entry.text}
-                            </p>
-                          ) : (
-                            <p className="text-body-sm text-on-surface-variant/40 italic mt-0.5">
-                              {t('home.noNote')}
-                            </p>
-                          )}
-                          {/* Badges for tags, photos, audio */}
-                          {(entry.tags?.length > 0 || entry.photo_url || entry.audio_url) && (
-                            <div className="flex items-center gap-xs mt-1.5 flex-wrap">
-                              {entry.tags?.slice(0, 3).map((tag) => (
+                              {!selectedFriend && entry.is_hidden ? (
                                 <span
-                                  key={tag}
-                                  className="rounded-md bg-surface-container-high px-2 py-0.5 text-[11px] font-medium text-on-surface-variant"
+                                  className="material-symbols-outlined text-[14px] text-on-surface-variant"
+                                  title={t('common.hiddenFromFriends')}
                                 >
-                                  #{getLocalizedTag(tag, t)}
+                                  lock
                                 </span>
-                              ))}
-                              {entry.photo_url && (
-                                <span className="flex items-center gap-1 rounded-md bg-surface-container-high px-2 py-0.5 text-[11px] text-on-surface-variant">
-                                  <span className="material-symbols-outlined text-[13px]">image</span>
-                                  <span>{t('addEntry.photo')}</span>
+                              ) : !selectedFriend && entry.has_custom_visibility ? (
+                                <span
+                                  className="material-symbols-outlined text-[14px] text-primary"
+                                  title={t('addEntry.customVisibilityBadge')}
+                                >
+                                  group
                                 </span>
-                              )}
-                              {entry.audio_url && (
-                                <span className="flex items-center gap-1 rounded-md bg-surface-container-high px-2 py-0.5 text-[11px] text-on-surface-variant">
-                                  <span className="material-symbols-outlined text-[13px]">mic</span>
-                                  <span>{t('addEntry.voiceNote')}</span>
+                              ) : null}
+                              {today && (
+                                <span className="ml-auto sm:ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-overline font-bold text-primary">
+                                  {t('common.today').toUpperCase()}
                                 </span>
                               )}
                             </div>
-                          )}
+                            {entry.text ? (
+                              <p className="text-body-sm text-on-surface-variant truncate mt-0.5">
+                                {entry.text}
+                              </p>
+                            ) : (
+                              <p className="text-body-sm text-on-surface-variant/50 italic mt-0.5">
+                                {t('home.noNote')}
+                              </p>
+                            )}
+                            {/* Badges for tags, photos, audio */}
+                            {(entry.tags?.length > 0 || entry.photo_url || entry.audio_url) && (
+                              <div className="flex items-center gap-xs mt-1.5 flex-wrap">
+                                {entry.tags?.slice(0, 3).map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="rounded-md bg-surface-container-high px-2 py-0.5 text-label-sm font-medium text-on-surface-variant"
+                                  >
+                                    #{getLocalizedTag(tag, t)}
+                                  </span>
+                                ))}
+                                {entry.photo_url && (
+                                  <span className="flex items-center gap-1 rounded-md bg-surface-container-high px-2 py-0.5 text-label-sm text-on-surface-variant">
+                                    <span className="material-symbols-outlined text-[14px]">image</span>
+                                    <span>{t('addEntry.photo')}</span>
+                                  </span>
+                                )}
+                                {entry.audio_url && (
+                                  <span className="flex items-center gap-1 rounded-md bg-surface-container-high px-2 py-0.5 text-label-sm text-on-surface-variant">
+                                    <span className="material-symbols-outlined text-[14px]">mic</span>
+                                    <span>{t('addEntry.voiceNote')}</span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ) : future ? (
-                      <div className="flex items-center gap-md flex-1 min-w-0 py-1">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-surface-container-low/60 border border-outline-variant/10 text-on-surface-variant/30">
-                          <span className="material-symbols-outlined text-[22px]">event</span>
-                        </span>
-                        <span className="text-body-sm font-medium text-on-surface-variant/40">
-                          —
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-md flex-1 min-w-0">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-primary transition-colors">
-                          <span className="material-symbols-outlined text-[22px]">add</span>
-                        </span>
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <span className="text-body-md font-medium text-on-surface">
-                            {t('home.journalToday')}
+                      ) : future ? (
+                        <div className="flex items-center gap-md flex-1 min-w-0 py-1">
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-container-low/50 border border-outline-variant/10 text-on-surface-variant/30">
+                            <span className="material-symbols-outlined text-[22px]">event</span>
+                          </span>
+                          <span className="text-body-sm font-medium text-on-surface-variant/40">
+                            —
                           </span>
                         </div>
+                      ) : (
+                        <div className="flex items-center gap-md flex-1 min-w-0">
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-primary transition-colors">
+                            <span className="material-symbols-outlined text-[22px]">add</span>
+                          </span>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <span className="text-body-md font-medium text-on-surface">
+                              {today ? t('home.journalToday') : t('calendar.journalForDate')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Action Chevron */}
+                    {!future && (
+                      <div className="shrink-0 ml-xs">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant group-hover:bg-primary-container group-hover:text-primary transition-colors">
+                          <span className="material-symbols-outlined text-[18px]">
+                            {entry ? "chevron_right" : "add"}
+                          </span>
+                        </span>
                       </div>
                     )}
                   </div>
+                );
 
-                  {/* Right Action Chevron */}
-                  {!future && (
-                    <div className="shrink-0 ml-xs">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant group-hover:bg-primary-container group-hover:text-primary transition-colors">
-                        <span className="material-symbols-outlined text-[18px]">
-                          {entry ? "chevron_right" : "add"}
-                        </span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-              );
-
-              if (selectedFriend) {
                 if (future) {
                   return <div key={dateKey}>{cardContent}</div>;
                 }
+
                 return (
                   <button
                     key={dateKey}
@@ -786,32 +861,13 @@ export default function Calendar() {
                       setSelectedDate(dateKey);
                       setMobileInspectorOpen(true);
                     }}
-                    className="w-full text-left active:scale-[0.99] transition-transform"
+                    className="w-full text-left active:scale-[0.98] transition-transform"
                   >
                     {cardContent}
                   </button>
                 );
-              }
-
-              if (future) {
-                return <div key={dateKey}>{cardContent}</div>;
-              }
-
-              return (
-                <button
-                  key={dateKey}
-                  type="button"
-                  onClick={() => {
-                    haptics.selection();
-                    setSelectedDate(dateKey);
-                    setMobileInspectorOpen(true);
-                  }}
-                  className="w-full text-left active:scale-[0.99] transition-transform"
-                >
-                  {cardContent}
-                </button>
-              );
-            })}
+              })}
+            </div>
           </div>
 
           {error && (
@@ -822,57 +878,6 @@ export default function Calendar() {
         </section>
       )}
       </>}
-
-      {selectedFriendEntry && selectedFriend && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-on-surface/40 p-container-margin backdrop-blur-xs animate-in fade-in duration-200"
-          role="presentation"
-          onMouseDown={() => setSelectedFriendEntry(null)}
-        >
-          <article
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="friend-entry-title"
-            onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-md max-h-[85vh] overflow-y-auto rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow"
-          >
-            <div className="mb-md flex items-start justify-between gap-md">
-              <div className="flex items-center gap-sm">
-                <FriendAvatar friend={selectedFriend} />
-                <div>
-                  <p className="text-label-sm font-label-sm text-on-surface-variant">{friendName(selectedFriend)}</p>
-                  <h2 id="friend-entry-title" className="text-headline-lg-mobile font-headline-lg-mobile">
-                    {formatDateLocale(selectedFriendEntry.date)}
-                  </h2>
-                </div>
-              </div>
-              <button type="button" aria-label={t('common.close')} onClick={() => setSelectedFriendEntry(null)} className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <div className="mb-md flex items-center gap-sm">
-              <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${getMoodInfo(selectedFriendEntry.mood, t).bg}`}>
-                <MoodIcon mood={selectedFriendEntry.mood} className="text-[26px]" />
-              </span>
-              <div className="flex flex-wrap gap-xs">
-                {selectedFriendEntry.tags.map((tag) => <span key={tag} className="rounded-full bg-primary-container px-md py-xs text-label-sm font-label-sm text-primary">{getLocalizedTag(tag, t)}</span>)}
-              </div>
-            </div>
-            <p className="whitespace-pre-wrap text-body-md font-body-md leading-6 text-on-surface">{selectedFriendEntry.text || t('home.noNote')}</p>
-            {selectedFriendEntry.photo_url && (
-              <div className="mt-md">
-                <ImageWithSkeleton
-                  src={selectedFriendEntry.photo_url}
-                  alt={`Photo from ${friendName(selectedFriend)}'s day`}
-                  className="w-full h-auto rounded-2xl object-contain"
-                  skeletonHeightClass="h-48 sm:h-64"
-                />
-              </div>
-            )}
-            {selectedFriendEntry.audio_url && <VoiceNotePlayer audioUrl={selectedFriendEntry.audio_url} duration={selectedFriendEntry.audio_duration} className="mt-md" />}
-          </article>
-        </div>
-      )}
 
       {mobileInspectorOpen && selectedDate && (
         <div
@@ -885,16 +890,14 @@ export default function Calendar() {
             aria-modal="true"
             aria-labelledby="mobile-inspector-title"
             onMouseDown={(event) => event.stopPropagation()}
-            onTouchStart={handleInspectorTouchStart}
-            onTouchMove={handleInspectorTouchMove}
-            onTouchEnd={handleInspectorTouchEnd}
-            style={{
-              transform: isInspectorDragging ? `translateX(${inspectorDragX}px)` : 'translateX(0px)',
-              transition: isInspectorDragging ? 'none' : 'transform 0.2s ease-out',
-            }}
-            className={`w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-xxl sm:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-modal select-none ${inspectorSlideAnim}`}
+            className={`w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-xxl sm:rounded-xxl bg-surface-container-lowest border border-outline-variant/15 p-lg shadow-modal select-none ${inspectorSlideAnim}`}
           >
-            <div className="mx-auto mb-xs h-1.5 w-12 rounded-full bg-surface-container-high" />
+            <button
+              type="button"
+              aria-label={t('common.close')}
+              onClick={() => setMobileInspectorOpen(false)}
+              className="mx-auto mb-sm block h-1.5 w-12 rounded-full bg-surface-container-high hover:bg-surface-container-highest active:scale-95 transition-colors cursor-pointer"
+            />
 
             {(() => {
               const activeDateStr = selectedDate || getLocalDate();
@@ -906,7 +909,7 @@ export default function Calendar() {
 
               return (
                 <div className="space-y-md">
-                  <div className="flex items-center justify-between border-b border-outline-variant/40 pb-sm">
+                  <div className="flex items-center justify-between border-b border-outline-variant/30 pb-sm">
                     <div className="flex items-center gap-xs">
                       <button
                         type="button"
@@ -920,7 +923,7 @@ export default function Calendar() {
                       <div className="flex items-center gap-sm">
                         {selectedFriend && <FriendAvatar friend={selectedFriend} />}
                         <div>
-                          <span className="text-label-sm font-label-sm uppercase tracking-wider text-on-surface-variant/70">
+                          <span className="text-overline text-on-surface-variant/70">
                             {selectedFriend ? friendName(selectedFriend) : isTodayDate ? t('common.today') : t('calendar.inspectorDate')}
                           </span>
                           <h3 id="mobile-inspector-title" className="text-headline-lg-mobile font-bold text-on-surface">
@@ -946,9 +949,9 @@ export default function Calendar() {
                         haptics.selection();
                         setMobileInspectorOpen(false);
                       }}
-                      className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant"
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container transition-colors"
                     >
-                      <span className="material-symbols-outlined">close</span>
+                      <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
                   </div>
 
@@ -1025,7 +1028,7 @@ export default function Calendar() {
                   )}
 
                   {!selectedFriend && !isFutureDate && (
-                    <div className="pt-md border-t border-outline-variant/40">
+                    <div className="pt-md border-t border-outline-variant/30">
                       <Link
                         to={`/entries/new?date=${activeDateStr}`}
                         onClick={() => setMobileInspectorOpen(false)}
@@ -1035,7 +1038,7 @@ export default function Calendar() {
                           {activeEntry ? "edit" : "add"}
                         </span>
                         <span>
-                          {activeEntry ? t('common.edit') : t('home.journalToday')}
+                          {activeEntry ? t('common.edit') : isTodayDate ? t('home.journalToday') : t('calendar.journalForDate')}
                         </span>
                       </Link>
                     </div>
@@ -1050,6 +1053,11 @@ export default function Calendar() {
       </main>
     </AppLayout>
   );
+}
+
+function capitalizeFirstLetter(string) {
+  if (!string) return '';
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 function friendName(friend) {
@@ -1164,38 +1172,40 @@ function WeeklyMoodWave({ days, entriesByDate, weekdays, t, isFriend }) {
   });
 
   const avgMood = loggedCount > 0 ? (moodSum / loggedCount).toFixed(1) : null;
+  const roundedAvg = avgMood ? Math.round(Number(avgMood)) : null;
+  const avgMoodInfo = roundedAvg ? getMoodInfo(roundedAvg, t) : null;
   const loggedPoints = points.filter((p) => p.hasEntry);
-  const pathD = getSmoothPath(loggedPoints.length > 0 ? loggedPoints : []);
+  const pathD = loggedPoints.length > 1 ? getSmoothPath(loggedPoints) : "";
 
   const areaD =
-    loggedPoints.length > 0
+    loggedPoints.length > 1
       ? `${pathD} L ${loggedPoints[loggedPoints.length - 1].x},80 L ${loggedPoints[0].x},80 Z`
       : "";
 
   return (
     <div className="rounded-[24px] bg-surface-container-lowest p-md cloud-shadow">
-      <div className="flex items-center justify-between mb-xs">
-        <div>
+      <div className="flex items-center justify-between mb-xs gap-2">
+        <div className="min-w-0">
           <h3 className="text-label-lg font-bold text-on-surface flex items-center gap-1.5">
             <span className="material-symbols-outlined text-primary text-[20px]">show_chart</span>
             {t('home.thisWeekMood')}
           </h3>
-          <p className="text-label-sm text-on-surface-variant/60">
+          <p className="text-label-sm text-on-surface-variant/70">
             {loggedCount} / 7
           </p>
         </div>
-        <div className="flex items-center gap-sm">
-          {avgMood && (
-            <div className="flex items-center gap-1.5 rounded-full bg-primary-container/40 px-3 py-1 text-primary">
-              <span className="material-symbols-outlined text-[18px]">sentiment_very_satisfied</span>
-              <span className="text-label-lg font-bold">{avgMood}</span>
-              <span className="text-[11px] opacity-70">/ 5</span>
+        <div className="flex items-center gap-sm shrink-0">
+          {avgMood && avgMoodInfo && (
+            <div className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 min-w-fit shrink-0 whitespace-nowrap shadow-subtle ${avgMoodInfo.bg}`}>
+              <MoodIcon mood={roundedAvg} className="text-[18px] shrink-0" />
+              <span className="text-label-lg font-bold text-on-surface">{avgMood}</span>
+              <span className="text-label-sm opacity-70 text-on-surface-variant whitespace-nowrap">/ 5</span>
             </div>
           )}
           {!isFriend && (
             <Link
               to="/stats"
-              className="flex items-center gap-1 rounded-full bg-surface-container-low px-2.5 py-1 text-label-sm font-bold text-primary hover:bg-primary-container/40 transition-colors"
+              className="flex items-center gap-1 rounded-full bg-surface-container-low px-2.5 py-1 text-label-sm font-bold text-primary hover:bg-primary-container/40 transition-colors shrink-0"
               title={t('stats.title')}
             >
               <span className="material-symbols-outlined text-[16px]">equalizer</span>
@@ -1209,29 +1219,52 @@ function WeeklyMoodWave({ days, entriesByDate, weekdays, t, isFriend }) {
         <svg viewBox="0 0 320 95" className="w-full overflow-visible">
           <defs>
             <linearGradient id="moodWaveGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="rgb(var(--color-primary))" stopOpacity="0.25" />
+              <stop offset="0%" stopColor="rgb(var(--color-primary))" stopOpacity="0.22" />
               <stop offset="100%" stopColor="rgb(var(--color-primary))" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
           {/* Grid lines */}
-          <line x1="20" y1="20" x2="300" y2="20" stroke="currentColor" strokeDasharray="3 3" className="text-outline-variant/25" strokeWidth="1" />
-          <line x1="20" y1="45" x2="300" y2="45" stroke="currentColor" strokeDasharray="3 3" className="text-outline-variant/25" strokeWidth="1" />
-          <line x1="20" y1="70" x2="300" y2="70" stroke="currentColor" strokeDasharray="3 3" className="text-outline-variant/25" strokeWidth="1" />
+          <line x1="20" y1="20" x2="300" y2="20" stroke="currentColor" strokeDasharray="3 3" className="text-outline-variant/30" strokeWidth="1" />
+          <line x1="20" y1="45" x2="300" y2="45" stroke="currentColor" strokeDasharray="3 3" className="text-outline-variant/30" strokeWidth="1" />
+          <line x1="20" y1="70" x2="300" y2="70" stroke="currentColor" strokeDasharray="3 3" className="text-outline-variant/30" strokeWidth="1" />
 
           {/* Area Fill */}
-          {loggedPoints.length > 0 && <path d={areaD} fill="url(#moodWaveGrad)" />}
+          {loggedPoints.length > 1 && <path d={areaD} fill="url(#moodWaveGrad)" />}
 
           {/* Line */}
-          {loggedPoints.length > 0 && (
+          {loggedPoints.length > 1 && (
             <path
               d={pathD}
               fill="none"
               stroke="rgb(var(--color-primary))"
-              strokeWidth="3.5"
+              strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
+          )}
+
+          {/* Single Point Halo */}
+          {loggedPoints.length === 1 && (
+            <g>
+              <circle
+                cx={loggedPoints[0].x}
+                cy={loggedPoints[0].y}
+                r="14"
+                fill="rgb(var(--color-primary))"
+                opacity="0.18"
+              />
+              <circle
+                cx={loggedPoints[0].x}
+                cy={loggedPoints[0].y}
+                r="20"
+                fill="none"
+                stroke="rgb(var(--color-primary))"
+                strokeWidth="1.5"
+                strokeDasharray="2 2"
+                opacity="0.3"
+              />
+            </g>
           )}
 
           {/* Points */}
@@ -1262,7 +1295,7 @@ function WeeklyMoodWave({ days, entriesByDate, weekdays, t, isFriend }) {
                 x={p.x}
                 y="90"
                 textAnchor="middle"
-                className="fill-on-surface-variant/60 text-[10px] font-medium"
+                className="fill-on-surface-variant/70 text-[10px] font-medium"
               >
                 {weekdays[i]}
               </text>
