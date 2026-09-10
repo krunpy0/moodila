@@ -240,8 +240,8 @@ export default function Stats() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
                   {highestTag && (
                     <div className="flex items-center gap-md rounded-xl bg-mood-rad-container/25 border border-mood-rad/20 p-md shadow-subtle">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mood-rad text-on-primary">
-                        <MoodIcon mood={5} className="text-[22px]" />
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-mood-rad-container border border-mood-rad/30">
+                        <MoodIcon mood={Math.min(5, Math.max(1, Math.round(highestTag.avg_mood)))} className="text-[26px]" />
                       </span>
                       <div className="min-w-0">
                         <span className="text-label-sm font-semibold text-on-mood-rad-container block">
@@ -259,8 +259,8 @@ export default function Stats() {
 
                   {lowestTag && (
                     <div className="flex items-center gap-md rounded-xl bg-mood-awful-container/25 border border-mood-awful/20 p-md shadow-subtle">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mood-awful text-on-primary">
-                        <MoodIcon mood={1} className="text-[22px]" />
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-mood-awful-container border border-mood-awful/30">
+                        <MoodIcon mood={Math.min(5, Math.max(1, Math.round(lowestTag.avg_mood)))} className="text-[26px]" />
                       </span>
                       <div className="min-w-0">
                         <span className="text-label-sm font-semibold text-on-mood-awful-container block">
@@ -290,24 +290,33 @@ export default function Stats() {
                 }
                 return (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-xs pt-xs">
-                    {validTags.map((item) => (
-                      <div
-                        key={item.tag}
-                        className="flex items-center justify-between rounded-lg bg-surface-container-low border border-outline-variant/15 py-2 px-3 transition-colors hover:bg-surface-container"
-                      >
-                        <span className="text-body-md font-semibold text-on-surface truncate max-w-[140px]">
-                          #{getLocalizedTag(item.tag, t)}
-                        </span>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <span className="text-body-md font-bold text-on-surface tabular-nums">
-                            {Number(item.avg_mood).toFixed(1)}
-                          </span>
-                          <span className="text-label-sm text-on-surface-variant tabular-nums">
-                            ({item.entry_count})
-                          </span>
+                    {validTags.map((item) => {
+                      const tagMoodLevel = Math.min(5, Math.max(1, Math.round(item.avg_mood)));
+                      const tagMoodInfo = getMoodInfo(tagMoodLevel, t);
+                      return (
+                        <div
+                          key={item.tag}
+                          className="flex items-center justify-between rounded-xl bg-surface-container-low border border-outline-variant/15 py-2 px-3 transition-colors hover:bg-surface-container"
+                        >
+                          <div className="flex items-center gap-2.5 truncate max-w-[170px]">
+                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tagMoodInfo.bg}`}>
+                              <MoodIcon mood={tagMoodLevel} className="text-[17px]" />
+                            </span>
+                            <span className="text-body-md font-semibold text-on-surface truncate">
+                              #{getLocalizedTag(item.tag, t)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="text-body-md font-bold text-on-surface tabular-nums">
+                              {Number(item.avg_mood).toFixed(1)}
+                            </span>
+                            <span className="text-label-sm text-on-surface-variant tabular-nums">
+                              ({item.entry_count})
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 );
               })()}
