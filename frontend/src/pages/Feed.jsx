@@ -1,4 +1,4 @@
-/* Hallmark · designed-as-app · design-system: DESIGN.md */
+/* Hallmark · designed-as-app · design-system: DESIGN.md · genre: editorial */
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
 import {
@@ -40,7 +40,7 @@ export default function Feed() {
   const friendsQuery = useFriendsQuery();
   const likeMutation = useLikeEntryMutation();
   const observerRef = useRef(null);
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const { notify } = useNotifications();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -162,7 +162,7 @@ export default function Feed() {
           {/* Main Feed Column */}
           <div className="lg:col-span-8 space-y-md">
             <section className="px-container-margin lg:px-0 pb-xs">
-              <div className="flex items-center justify-between rounded-[20px] bg-surface-container-lowest p-md cloud-shadow border border-outline-variant/15">
+              <div className="flex items-center justify-between rounded-md bg-surface-container-lowest p-md border border-outline-variant/20">
                 <div className="flex items-center gap-sm">
                   <span className="material-symbols-outlined text-[22px] text-primary">
                     {includeSelf ? "person" : "group"}
@@ -182,12 +182,12 @@ export default function Feed() {
                   aria-checked={includeSelf}
                   aria-label={t("feed.includeMyPosts")}
                   onClick={handleToggleIncludeSelf}
-                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors duration-normal ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
                     includeSelf ? "bg-primary" : "bg-surface-container-highest"
                   }`}
                 >
                   <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ease-in-out ${
+                    className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-sm transition-transform duration-normal ease-standard ${
                       includeSelf
                         ? "translate-x-5 text-on-primary-container"
                         : "translate-x-0 text-on-surface-variant"
@@ -233,29 +233,37 @@ export default function Feed() {
                   {!feedQuery.isLoading &&
                     !feedQuery.isError &&
                     entries.length === 0 && (
-                      <div className="rounded-[24px] bg-surface-container-low p-lg text-center border border-outline-variant/15 space-y-sm">
-                        <span className="material-symbols-outlined text-[36px] text-primary">
-                          waving_hand
-                        </span>
-                        <h2 className="text-headline-sm font-bold text-on-surface">
-                          {t("feed.welcomeTitle")}
-                        </h2>
-                        <p className="text-body-sm text-on-surface-variant max-w-sm mx-auto">
-                          {t("feed.welcomeDesc")}
-                        </p>
-                        <div className="flex flex-wrap justify-center gap-xs pt-xs">
-                          <Link
-                            to="/entries/new"
-                            className="rounded-full bg-primary px-lg py-sm text-label-lg font-semibold text-on-primary shadow-xs hover:opacity-90 transition-all"
-                          >
-                            {t("home.firstEntryBtn")}
-                          </Link>
-                          <Link
-                            to="/friends"
-                            className="rounded-full bg-surface-container-high px-lg py-sm text-label-lg font-semibold text-on-surface-variant hover:bg-surface-container-highest transition-all"
-                          >
-                            {t("feed.addFriendsBtn")}
-                          </Link>
+                      <div className="rounded-lg bg-surface-container-lowest p-lg sm:p-xl border border-outline-variant/20 shadow-card relative overflow-hidden">
+                        <div className="flex items-start gap-md">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-container text-on-primary-container">
+                            <span className="material-symbols-outlined text-[26px] text-primary">
+                              auto_stories
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-xs">
+                            <h2 className="text-headline-sm font-bold text-on-surface tracking-tight">
+                              {t("feed.welcomeTitle")}
+                            </h2>
+                            <p className="text-body-sm leading-relaxed text-on-surface-variant max-w-lg">
+                              {t("feed.welcomeDesc")}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-sm pt-md">
+                              <Link
+                                to="/entries/new"
+                                className="inline-flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-md font-semibold text-on-primary shadow-xs hover:opacity-90 active:scale-95 transition-[background-color,transform,opacity] duration-normal ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">edit_note</span>
+                                <span>{t("home.firstEntryBtn")}</span>
+                              </Link>
+                              <Link
+                                to="/friends"
+                                className="inline-flex items-center gap-xs rounded-full bg-surface-container px-lg py-sm text-label-md font-semibold text-on-surface hover:bg-surface-container-high active:scale-95 transition-[background-color,transform] duration-normal ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                                <span>{t("feed.addFriendsBtn")}</span>
+                              </Link>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -274,26 +282,26 @@ export default function Feed() {
 
           {/* Right Sidebar Column on Desktop */}
           <div className="hidden lg:block lg:col-span-4 space-y-md">
-            <div className="sticky top-6 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow space-y-md border border-outline-variant/15">
-              <div className="flex items-center justify-between border-b border-outline-variant/15 pb-sm">
-                <h3 className="text-headline-lg font-bold text-on-surface">
-                  {language === "ru" ? "Друзья" : "Friends"}
+            <div className="sticky top-6 rounded-lg bg-surface-container-lowest p-lg border border-outline-variant/20 space-y-md">
+              <div className="flex items-center justify-between border-b border-outline-variant/20 pb-sm">
+                <h3 className="text-headline-sm font-bold text-on-surface">
+                  {t("feed.friendsSidebarTitle")}
                 </h3>
                 <Link
                   to="/friends"
-                  className="text-label-sm font-semibold text-primary hover:underline"
+                  className="text-label-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xs"
                 >
                   {t("common.seeAll")}
                 </Link>
               </div>
 
               {friends.length > 0 ? (
-                <div className="space-y-sm">
+                <div className="space-y-xs">
                   {friends.slice(0, 5).map((friend) => (
                     <Link
                       key={friend.id}
                       to={`/calendar?friend=${friend.id}`}
-                      className="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container transition-colors group"
+                      className="flex items-center justify-between p-sm rounded-md hover:bg-surface-container-low transition-colors duration-fast group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       <div className="flex items-center gap-sm min-w-0">
                         {friend.avatar_url ? (
@@ -309,7 +317,7 @@ export default function Feed() {
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="text-body-sm font-semibold text-on-surface truncate">
+                          <p className="text-body-sm font-semibold text-on-surface truncate group-hover:text-primary transition-colors duration-fast">
                             {friend.display_name || friend.username}
                           </p>
                           <p className="text-label-sm text-on-surface-variant truncate">
@@ -317,7 +325,7 @@ export default function Feed() {
                           </p>
                         </div>
                       </div>
-                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant/40 group-hover:text-primary transition-colors">
+                      <span className="material-symbols-outlined text-[18px] text-on-surface-variant/40 group-hover:text-primary transition-colors duration-fast">
                         calendar_month
                       </span>
                     </Link>
@@ -326,15 +334,13 @@ export default function Feed() {
               ) : (
                 <div className="py-4 text-center">
                   <p className="text-body-sm text-on-surface-variant">
-                    {language === "ru"
-                      ? "У вас пока нет друзей"
-                      : "No friends added yet"}
+                    {t("feed.noFriendsYet")}
                   </p>
                   <Link
                     to="/friends"
-                    className="mt-xs inline-block text-label-sm font-semibold text-primary hover:underline"
+                    className="mt-xs inline-block text-label-sm font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xs"
                   >
-                    {language === "ru" ? "Найти друзей" : "Find friends"}
+                    {t("feed.findFriends")}
                   </Link>
                 </div>
               )}
@@ -392,7 +398,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
         <header className="flex items-center gap-sm">
           <Link
             to={profileLink}
-            className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80"
+            className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
           >
             <Avatar author={entry.author} />
             <div className="min-w-0 flex-1">
@@ -401,7 +407,9 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
               </h2>
               <p className="text-label-sm text-on-surface-variant">
                 @{entry.author.username} ·{" "}
-                {formatFeedDate(entry.created_at, entry.date, t, dateLocale)}
+                <span className="tabular-nums">
+                  {formatFeedDate(entry.created_at, entry.date, t, dateLocale)}
+                </span>
               </p>
             </div>
           </Link>
@@ -414,7 +422,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
             <MoodIcon mood={entry.mood} className="text-[36px]" />
           </span>
           <span
-            className={`rounded-full px-md py-xs text-label-lg font-bold ${moodInfo.bg} ${moodInfo.color}`}
+            className={`rounded-full px-md py-xs text-label-lg font-bold ${moodInfo.bg} ${moodInfo.onContainer || "text-on-surface"}`}
           >
             {moodInfo.label}
           </span>
@@ -432,7 +440,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
           )}
         </div>
 
-        <footer className="relative mt-sm border-t border-on-surface/5 pt-sm">
+        <footer className="relative mt-sm border-t border-surface-container pt-sm">
           <ReactionsSection
             entry={entry}
             onReact={onReact}
@@ -461,7 +469,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
       <header className="flex items-center gap-sm">
         <Link
           to={profileLink}
-          className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80"
+          className="flex min-w-0 flex-1 items-center gap-sm transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
         >
           <Avatar author={entry.author} />
           <div className="min-w-0 flex-1">
@@ -470,7 +478,9 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
             </h2>
             <p className="text-label-sm text-on-surface-variant">
               @{entry.author.username} ·{" "}
-              {formatFeedDate(entry.created_at, entry.date, t, dateLocale)}
+              <span className="tabular-nums">
+                {formatFeedDate(entry.created_at, entry.date, t, dateLocale)}
+              </span>
             </p>
           </div>
         </Link>
@@ -485,7 +495,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
       <div className="mt-md space-y-sm">
         <div className="flex flex-wrap gap-xs">
           <span
-            className={`rounded-full px-sm py-xs text-label-sm font-label-sm ${moodInfo.bg} ${moodInfo.color}`}
+            className={`rounded-full px-sm py-xs text-label-sm font-semibold ${moodInfo.bg} ${moodInfo.onContainer || "text-on-surface"}`}
           >
             {moodInfo.label}
           </span>
@@ -504,13 +514,15 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
           </p>
         )}
         {hasPhoto && (
-          <ImageWithSkeleton
-            src={entry.photo_url}
-            alt={`Photo from ${authorName}'s day`}
-            className="w-full h-auto rounded-2xl object-contain"
-            skeletonHeightClass="h-64 sm:h-80"
-            loading="lazy"
-          />
+          <div className="overflow-hidden rounded-2xl bg-surface-container-high">
+            <ImageWithSkeleton
+              src={entry.photo_url}
+              alt={t("feed.photoAlt", { name: authorName })}
+              className="w-full max-h-[480px] sm:max-h-[520px] object-cover"
+              skeletonHeightClass="h-64 sm:h-80"
+              loading="lazy"
+            />
+          </div>
         )}
         {hasAudio && (
           <VoiceNotePlayer
@@ -543,7 +555,34 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
 function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [reactionsModalOpen, setReactionsModalOpen] = useState(false);
+  const pickerRef = useRef(null);
   const { t } = useLanguage();
+
+  useEffect(() => {
+    if (!emojiPickerOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setEmojiPickerOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setEmojiPickerOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [emojiPickerOpen]);
 
   const reactions = entry.reactions || [];
   const myReactions =
@@ -553,7 +592,12 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
   return (
     <>
       {emojiPickerOpen && (
-        <div className="absolute -top-12 left-0 z-20 flex items-center gap-xs rounded-full bg-surface-container-high p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
+        <div
+          ref={pickerRef}
+          role="toolbar"
+          aria-label={t("reactions.title")}
+          className="absolute -top-12 left-0 z-20 flex items-center gap-xs rounded-full bg-surface-container-high p-1 shadow-floating border border-outline-variant/30 animate-in fade-in zoom-in-95"
+        >
           {emojiReactions.map((reac) => {
             const isMine = myReactions.includes(reac);
             return (
@@ -565,7 +609,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                   onReact(entry.id, reac);
                   setEmojiPickerOpen(false);
                 }}
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform duration-fast ease-out hover:-translate-y-0.5 active:translate-y-0 ${
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition-[background-color,transform] duration-fast ease-out hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                   isMine
                     ? "bg-primary-container/70 ring-1 ring-primary/30"
                     : "hover:bg-surface-container-low"
@@ -597,7 +641,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                 onReact(entry.id, "❤️");
               }}
               aria-label="Add reaction"
-              className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-all hover:bg-surface-container active:scale-95"
+              className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             >
               <ReactionIcon reaction="❤️" className="text-[18px]" />
               <span>0</span>
@@ -611,7 +655,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
               setEmojiPickerOpen((prev) => !prev);
             }}
             aria-label={t("reactions.title")}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors hover:bg-surface-container"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors duration-fast hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
             title={t("reactions.title")}
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -626,7 +670,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
                 haptics.selection();
                 setReactionsModalOpen(true);
               }}
-              className="flex items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors px-xs py-0.5 rounded-full hover:bg-surface-container-low"
+              className="flex items-center gap-0.5 text-label-sm font-semibold text-on-surface-variant/70 hover:text-primary transition-colors duration-fast px-xs py-0.5 rounded-full hover:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
               title={t("reactions.longPressHint")}
             >
               <span className="material-symbols-outlined text-[16px]">
@@ -638,11 +682,13 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
 
         <button
           type="button"
+          aria-expanded={showComments}
+          aria-label={t("feed.commentsCount", { count: entry.comment_count || 0 })}
           onClick={() => {
             haptics.selection();
             setShowComments((prev) => !prev);
           }}
-          className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors hover:bg-surface-container shrink-0"
+          className="flex items-center gap-xs rounded-full bg-surface-container-low px-sm py-xs text-label-sm text-on-surface-variant transition-colors duration-fast hover:bg-surface-container shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
         >
           <span className="material-symbols-outlined text-[19px]">
             chat_bubble
@@ -665,6 +711,7 @@ function ReactionsSection({ entry, onReact, showComments, setShowComments }) {
 function ReactionChip({ reactionItem, onToggle, onLongPress }) {
   const timerRef = useRef(null);
   const isLongPressRef = useRef(false);
+  const { t } = useLanguage();
 
   const handleStart = () => {
     isLongPressRef.current = false;
@@ -699,8 +746,8 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
         handleEnd();
       }}
       onTouchMove={handleCancel}
-      title="Зажмите для просмотра реакций"
-      className={`flex items-center gap-xs rounded-full px-sm py-xs text-label-sm transition-all duration-200 active:scale-95 cursor-pointer ${
+      title={t("reactions.longPressHint")}
+      className={`flex items-center gap-xs rounded-full px-sm py-xs text-label-sm transition-[background-color,transform,color] duration-fast active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
         reactionItem.reacted_by_me
           ? "bg-primary-container text-on-primary-container font-semibold ring-1 ring-primary/30 shadow-xs"
           : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
@@ -777,7 +824,7 @@ function CommentsSection({ entryId, postAuthorId }) {
                     <span className="truncate text-label-sm font-semibold text-on-surface">
                       {commentAuthor}
                     </span>
-                    <span className="text-label-sm text-on-surface-variant/60">
+                    <span className="text-label-sm text-on-surface-variant/60 tabular-nums">
                       {formatFeedDate(comment.created_at, null, t, dateLocale)}
                     </span>
                   </div>
@@ -790,9 +837,9 @@ function CommentsSection({ entryId, postAuthorId }) {
                     type="button"
                     onClick={() => handleDelete(comment.id)}
                     aria-label={t("common.delete")}
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant/40 hover:bg-error-container/20 hover:text-error"
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant/50 hover:bg-error-container/30 hover:text-error transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
                   >
-                    <span className="material-symbols-outlined text-[16px]">
+                    <span className="material-symbols-outlined text-[18px]">
                       delete
                     </span>
                   </button>
@@ -816,12 +863,13 @@ function CommentsSection({ entryId, postAuthorId }) {
           maxLength={500}
           onChange={(e) => setCommentText(e.target.value)}
           placeholder={t("feed.addComment")}
-          className="flex-1 rounded-full bg-surface-container-low px-md py-xs text-body-sm text-on-surface outline-none placeholder:text-on-surface-variant/50 focus:ring-2 focus:ring-primary/20"
+          className="h-11 flex-1 rounded-full bg-surface-container-low px-md text-body-sm text-on-surface outline-none placeholder:text-on-surface-variant/50 border border-transparent focus-visible:border-outline-variant focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 transition-[border-color,box-shadow] duration-fast"
         />
         <button
           type="submit"
+          aria-label={t("feed.sendComment")}
           disabled={!commentText.trim() || addMutation.isPending}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-on-primary disabled:opacity-40"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition-transform duration-fast active:scale-95 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
         >
           <span className="material-symbols-outlined text-[18px]">send</span>
         </button>

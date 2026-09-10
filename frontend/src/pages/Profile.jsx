@@ -1,8 +1,10 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useProfileQuery, useUpdateProfileMutation } from "../api/queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys, useProfileQuery, useUpdateProfileMutation } from "../api/queries";
 import { uploadEntryPhoto, deleteStorageObject } from "../api/entries";
+import { logout } from "../api/auth";
 import AppLayout from "../components/AppLayout";
 import HeaderBell from "../components/HeaderBell";
 import { ProfileSkeleton } from "../components/skeleton/PageSkeletons";
@@ -13,6 +15,7 @@ import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import ChangePasswordForm from "../components/ChangePasswordForm";
 import DeleteAccountModal from "../components/DeleteAccountModal";
+import LogoutModal from "../components/LogoutModal";
 import AvatarCropModal from "../components/AvatarCropModal";
 import FriendPrivacyModal from "../components/FriendPrivacyModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
@@ -27,12 +30,30 @@ export default function Profile() {
   const update = useUpdateProfileMutation();
   const { notify } = useNotifications();
   const { t, formatDate } = useLanguage();
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFriendPrivacyModal, setShowFriendPrivacyModal] = useState(false);
   const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
+
+  const handleLogout = async () => {
+    haptics.warning();
+    setIsLoggingOut(true);
+    try {
+      await logout().catch(() => {});
+      queryClient.setQueryData(queryKeys.session, null);
+      queryClient.removeQueries({ queryKey: queryKeys.session });
+      queryClient.clear();
+      navigate("/login", { replace: true });
+    } catch {
+      setIsLoggingOut(false);
+      setShowLogoutModal(false);
+    }
+  };
 
   const [form, setForm] = useState(null);
   const [initialAvatarUrl, setInitialAvatarUrl] = useState("");
@@ -580,6 +601,28 @@ export default function Profile() {
                   {showChangePassword && <ChangePasswordForm />}
                 </div>
 
+                {/* Logout */}
+                <div className="border-t border-surface-container-low pt-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      haptics.selection();
+                      setShowLogoutModal(true);
+                    }}
+                    className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:text-error active:opacity-80 transition-colors"
+                  >
+                    <span className="flex items-center gap-sm">
+                      <span className="material-symbols-outlined text-on-surface-variant">
+                        logout
+                      </span>
+                      {t("common.logout")}
+                    </span>
+                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                      chevron_right
+                    </span>
+                  </button>
+                </div>
+
                 {/* Delete account */}
                 <div className="border-t border-surface-container-low pt-xs">
                   <button
@@ -613,6 +656,12 @@ export default function Profile() {
               <DeleteAccountModal
                 isOpen={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
+              />
+              <LogoutModal
+                isOpen={showLogoutModal}
+                onClose={() => setShowLogoutModal(false)}
+                onConfirm={handleLogout}
+                isPending={isLoggingOut}
               />
               <AvatarCropModal
                 imageSrc={cropImageSrc}

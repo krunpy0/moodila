@@ -1,10 +1,10 @@
 export const REACTION_MAP = [
-  { id: '❤️', icon: 'favorite', color: 'text-rose-500', label: 'Heart' },
-  { id: '🫂', icon: 'diversity_1', color: 'text-amber-600', label: 'Hug' },
-  { id: '👏', icon: 'thumb_up', color: 'text-blue-500', label: 'Clap' },
-  { id: '💡', icon: 'lightbulb', color: 'text-yellow-500', label: 'Idea' },
-  { id: '😁', icon: 'sentiment_very_satisfied', color: 'text-emerald-500', label: 'Joy' },
-  { id: '🔥', icon: 'local_fire_department', color: 'text-orange-500', label: 'Fire' },
+  { id: '❤️', icon: 'favorite', color: 'text-primary', label: 'Heart' },
+  { id: '🫂', icon: 'diversity_1', color: 'text-secondary', label: 'Hug' },
+  { id: '👏', icon: 'thumb_up', color: 'text-tertiary', label: 'Clap' },
+  { id: '💡', icon: 'lightbulb', color: 'text-mood-meh', label: 'Idea' },
+  { id: '😁', icon: 'sentiment_very_satisfied', color: 'text-mood-good', label: 'Joy' },
+  { id: '🔥', icon: 'local_fire_department', color: 'text-mood-bad', label: 'Fire' },
 ]
 
 export default function ReactionIcon({ reaction, className = 'text-[18px]', filled = true, style }) {

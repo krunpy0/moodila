@@ -239,6 +239,10 @@ export const en = {
     sendComment: "Post",
     includeMyPosts: "Include my posts",
     includeMyPostsDesc: "Show your own entries in the feed",
+    friendsSidebarTitle: "Friends",
+    noFriendsYet: "No friends added yet",
+    findFriends: "Find friends",
+    photoAlt: "Photo from {name}'s day",
   },
 
   // Reactions Modal
@@ -247,6 +251,7 @@ export const en = {
     all: "All",
     empty: "No reactions yet",
     longPressHint: "Hold to view reactors",
+    viewReactions: "View reactions",
   },
 
   // Friends & Profile Pages
@@ -289,6 +294,8 @@ export const en = {
     changePassword: "Change password",
     deleteAccount: "Delete account",
     dangerZone: "Danger Zone",
+    logoutConfirmTitle: "Log out of account?",
+    logoutConfirmDesc: "Are you sure you want to log out? You will need your password to sign back in.",
   },
 
   // Change Password Form

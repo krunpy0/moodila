@@ -241,6 +241,10 @@ export const ru = {
     sendComment: "Отправить",
     includeMyPosts: "Показывать мои записи",
     includeMyPostsDesc: "Включать собственные записи в ленту",
+    friendsSidebarTitle: "Друзья",
+    noFriendsYet: "У вас пока нет друзей",
+    findFriends: "Найти друзей",
+    photoAlt: "Фото дня от {name}",
   },
 
   // Reactions Modal
@@ -249,6 +253,7 @@ export const ru = {
     all: "Все",
     empty: "Пока нет реакций",
     longPressHint: "Зажмите для просмотра участников",
+    viewReactions: "Посмотреть реакции",
   },
 
   // Friends & Profile Pages
@@ -291,6 +296,8 @@ export const ru = {
     changePassword: "Сменить пароль",
     deleteAccount: "Удалить аккаунт",
     dangerZone: "Опасная зона",
+    logoutConfirmTitle: "Выйти из аккаунта?",
+    logoutConfirmDesc: "Вы уверены, что хотите выйти? Чтобы войти снова, потребуется ввести пароль.",
   },
 
   // Change Password Form
