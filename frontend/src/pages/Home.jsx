@@ -185,7 +185,7 @@ export default function Home() {
                     </span>
                     <span className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-on-primary/15 text-on-primary shadow-xs transition-transform duration-fast ease-standard group-hover:translate-x-0.5">
                       <span className="material-symbols-outlined text-[22px] sm:text-[24px]">
-                        edit_note
+                        arrow_outward
                       </span>
                     </span>
                   </Link>

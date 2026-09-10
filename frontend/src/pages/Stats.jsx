@@ -8,6 +8,7 @@ import { getMoodInfo, getLocalizedTag, getLocalizedInsightText } from "../utils/
 import { useLanguage } from "../context/LanguageContext";
 import { StatsSkeleton } from "../components/skeleton/PageSkeletons";
 import { safeNavigateBack } from "../utils/navigation";
+import { getLocalDate } from "../api/client";
 
 export default function Stats() {
   const [period, setPeriod] = useState("month");
@@ -497,6 +498,8 @@ function DayOfWeekBarChart({ data, language }) {
 /* Annual Heatmap Component (Soft Editorial Mood Spectrum) */
 function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
   const scrollRef = useRef(null);
+  const todayRef = useRef(null);
+  const hasAutoScrolledRef = useRef(false);
   const { language } = useLanguage();
 
   const monthsRu = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
@@ -560,12 +563,59 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
     return headers;
   }, [weeks, months]);
 
-  // Auto-scroll to rightmost (current date) on mount/update
+  // Auto-scroll to today (current date) on mount/update
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
-    }
-  }, [weeks]);
+    const container = scrollRef.current;
+    if (!container || !weeks.length || hasAutoScrolledRef.current) return;
+
+    let timeoutId;
+    let rafId;
+
+    const scrollToToday = () => {
+      const c = scrollRef.current;
+      if (!c) return;
+      if (c.clientWidth === 0) {
+        timeoutId = setTimeout(scrollToToday, 50);
+        return;
+      }
+
+      const todayStr = getLocalDate();
+
+      if (todayRef.current) {
+        const todayEl = todayRef.current;
+        const containerRect = c.getBoundingClientRect();
+        const todayRect = todayEl.getBoundingClientRect();
+        const cellLeftInContent = todayRect.left - containerRect.left + c.scrollLeft;
+
+        const stickyCol = c.querySelector(".sticky");
+        const stickyWidth = stickyCol ? stickyCol.offsetWidth : 34;
+
+        const visibleWidth = c.clientWidth - stickyWidth;
+        const targetScrollLeft = cellLeftInContent - stickyWidth - visibleWidth / 2 + todayRect.width / 2;
+
+        c.scrollLeft = Math.max(0, targetScrollLeft);
+        hasAutoScrolledRef.current = true;
+      } else {
+        const lastDay = heatmapData[heatmapData.length - 1];
+        const firstDay = heatmapData[0];
+        if (lastDay && todayStr > lastDay.date) {
+          c.scrollLeft = c.scrollWidth;
+          hasAutoScrolledRef.current = true;
+        } else if (firstDay && todayStr < firstDay.date) {
+          c.scrollLeft = 0;
+          hasAutoScrolledRef.current = true;
+        }
+      }
+    };
+
+    scrollToToday();
+    rafId = requestAnimationFrame(scrollToToday);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
+    };
+  }, [weeks, heatmapData]);
 
   const moodColors = {
     1: "bg-mood-awful border-mood-awful/40",
@@ -660,12 +710,15 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
 
               const hasMood = day.mood !== null && day.mood !== undefined;
               const isSelected = activeDay?.date === day.date;
+              const isToday = day.date === getLocalDate();
 
               return (
                 <button
                   key={day.date}
+                  ref={isToday ? todayRef : null}
                   type="button"
-                  title={`${formatDate(day.date)}: ${hasMood ? `${day.mood}/5` : t("stats.noData")}`}
+                  data-today={isToday ? "true" : undefined}
+                  title={`${formatDate(day.date)}${isToday ? ` (${t("common.today")})` : ""}: ${hasMood ? `${day.mood}/5` : t("stats.noData")}`}
                   onClick={() => setActiveDay(day)}
                   style={{
                     gridRow: dIdx + 2,
@@ -678,6 +731,8 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
                   } ${
                     isSelected
                       ? "ring-2 ring-primary ring-offset-1 ring-offset-surface-container-lowest z-10"
+                      : isToday
+                      ? "ring-1 ring-primary/80 ring-offset-1 ring-offset-surface-container-lowest z-10"
                       : "hover:ring-1 hover:ring-primary/60"
                   }`}
                 />
