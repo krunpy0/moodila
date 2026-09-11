@@ -1,4 +1,3 @@
-import 'ios-vibrator-pro-max'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
