@@ -168,7 +168,7 @@ export default function Landing() {
             </div>
 
             <h1
-              className="font-display text-4xl sm:text-5xl lg:text-[52px] leading-[1.08] font-normal tracking-tight text-on-surface mb-6"
+              className="font-display text-[46px] sm:text-[54px] lg:text-[62px] leading-[1.05] font-normal tracking-tight text-on-surface mb-6"
               style={{ overflowWrap: 'anywhere', minWidth: 0 }}
             >
               {t('landing.heroTitle')}
