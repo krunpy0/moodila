@@ -1,0 +1,14 @@
+{
+  "scan_date": "2026-09-17",
+  "system_doc": "design-reference/DESIGN.md",
+  "theme": "Soft Editorial",
+  "fonts": {
+    "display": "Newsreader",
+    "body": "Plus Jakarta Sans",
+    "fallback": "Manrope"
+  },
+  "palette": "OKLCH / CSS custom properties (design-reference/DESIGN.md)",
+  "motion": "CSS native transitions with cubic-bezier(0.2, 0, 0, 1)",
+  "spacing": "Tailwind 4-pt scale",
+  "framework": "React 19 + Vite 8 + Tailwind CSS 3"
+}

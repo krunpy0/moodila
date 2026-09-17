@@ -1,1776 +1,1070 @@
-import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import AppLogo from "../components/AppLogo";
+/* Hallmark · macrostructure: Bento Grid · genre: editorial · theme: Soft Editorial
+ * fonts: Newsreader + Plus Jakarta Sans · enrichment: Tier-A pure CSS interactive widgets
+ * nav: N5 Floating pill · footer: Ft5 Statement
+ * mobile: pass (34, 49, 50–57) · contrast: pass (40–41) · honest: pass (46) · chrome: pass (47)
+ */
 
-// Mood definitions matching utils/moods.js 1:1
-const APP_MOODS = {
-  5: {
-    value: 5,
-    icon: "sentiment_very_satisfied",
-    label: "Rad",
-    color: "text-mood-rad",
-    bg: "bg-mood-rad-container",
-    border: "border-mood-rad/20",
-    onContainer: "text-on-mood-rad-container",
-  },
-  4: {
-    value: 4,
-    icon: "sentiment_satisfied",
-    label: "Good",
-    color: "text-mood-good",
-    bg: "bg-mood-good-container",
-    border: "border-mood-good/20",
-    onContainer: "text-on-mood-good-container",
-  },
-  3: {
-    value: 3,
-    icon: "sentiment_neutral",
-    label: "Meh",
-    color: "text-mood-meh",
-    bg: "bg-mood-meh-container",
-    border: "border-mood-meh/20",
-    onContainer: "text-on-mood-meh-container",
-  },
-  2: {
-    value: 2,
-    icon: "sentiment_dissatisfied",
-    label: "Bad",
-    color: "text-mood-bad",
-    bg: "bg-mood-bad-container",
-    border: "border-mood-bad/20",
-    onContainer: "text-on-mood-bad-container",
-  },
-  1: {
-    value: 1,
-    icon: "sentiment_very_dissatisfied",
-    label: "Awful",
-    color: "text-mood-awful",
-    bg: "bg-mood-awful-container",
-    border: "border-mood-awful/20",
-    onContainer: "text-on-mood-awful-container",
-  },
-};
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import AppLogo from '../components/AppLogo';
+import MoodIcon from '../components/MoodIcon';
+import { MOODS, TAG_CATEGORIES, getMoodInfo, getLocalizedTag } from '../utils/moods';
+import { useLanguage } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
-// Category tags matching AddEntry.jsx 1:1
-const TAG_CATEGORIES = [
-  {
-    key: "positive",
-    label: "Positive",
-    tags: ["Calm", "Chill", "Motivated", "Grateful", "Inspired", "Peaceful"],
-  },
-  {
-    key: "neutral",
-    label: "Neutral",
-    tags: ["Okay", "Neutral", "Bored", "Focused", "Steady", "Meh"],
-  },
-  {
-    key: "difficult",
-    label: "Difficult",
-    tags: [
-      "Tired",
-      "Anxious",
-      "Overwhelmed",
-      "Frustrated",
-      "Lonely",
-      "Drained",
-    ],
-  },
+const WAVEFORM_HEIGHTS = [
+  35, 60, 40, 75, 50, 90, 65, 40, 80, 100, 70, 45, 85, 95, 60, 40, 75, 50, 85, 90, 60, 40, 55, 35, 65, 80, 45, 30
 ];
 
-const SHARED_ENTRY_TEXT = "Quiet evening with warm tea. So glad to unwind.";
-
-const FAQS = [
-  {
-    q: "How is Moodila different from typical social media?",
-    a: "There's no public follower count, no ads, and no algorithm deciding what you see. Only friends you've added can see your entries, and only if you haven't hidden them.",
-  },
-  {
-    q: "Can I keep my entries completely private from friends?",
-    a: "Yes. Every entry has a 'Hide entry' toggle. When it's on, only you can see that entry.",
-  },
-  {
-    q: "Is Moodila free to use?",
-    a: "Yes. Mood tracking, friend feeds, and monthly summaries are all free.",
-  },
-  {
-    q: "Can I install Moodila as an app on my phone?",
-    a: "You can add Moodila to your home screen on iPhone or Android and use it just like a regular app.",
-  },
+// Sample calendar data for monthly mood matrix
+const CALENDAR_DAYS = [
+  { day: 1, mood: 4 }, { day: 2, mood: 5 }, { day: 3, mood: 4 }, { day: 4, mood: 3 },
+  { day: 5, mood: 4 }, { day: 6, mood: 5 }, { day: 7, mood: 5 }, { day: 8, mood: 4 },
+  { day: 9, mood: 2, isHidden: true }, { day: 10, mood: 3 }, { day: 11, mood: 4 }, { day: 12, mood: 4 },
+  { day: 13, mood: 5 }, { day: 14, mood: 5 }, { day: 15, mood: 4 }, { day: 16, mood: 3 },
+  { day: 17, mood: 4 }, { day: 18, mood: 5 }, { day: 19, mood: 4 }, { day: 20, mood: 5 },
+  { day: 21, mood: 4, hasCustom: true }, { day: 22, mood: 3 }, { day: 23, mood: 2 }, { day: 24, mood: 4 },
+  { day: 25, mood: 5 }, { day: 26, mood: 5 }, { day: 27, mood: 4 }, { day: 28, mood: 5 },
 ];
-
-// Mock Calendar Entries mapping 1:1 to original app calendar
-const MOCK_CALENDAR_ENTRIES = {
-  2: {
-    mood: 1,
-    note: "Tough start to the week, stayed in bed early.",
-    tags: ["Tired"],
-  },
-  4: {
-    mood: 2,
-    note: "Felt quite anxious about deadlines.",
-    tags: ["Anxious"],
-  },
-  5: {
-    mood: 4,
-    note: "Nice afternoon coffee break with tea.",
-    tags: ["Chill"],
-  },
-  8: {
-    mood: 4,
-    note: "Productive workout and sunny weather.",
-    tags: ["Inspired", "Grateful"],
-  },
-  9: { mood: 2, note: "Low energy day.", tags: ["Tired"] },
-  10: { mood: 3, note: "Routine Monday, steady work.", tags: ["Focused"] },
-  12: { mood: 1, note: "Overwhelmed with tasks.", tags: ["Overwhelmed"] },
-  13: {
-    mood: 4,
-    note: "Felt much better after chatting with a friend.",
-    tags: ["Calm", "Peaceful"],
-  },
-  14: { mood: 2, note: "Felt rainy and quiet.", tags: ["Meh"] },
-  15: {
-    mood: 5,
-    note: "Had an inspiring session with the team!",
-    tags: ["Motivated"],
-  },
-  17: { mood: 1, note: "Felt emotionally drained.", tags: ["Drained"] },
-  18: { mood: 4, note: "Took a long evening walk.", tags: ["Calm"] },
-  19: { mood: 2, note: "Trouble focusing today.", tags: ["Bored"] },
-  20: { mood: 4, note: "Cooked a warm dinner.", tags: ["Peaceful"] },
-  22: { mood: 1, note: "Hard day, self-care night.", tags: ["Tired"] },
-  24: { mood: 2, note: "Slight headache, rested early.", tags: ["Meh"] },
-  26: { mood: 4, note: "Finished a great book!", tags: ["Inspired"] },
-  27: { mood: 1, note: "Felt frustrated.", tags: ["Frustrated"] },
-  29: { mood: 2, note: "Restless evening.", tags: ["Okay"] },
-  30: { mood: 5, note: "Wonderful weekend getaway!", tags: ["Grateful"] },
-};
-
-// Scroll reveal wrapper component
-function ScrollReveal({
-  children,
-  animation = "fade-up", // 'fade-up' | 'scale-up' | 'slide-left' | 'slide-right'
-  delay = 0,
-  className = "",
-  threshold = 0.15,
-  once = true,
-}) {
-  const [isVisible, setIsVisible] = useState(false);
-  const domRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          if (once && domRef.current) observer.unobserve(domRef.current);
-        } else if (!once) {
-          setIsVisible(false);
-        }
-      },
-      { threshold },
-    );
-
-    const currentRef = domRef.current;
-    if (currentRef) observer.observe(currentRef);
-
-    return () => {
-      if (currentRef) observer.unobserve(currentRef);
-    };
-  }, [threshold, once]);
-
-  const animationClass =
-    animation === "scale-up"
-      ? "reveal-scale-up"
-      : animation === "slide-left"
-        ? "reveal-slide-left"
-        : animation === "slide-right"
-          ? "reveal-slide-right"
-          : "reveal-fade-up";
-
-  return (
-    <div
-      ref={domRef}
-      style={{ transitionDelay: `${delay}ms` }}
-      className={`reveal-base ${animationClass} ${
-        isVisible ? "reveal-active" : ""
-      } ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
 
 export default function Landing() {
-  const [activeTab, setActiveTab] = useState("home");
-  const [openFaq, setOpenFaq] = useState(null);
+  const { t, language, toggleLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
-  // Scroll Progress and Scroll Spy State
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [activeSection, setActiveSection] = useState("");
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const totalHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
-      if (totalHeight > 0) {
-        setScrollProgress((window.scrollY / totalHeight) * 100);
-      }
-
-      const sections = ["demo", "features", "showcase", "faq"];
-      const scrollPos = window.scrollY + 220;
-
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const sec = document.getElementById(sections[i]);
-        if (sec && sec.offsetTop <= scrollPos) {
-          setActiveSection(sections[i]);
-          break;
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Closed loop signature animation state
-  const [hasLiked, setHasLiked] = useState(false);
-  const loopSectionRef = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          const timer = setTimeout(() => {
-            setHasLiked(true);
-          }, 700);
-          return () => clearTimeout(timer);
-        }
-      },
-      { threshold: 0.35 },
-    );
-
-    if (loopSectionRef.current) {
-      observer.observe(loopSectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  // Demo Calendar interactive states
-  const [calViewMode, setCalViewMode] = useState("month");
-  const [selectedDay, setSelectedDay] = useState(15);
-
-  // 1:1 Live Interactive Demo State for "Record your day" (AddEntry)
-  const [demoMood, setDemoMood] = useState(4); // Default: 4 (Good)
-  const [demoTags, setDemoTags] = useState(["Grateful", "Calm"]);
-  const [demoText, setDemoText] = useState(
-    "Finished reading a chapter by the window with a warm cup of tea.",
+  // 1:1 AddEntry Hero Interactive state
+  const [heroMood, setHeroMood] = useState(4);
+  const [heroTags, setHeroTags] = useState(['Calm', 'Grateful']);
+  const [heroNote, setHeroNote] = useState(
+    language === 'ru'
+      ? 'Спокойный вечер с чаем и хорошей музыкой. Удалось отдохнуть и перезагрузиться.'
+      : 'Quiet evening with tea and good music. Felt nice and relaxing.'
   );
-  const [demoIsHidden, setDemoIsHidden] = useState(false);
-  const [demoSaveNotice, setDemoSaveNotice] = useState(false);
+  const [heroIsPlayingAudio, setHeroIsPlayingAudio] = useState(false);
+  const [heroAudioSpeed, setHeroAudioSpeed] = useState(1);
+  const [heroIsHidden, setHeroIsHidden] = useState(false);
 
-  const toggleDemoTag = (tag) => {
-    setDemoTags((curr) =>
-      curr.includes(tag) ? curr.filter((t) => t !== tag) : [...curr, tag],
+  // 1:1 Bento Tile 1: Privacy Modal state
+  const [friendsPrivacy, setFriendsPrivacy] = useState([
+    { id: 1, name: 'Anna Karenina', username: 'anna_k', hidden: false, initial: 'A' },
+    { id: 2, name: 'Leo Tolstoy', username: 'leo_t', hidden: false, initial: 'L' },
+    { id: 3, name: 'Daniel Kim', username: 'daniel', hidden: true, initial: 'D' },
+  ]);
+
+  // 1:1 Bento Tile 2: Audio player demo state
+  const [tileAudioPlaying, setTileAudioPlaying] = useState(false);
+  const [tileAudioSpeed, setTileAudioSpeed] = useState(1.5);
+
+  // 1:1 Bento Tile 3: Feed Card reaction state
+  const [feedLiked, setFeedLiked] = useState(true);
+
+  // 1:1 Bento Tile 4: Calendar selected day
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState(18);
+
+  // FAQ Accordion open index
+  const [openFaq, setOpenFaq] = useState(0);
+
+  const isRu = language === 'ru';
+
+  const toggleHeroTag = (tag) => {
+    setHeroTags((prev) =>
+      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag]
     );
   };
 
-  const handleDemoSave = (e) => {
-    e.preventDefault();
-    setDemoSaveNotice(true);
-    setTimeout(() => setDemoSaveNotice(false), 3000);
+  const toggleFriendPrivacy = (friendId) => {
+    setFriendsPrivacy((prev) =>
+      prev.map((f) => (f.id === friendId ? { ...f, hidden: !f.hidden } : f))
+    );
   };
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col font-sans transition-colors duration-300 relative overflow-x-hidden">
-      {/* HEADER / NAVIGATION WITH TOP SCROLL PROGRESS BAR */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 px-container-margin py-md relative">
-        {/* Top Scroll Progress Bar */}
-        <div
-          className="absolute top-0 left-0 h-[3px] bg-gradient-to-r from-primary via-secondary to-tertiary transition-all duration-150 ease-out z-50 rounded-r-full"
-          style={{ width: `${scrollProgress}%` }}
-        />
-
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-container font-sans antialiased overflow-x-clip transition-colors duration-200">
+      {/* N5 FLOATING PILL NAVIGATION */}
+      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-4xl" role="banner">
+        <nav
+          aria-label="Main navigation"
+          className="flex items-center justify-between px-4 py-2.5 rounded-full bg-surface-container-lowest/85 dark:bg-surface-container/85 backdrop-blur-md border border-outline-variant/30 shadow-floating transition-colors"
+        >
+          {/* Brand Wordmark */}
           <Link
-            to="/landing"
-            className="flex items-center gap-2 text-headline-lg font-bold text-on-surface hover:opacity-90 transition-opacity"
+            to="/"
+            className="flex items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 rounded-full py-1 pr-2"
           >
-            <AppLogo className="w-10 h-10 rounded-2xl cloud-shadow transition-transform hover:scale-105" />
-            <span className="tracking-tight">Moodila</span>
+            <AppLogo className="w-7 h-7 rounded-lg shadow-subtle" />
+            <span className="font-display text-[21px] font-semibold tracking-tight text-on-surface">
+              Moodila
+            </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-lg text-label-lg font-medium text-on-surface-variant">
-            <a
-              href="#demo"
-              className={`transition-colors hover:text-primary ${
-                activeSection === "demo" ? "text-primary font-bold" : ""
-              }`}
-            >
-              Interactive Demo
-            </a>
+          {/* Center Jump Links (Desktop) */}
+          <div className="hidden md:flex items-center gap-6 text-label-md text-on-surface-variant">
             <a
               href="#features"
-              className={`transition-colors hover:text-primary ${
-                activeSection === "features" ? "text-primary font-bold" : ""
-              }`}
+              className="hover:text-on-surface transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-primary"
             >
-              Features
+              {t('landing.navFeatures')}
             </a>
             <a
-              href="#showcase"
-              className={`transition-colors hover:text-primary ${
-                activeSection === "showcase" ? "text-primary font-bold" : ""
-              }`}
+              href="#philosophy"
+              className="hover:text-on-surface transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-primary"
             >
-              App Showcase
+              {t('landing.navPhilosophy')}
+            </a>
+            <a
+              href="#how-it-works"
+              className="hover:text-on-surface transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              {t('landing.navHowItWorks')}
             </a>
             <a
               href="#faq"
-              className={`transition-colors hover:text-primary ${
-                activeSection === "faq" ? "text-primary font-bold" : ""
-              }`}
+              className="hover:text-on-surface transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-primary"
             >
-              FAQ
+              {t('landing.navFaq')}
             </a>
-          </nav>
+          </div>
 
-          <div className="flex items-center gap-xs">
+          {/* Utility Affordances */}
+          <div className="flex items-center gap-2">
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              aria-label="Toggle language"
+              className="h-9 px-2.5 flex items-center justify-center rounded-full text-label-sm font-semibold border border-outline-variant/30 hover:bg-surface-container-high transition-colors focus-visible:outline-2 focus-visible:outline-primary whitespace-nowrap"
+            >
+              {isRu ? 'EN' : 'RU'}
+            </button>
+
+            {/* Dark/Light Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="h-9 w-9 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/30 transition-colors focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+              </span>
+            </button>
+
+            {/* CTA to App */}
             <Link
               to="/login"
-              className="px-md py-xs rounded-full text-label-lg font-semibold text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+              className="h-9 px-4 flex items-center justify-center rounded-full bg-primary text-on-primary text-label-md font-semibold hover:opacity-90 active:scale-95 transition-all shadow-subtle focus-visible:outline-2 focus-visible:outline-primary whitespace-nowrap"
             >
-              Log in
-            </Link>
-            <Link
-              to="/login"
-              className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-lg font-semibold hover:opacity-90 transition-opacity shadow-sm hover:shadow-md active:scale-95 transform"
-            >
-              Get Started
+              {t('landing.navLogIn')}
             </Link>
           </div>
-        </div>
+        </nav>
       </header>
 
-      {/* HERO SECTION */}
-      <section className="relative px-container-margin pt-xl pb-20 overflow-hidden">
-        {/* Animated Background Glowing Orbs */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[650px] h-[340px] bg-gradient-to-r from-primary-container/50 via-secondary-container/50 to-tertiary-container/50 blur-3xl pointer-events-none -z-10 rounded-full animate-pulse-glow animate-float-slow" />
-        <div className="absolute top-40 right-10 w-72 h-72 bg-tertiary-container/30 blur-3xl pointer-events-none -z-10 rounded-full animate-float-reverse" />
-
-        <div className="max-w-5xl mx-auto text-center flex flex-col items-center">
-          <ScrollReveal animation="fade-up" delay={50}>
-            <div className="inline-flex items-center gap-xs px-md py-xs rounded-full bg-surface-container-high text-on-surface-variant text-label-sm font-semibold mb-lg cloud-shadow transition-transform hover:scale-105">
-              <span>A private mood diary for you and your friends</span>
+      {/* HERO SECTION (H2 SPLIT DIPTYCH WITH 1:1 ADDENTRY HERO INTERACTIVE DEMO) */}
+      <section className="pt-32 pb-16 md:pt-40 md:pb-24 px-container-margin max-w-6xl mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          {/* Left Column: Literary Statement & Direction */}
+          <div className="lg:col-span-6 flex flex-col items-start text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/70 text-on-primary-container text-label-sm font-semibold tracking-wide border border-primary/20 mb-5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span>{t('landing.heroBadge')}</span>
             </div>
-          </ScrollReveal>
 
-          <ScrollReveal animation="fade-up" delay={150}>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-on-surface max-w-3xl leading-[1.2] md:leading-[1.2]">
-              Track your day. <br className="hidden sm:inline" />
-              Share it with people who{" "}
-              <span className="text-primary">actually care.</span>
+            <h1
+              className="font-display text-4xl sm:text-5xl lg:text-[52px] leading-[1.08] font-normal tracking-tight text-on-surface mb-6"
+              style={{ overflowWrap: 'anywhere', minWidth: 0 }}
+            >
+              {t('landing.heroTitle')}
             </h1>
-          </ScrollReveal>
 
-          <ScrollReveal animation="fade-up" delay={250}>
-            <p className="mt-md text-body-md md:text-lg text-on-surface-variant max-w-2xl leading-relaxed">
-              Log how you're feeling, see the patterns over time, and let a few
-              close friends see your day, no public feed, no followers, no
-              algorithm.
+            <p className="text-body-lg text-on-surface-variant leading-relaxed max-w-[54ch] mb-8">
+              {t('landing.heroDescription')}
             </p>
-          </ScrollReveal>
 
-          <ScrollReveal animation="scale-up" delay={350}>
-            <div className="mt-lg flex flex-wrap items-center justify-center gap-md">
+            <div className="flex flex-wrap items-center gap-3.5 mb-8">
               <Link
                 to="/login"
-                className="px-xl py-md rounded-full bg-primary-container text-on-primary-container text-label-lg font-bold hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95"
+                className="h-12 px-6 inline-flex items-center justify-center gap-2 rounded-full bg-primary text-on-primary text-label-lg font-semibold hover:shadow-card hover:-translate-y-0.5 active:translate-y-0 active:scale-98 transition-all focus-visible:outline-2 focus-visible:outline-primary whitespace-nowrap"
               >
-                Start Journaling — Free
+                <span>{t('landing.heroCtaPrimary')}</span>
+                <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
               </Link>
               <a
-                href="#demo"
-                className="px-xl py-md rounded-full bg-surface-container text-on-surface text-label-lg font-semibold hover:bg-surface-container-high transition-colors active:scale-95"
+                href="#features"
+                className="h-12 px-5 inline-flex items-center justify-center rounded-full bg-surface-container-high text-on-surface text-label-lg font-medium hover:bg-surface-variant transition-colors border border-outline-variant/30 focus-visible:outline-2 focus-visible:outline-primary whitespace-nowrap"
               >
-                Try Interactive Demo
+                {t('landing.heroCtaSecondary')}
               </a>
             </div>
-          </ScrollReveal>
 
-          <ScrollReveal animation="fade-up" delay={450}>
-            <div className="mt-xl flex flex-wrap justify-center items-center gap-md text-body-sm text-on-surface-variant">
-              <span className="flex items-center gap-xs">
-                ✓ 30-Second Daily Check-in
-              </span>
-              <span className="flex items-center gap-xs">
-                ✓ 100% Private Entries
-              </span>
-              <span className="flex items-center gap-xs">
-                ✓ iOS & Android PWA
-              </span>
+            <div className="flex items-center gap-2 text-body-sm text-on-surface-variant/80">
+              <span className="material-symbols-outlined text-[16px] text-primary">verified_user</span>
+              <span>{t('landing.heroReassurance')}</span>
             </div>
-          </ScrollReveal>
-        </div>
-      </section>
+          </div>
 
-      {/* 1:1 INTERACTIVE DEMO WIDGET (EXACT ADAPTATION OF "Record your day" / AddEntry.jsx) */}
-      <section
-        id="demo"
-        className="px-container-margin py-xl bg-surface-container-low/60 border-y border-outline-variant/20 relative"
-      >
-        {/* Soft Ambient Background Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-container/20 blur-3xl pointer-events-none rounded-full animate-pulse-glow" />
-
-        <div className="max-w-xl mx-auto relative z-10">
-          <ScrollReveal animation="fade-up">
-            <div className="text-center mb-lg">
-              <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
-                Live Interactive Form Demo
-              </span>
-              <h2 className="mt-md text-headline-lg font-bold text-on-surface">
-                Try "Record your day" Live
-              </h2>
-              <p className="mt-xs text-body-md text-on-surface-variant">
-                This interactive widget matches Moodila’s exact entry creation
-                interface 1:1.
-              </p>
-            </div>
-          </ScrollReveal>
-
-          {/* 1:1 AddEntry Form Mockup Container */}
-          <ScrollReveal animation="scale-up" delay={150}>
-            <div className="rounded-[32px] bg-background p-md sm:p-lg border border-outline-variant/30 cloud-shadow space-y-md text-left transition-all duration-300 hover:shadow-xl">
-              <div className="flex items-center justify-between pb-xs border-b border-surface-container">
-                <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold text-on-surface">
-                  Record your day
-                </span>
-                <span className="px-sm py-1 rounded-full bg-surface-container text-label-sm text-on-surface-variant font-medium">
-                  Today
+          {/* Right Column: 1:1 REAL APP AddEntry.jsx Interactive Component */}
+          <div className="lg:col-span-6 w-full space-y-4">
+            {/* 1:1 AddEntry Section: Mood Picker + Tag Categories */}
+            <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20 space-y-md">
+              <div className="flex items-center justify-between pb-sm border-b border-outline-variant/15">
+                <div>
+                  <h3 className="text-label-lg font-bold text-on-surface">
+                    {t('landing.demoTitle')}
+                  </h3>
+                  <p className="text-body-sm text-on-surface-variant">
+                    {t('landing.demoSubtitle')}
+                  </p>
+                </div>
+                <span className="text-label-sm font-semibold px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant border border-outline-variant/20">
+                  {isRu ? 'Сегодня, 21:30' : 'Today, 9:30 PM'}
                 </span>
               </div>
 
-              {/* Mood Selector Card (1:1 with AddEntry.jsx) */}
-              <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15">
-                <h3 className="mb-md text-label-lg font-label-lg text-on-surface-variant">
-                  How are you feeling today?
-                </h3>
+              {/* Real 1:1 Mood Buttons from AddEntry.jsx */}
+              <div className="flex items-center justify-between gap-1 sm:gap-2 pt-1 pb-1">
+                {[1, 2, 3, 4, 5].map((level) => {
+                  const item = MOODS[level];
+                  const moodInfo = getMoodInfo(level, t);
+                  const selected = heroMood === level;
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      aria-label={moodInfo.label}
+                      title={moodInfo.label}
+                      aria-pressed={selected}
+                      onClick={() => setHeroMood(level)}
+                      className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full transition-[opacity,transform,box-shadow] duration-normal ease-out active:scale-95 ${item.bg} ${
+                        selected
+                          ? 'ring-4 ring-primary/40 shadow-card scale-105'
+                          : 'opacity-80 hover:opacity-100 hover:-translate-y-0.5'
+                      }`}
+                    >
+                      <MoodIcon mood={level} className="text-[28px] sm:text-[32px]" filled={selected} />
+                    </button>
+                  );
+                })}
+              </div>
 
-                {/* Mood Buttons Row */}
-                <div className="mb-lg flex items-center justify-between">
-                  {[1, 2, 3, 4, 5].map((val) => {
-                    const item = APP_MOODS[val];
-                    const isSelected = demoMood === val;
-                    return (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => setDemoMood(val)}
-                        className={`flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-full transition-all active:scale-95 ${item.bg} ${
-                          isSelected
-                            ? "ring-4 ring-primary/40 scale-110 shadow-md"
-                            : "opacity-80 hover:opacity-100"
-                        }`}
-                      >
-                        <span
-                          className={`material-symbols-outlined text-[22px] sm:text-[28px] ${item.color}`}
-                          style={{
-                            fontVariationSettings: isSelected
-                              ? "'FILL' 1"
-                              : undefined,
-                          }}
-                        >
-                          {item.icon}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+              {/* Real 1:1 Tag Categories from AddEntry.jsx */}
+              <div className="space-y-sm border-t border-outline-variant/15 pt-md">
+                {TAG_CATEGORIES.map((category) => (
+                  <div key={category.key}>
+                    <span className="mb-xs block text-overline font-bold uppercase tracking-wider text-on-surface-variant/70">
+                      {t(`moods.categories.${category.key}`, category.label)}
+                    </span>
+                    <div className="flex flex-wrap gap-xs">
+                      {category.tags.slice(0, 5).map((tag) => {
+                        const selected = heroTags.includes(tag);
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => toggleHeroTag(tag)}
+                            className={`rounded-full px-md py-xs text-label-sm font-medium transition-all duration-fast active:scale-95 ${
+                              selected
+                                ? 'bg-primary-container text-on-primary-container font-semibold shadow-xs'
+                                : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                            }`}
+                          >
+                            {getLocalizedTag(tag, t)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                {/* Selected Mood Badge Indicator */}
-                <div className="flex items-center justify-center pb-xs">
-                  <span
-                    className={`px-md py-xs rounded-full text-label-lg font-bold ${APP_MOODS[demoMood].bg} ${APP_MOODS[demoMood].color}`}
-                  >
-                    Feeling {APP_MOODS[demoMood].label}
-                  </span>
-                </div>
+            {/* 1:1 AddEntry Section: Note Textarea + 1:1 VoiceNotePlayer */}
+            <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
+              <label htmlFor="landing-entry-note" className="mb-md block text-label-lg font-label-lg text-on-surface-variant">
+                {t('addEntry.optionalNote')}
+              </label>
+              <textarea
+                id="landing-entry-note"
+                value={heroNote}
+                maxLength={5000}
+                onChange={(e) => setHeroNote(e.target.value)}
+                placeholder={t('addEntry.notePlaceholder')}
+                className="min-h-[85px] w-full resize-none overflow-hidden bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
+              />
+              <div className="mt-1 flex justify-end">
+                <span className="text-label-sm text-on-surface-variant/60 tabular-nums">
+                  {heroNote.length} / 5000
+                </span>
+              </div>
 
-                {/* Categorized Tag Chips (1:1 with AddEntry.jsx) */}
-                <div className="space-y-sm border-t border-surface-container pt-md">
-                  {TAG_CATEGORIES.map((category) => (
-                    <div key={category.key}>
-                      <span className="mb-xs block text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant/60">
-                        {category.label}
+              {/* 1:1 VoiceNotePlayer from components/VoiceNotePlayer.jsx */}
+              <div className="mt-sm mb-md">
+                <div className="relative flex flex-col gap-xs rounded-[20px] bg-surface-container-low p-md border border-surface-container-high/60 cloud-shadow">
+                  <div className="flex items-center gap-md">
+                    <button
+                      type="button"
+                      onClick={() => setHeroIsPlayingAudio(!heroIsPlayingAudio)}
+                      aria-label={heroIsPlayingAudio ? 'Pause voice note' : 'Play voice note'}
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary shadow-sm transition-transform active:scale-95 hover:bg-primary/90"
+                    >
+                      <span className="material-symbols-outlined text-[24px]">
+                        {heroIsPlayingAudio ? 'pause' : 'play_arrow'}
                       </span>
-                      <div className="flex flex-wrap gap-xs">
-                        {category.tags.map((tag) => {
-                          const selected = demoTags.includes(tag);
+                    </button>
+
+                    <div className="flex flex-1 flex-col gap-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 min-w-0">
+                        <span className="text-label-sm font-medium text-on-surface-variant font-sans tabular-nums min-w-0 truncate">
+                          {heroIsPlayingAudio ? '0:24 / 0:42' : '0:00 / 0:42'}
+                        </span>
+                        <div className="flex items-center gap-xs shrink-0">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setHeroAudioSpeed((s) => (s === 1 ? 1.5 : s === 1.5 ? 2 : 1))
+                            }
+                            title="Playback speed"
+                            className="shrink-0 rounded-md bg-surface-container px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-surface-container-high"
+                          >
+                            {heroAudioSpeed}x
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 1:1 Waveform Bars from VoiceNotePlayer.jsx */}
+                      <div
+                        className="flex h-7 w-full items-center gap-[3px] py-1 cursor-pointer"
+                        role="slider"
+                        aria-label="Audio progress"
+                        aria-valuenow={heroIsPlayingAudio ? 24 : 0}
+                        aria-valuemin={0}
+                        aria-valuemax={42}
+                      >
+                        {WAVEFORM_HEIGHTS.map((heightPercent, idx) => {
+                          const isActive = heroIsPlayingAudio && idx <= 15;
                           return (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => toggleDemoTag(tag)}
-                              className={`rounded-full px-md py-xs text-label-sm font-label-sm transition-colors ${
-                                selected
-                                  ? "bg-primary-container text-primary font-semibold shadow-xs"
-                                  : "bg-surface-container-low text-on-surface-variant hover:bg-surface-container"
+                            <span
+                              key={idx}
+                              style={{ height: `${heightPercent}%` }}
+                              className={`flex-1 rounded-full transition-colors duration-150 ${
+                                isActive ? 'bg-primary' : 'bg-surface-container-highest'
                               }`}
-                            >
-                              {tag}
-                            </button>
+                            />
                           );
                         })}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-
-              {/* Summary Textarea Card (1:1 with AddEntry.jsx) */}
-              <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15">
-                <label
-                  htmlFor="demo-entry-text"
-                  className="mb-md block text-label-lg font-label-lg text-on-surface-variant"
-                >
-                  Write a summary of your day
-                </label>
-                <textarea
-                  id="demo-entry-text"
-                  value={demoText}
-                  onChange={(e) => setDemoText(e.target.value)}
-                  placeholder="Start writing..."
-                  className="min-h-[140px] w-full resize-none bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
-                />
-
-                {/* Attachments Toolbar */}
-                <div className="mt-md flex items-center gap-md border-t border-surface-container pt-md">
-                  <button
-                    type="button"
-                    title="Add photo"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      image
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    title="Record voice note"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      mic
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    title="Attach file"
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant opacity-60"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">
-                      attach_file
-                    </span>
-                  </button>
-                </div>
-              </section>
-
-              {/* Privacy Switch Section (1:1 with AddEntry.jsx) */}
-              <section className="flex items-center justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15">
-                <div className="flex items-center gap-md">
-                  <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
-                    {demoIsHidden ? "lock" : "public"}
-                  </span>
-                  <div>
-                    <span className="block text-body-md font-label-lg text-on-surface font-semibold">
-                      Hide entry from friends
-                    </span>
-                    <span className="block text-body-sm text-on-surface-variant">
-                      {demoIsHidden
-                        ? "Visible only to you"
-                        : "Visible to friends"}
-                    </span>
                   </div>
                 </div>
+              </div>
 
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={demoIsHidden}
-                  onClick={() => setDemoIsHidden(!demoIsHidden)}
-                  className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-300 ${
-                    demoIsHidden ? "bg-primary" : "bg-surface-container-highest"
-                  }`}
-                >
-                  <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-md transition-transform duration-300 ${
-                      demoIsHidden
-                        ? "translate-x-6 text-on-primary-container"
-                        : "translate-x-0 text-on-surface-variant"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      {demoIsHidden ? "lock" : "public"}
-                    </span>
+              {/* 1:1 Bottom Tool Bar from AddEntry.jsx */}
+              <div className="mt-lg flex items-center justify-between border-t border-surface-container pt-md">
+                <div className="flex items-center gap-md">
+                  <span className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container">
+                    <span className="material-symbols-outlined text-[20px]">image</span>
                   </span>
-                </button>
-              </section>
-
-              {/* Save Entry Action Button */}
-              <form onSubmit={handleDemoSave}>
-                <button
-                  type="submit"
-                  className="w-full h-12 rounded-full bg-primary text-on-primary text-label-lg font-label-lg font-bold shadow-md hover:bg-primary/90 transition-all active:scale-[0.99]"
-                >
-                  Save entry
-                </button>
-              </form>
-
-              {/* Live Save Notification */}
-              {demoSaveNotice && (
-                <div className="p-md rounded-2xl bg-primary-container text-on-primary-container text-label-lg font-semibold text-center animate-in fade-in zoom-in-95">
-                  Your entry has been saved
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-container text-primary">
+                    <span className="material-symbols-outlined text-[20px]">mic</span>
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
-          </ScrollReveal>
+
+            {/* 1:1 AddEntry Section: Hide from Friends Switch Card */}
+            <div className="flex items-center justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
+              <div className="flex items-center gap-md">
+                <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
+                  {heroIsHidden ? 'lock' : 'public'}
+                </span>
+                <div>
+                  <span className="block text-body-md font-bold text-on-surface">
+                    {t('addEntry.hideFromFriends')}
+                  </span>
+                  <span className="block text-body-sm text-on-surface-variant">
+                    {t('addEntry.hideDescription')}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={heroIsHidden}
+                aria-label={t('addEntry.hideFromFriends')}
+                onClick={() => setHeroIsHidden(!heroIsHidden)}
+                className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  heroIsHidden ? 'bg-primary' : 'bg-surface-container-highest'
+                }`}
+              >
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-subtle transition-transform duration-normal ${
+                    heroIsHidden ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* 1:1 Save Button from AddEntry.jsx */}
+            <Link
+              to="/login"
+              className="flex h-14 w-full items-center justify-center rounded-full bg-primary text-label-lg font-bold text-on-primary shadow-card hover:opacity-95 active:scale-[0.99] transition-all duration-normal"
+            >
+              {t('addEntry.saveEntry')}
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* THE CLOSED LOOP SECTION */}
-      <section
-        id="features"
-        ref={loopSectionRef}
-        className="px-container-margin py-20 max-w-6xl mx-auto w-full relative"
-      >
-        {/* Header (Eyebrow + H2 + Subtitle) */}
-        <ScrollReveal animation="fade-up">
-          <div className="text-center mb-16">
-            <span className="px-md py-xs rounded-full bg-secondary-container text-on-secondary-container text-label-sm font-semibold inline-block">
-              Not just a journal
-            </span>
-            <h2 className="mt-md text-3xl md:text-4xl font-bold text-on-surface">
-              A journal that answers back
-            </h2>
-            <p className="mt-xs text-body-md text-on-surface-variant max-w-xl mx-auto leading-relaxed">
-              Your entries are visible only to accepted friends — zero
-              algorithms, zero public pressure, zero noise.
-            </p>
-          </div>
-        </ScrollReveal>
-
-        {/* 4 Connected Nodes Container */}
-        <div className="flex flex-col md:flex-row items-stretch gap-6 md:gap-0">
-          {/* NODE 1 — "You record your day" */}
-          <ScrollReveal
-            animation="fade-up"
-            delay={100}
-            className="flex-1 flex flex-col"
+      {/* F1 BENTO GRID FEATURES SECTION */}
+      <section id="features" className="py-20 px-container-margin max-w-6xl mx-auto w-full scroll-mt-24">
+        <div className="max-w-2xl mx-auto text-center mb-16">
+          <h2
+            className="font-display text-3xl sm:text-4xl font-normal tracking-tight text-on-surface mb-4"
+            style={{ overflowWrap: 'anywhere', minWidth: 0 }}
           >
-            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
-              <div>
-                {/* Header inside mockup 1 */}
-                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                  <span className="text-label-sm font-semibold text-on-surface-variant">
-                    My Entry
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant/60">
-                    Today
-                  </span>
+            {t('landing.bentoHeader')}
+          </h2>
+          <p className="text-body-lg text-on-surface-variant leading-relaxed">
+            {t('landing.bentoSubheader')}
+          </p>
+        </div>
+
+        {/* 6-Tile Asymmetric Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
+          {/* Tile 1: 1:1 Two-Tier Friend Privacy Modal (Span 2x2: md:col-span-7 md:row-span-2) */}
+          <div className="md:col-span-7 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-sm mb-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
+                  <span className="material-symbols-outlined text-[22px]">visibility_off</span>
                 </div>
-
-                {/* Entry Content Mockup */}
-                <div className="space-y-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-xs">
-                      <span
-                        className={`flex h-8 w-8 items-center justify-center rounded-full ${APP_MOODS[4].bg}`}
-                      >
-                        <span
-                          className={`material-symbols-outlined text-[18px] ${APP_MOODS[4].color}`}
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          {APP_MOODS[4].icon}
-                        </span>
-                      </span>
-                      <span className="px-sm py-0.5 rounded-full bg-primary-container/40 text-[11px] font-semibold text-primary">
-                        #Grateful
-                      </span>
-                    </div>
-
-                    {/* Photo preview placeholder 32x32 */}
-                    <div className="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant shrink-0 border border-outline-variant/20">
-                      <span className="material-symbols-outlined text-[16px]">
-                        image
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
-                    “{SHARED_ENTRY_TEXT}”
+                <div>
+                  <h3 className="text-headline-lg-mobile font-semibold text-on-surface">
+                    {t('friendPrivacy.title')}
+                  </h3>
+                  <p className="text-body-sm text-on-surface-variant">
+                    {t('friendPrivacy.subtitle')}
                   </p>
                 </div>
               </div>
-
-              {/* Caption under Node 1 */}
-              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-                <p className="text-label-md font-bold text-on-surface">
-                  You record your day
-                </p>
-              </div>
+              <p className="text-body-sm text-on-surface-variant mb-6 leading-relaxed">
+                {t('friendPrivacy.description')}
+              </p>
             </div>
-          </ScrollReveal>
 
-          {/* CONNECTOR 1 -> 2 */}
-          <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
-            {/* Desktop Horizontal Line */}
-            <div className="hidden md:flex flex-col items-center w-full">
-              <span className="text-[9px] lg:text-[10px] font-medium text-on-surface-variant/80 whitespace-nowrap mb-1 px-1.5 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/20">
-                friends only
-              </span>
-              <div className="w-full flex items-center">
+            {/* 1:1 Friend Privacy Rows from FriendPrivacyModal.jsx */}
+            <div className="space-y-sm">
+              {friendsPrivacy.map((friend) => (
                 <div
-                  className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`}
-                />
-                <span
-                  className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
+                  key={friend.id}
+                  className="flex items-center justify-between gap-sm rounded-2xl bg-surface-container-low p-sm transition-colors hover:bg-surface-container"
                 >
-                  chevron_right
-                </span>
-              </div>
-            </div>
-
-            {/* Mobile Vertical Line */}
-            <div className="flex md:hidden items-center gap-sm py-2">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`}
-                />
-                <span
-                  className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
-                >
-                  expand_more
-                </span>
-              </div>
-              <span className="text-label-sm font-medium text-on-surface-variant/80 px-md py-xs rounded-full bg-surface-container-low border border-outline-variant/20">
-                friends only
-              </span>
-            </div>
-          </div>
-
-          {/* NODE 2 — "Friend sees in feed" */}
-          <ScrollReveal
-            animation="fade-up"
-            delay={250}
-            className="flex-1 flex flex-col"
-          >
-            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
-              <div>
-                {/* Feed Card Mockup Header */}
-                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                  <div className="flex items-center gap-xs">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-container text-secondary text-label-sm font-bold">
-                      D
+                  <div className="flex items-center gap-sm min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-sm">
+                      {friend.initial}
                     </div>
-                    <div>
-                      <h4 className="text-label-sm font-bold text-on-surface leading-none">
-                        Daniel Kim
-                      </h4>
-                      <span className="text-[10px] text-on-surface-variant">
-                        10m ago
-                      </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-body-md font-semibold text-on-surface">
+                        {friend.name}
+                      </p>
+                      <p className="truncate text-label-sm text-on-surface-variant">
+                        @{friend.username}
+                      </p>
                     </div>
                   </div>
-                  <span
-                    className={`material-symbols-outlined text-[20px] ${APP_MOODS[4].color}`}
-                    style={{ fontVariationSettings: "'FILL' 1" }}
-                  >
-                    {APP_MOODS[4].icon}
-                  </span>
-                </div>
 
-                {/* Feed Card Text (Exact same entry text as Node 1!) */}
-                <p className="text-[12px] leading-snug text-on-surface italic bg-surface-container-low/60 p-xs rounded-xl border border-outline-variant/10">
-                  “{SHARED_ENTRY_TEXT}”
-                </p>
-              </div>
-
-              {/* Caption under Node 2 */}
-              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-                <p className="text-label-md font-bold text-on-surface">
-                  Friend sees in feed
-                </p>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {/* CONNECTOR 2 -> 3 */}
-          <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
-            {/* Desktop Horizontal Line */}
-            <div className="hidden md:flex flex-col items-center w-full">
-              <span className="text-[9px] lg:text-[10px] font-medium text-on-surface-variant/80 whitespace-nowrap mb-1 px-1.5 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/20">
-                friend reacts
-              </span>
-              <div className="w-full flex items-center">
-                <div
-                  className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`}
-                />
-                <span
-                  className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
-                >
-                  chevron_right
-                </span>
-              </div>
-            </div>
-
-            {/* Mobile Vertical Line */}
-            <div className="flex md:hidden items-center gap-sm py-2">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`}
-                />
-                <span
-                  className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
-                >
-                  expand_more
-                </span>
-              </div>
-              <span className="text-label-sm font-medium text-on-surface-variant/80 px-md py-xs rounded-full bg-surface-container-low border border-outline-variant/20">
-                friend reacts
-              </span>
-            </div>
-          </div>
-
-          {/* NODE 3 — "Friend leaves a like" */}
-          <ScrollReveal
-            animation="fade-up"
-            delay={400}
-            className="flex-1 flex flex-col"
-          >
-            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
-              <div>
-                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                  <span className="text-label-sm font-semibold text-on-surface-variant">
-                    Reaction
-                  </span>
-                  <span className="text-[11px] text-on-surface-variant/60">
-                    Feed
-                  </span>
-                </div>
-
-                {/* Heart reaction mockup */}
-                <div className="flex flex-col items-center justify-center py-xs space-y-xs bg-primary-container/20 rounded-xl border border-primary-container/30">
-                  <div
-                    className={`transition-transform duration-300 ${hasLiked ? "scale-125" : "scale-100"}`}
+                  {/* 1:1 Toggle Switch with lock/public icon from FriendPrivacyModal.jsx */}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={friend.hidden}
+                    aria-label={`Toggle privacy for ${friend.name}`}
+                    onClick={() => toggleFriendPrivacy(friend.id)}
+                    className={`relative inline-flex h-8 w-14 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors duration-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                      friend.hidden ? 'bg-primary' : 'bg-surface-container-highest'
+                    }`}
                   >
                     <span
-                      className="material-symbols-outlined text-[28px] text-primary"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      favorite
-                    </span>
-                  </div>
-                  <div className="text-label-md font-bold text-primary transition-all duration-300">
-                    {hasLiked ? "4 Likes" : "3 Likes"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Caption under Node 3 */}
-              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-                <p className="text-label-md font-bold text-on-surface">
-                  Friend leaves a like
-                </p>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {/* CONNECTOR 3 -> 4 */}
-          <div className="flex md:flex-col items-center justify-center shrink-0 md:w-16 lg:w-20 py-2 md:py-0 px-1 relative z-0">
-            {/* Desktop Horizontal Line */}
-            <div className="hidden md:flex flex-col items-center w-full">
-              <span className="text-[9px] lg:text-[10px] font-medium text-on-surface-variant/80 whitespace-nowrap mb-1 px-1.5 py-0.5 rounded-full bg-surface-container-low border border-outline-variant/20">
-                you find out
-              </span>
-              <div className="w-full flex items-center">
-                <div
-                  className={`h-[2px] w-full transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-dashed border-b border-outline-variant"}`}
-                />
-                <span
-                  className={`material-symbols-outlined text-[14px] -ml-1 shrink-0 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
-                >
-                  chevron_right
-                </span>
-              </div>
-            </div>
-
-            {/* Mobile Vertical Line */}
-            <div className="flex md:hidden items-center gap-sm py-2">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-[2px] h-8 transition-colors duration-500 ${hasLiked ? "bg-primary border-solid" : "bg-outline-variant/40 border-r border-dashed border-outline-variant"}`}
-                />
-                <span
-                  className={`material-symbols-outlined text-[16px] -mt-1 transition-all duration-500 ${hasLiked ? "text-primary font-bold scale-125" : "text-outline-variant/80"}`}
-                >
-                  expand_more
-                </span>
-              </div>
-              <span className="text-label-sm font-medium text-on-surface-variant/80 px-md py-xs rounded-full bg-surface-container-low border border-outline-variant/20">
-                you find out
-              </span>
-            </div>
-          </div>
-
-          {/* NODE 4 — "Notification to you" */}
-          <ScrollReveal
-            animation="fade-up"
-            delay={550}
-            className="flex-1 flex flex-col"
-          >
-            <div className="flex-1 flex flex-col justify-between bg-surface-container-lowest rounded-xl lg:rounded-xxl p-md lg:p-lg shadow-card border border-outline-variant/20 relative z-10 transition-all duration-300 hover:shadow-floating hover:-translate-y-1">
-              <div>
-                {/* Header Bell with animated badge */}
-                <div className="flex items-center justify-between mb-sm pb-xs border-b border-surface-container">
-                  <span className="text-label-sm font-semibold text-on-surface-variant">
-                    Notifications
-                  </span>
-
-                  {/* HeaderBell Icon with red badge */}
-                  <div className="relative flex items-center justify-center w-7 h-7 rounded-full bg-surface-container-low">
-                    <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
-                      notifications
-                    </span>
-
-                    {/* Red Badge "1" — Fades in & scales up synchronously */}
-                    <span
-                      className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-error text-[10px] font-bold text-on-error transition-all duration-500 ease-out ${
-                        hasLiked
-                          ? "opacity-100 scale-100"
-                          : "opacity-0 scale-50"
+                      className={`flex h-6 w-6 items-center justify-center rounded-full bg-surface-container-lowest shadow-subtle transition-transform duration-normal ${
+                        friend.hidden ? 'translate-x-6' : 'translate-x-0'
                       }`}
                     >
-                      1
-                    </span>
-                  </div>
-                </div>
-
-                {/* Notification Card — Fades in & scales up synchronously */}
-                <div
-                  className={`rounded-xl bg-surface-container-low p-xs border border-outline-variant/20 transition-all duration-500 ease-out ${
-                    hasLiked
-                      ? "opacity-100 translate-y-0 scale-100"
-                      : "opacity-40 translate-y-1 scale-95"
-                  }`}
-                >
-                  <div className="flex items-start gap-xs">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary-container text-secondary text-[11px] font-bold mt-0.5">
-                      D
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] leading-tight text-on-surface font-medium">
-                        <span className="font-bold">Daniel</span> liked your
-                        entry
-                      </p>
-                      <span className="text-[10px] text-on-surface-variant">
-                        just now
+                      <span className="material-symbols-outlined text-[16px] text-on-surface">
+                        {friend.hidden ? 'lock' : 'public'}
                       </span>
-                    </div>
+                    </span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tile 2: 1:1 Voice Note Player (Span 1x1: md:col-span-5) */}
+          <div className="md:col-span-5 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[22px]">mic</span>
+              </div>
+              <h3 className="font-display text-2xl font-normal text-on-surface mb-2">
+                {t('landing.audioMemoTitle')}
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed mb-6">
+                {t('landing.audioMemoDesc')}
+              </p>
+            </div>
+
+            {/* 1:1 VoiceNotePlayer component structure */}
+            <div className="relative flex flex-col gap-xs rounded-[20px] bg-surface-container-low p-md border border-surface-container-high/60 cloud-shadow">
+              <div className="flex items-center gap-md">
+                <button
+                  type="button"
+                  onClick={() => setTileAudioPlaying(!tileAudioPlaying)}
+                  aria-label={tileAudioPlaying ? 'Pause voice note' : 'Play voice note'}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary shadow-sm transition-transform active:scale-95 hover:bg-primary/90"
+                >
+                  <span className="material-symbols-outlined text-[24px]">
+                    {tileAudioPlaying ? 'pause' : 'play_arrow'}
+                  </span>
+                </button>
+
+                <div className="flex flex-1 flex-col gap-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <span className="text-label-sm font-medium text-on-surface-variant font-sans tabular-nums min-w-0 truncate">
+                      {tileAudioPlaying ? '0:28 / 1:12' : '0:00 / 1:12'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setTileAudioSpeed((s) => (s === 1 ? 1.5 : s === 1.5 ? 2 : 1))
+                      }
+                      title="Playback speed"
+                      className="shrink-0 rounded-md bg-surface-container px-1.5 py-0.5 text-[11px] font-semibold text-primary hover:bg-surface-container-high"
+                    >
+                      {tileAudioSpeed}x
+                    </button>
+                  </div>
+
+                  <div
+                    className="flex h-7 w-full items-center gap-[3px] py-1 cursor-pointer"
+                    role="slider"
+                    aria-label="Audio progress"
+                    aria-valuenow={tileAudioPlaying ? 28 : 0}
+                    aria-valuemin={0}
+                    aria-valuemax={72}
+                  >
+                    {WAVEFORM_HEIGHTS.map((heightPercent, idx) => {
+                      const isActive = tileAudioPlaying && idx <= 18;
+                      return (
+                        <span
+                          key={idx}
+                          style={{ height: `${heightPercent}%` }}
+                          className={`flex-1 rounded-full transition-colors duration-150 ${
+                            isActive ? 'bg-primary' : 'bg-surface-container-highest'
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* Caption under Node 4 */}
-              <div className="mt-sm pt-xs border-t border-outline-variant/15 text-center">
-                <p className="text-label-md font-bold text-on-surface">
-                  Notification to you
+          {/* Tile 3: 1:1 FeedCard Component (Span 1x1: md:col-span-5) */}
+          <div className="md:col-span-5 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[22px]">favorite</span>
+              </div>
+              <h3 className="font-display text-2xl font-normal text-on-surface mb-2">
+                {t('landing.noAlgorithmTitle')}
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed mb-6">
+                {t('landing.noAlgorithmDesc')}
+              </p>
+            </div>
+
+            {/* 1:1 FeedCard from pages/Feed.jsx */}
+            <article className="rounded-xl lg:rounded-2xl bg-surface-container-low border border-outline-variant/20 p-md shadow-card">
+              <header className="flex items-center gap-sm">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-sm">
+                  D
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate text-body-md font-semibold text-on-surface">
+                    Daniel Kim
+                  </h4>
+                  <p className="text-label-sm text-on-surface-variant">
+                    @daniel · {isRu ? '2 ч назад' : '2h ago'}
+                  </p>
+                </div>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-mood-good-container">
+                  <MoodIcon mood={4} className="text-[22px]" />
+                </span>
+              </header>
+
+              <div className="mt-sm space-y-xs">
+                <div className="flex flex-wrap gap-xs">
+                  <span className="rounded-full px-sm py-xs text-label-sm font-semibold bg-mood-good-container text-on-mood-good-container">
+                    {t('moods.4', 'Good')}
+                  </span>
+                  <span className="rounded-full bg-surface-container px-sm py-xs text-label-sm text-on-surface-variant">
+                    #{getLocalizedTag('Calm', t)}
+                  </span>
+                  <span className="rounded-full bg-surface-container px-sm py-xs text-label-sm text-on-surface-variant">
+                    #{getLocalizedTag('Tea', t)}
+                  </span>
+                </div>
+                <p className="text-body-sm leading-5 text-on-surface font-serif italic">
+                  “{isRu ? 'Тихий вечер с травяным чаем и спокойной музыкой. Замечательный день.' : 'Quiet evening with herbal tea and slow music. Taking things slow today.'}”
                 </p>
               </div>
+
+              <footer className="relative mt-sm border-t border-outline-variant/20 pt-sm flex items-center justify-between">
+                <div className="flex items-center gap-xs">
+                  <button
+                    type="button"
+                    onClick={() => setFeedLiked((prev) => !prev)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold transition-all ${
+                      feedLiked
+                        ? 'bg-primary-container text-on-primary-container ring-1 ring-primary/40'
+                        : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+                    }`}
+                  >
+                    <span>❤️</span>
+                    <span className="tabular-nums">{feedLiked ? 4 : 3}</span>
+                  </button>
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-label-sm text-on-surface-variant">
+                    <span>🌿</span>
+                    <span className="tabular-nums">2</span>
+                  </span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface-container text-on-surface-variant">
+                    <span className="material-symbols-outlined text-[16px]">add_reaction</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-label-sm text-on-surface-variant font-medium">
+                  <span className="material-symbols-outlined text-[16px]">chat_bubble_outline</span>
+                  <span>2</span>
+                </div>
+              </footer>
+            </article>
+          </div>
+
+          {/* Tile 4: 1:1 Calendar Grid & Month Summary Cards (Span 2x1: md:col-span-7) */}
+          <div className="md:col-span-7 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/70 text-on-primary-container text-label-sm font-semibold">
+                  <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                  <span>{t('landing.calendarMatrixTitle')}</span>
+                </span>
+                <span className="text-label-sm font-semibold text-primary">
+                  {t('landing.calendarDominant')}
+                </span>
+              </div>
+
+              <h3 className="font-display text-2xl font-normal text-on-surface mb-2">
+                {isRu ? 'Месяц как на ладони' : 'Your Month at a Glance'}
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed mb-5">
+                {t('landing.calendarMatrixDesc')}
+              </p>
             </div>
-          </ScrollReveal>
-        </div>
-      </section>
 
-      {/* APP SHOWCASE - 1:1 EXACT APPLICATION VIEWS */}
-      <section
-        id="showcase"
-        className="px-container-margin py-20 bg-surface-container-low/80 border-t border-outline-variant/20 relative overflow-hidden"
-      >
-        {/* Ambient Glowing Orbs */}
-        <div className="absolute top-1/3 left-10 w-80 h-80 bg-secondary-container/30 blur-3xl pointer-events-none rounded-full animate-float-slow" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-tertiary-container/30 blur-3xl pointer-events-none rounded-full animate-float-reverse" />
-
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          <ScrollReveal animation="fade-up">
-            <span className="px-md py-xs rounded-full bg-primary-container text-on-primary-container text-label-sm font-semibold">
-              1:1 Mobile Interface Preview
-            </span>
-            <h2 className="mt-md text-3xl md:text-4xl font-bold text-on-surface">
-              Explore the Real App Screens
-            </h2>
-            <p className="mt-xs text-body-md text-on-surface-variant max-w-lg mx-auto">
-              Experience Moodila’s exact layouts — adapted directly from the
-              live application components.
-            </p>
-          </ScrollReveal>
-
-          {/* View Switcher Tabs */}
-          <ScrollReveal animation="scale-up" delay={150}>
-            <div className="mt-md inline-flex p-1 rounded-2xl bg-surface-container border border-outline-variant/20 shadow-subtle mb-lg">
-              <button
-                onClick={() => setActiveTab("home")}
-                className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
-                  activeTab === "home"
-                    ? "bg-surface-container-lowest text-on-surface shadow-subtle scale-105"
-                    : "text-on-surface-variant hover:text-on-surface"
-                }`}
-              >
-                Home Summary
-              </button>
-              <button
-                onClick={() => setActiveTab("calendar")}
-                className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
-                  activeTab === "calendar"
-                    ? "bg-surface-container-lowest text-on-surface shadow-subtle scale-105"
-                    : "text-on-surface-variant hover:text-on-surface"
-                }`}
-              >
-                Monthly & Weekly Calendar
-              </button>
-              <button
-                onClick={() => setActiveTab("feed")}
-                className={`px-md py-xs rounded-xl text-label-lg font-semibold transition-all ${
-                  activeTab === "feed"
-                    ? "bg-surface-container-lowest text-on-surface shadow-subtle scale-105"
-                    : "text-on-surface-variant hover:text-on-surface"
-                }`}
-              >
-                Friend Feed
-              </button>
-            </div>
-          </ScrollReveal>
-
-          {/* Device Mockup Shell */}
-          <ScrollReveal animation="scale-up" delay={250}>
-            <div className="mx-auto max-w-md bg-background text-on-background rounded-[36px] border-[8px] border-surface-container-highest shadow-2xl overflow-hidden relative text-left transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)]">
-              {/* 1:1 HOME SUMMARY VIEW */}
-              {/* 1:1 HOME SUMMARY VIEW */}
-              {activeTab === "home" && (
-                <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
-                  <header className="flex items-center justify-between py-xs">
-                    <div className="flex items-center gap-sm">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-container font-semibold text-secondary text-body-md">
-                        A
-                      </div>
-                      <h1 className="text-headline-lg-mobile font-headline-lg-mobile text-on-surface font-bold">
-                        Moodila
-                      </h1>
-                    </div>
-                    <div className="flex items-center gap-xs">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow">
-                        <span className="material-symbols-outlined text-[20px]">
-                          notifications
-                        </span>
-                      </div>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant cloud-shadow">
-                        <span className="material-symbols-outlined text-[20px]">
-                          logout
-                        </span>
-                      </div>
-                    </div>
-                  </header>
-
-                  <section className="relative overflow-hidden rounded-[24px] bg-primary-container p-lg cloud-shadow">
-                    <div className="relative z-10 flex max-w-full flex-col items-start gap-md">
-                      <h2 className="text-headline-lg font-headline-lg text-on-primary-container font-bold flex items-center gap-2">
-                        <span>Good evening, Alex</span>
-                        <AppLogo className="w-7 h-7 rounded-lg shadow-xs" />
-                      </h2>
-                      <div className="flex items-center gap-xs rounded-full bg-primary px-lg py-sm text-label-lg font-label-lg text-on-primary shadow-md">
-                        Journal today
-                        <span className="material-symbols-outlined text-[18px]">
-                          edit
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section className="space-y-md">
-                    <div className="flex items-end justify-between">
-                      <h2 className="text-label-lg font-label-lg text-on-surface-variant">
-                        This week's mood
-                      </h2>
-                      <span className="text-label-sm font-label-sm text-primary cursor-pointer hover:underline">
-                        See more
-                      </span>
-                    </div>
-                    <div className="flex justify-between gap-xs overflow-x-auto rounded-xl lg:rounded-xxl bg-surface-container-lowest/60 p-md shadow-card border border-outline-variant/15">
-                      {[
-                        { day: "Mon", mood: 5 },
-                        { day: "Tue", mood: 4 },
-                        { day: "Wed", mood: 4 },
-                        { day: "Thu", mood: 3 },
-                        { day: "Fri", mood: 5, today: true },
-                        { day: "Sat", mood: null },
-                        { day: "Sun", mood: null },
-                      ].map((item, idx) => {
-                        const mInfo = item.mood ? APP_MOODS[item.mood] : null;
-                        return (
-                          <div
-                            key={idx}
-                            className="flex min-w-10 flex-col items-center gap-xs"
-                          >
-                            <span
-                              className={`flex h-11 w-11 items-center justify-center rounded-full ${
-                                mInfo ? mInfo.bg : "bg-surface-variant"
-                              } ${item.today ? "ring-2 ring-primary" : ""}`}
-                            >
-                              {mInfo ? (
-                                <span
-                                  className={`material-symbols-outlined text-[24px] ${mInfo.color}`}
-                                  style={{ fontVariationSettings: "'FILL' 1" }}
-                                >
-                                  {mInfo.icon}
-                                </span>
-                              ) : (
-                                <span className="material-symbols-outlined text-[18px] text-on-surface-variant">
-                                  add
-                                </span>
-                              )}
-                            </span>
-                            <span
-                              className={`text-label-sm font-label-sm ${item.today ? "font-bold text-primary" : "text-on-surface-variant"}`}
-                            >
-                              {item.day}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  <section className="grid grid-cols-2 gap-md">
-                    <div className="col-span-2 rounded-[24px] bg-surface-container-lowest p-lg cloud-shadow">
-                      <h2 className="text-headline-lg font-headline-lg text-on-surface">
-                        Mood summary
-                      </h2>
-                      <div className="mt-sm flex items-baseline gap-xs">
-                        <span className="text-headline-xl font-headline-xl text-on-surface font-bold">
-                          24
-                        </span>
-                        <span className="text-body-md font-body-md text-on-surface-variant">
-                          entries
-                        </span>
-                      </div>
-                      <p className="mt-1 text-body-sm font-body-sm text-on-surface-variant">
-                        Total moods logged this month
-                      </p>
-                    </div>
-                    <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-primary-container/30 p-md">
-                      <span className="text-label-sm font-label-sm text-on-surface-variant">
-                        Dominant mood
-                      </span>
-                      <div className="flex items-center gap-xs mt-2 min-w-0">
-                        <span
-                          className="material-symbols-outlined text-[28px] text-primary shrink-0"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          sentiment_satisfied
-                        </span>
-                        <span className="min-w-0 text-lg sm:text-xl font-bold text-on-surface leading-tight tracking-tight break-words line-clamp-2">
-                          Good
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex min-h-[120px] flex-col justify-between rounded-[24px] bg-secondary-container/30 p-md">
-                      <span className="text-label-sm font-label-sm text-on-surface-variant">
-                        Most used tag
-                      </span>
-                      <div className="flex items-center gap-xs mt-2 min-w-0">
-                        <span className="material-symbols-outlined text-[24px] text-secondary shrink-0">
-                          auto_awesome
-                        </span>
-                        <span className="min-w-0 text-lg sm:text-xl font-bold text-on-surface leading-tight tracking-tight break-words line-clamp-2">
-                          Coffee
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-              )}
-
-              {/* 1:1 MONTHLY & WEEKLY CALENDAR VIEW */}
-              {activeTab === "calendar" && (
-                <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
-                  <header className="py-xs">
-                    <div className="flex items-center justify-between rounded-[24px] bg-surface-container-lowest p-md text-left cloud-shadow">
-                      <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold">
-                        Your calendar
-                      </span>
-                      <span className="material-symbols-outlined text-primary">
-                        expand_more
-                      </span>
-                    </div>
-                  </header>
-
-                  <section aria-label="Calendar view">
-                    <div className="flex gap-1 rounded-full bg-surface-container-low p-1">
-                      <button
-                        type="button"
-                        onClick={() => setCalViewMode("week")}
-                        className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
-                          calViewMode === "week"
-                            ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
-                            : "text-on-surface-variant hover:text-on-surface"
-                        }`}
-                      >
-                        Week
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCalViewMode("month")}
-                        className={`flex-1 rounded-full py-2 text-label-lg font-label-lg transition-all ${
-                          calViewMode === "month"
-                            ? "bg-surface-container-lowest text-on-surface cloud-shadow font-bold"
-                            : "text-on-surface-variant hover:text-on-surface"
-                        }`}
-                      >
-                        Month
-                      </button>
-                    </div>
-                  </section>
-
-                  <section className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95"
-                    >
-                      <span className="material-symbols-outlined">
-                        chevron_left
-                      </span>
-                    </button>
-                    <h2 className="text-headline-lg-mobile font-headline-lg-mobile font-bold">
-                      {calViewMode === "month"
-                        ? "August 2026"
-                        : "Aug 10 – Aug 16, 2026"}
-                    </h2>
-                    <button
-                      type="button"
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant active:scale-95"
-                    >
-                      <span className="material-symbols-outlined">
-                        chevron_right
-                      </span>
-                    </button>
-                  </section>
-
-                  {calViewMode === "month" ? (
-                    <section className="space-y-md">
-                      <div className="grid grid-cols-7 text-center select-none">
-                        {["MO", "TU", "WE", "TH", "FR", "SA", "SU"].map(
-                          (day) => (
-                            <span
-                              key={day}
-                              className="pb-sm text-label-sm font-label-sm text-on-surface-variant/60"
-                            >
-                              {day}
-                            </span>
-                          ),
-                        )}
-
-                        {[27, 28, 29, 30, 31].map((d) => (
-                          <span
-                            key={`prev-${d}`}
-                            className="flex h-[76px] items-start justify-center pt-1 text-body-md font-body-md text-on-surface-variant/20"
-                          >
-                            {d}
-                          </span>
-                        ))}
-
-                        {Array.from({ length: 31 }).map((_, i) => {
-                          const dayNum = i + 1;
-                          const entry = MOCK_CALENDAR_ENTRIES[dayNum];
-                          const mood = entry ? APP_MOODS[entry.mood] : null;
-                          const isSelected = selectedDay === dayNum;
-
-                          return (
-                            <div
-                              key={dayNum}
-                              onClick={() => setSelectedDay(dayNum)}
-                              className="flex h-[76px] flex-col items-center gap-1 text-body-md font-body-md cursor-pointer select-none"
-                            >
-                              <span
-                                className={`flex items-center gap-0.5 ${isSelected ? "font-bold text-primary" : ""}`}
-                              >
-                                {dayNum}
-                              </span>
-                              <span
-                                className={`flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full transition-all ${
-                                  mood
-                                    ? `${mood.bg} ${isSelected ? "ring-2 ring-primary" : ""}`
-                                    : "border-2 border-dashed border-outline-variant text-outline-variant"
-                                }`}
-                              >
-                                {mood ? (
-                                  <span
-                                    className={`material-symbols-outlined text-[16px] sm:text-[20px] ${mood.color}`}
-                                    style={{
-                                      fontVariationSettings: "'FILL' 1",
-                                    }}
-                                  >
-                                    {mood.icon}
-                                  </span>
-                                ) : (
-                                  <span className="material-symbols-outlined text-[16px] sm:text-[20px]">
-                                    add
-                                  </span>
-                                )}
-                              </span>
-                            </div>
-                          );
-                        })}
-
-                        {[1, 2, 3, 4, 5, 6].map((d) => (
-                          <span
-                            key={`next-${d}`}
-                            className="flex h-[76px] items-start justify-center pt-1 text-body-md font-body-md text-on-surface-variant/20"
-                          >
-                            {d}
-                          </span>
-                        ))}
-                      </div>
-
-                      <div className="rounded-[24px] bg-surface-container-lowest p-md cloud-shadow space-y-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-label-sm font-bold text-primary">
-                            August {selectedDay}, 2026
-                          </span>
-                          {MOCK_CALENDAR_ENTRIES[selectedDay] ? (
-                            <span
-                              className={`px-sm py-0.5 rounded-full text-label-sm font-medium ${APP_MOODS[MOCK_CALENDAR_ENTRIES[selectedDay].mood].bg} ${APP_MOODS[MOCK_CALENDAR_ENTRIES[selectedDay].mood].color}`}
-                            >
-                              {
-                                APP_MOODS[
-                                  MOCK_CALENDAR_ENTRIES[selectedDay].mood
-                                ].label
-                              }
-                            </span>
-                          ) : (
-                            <span className="text-label-sm text-on-surface-variant">
-                              No entry logged
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-body-sm text-on-surface">
-                          {MOCK_CALENDAR_ENTRIES[selectedDay]
-                            ? `"${MOCK_CALENDAR_ENTRIES[selectedDay].note}"`
-                            : "Tap + on any day to create a new mood journal entry."}
-                        </p>
-                        {MOCK_CALENDAR_ENTRIES[selectedDay]?.tags && (
-                          <div className="flex flex-wrap gap-xs pt-xs">
-                            {MOCK_CALENDAR_ENTRIES[selectedDay].tags.map(
-                              (t) => (
-                                <span
-                                  key={t}
-                                  className="rounded-full bg-surface-container px-sm py-xs text-label-sm text-on-surface-variant"
-                                >
-                                  #{t}
-                                </span>
-                              ),
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </section>
-                  ) : (
-                    <section className="space-y-sm select-none">
-                      <div className="flex items-center justify-between px-1 pb-xs">
-                        <h3 className="text-label-lg font-bold text-on-surface flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[18px] text-primary">
-                            view_day
-                          </span>
-                          Weekly Flow
-                        </h3>
-                        <span className="text-label-sm text-on-surface-variant/60">
-                          Aug 10 - Aug 16
-                        </span>
-                      </div>
-
-                      {[
-                        {
-                          day: "Mon",
-                          num: 10,
-                          mood: 3,
-                          text: "Routine Monday, steady work.",
-                          tag: "Focused",
-                        },
-                        {
-                          day: "Tue",
-                          num: 11,
-                          mood: null,
-                          text: "No entry logged",
-                          tag: null,
-                        },
-                        {
-                          day: "Wed",
-                          num: 12,
-                          mood: 1,
-                          text: "Overwhelmed with tasks.",
-                          tag: "Overwhelmed",
-                        },
-                        {
-                          day: "Thu",
-                          num: 13,
-                          mood: 4,
-                          text: "Felt much better after chatting.",
-                          tag: "Peaceful",
-                        },
-                        {
-                          day: "Fri",
-                          num: 14,
-                          mood: 2,
-                          text: "Felt rainy and quiet.",
-                          tag: "Rainy Vibe",
-                        },
-                        {
-                          day: "Sat",
-                          num: 15,
-                          mood: 5,
-                          text: "Had an inspiring session!",
-                          tag: "Breakthrough",
-                          selected: true,
-                        },
-                        {
-                          day: "Sun",
-                          num: 16,
-                          mood: null,
-                          text: "No entry logged",
-                          tag: null,
-                        },
-                      ].map((item, idx) => {
-                        const mInfo = item.mood ? APP_MOODS[item.mood] : null;
-                        return (
-                          <div
-                            key={idx}
-                            className={`flex items-center justify-between rounded-[24px] p-md transition-all ${
-                              item.selected
-                                ? "bg-surface-container-lowest ring-2 ring-primary cloud-shadow"
-                                : "bg-surface-container-lowest cloud-shadow"
-                            }`}
-                          >
-                            <div className="flex items-center gap-md flex-1 min-w-0">
-                              <div
-                                className={`flex flex-col items-center justify-center rounded-2xl px-3 py-2 min-w-[54px] shrink-0 ${
-                                  item.selected
-                                    ? "bg-primary text-on-primary font-bold cloud-shadow"
-                                    : "bg-surface-container-low text-on-surface"
-                                }`}
-                              >
-                                <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">
-                                  {item.day}
-                                </span>
-                                <span className="text-xl font-bold leading-none mt-0.5">
-                                  {item.num}
-                                </span>
-                              </div>
-
-                              <div className="min-w-0 flex-1">
-                                <p className="text-body-sm text-on-surface truncate font-medium">
-                                  {item.text}
-                                </p>
-                                {item.tag && (
-                                  <span className="inline-block mt-xs rounded-full bg-surface-container-low px-xs py-0.5 text-[11px] text-on-surface-variant">
-                                    #{item.tag}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="ml-md shrink-0">
-                              {mInfo ? (
-                                <span
-                                  className={`flex h-11 w-11 items-center justify-center rounded-full ${mInfo.bg}`}
-                                >
-                                  <span
-                                    className={`material-symbols-outlined text-[24px] ${mInfo.color}`}
-                                    style={{
-                                      fontVariationSettings: "'FILL' 1",
-                                    }}
-                                  >
-                                    {mInfo.icon}
-                                  </span>
-                                </span>
-                              ) : (
-                                <span className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-dashed border-outline-variant text-outline-variant">
-                                  <span className="material-symbols-outlined text-[18px]">
-                                    add
-                                  </span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </section>
-                  )}
-                </div>
-              )}
-
-              {/* 1:1 FRIENDS FEED VIEW */}
-              {activeTab === "feed" && (
-                <div className="min-h-[640px] pb-28 pt-sm px-container-margin space-y-md animate-fadeIn">
-                  <header className="py-xs">
-                    <p className="text-label-sm font-label-sm uppercase tracking-[0.12em] text-primary">
-                      Your circle
-                    </p>
-                    <h1 className="mt-xs text-headline-xl font-headline-xl text-on-surface font-bold">
-                      Friend feed
-                    </h1>
-                    <p className="mt-xs text-body-sm text-on-surface-variant">
-                      A gentle look at how everyone’s doing.
-                    </p>
-                  </header>
-
-                  <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md shadow-card border border-outline-variant/15 space-y-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-xs">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-tertiary-container text-tertiary font-bold">
-                          M
-                        </div>
-                        <div>
-                          <h4 className="text-label-lg font-label-lg text-on-surface font-bold">
-                            Maria Chen
-                          </h4>
-                          <p className="text-body-sm text-on-surface-variant">
-                            2 hours ago
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className="material-symbols-outlined text-[28px] text-tertiary"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        sentiment_very_satisfied
-                      </span>
-                    </div>
-
-                    <p className="text-body-md text-on-surface">
-                      Finished my morning run! The fresh air was just what I
-                      needed to start the weekend.
-                    </p>
-
-                    <div className="flex flex-wrap gap-xs">
-                      <span className="px-sm py-0.5 rounded-full bg-primary-container/40 text-label-sm text-on-primary-container">
-                        #Peaceful
-                      </span>
-                      <span className="px-sm py-0.5 rounded-full bg-secondary-container/40 text-label-sm text-on-secondary-container">
-                        #FreshAir
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-xs border-t border-outline-variant/20">
-                      <div className="flex items-center gap-xs text-label-sm text-primary font-semibold">
-                        <span
-                          className="material-symbols-outlined text-[18px]"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          favorite
-                        </span>
-                        <span>5 Likes</span>
-                      </div>
-                      <span className="text-label-sm text-on-surface-variant">
-                        2 comments
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md shadow-card border border-outline-variant/15 space-y-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-xs">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary-container text-secondary font-bold">
-                          D
-                        </div>
-                        <div>
-                          <h4 className="text-label-lg font-label-lg text-on-surface font-bold">
-                            Daniel Kim
-                          </h4>
-                          <p className="text-body-sm text-on-surface-variant">
-                            Yesterday at 9:15 PM
-                          </p>
-                        </div>
-                      </div>
-                      <span
-                        className="material-symbols-outlined text-[28px] text-primary"
-                        style={{ fontVariationSettings: "'FILL' 1" }}
-                      >
-                        sentiment_satisfied
-                      </span>
-                    </div>
-
-                    <p className="text-body-md text-on-surface">
-                      Quiet evening with herbal tea and music. Taking things
-                      slow.
-                    </p>
-
-                    <div className="flex items-center justify-between pt-xs border-t border-outline-variant/20">
-                      <div className="flex items-center gap-xs text-label-sm text-primary font-semibold">
-                        <span className="material-symbols-outlined text-[18px]">
-                          favorite
-                        </span>
-                        <span>3 Likes</span>
-                      </div>
-                      <span className="text-label-sm text-on-surface-variant">
-                        1 comment
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 1:1 BOTTOM NAV BAR */}
-              <nav className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex w-[calc(100%-32px)] items-center justify-around rounded-full bg-surface/90 px-3 py-1.5 cloud-shadow backdrop-blur-xl border border-outline-variant/20">
-                {[
-                  { key: "home", icon: "home", label: "Home" },
-                  {
-                    key: "calendar",
-                    icon: "calendar_today",
-                    label: "Calendar",
-                  },
-                  { key: "add", icon: "add", label: "Add" },
-                  { key: "feed", icon: "grid_view", label: "Feed" },
-                  { key: "profile", icon: "person", label: "Profile" },
-                ].map((item) => {
-                  const active = activeTab === item.key;
+            {/* 1:1 Month Grid from pages/Calendar.jsx */}
+            <div className="rounded-xl bg-surface-container/60 p-4 border border-outline-variant/20">
+              <div className="grid grid-cols-7 text-center select-none mb-2">
+                {(isRu ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S']).map((day) => (
+                  <span key={day} className="pb-sm text-label-sm font-bold text-on-surface-variant/70">
+                    {day}
+                  </span>
+                ))}
+                {CALENDAR_DAYS.map((d) => {
+                  const m = MOODS[d.mood];
+                  const isSelected = selectedCalendarDay === d.day;
                   return (
                     <button
-                      key={item.key}
-                      onClick={() =>
-                        item.key !== "add" &&
-                        item.key !== "profile" &&
-                        setActiveTab(item.key)
-                      }
-                      className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-                        item.icon === "add"
-                          ? "h-11 w-11 bg-on-background text-background shadow-md"
-                          : active
-                            ? "bg-primary-container text-on-primary-container"
-                            : "text-on-surface-variant hover:text-on-surface"
-                      }`}
+                      key={d.day}
+                      type="button"
+                      onClick={() => setSelectedCalendarDay(d.day)}
+                      aria-label={`Day ${d.day}, mood ${m.label}`}
+                      className="flex flex-col items-center gap-1 py-1 group focus:outline-none"
                     >
+                      <span className={`text-[11px] font-medium tabular-nums flex items-center gap-0.5 ${isSelected ? 'font-bold text-primary' : 'text-on-surface/90'}`}>
+                        {d.day}
+                        {d.isHidden && <span className="material-symbols-outlined text-[12px] text-on-surface-variant">lock</span>}
+                        {d.hasCustom && <span className="material-symbols-outlined text-[12px] text-primary">group</span>}
+                      </span>
                       <span
-                        className="material-symbols-outlined text-[20px]"
-                        style={
-                          active
-                            ? { fontVariationSettings: "'FILL' 1" }
-                            : undefined
-                        }
+                        className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full transition-transform group-hover:-translate-y-0.5 ${m.bg} ${
+                          isSelected ? 'ring-2 ring-primary ring-offset-1 ring-offset-surface-container' : ''
+                        }`}
                       >
-                        {item.icon}
+                        <MoodIcon mood={d.mood} className="text-[18px] sm:text-[20px]" />
                       </span>
                     </button>
                   );
                 })}
-              </nav>
+              </div>
+
+              {/* 1:1 Summary Cards from pages/Calendar.jsx lines 516-548 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm pt-md border-t border-outline-variant/15">
+                <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-sm border border-outline-variant/10">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mood-rad-container text-on-mood-rad-container">
+                    <MoodIcon mood={5} className="text-[22px]" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-overline text-on-surface-variant/70">{t('calendar.dominantMood')}</p>
+                    <p className="text-body-md font-bold text-on-surface truncate">{t('moods.5', 'Rad')}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-sm border border-outline-variant/10">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container/40 text-primary">
+                    <span className="material-symbols-outlined text-[20px]">tag</span>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-overline text-on-surface-variant/70">{t('calendar.topTag')}</p>
+                    <p className="text-body-md font-bold text-on-surface truncate">#{getLocalizedTag('Calm', t)}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </ScrollReveal>
+          </div>
+
+          {/* Tile 5: 1:1 Stats.jsx Mood Distribution & Insights (Span 1x1: md:col-span-6) */}
+          <div className="md:col-span-6 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[22px]">pie_chart</span>
+              </div>
+              <h3 className="font-display text-2xl font-normal text-on-surface mb-2">
+                {t('landing.analyticsTitle')}
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed mb-6">
+                {t('landing.analyticsDesc')}
+              </p>
+            </div>
+
+            {/* 1:1 Distribution Bars from pages/Stats.jsx lines 177-209 */}
+            <div className="space-y-sm p-4 rounded-xl bg-surface-container/60 border border-outline-variant/20">
+              {[
+                { level: 5, pct: 45, count: 12, color: 'bg-mood-rad' },
+                { level: 4, pct: 33, count: 9, color: 'bg-mood-good' },
+                { level: 3, pct: 14, count: 4, color: 'bg-mood-meh' },
+                { level: 2, pct: 5, count: 1, color: 'bg-mood-bad' },
+                { level: 1, pct: 3, count: 1, color: 'bg-mood-awful' },
+              ].map((item) => {
+                const moodInfo = getMoodInfo(item.level, t);
+                return (
+                  <div key={item.level} className="flex items-center gap-sm">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${moodInfo.bg}`}>
+                      <MoodIcon mood={item.level} className="text-[16px]" />
+                    </span>
+                    <div className="w-16 text-body-sm font-medium text-on-surface truncate">
+                      {moodInfo.label}
+                    </div>
+                    <div className="flex-1 h-2.5 rounded-full bg-surface-container-low overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${item.color}`}
+                        style={{ width: `${item.pct}%` }}
+                      />
+                    </div>
+                    <span className="w-16 text-right text-label-sm font-bold text-on-surface-variant tabular-nums">
+                      {item.pct}% ({item.count})
+                    </span>
+                  </div>
+                );
+              })}
+
+              {/* 1:1 Insight Card from pages/Stats.jsx lines 150-162 */}
+              <div className="flex items-start gap-md rounded-xl bg-surface-container-low border border-outline-variant/15 p-3 shadow-subtle mt-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mood-rad-container text-on-mood-rad-container mt-0.5">
+                  <span className="material-symbols-outlined text-[16px]">trending_up</span>
+                </span>
+                <p className="text-body-sm font-medium text-on-surface leading-snug">
+                  {isRu
+                    ? 'Ваше настроение обычно выше по пятницам и субботам.'
+                    : 'Your mood tends to be highest on Fridays and Saturdays.'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tile 6: 1:1 BottomNav.jsx Mobile PWA Preview (Span 1x1: md:col-span-6) */}
+          <div className="md:col-span-6 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-surface-container-highest text-on-surface flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[22px]">vibration</span>
+              </div>
+              <h3 className="font-display text-2xl font-normal text-on-surface mb-2">
+                {t('landing.pwaTitle')}
+              </h3>
+              <p className="text-body-md text-on-surface-variant leading-relaxed mb-6">
+                {t('landing.pwaDesc')}
+              </p>
+            </div>
+
+            {/* 1:1 BottomNav from components/BottomNav.jsx */}
+            <div className="p-4 rounded-xl bg-surface-container/60 border border-outline-variant/20 flex flex-col items-center gap-4">
+              <nav
+                aria-label="App Navigation Preview"
+                className="w-full flex items-center justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-3 py-2 shadow-floating backdrop-blur-xl select-none"
+              >
+                {[
+                  { icon: 'home', labelKey: 'nav.home', active: true },
+                  { icon: 'calendar_today', labelKey: 'nav.calendar' },
+                  { icon: 'add', labelKey: 'nav.addEntry', isAdd: true },
+                  { icon: 'grid_view', labelKey: 'nav.feed' },
+                  { icon: 'person', labelKey: 'nav.profile' },
+                ].map((item, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-center rounded-full transition-all ${
+                      item.isAdd
+                        ? 'h-12 w-12 bg-primary text-on-primary shadow-card'
+                        : item.active
+                        ? 'h-11 w-11 bg-primary-container text-on-primary-container font-semibold'
+                        : 'h-11 w-11 text-on-surface-variant'
+                    }`}
+                  >
+                    <span
+                      className="material-symbols-outlined text-[22px]"
+                      style={item.active ? { fontVariationSettings: "'FILL' 1" } : undefined}
+                    >
+                      {item.icon}
+                    </span>
+                  </div>
+                ))}
+              </nav>
+
+              <div className="flex items-center gap-2 text-label-sm font-semibold text-on-surface">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                <span>{isRu ? 'iPhone и Android · Приятный виброотклик' : 'iPhone & Android · Gentle Haptics'}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* FAQ SECTION */}
-      <section
-        id="faq"
-        className="px-container-margin py-20 max-w-4xl mx-auto w-full"
-      >
-        <ScrollReveal animation="fade-up">
-          <div className="text-center mb-xl">
-            <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
-              Frequently Asked Questions
-            </h2>
-            <p className="mt-xs text-body-md text-on-surface-variant">
-              Everything you need to know about Moodila.
-            </p>
-          </div>
-        </ScrollReveal>
+      {/* PHILOSOPHY STATEMENT & HONEST COMPARISON */}
+      <section id="philosophy" className="py-20 px-container-margin max-w-5xl mx-auto w-full scroll-mt-24">
+        {/* T3 Single Huge Quote */}
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <p className="font-display text-2xl sm:text-3xl lg:text-4xl font-normal text-on-surface leading-tight tracking-tight mb-6">
+            “{t('landing.quoteStatement')}”
+          </p>
+          <div className="w-16 h-0.5 bg-primary/40 mx-auto" />
+        </div>
 
-        <div className="space-y-md">
-          {FAQS.map((faq, index) => {
+        {/* Side-by-Side Honest Comparison */}
+        <div className="rounded-2xl bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/30 shadow-card overflow-hidden">
+          <div className="p-6 border-b border-outline-variant/20 text-center sm:text-left">
+            <h3 className="font-display text-2xl font-normal text-on-surface">
+              {t('landing.comparisonTitle')}
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-outline-variant/20">
+            {/* Column 1: Typical Social Media */}
+            <div className="p-6 sm:p-8 space-y-6 bg-surface-container-low/40 dark:bg-surface-container-low/20">
+              <div className="flex items-center gap-2 text-label-lg font-bold text-on-surface-variant">
+                <span className="material-symbols-outlined text-[20px] text-error">close</span>
+                <span>{t('landing.socialNetworks')}</span>
+              </div>
+              <ul className="space-y-4 text-body-md text-on-surface-variant">
+                <li className="flex items-start gap-3">
+                  <span className="text-error mt-0.5 font-bold">—</span>
+                  <span>{t('landing.comp1Social')}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-error mt-0.5 font-bold">—</span>
+                  <span>{t('landing.comp2Social')}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-error mt-0.5 font-bold">—</span>
+                  <span>{t('landing.comp3Social')}</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 2: The Moodila Way */}
+            <div className="p-6 sm:p-8 space-y-6 bg-surface-container-lowest dark:bg-surface-container">
+              <div className="flex items-center gap-2 text-label-lg font-bold text-primary">
+                <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                <span>{t('landing.moodilaWay')}</span>
+              </div>
+              <ul className="space-y-4 text-body-md text-on-surface">
+                <li className="flex items-start gap-3">
+                  <span className="text-primary font-bold mt-0.5">✓</span>
+                  <span>{t('landing.comp1Moodila')}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-primary font-bold mt-0.5">✓</span>
+                  <span>{t('landing.comp2Moodila')}</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="text-primary font-bold mt-0.5">✓</span>
+                  <span>{t('landing.comp3Moodila')}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS (F4 STEP SEQUENCE) */}
+      <section id="how-it-works" className="py-20 px-container-margin max-w-5xl mx-auto w-full scroll-mt-24">
+        <div className="max-w-2xl mx-auto text-center mb-16">
+          <h2
+            className="font-display text-3xl sm:text-4xl font-normal tracking-tight text-on-surface mb-3"
+            style={{ overflowWrap: 'anywhere', minWidth: 0 }}
+          >
+            {t('landing.howItWorksTitle')}
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              num: '01',
+              title: t('landing.step1Title'),
+              desc: t('landing.step1Desc'),
+              icon: 'edit_note',
+            },
+            {
+              num: '02',
+              title: t('landing.step2Title'),
+              desc: t('landing.step2Desc'),
+              icon: 'shield',
+            },
+            {
+              num: '03',
+              title: t('landing.step3Title'),
+              desc: t('landing.step3Desc'),
+              icon: 'forum',
+            },
+          ].map((step, idx) => (
+            <div
+              key={idx}
+              className="rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between relative"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="font-display text-2xl font-bold text-primary font-mono">
+                    {step.num}
+                  </span>
+                  <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center">
+                    <span className="material-symbols-outlined text-[18px]">{step.icon}</span>
+                  </div>
+                </div>
+                <h3 className="font-display text-xl font-normal text-on-surface mb-2.5">
+                  {step.title}
+                </h3>
+                <p className="text-body-md text-on-surface-variant leading-relaxed">
+                  {step.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CONVERSATIONAL FAQ SECTION */}
+      <section id="faq" className="py-20 px-container-margin max-w-4xl mx-auto w-full scroll-mt-24">
+        <div className="text-center mb-14">
+          <h2
+            className="font-display text-3xl sm:text-4xl font-normal tracking-tight text-on-surface mb-3"
+            style={{ overflowWrap: 'anywhere', minWidth: 0 }}
+          >
+            {t('landing.faqTitle')}
+          </h2>
+          <p className="text-body-md text-on-surface-variant">
+            {t('landing.faqSubtitle')}
+          </p>
+        </div>
+
+        <div className="space-y-3">
+          {[
+            { q: t('landing.q1'), a: t('landing.a1') },
+            { q: t('landing.q2'), a: t('landing.a2') },
+            { q: t('landing.q3'), a: t('landing.a3') },
+            { q: t('landing.q4'), a: t('landing.a4') },
+            { q: t('landing.q5'), a: t('landing.a5') },
+          ].map((item, index) => {
             const isOpen = openFaq === index;
             return (
-              <ScrollReveal key={index} animation="fade-up" delay={index * 100}>
-                <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/20 shadow-card overflow-hidden transition-all duration-300 hover:border-outline-variant/60">
-                  <button
-                    onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="w-full p-md text-left flex items-center justify-between font-bold text-on-surface text-body-md md:text-lg hover:bg-surface-container-low transition-colors"
-                  >
-                    <span>{faq.q}</span>
-                    <span className="text-xl font-normal text-on-surface-variant ml-xs transition-transform duration-300">
-                      {isOpen ? "−" : "+"}
-                    </span>
-                  </button>
-                  {isOpen && (
-                    <div className="px-md pb-md text-body-md text-on-surface-variant leading-relaxed border-t border-outline-variant/10 pt-sm animate-in fade-in duration-200">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              </ScrollReveal>
+              <div
+                key={index}
+                className="rounded-xl bg-surface-container-lowest dark:bg-surface-container border border-outline-variant/30 shadow-subtle overflow-hidden transition-all duration-200"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(isOpen ? -1 : index)}
+                  aria-expanded={isOpen}
+                  className="w-full p-5 text-left flex items-center justify-between text-body-lg font-semibold text-on-surface hover:bg-surface-container-high/40 transition-colors focus-visible:outline-2 focus-visible:outline-primary"
+                >
+                  <span className="pr-4">{item.q}</span>
+                  <span className="text-xl font-mono text-on-surface-variant shrink-0">
+                    {isOpen ? '−' : '+'}
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="px-5 pb-5 pt-1 text-body-md text-on-surface-variant leading-relaxed border-t border-outline-variant/10">
+                    {item.a}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
       </section>
 
-      {/* FINAL CALL TO ACTION */}
-      <section className="px-container-margin py-20 bg-gradient-to-r from-primary-container/50 via-secondary-container/50 to-tertiary-container/50 text-center relative overflow-hidden">
-        <ScrollReveal animation="scale-up">
-          <div className="max-w-3xl mx-auto relative z-10">
-            <AppLogo className="w-16 h-16 mx-auto mb-sm rounded-2xl shadow-card animate-bounce duration-1000 block" />
-            <h2 className="text-3xl md:text-4xl font-bold text-on-surface">
-              Ready for a calm, mindful routine?
-            </h2>
-            <p className="mt-xs text-body-md md:text-lg text-on-surface-variant max-w-xl mx-auto">
-              Join Moodila today and take your first step toward gentle
-              self-reflection.
+      {/* FT5 STATEMENT CLOSER & FOOTER */}
+      <footer className="pt-20 pb-12 px-container-margin border-t border-outline-variant/30 bg-surface-container-low/60 dark:bg-surface-container-lowest text-on-surface-variant text-body-sm">
+        <div className="max-w-5xl mx-auto">
+          {/* Ft5 Statement Headline */}
+          <div className="mb-16 text-center sm:text-left">
+            <p
+              className="font-display text-3xl sm:text-4xl lg:text-5xl font-normal text-on-surface leading-tight tracking-tight max-w-2xl mb-8"
+              style={{ overflowWrap: 'anywhere', minWidth: 0 }}
+            >
+              {t('landing.footerStatement')}
             </p>
-            <div className="mt-lg">
-              <Link
-                to="/login"
-                className="inline-block px-xl py-md rounded-full bg-primary-container text-on-primary-container text-label-lg font-bold hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95"
-              >
-                Get Started for Free
-              </Link>
-            </div>
+            <Link
+              to="/login"
+              className="h-12 px-7 inline-flex items-center justify-center gap-2 rounded-full bg-primary text-on-primary text-label-lg font-semibold hover:shadow-card hover:-translate-y-0.5 active:translate-y-0 active:scale-98 transition-all focus-visible:outline-2 focus-visible:outline-primary whitespace-nowrap"
+            >
+              <span>{t('landing.footerCta')}</span>
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </Link>
           </div>
-        </ScrollReveal>
-      </section>
 
-      {/* FOOTER */}
-      <footer className="px-container-margin py-lg border-t border-outline-variant/20 bg-background text-on-surface-variant text-body-sm">
-        <ScrollReveal animation="fade-up">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-md">
-            <div className="flex items-center gap-2 font-bold text-on-surface">
+          {/* Bottom Meta Row */}
+          <div className="pt-8 border-t border-outline-variant/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3 font-display text-lg text-on-surface font-semibold">
               <AppLogo className="w-6 h-6 rounded-md" />
               <span>Moodila</span>
             </div>
 
-            <div className="flex gap-md text-label-sm">
-              <Link to="/login" className="hover:underline">
-                Log in
+            <div className="flex flex-wrap items-center justify-center gap-6 text-label-sm">
+              <Link to="/login" className="hover:text-on-surface transition-colors whitespace-nowrap">
+                {t('landing.navLogIn')}
               </Link>
-              <a href="#features" className="hover:underline">
-                Features
+              <a href="#features" className="hover:text-on-surface transition-colors whitespace-nowrap">
+                {t('landing.navFeatures')}
               </a>
-              <a href="#faq" className="hover:underline">
-                FAQ
+              <a href="#philosophy" className="hover:text-on-surface transition-colors whitespace-nowrap">
+                {t('landing.navPhilosophy')}
+              </a>
+              <a href="#faq" className="hover:text-on-surface transition-colors whitespace-nowrap">
+                {t('landing.navFaq')}
               </a>
             </div>
 
-            <p>© {new Date().getFullYear()} Moodila.</p>
+            <p className="text-label-sm text-on-surface-variant/80">
+              © {new Date().getFullYear()} {t('landing.footerRights')}
+            </p>
           </div>
-        </ScrollReveal>
+        </div>
       </footer>
     </div>
   );

@@ -133,6 +133,8 @@ export default {
 
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'Manrope', 'system-ui', 'sans-serif'],
+        display: ['"Newsreader"', 'Georgia', 'serif'],
+        serif: ['"Newsreader"', 'Georgia', 'serif'],
       },
 
       fontSize: {

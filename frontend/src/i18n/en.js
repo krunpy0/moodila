@@ -187,6 +187,7 @@ export const en = {
     recordVoice: "Record voice note",
     stopRecording: "Stop recording",
     deleteVoice: "Delete voice note",
+    save: "Save",
     saveEntry: "Save entry",
     savingEntry: "Saving entry…",
     photoUploaded: "Photo attached.",
@@ -306,7 +307,8 @@ export const en = {
     deleteAccount: "Delete account",
     dangerZone: "Danger Zone",
     logoutConfirmTitle: "Log out of account?",
-    logoutConfirmDesc: "Are you sure you want to log out? You will need your password to sign back in.",
+    logoutConfirmDesc:
+      "Are you sure you want to log out? You will need your password to sign back in.",
   },
 
   // Change Password Form
@@ -497,5 +499,106 @@ export const en = {
     statsDismissedAt: "Dismissed",
     statsBoth: "Read & Dismissed",
     statsLoading: "Loading statistics…",
+  },
+
+  // Landing Page (Soft Editorial)
+  landing: {
+    navFeatures: "Features",
+    navPhilosophy: "Philosophy",
+    navHowItWorks: "How it works",
+    navPrivacy: "Privacy",
+    navFaq: "FAQ",
+    navGetStarted: "Start journaling",
+    navLogIn: "Log In",
+
+    heroBadge: "Personal mood diary",
+    heroTitle: "A quiet daily diary. Shared only with who you choose.",
+    heroDescription:
+      "Log your mood in seconds, save voice notes, and share days with close friends. No algorithms, no ads, no likes.",
+    heroCtaPrimary: "Start your journal",
+    heroCtaSecondary: "How it works",
+    heroReassurance: "Private by default · No ads · You decide who sees what",
+
+    demoTitle: "Try a check-in",
+    demoSubtitle: "Tap a mood to see how it works",
+    demoNoteSample:
+      "Quiet evening with tea and good music. Felt nice and relaxing.",
+    demoAudioVoice: "Voice note attached",
+    demoVisibilityStatus: "Visible to 3 close friends",
+    demoTags: ["Calm", "Grateful", "Tea", "Evening"],
+
+    bentoHeader: "A calm space, not another social network",
+    bentoSubheader:
+      "Everything you need to understand how you feel and stay close with people you trust.",
+
+    privacyVaultTitle: "Flexible friend privacy",
+    privacyVaultDesc:
+      "Keep any day private, or choose exactly which friends can see it. Set default rules for each friend, or change it for any single entry.",
+    privacyGlobal: "Only me",
+    privacyGlobalDesc: "Only you can see this day",
+    privacySelective: "Chosen friends",
+    privacySelectiveDesc: "Shared only with close friends",
+
+    audioMemoTitle: "Voice notes & photos",
+    audioMemoDesc:
+      "When you don't feel like typing, record a quick voice memo or add a photo of your day.",
+
+    noAlgorithmTitle: "A simple chronological feed",
+    noAlgorithmDesc:
+      "No recommendations, no trends, no ads. Just posts from friends in the order they were shared.",
+
+    calendarMatrixTitle: "Monthly calendar",
+    calendarMatrixDesc:
+      "See all your days at a glance and spot patterns in how your mood changes over time.",
+    calendarDominant: "Mostly: Great & Good (78%)",
+    calendarStreak: "18 days logged",
+
+    analyticsTitle: "Simple stats & trends",
+    analyticsDesc:
+      "See which days of the week you feel best, and which tags show up on your happiest days.",
+
+    pwaTitle: "Works like a native app",
+    pwaDesc:
+      "Add it to your home screen right from the browser. Opens fast, works offline, and vibrates gently with each tap.",
+
+    quoteStatement:
+      "Social media turned feelings into a show for likes. Moodila is a quiet place just for you and your real friends.",
+    comparisonTitle: "A calmer way to share",
+    socialNetworks: "Other Social Networks",
+    moodilaWay: "In Moodila",
+    comp1Social: "Endless feeds designed to keep you scrolling forever",
+    comp1Moodila: "Only posts from friends, in the order they were shared",
+    comp2Social: "Like counts and pressure to look happy",
+    comp2Moodila: "Simple emoji reactions and friendly comments",
+    comp3Social: "All or nothing: either completely public or locked",
+    comp3Moodila: "You decide who sees each day, down to individual friends",
+
+    howItWorksTitle: "How it works in three simple steps",
+    step1Title: "1. Pick your mood",
+    step1Desc:
+      "Tap how you feel in seconds. Add a quick note, tags, or a short voice memo.",
+    step2Title: "2. Choose who sees it",
+    step2Desc:
+      "Keep the entry just for yourself, or share it with close friends with one tap.",
+    step3Title: "3. Look back and stay close",
+    step3Desc:
+      "See your month in the calendar and check in on how your close friends are doing.",
+
+    faqTitle: "Frequently Asked Questions",
+    faqSubtitle: "Clear answers about privacy, data, and how Moodila works.",
+    q1: "How is Moodila different from other mood trackers?",
+    a1: "Most mood apps are completely solo, while social media is too public. Moodila lets you keep a personal journal and share moments with a few close friends, without ads, feeds, or follower counts.",
+    q2: "Can I make some entries completely invisible to friends?",
+    a2: "Yes. You can hide any entry so only you see it, or set rules so only certain friends can see your posts.",
+    q3: "Is Moodila free to use?",
+    a3: "Yes, Moodila is completely free to use for personal journaling, calendar tracking, friend feeds, and analytics.",
+    q4: "How do I install Moodila on my phone?",
+    a4: "Moodila works right in your browser. On iPhone, open Safari, tap Share, and select 'Add to Home Screen'. On Android, open Chrome and tap 'Install'.",
+    q5: "Can I delete my account and data whenever I want?",
+    a5: "Yes, at any time. You can permanently delete your account and all your entries, photos, and voice notes from your profile settings.",
+
+    footerStatement: "A calm place for your thoughts and feelings.",
+    footerCta: "Start your journal",
+    footerRights: "Moodila. Crafted with care.",
   },
 };
