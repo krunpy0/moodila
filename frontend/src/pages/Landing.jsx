@@ -430,7 +430,7 @@ export default function Landing() {
         {/* 6-Tile Asymmetric Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           {/* Tile 1: 1:1 Two-Tier Friend Privacy Modal (Span 2x2: md:col-span-7 md:row-span-2) */}
-          <div className="md:col-span-7 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+          <div className="md:col-span-7 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-6 md:p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-sm mb-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
@@ -498,7 +498,7 @@ export default function Landing() {
           </div>
 
           {/* Tile 2: 1:1 Voice Note Player (Span 1x1: md:col-span-5) */}
-          <div className="md:col-span-5 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+          <div className="md:col-span-5 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-6 md:p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
             <div>
               <div className="w-10 h-10 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-[22px]">mic</span>
@@ -569,7 +569,7 @@ export default function Landing() {
           </div>
 
           {/* Tile 3: 1:1 FeedCard Component (Span 1x1: md:col-span-5) */}
-          <div className="md:col-span-5 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+          <div className="md:col-span-5 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-6 md:p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
             <div>
               <div className="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-[22px]">favorite</span>
@@ -649,7 +649,7 @@ export default function Landing() {
           </div>
 
           {/* Tile 4: 1:1 Calendar Grid & Month Summary Cards (Span 2x1: md:col-span-7) */}
-          <div className="md:col-span-7 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+          <div className="md:col-span-7 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-6 md:p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between overflow-hidden">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/70 text-on-primary-container text-label-sm font-semibold">
@@ -670,10 +670,10 @@ export default function Landing() {
             </div>
 
             {/* 1:1 Month Grid from pages/Calendar.jsx */}
-            <div className="rounded-xl bg-surface-container/60 p-4 border border-outline-variant/20">
-              <div className="grid grid-cols-7 text-center select-none mb-2">
+            <div className="rounded-xl bg-surface-container/60 p-2 sm:p-3 md:p-4 border border-outline-variant/20 overflow-hidden">
+              <div className="grid grid-cols-7 text-center select-none mb-1.5 sm:mb-2">
                 {(isRu ? ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S']).map((day) => (
-                  <span key={day} className="pb-sm text-label-sm font-bold text-on-surface-variant/70">
+                  <span key={day} className="pb-1 text-[10px] xs:text-[11px] sm:text-label-sm font-bold text-on-surface-variant/70">
                     {day}
                   </span>
                 ))}
@@ -686,19 +686,19 @@ export default function Landing() {
                       type="button"
                       onClick={() => setSelectedCalendarDay(d.day)}
                       aria-label={`Day ${d.day}, mood ${m.label}`}
-                      className="flex flex-col items-center gap-1 py-1 group focus:outline-none"
+                      className="flex flex-col items-center gap-0.5 sm:gap-1 py-0.5 sm:py-1 group focus:outline-none min-w-0"
                     >
-                      <span className={`text-[11px] font-medium tabular-nums flex items-center gap-0.5 ${isSelected ? 'font-bold text-primary' : 'text-on-surface/90'}`}>
+                      <span className={`text-[9px] xs:text-[10px] sm:text-[11px] font-medium tabular-nums flex items-center justify-center gap-0.5 ${isSelected ? 'font-bold text-primary' : 'text-on-surface/90'}`}>
                         {d.day}
-                        {d.isHidden && <span className="material-symbols-outlined text-[12px] text-on-surface-variant">lock</span>}
-                        {d.hasCustom && <span className="material-symbols-outlined text-[12px] text-primary">group</span>}
+                        {d.isHidden && <span className="material-symbols-outlined text-[9px] xs:text-[10px] sm:text-[12px] text-on-surface-variant">lock</span>}
+                        {d.hasCustom && <span className="material-symbols-outlined text-[9px] xs:text-[10px] sm:text-[12px] text-primary">group</span>}
                       </span>
                       <span
-                        className={`flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full transition-transform group-hover:-translate-y-0.5 ${m.bg} ${
+                        className={`flex h-7 w-7 xs:h-8 xs:w-8 md:h-9 md:w-9 items-center justify-center rounded-full transition-transform group-hover:-translate-y-0.5 ${m.bg} ${
                           isSelected ? 'ring-2 ring-primary ring-offset-1 ring-offset-surface-container' : ''
                         }`}
                       >
-                        <MoodIcon mood={d.mood} className="text-[18px] sm:text-[20px]" />
+                        <MoodIcon mood={d.mood} className="text-[15px] xs:text-[18px] md:text-[20px]" />
                       </span>
                     </button>
                   );
@@ -706,24 +706,24 @@ export default function Landing() {
               </div>
 
               {/* 1:1 Summary Cards from pages/Calendar.jsx lines 516-548 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm pt-md border-t border-outline-variant/15">
-                <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-sm border border-outline-variant/10">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-mood-rad-container text-on-mood-rad-container">
-                    <MoodIcon mood={5} className="text-[22px]" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-sm pt-2.5 sm:pt-md border-t border-outline-variant/15">
+                <div className="flex items-center gap-2 sm:gap-sm rounded-xl bg-surface-container-low p-2 sm:p-sm border border-outline-variant/10 min-w-0">
+                  <span className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-mood-rad-container text-on-mood-rad-container">
+                    <MoodIcon mood={5} className="text-[18px] sm:text-[22px]" />
                   </span>
-                  <div className="min-w-0">
-                    <p className="text-overline text-on-surface-variant/70">{t('calendar.dominantMood')}</p>
-                    <p className="text-body-md font-bold text-on-surface truncate">{t('moods.5', 'Rad')}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-overline uppercase tracking-wider text-on-surface-variant/70 truncate">{t('calendar.dominantMood')}</p>
+                    <p className="text-body-sm sm:text-body-md font-bold text-on-surface truncate">{t('moods.5', 'Rad')}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-sm border border-outline-variant/10">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container/40 text-primary">
-                    <span className="material-symbols-outlined text-[20px]">tag</span>
+                <div className="flex items-center gap-2 sm:gap-sm rounded-xl bg-surface-container-low p-2 sm:p-sm border border-outline-variant/10 min-w-0">
+                  <span className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-primary-container/40 text-primary">
+                    <span className="material-symbols-outlined text-[18px] sm:text-[20px]">tag</span>
                   </span>
-                  <div className="min-w-0">
-                    <p className="text-overline text-on-surface-variant/70">{t('calendar.topTag')}</p>
-                    <p className="text-body-md font-bold text-on-surface truncate">#{getLocalizedTag('Calm', t)}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] sm:text-overline uppercase tracking-wider text-on-surface-variant/70 truncate">{t('calendar.topTag')}</p>
+                    <p className="text-body-sm sm:text-body-md font-bold text-on-surface truncate">#{getLocalizedTag('Calm', t)}</p>
                   </div>
                 </div>
               </div>
@@ -731,7 +731,7 @@ export default function Landing() {
           </div>
 
           {/* Tile 5: 1:1 Stats.jsx Mood Distribution & Insights (Span 1x1: md:col-span-6) */}
-          <div className="md:col-span-6 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+          <div className="md:col-span-6 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-6 md:p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between overflow-hidden">
             <div>
               <div className="w-10 h-10 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-[22px]">pie_chart</span>
@@ -745,7 +745,7 @@ export default function Landing() {
             </div>
 
             {/* 1:1 Distribution Bars from pages/Stats.jsx lines 177-209 */}
-            <div className="space-y-sm p-4 rounded-xl bg-surface-container/60 border border-outline-variant/20">
+            <div className="space-y-sm p-3 sm:p-4 rounded-xl bg-surface-container/60 border border-outline-variant/20 overflow-hidden">
               {[
                 { level: 5, pct: 45, count: 12, color: 'bg-mood-rad' },
                 { level: 4, pct: 33, count: 9, color: 'bg-mood-good' },
@@ -755,20 +755,20 @@ export default function Landing() {
               ].map((item) => {
                 const moodInfo = getMoodInfo(item.level, t);
                 return (
-                  <div key={item.level} className="flex items-center gap-sm">
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${moodInfo.bg}`}>
-                      <MoodIcon mood={item.level} className="text-[16px]" />
+                  <div key={item.level} className="flex items-center gap-2 sm:gap-sm">
+                    <span className={`flex h-6.5 w-6.5 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg ${moodInfo.bg}`}>
+                      <MoodIcon mood={item.level} className="text-[15px] sm:text-[16px]" />
                     </span>
-                    <div className="w-16 text-body-sm font-medium text-on-surface truncate">
+                    <div className="w-14 sm:w-16 text-[12px] sm:text-body-sm font-medium text-on-surface truncate">
                       {moodInfo.label}
                     </div>
-                    <div className="flex-1 h-2.5 rounded-full bg-surface-container-low overflow-hidden">
+                    <div className="flex-1 h-2 sm:h-2.5 rounded-full bg-surface-container-low overflow-hidden">
                       <div
                         className={`h-full rounded-full ${item.color}`}
                         style={{ width: `${item.pct}%` }}
                       />
                     </div>
-                    <span className="w-16 text-right text-label-sm font-bold text-on-surface-variant tabular-nums">
+                    <span className="w-14 sm:w-16 text-right text-[11px] sm:text-label-sm font-bold text-on-surface-variant tabular-nums">
                       {item.pct}% ({item.count})
                     </span>
                   </div>
@@ -776,11 +776,11 @@ export default function Landing() {
               })}
 
               {/* 1:1 Insight Card from pages/Stats.jsx lines 150-162 */}
-              <div className="flex items-start gap-md rounded-xl bg-surface-container-low border border-outline-variant/15 p-3 shadow-subtle mt-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mood-rad-container text-on-mood-rad-container mt-0.5">
-                  <span className="material-symbols-outlined text-[16px]">trending_up</span>
+              <div className="flex items-start gap-2 sm:gap-md rounded-xl bg-surface-container-low border border-outline-variant/15 p-2.5 sm:p-3 shadow-subtle mt-2.5 sm:mt-3">
+                <span className="flex h-6.5 w-6.5 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-lg bg-mood-rad-container text-on-mood-rad-container mt-0.5">
+                  <span className="material-symbols-outlined text-[15px] sm:text-[16px]">trending_up</span>
                 </span>
-                <p className="text-body-sm font-medium text-on-surface leading-snug">
+                <p className="text-[12px] sm:text-body-sm font-medium text-on-surface leading-snug">
                   {isRu
                     ? 'Ваше настроение обычно выше по пятницам и субботам.'
                     : 'Your mood tends to be highest on Fridays and Saturdays.'}
@@ -790,7 +790,7 @@ export default function Landing() {
           </div>
 
           {/* Tile 6: 1:1 BottomNav.jsx Mobile PWA Preview (Span 1x1: md:col-span-6) */}
-          <div className="md:col-span-6 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between">
+          <div className="md:col-span-6 rounded-2xl bg-surface-container-lowest dark:bg-surface-container p-4 sm:p-6 md:p-7 border border-outline-variant/30 shadow-card flex flex-col justify-between overflow-hidden">
             <div>
               <div className="w-10 h-10 rounded-xl bg-surface-container-highest text-on-surface flex items-center justify-center mb-4">
                 <span className="material-symbols-outlined text-[22px]">vibration</span>
@@ -804,10 +804,10 @@ export default function Landing() {
             </div>
 
             {/* 1:1 BottomNav from components/BottomNav.jsx */}
-            <div className="p-4 rounded-xl bg-surface-container/60 border border-outline-variant/20 flex flex-col items-center gap-4">
+            <div className="p-2.5 sm:p-4 rounded-xl bg-surface-container/60 border border-outline-variant/20 flex flex-col items-center gap-3 sm:gap-4 w-full overflow-hidden">
               <nav
                 aria-label="App Navigation Preview"
-                className="w-full flex items-center justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-3 py-2 shadow-floating backdrop-blur-xl select-none"
+                className="w-full flex items-center justify-between sm:justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-2 sm:px-3 py-1.5 sm:py-2 shadow-floating backdrop-blur-xl select-none"
               >
                 {[
                   { icon: 'home', labelKey: 'nav.home', active: true },
@@ -818,16 +818,16 @@ export default function Landing() {
                 ].map((item, idx) => (
                   <div
                     key={idx}
-                    className={`flex items-center justify-center rounded-full transition-all ${
+                    className={`flex items-center justify-center rounded-full transition-all shrink-0 ${
                       item.isAdd
-                        ? 'h-12 w-12 bg-primary text-on-primary shadow-card'
+                        ? 'h-9 w-9 sm:h-12 sm:w-12 bg-primary text-on-primary shadow-card'
                         : item.active
-                        ? 'h-11 w-11 bg-primary-container text-on-primary-container font-semibold'
-                        : 'h-11 w-11 text-on-surface-variant'
+                        ? 'h-8 w-8 sm:h-11 sm:w-11 bg-primary-container text-on-primary-container font-semibold'
+                        : 'h-8 w-8 sm:h-11 sm:w-11 text-on-surface-variant'
                     }`}
                   >
                     <span
-                      className="material-symbols-outlined text-[22px]"
+                      className="material-symbols-outlined text-[18px] sm:text-[22px]"
                       style={item.active ? { fontVariationSettings: "'FILL' 1" } : undefined}
                     >
                       {item.icon}
@@ -836,9 +836,9 @@ export default function Landing() {
                 ))}
               </nav>
 
-              <div className="flex items-center gap-2 text-label-sm font-semibold text-on-surface">
-                <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-                <span>{isRu ? 'iPhone и Android · Приятный виброотклик' : 'iPhone & Android · Gentle Haptics'}</span>
+              <div className="flex items-center justify-center gap-2 text-[11px] sm:text-label-sm font-semibold text-on-surface max-w-full text-center flex-wrap">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shrink-0" />
+                <span className="truncate max-w-full">{isRu ? 'iPhone и Android · Приятный виброотклик' : 'iPhone & Android · Gentle Haptics'}</span>
               </div>
             </div>
           </div>
