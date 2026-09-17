@@ -265,7 +265,7 @@ func TestHiddenEntriesE2E(t *testing.T) {
 
 	// 6. Post-level override test:
 	// User A creates Entry 4 with override: Friend B is explicitly visible (is_hidden = false), Friend C is hidden (is_hidden = true)
-	_, _, _, err = entriesRepo.Save(ctx, userA.ID, date4, 5, []string{"Special"}, "Entry 4 overrides", nil, nil, nil, &isFalse, []models.EntryFriendOverride{
+	entry4, _, _, err := entriesRepo.Save(ctx, userA.ID, date4, 5, []string{"Special"}, "Entry 4 overrides", nil, nil, nil, &isFalse, []models.EntryFriendOverride{
 		{FriendID: userB.ID, IsHidden: false},
 		{FriendID: userC.ID, IsHidden: true},
 	})
@@ -361,6 +361,49 @@ func TestHiddenEntriesE2E(t *testing.T) {
 	_ = pool.QueryRow(ctx, "SELECT count(*) FROM entry_friend_visibility WHERE friend_id = $1", userB.ID).Scan(&countOverrides)
 	if countDefaults != 0 || countOverrides != 0 {
 		t.Fatalf("expected 0 visibility rows after unfriend, got defaults=%d, overrides=%d", countDefaults, countOverrides)
+	}
+
+	// 10. Check that when a new friend User D is accepted, entries with custom visibility (entry 4)
+	// are automatically hidden from User D, while normal public entries (entry 1) remain visible.
+	userD, err := usersRepo.Create(ctx, fmt.Sprintf("userd_%d@test.com", ts), fmt.Sprintf("userd_%d", (ts+2)%1000000), "User D", "pass")
+	if err != nil {
+		t.Fatalf("create user D: %v", err)
+	}
+	defer pool.Exec(context.Background(), "DELETE FROM users WHERE id = $1", userD.ID)
+
+	reqD, err := friendsRepo.Request(ctx, userA.ID, userD.ID)
+	if err != nil {
+		t.Fatalf("friend request D: %v", err)
+	}
+	if _, err := friendsRepo.Respond(ctx, reqD.ID, userD.ID, "accepted"); err != nil {
+		t.Fatalf("accept friend D: %v", err)
+	}
+
+	dEntries, err := entriesRepo.VisibleByMonth(ctx, userA.ID, userD.ID, "2026-07", "2026-08")
+	if err != nil {
+		t.Fatalf("VisibleByMonth for D: %v", err)
+	}
+	var dSees1, dSees4 bool
+	for _, e := range dEntries {
+		if e.Date == date1 {
+			dSees1 = true
+		}
+		if e.Date == date4 {
+			dSees4 = true
+		}
+	}
+	if !dSees1 {
+		t.Fatalf("User D SHOULD see normal public entry 1")
+	}
+	if dSees4 {
+		t.Fatalf("User D should NOT see entry 4 which has custom visibility")
+	}
+
+	// Verify that entry_friend_visibility has an override hiding entry 4 for User D
+	var dHiddenInOverrides bool
+	err = pool.QueryRow(ctx, "SELECT is_hidden FROM entry_friend_visibility WHERE entry_id = $1 AND friend_id = $2", entry4.ID, userD.ID).Scan(&dHiddenInOverrides)
+	if err != nil || !dHiddenInOverrides {
+		t.Fatalf("expected entry 4 override for User D to be true, err=%v, is_hidden=%v", err, dHiddenInOverrides)
 	}
 }
 

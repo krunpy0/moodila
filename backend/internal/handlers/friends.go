@@ -209,6 +209,10 @@ func (h Friends) respond(c *gin.Context, status string) {
 
 	if status == "accepted" {
 		_ = h.Notifications.Create(c.Request.Context(), friendship.RequesterID, c.GetString("userID"), "friend_accept", &friendship.ID, nil)
+		if h.Entries.Pool != nil {
+			h.Entries.InvalidateUserCache(c.GetString("userID"))
+			h.Entries.InvalidateUserCache(friendship.RequesterID)
+		}
 	}
 
 	c.JSON(http.StatusOK, friendship)

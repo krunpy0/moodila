@@ -115,6 +115,26 @@ func (r Friends) Respond(ctx context.Context, friendshipID, addresseeID, status 
 		&friendship.ID, &friendship.RequesterID, &friendship.AddresseeID,
 		&friendship.Status, &friendship.CreatedAt, &friendship.UpdatedAt,
 	)
+	if err == nil && status == "accepted" {
+		_, _ = r.Pool.Exec(ctx, `
+			INSERT INTO entry_friend_visibility (entry_id, friend_id, is_hidden)
+			SELECT e.id, $2, true
+			FROM entries e
+			WHERE e.user_id = $1
+			  AND EXISTS (SELECT 1 FROM entry_friend_visibility efv WHERE efv.entry_id = e.id)
+			ON CONFLICT (entry_id, friend_id) DO NOTHING`,
+			friendship.RequesterID, friendship.AddresseeID,
+		)
+		_, _ = r.Pool.Exec(ctx, `
+			INSERT INTO entry_friend_visibility (entry_id, friend_id, is_hidden)
+			SELECT e.id, $1, true
+			FROM entries e
+			WHERE e.user_id = $2
+			  AND EXISTS (SELECT 1 FROM entry_friend_visibility efv WHERE efv.entry_id = e.id)
+			ON CONFLICT (entry_id, friend_id) DO NOTHING`,
+			friendship.RequesterID, friendship.AddresseeID,
+		)
+	}
 	return friendship, err
 }
 
