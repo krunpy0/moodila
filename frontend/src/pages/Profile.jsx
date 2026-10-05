@@ -31,6 +31,7 @@ export default function Profile() {
   const update = useUpdateProfileMutation();
   const { notify } = useNotifications();
   const { t, formatDate } = useLanguage();
+  const { isHalloweenAvailable } = useTheme();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -533,16 +534,18 @@ export default function Profile() {
                     <ThemeToggle />
                   </div>
 
-                  {/* Halloween theme toggle */}
-                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
-                    <span className="flex items-center gap-sm text-body-md text-on-surface">
-                      <span className="flex h-6 w-6 items-center justify-center text-primary">
-                        <JackOLanternIcon className="h-5 w-5 fill-current" />
+                  {/* Halloween theme toggle - only visible during Halloween season (until Nov 5th) */}
+                  {isHalloweenAvailable && (
+                    <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
+                      <span className="flex items-center gap-sm text-body-md text-on-surface">
+                        <span className="flex h-6 w-6 items-center justify-center text-primary">
+                          <JackOLanternIcon className="h-5 w-5 fill-current" />
+                        </span>
+                        {t("profile.halloweenTheme")}
                       </span>
-                      {t("profile.halloweenTheme")}
-                    </span>
-                    <HalloweenToggle />
-                  </div>
+                      <HalloweenToggle />
+                    </div>
+                  )}
 
                   {/* Vibration toggle */}
                   <div className="flex items-center justify-between border-t border-surface-container-low py-sm">

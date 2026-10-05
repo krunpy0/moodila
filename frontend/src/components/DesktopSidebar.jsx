@@ -23,7 +23,7 @@ export default function DesktopSidebar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t, language, toggleLanguage } = useLanguage();
-  const { theme, toggleTheme, isHalloween, toggleHalloween } = useTheme();
+  const { theme, toggleTheme, isHalloween, toggleHalloween, isHalloweenAvailable } = useTheme();
   const profileQuery = useProfileQuery();
 
   const user = profileQuery.data?.user;
@@ -198,32 +198,34 @@ export default function DesktopSidebar() {
               </span>
             </button>
 
-            {/* Halloween Theme Toggle */}
-            <button
-              type="button"
-              onClick={() => {
-                const next = !isHalloween;
-                toggleHalloween();
-                if (next) {
-                  haptics.spooky();
-                } else {
-                  haptics.selection();
+            {/* Halloween Theme Toggle - hidden when Halloween season ends (on Nov 5th) */}
+            {isHalloweenAvailable && (
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !isHalloween;
+                  toggleHalloween();
+                  if (next) {
+                    haptics.spooky();
+                  } else {
+                    haptics.selection();
+                  }
+                }}
+                title={
+                  isHalloween
+                    ? t("profile.halloweenDisable")
+                    : t("profile.halloweenEnable")
                 }
-              }}
-              title={
-                isHalloween
-                  ? t("profile.halloweenDisable")
-                  : t("profile.halloweenEnable")
-              }
-              aria-label={t("profile.halloweenTheme")}
-              className={`flex h-9 w-9 items-center justify-center rounded-sm transition-colors duration-fast ${
-                isHalloween
-                  ? "bg-primary-container text-primary shadow-xs"
-                  : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
-              }`}
-            >
-              <JackOLanternIcon className="h-5 w-5 fill-current" />
-            </button>
+                aria-label={t("profile.halloweenTheme")}
+                className={`flex h-9 w-9 items-center justify-center rounded-sm transition-colors duration-fast ${
+                  isHalloween
+                    ? "bg-primary-container text-primary shadow-xs"
+                    : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+                }`}
+              >
+                <JackOLanternIcon className="h-5 w-5 fill-current" />
+              </button>
+            )}
           </div>
 
           {/* Logout button */}

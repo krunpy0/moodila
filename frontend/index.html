@@ -31,7 +31,10 @@
           if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
           }
-          if (localStorage.getItem('moodshare_halloween') === 'true') {
+          var mock = localStorage.getItem('moodshare_mock_date');
+          var now = mock ? new Date(mock) : new Date();
+          var isHalloweenSeason = (now.getMonth() === 9) || (now.getMonth() === 10 && now.getDate() < 5);
+          if (isHalloweenSeason && localStorage.getItem('moodshare_halloween') === 'true') {
             document.documentElement.classList.add('halloween');
           }
         } catch (_) {}

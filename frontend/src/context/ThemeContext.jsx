@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react'
+import { isHalloweenSeasonAvailable } from '../utils/halloweenSeason'
 
 const ThemeContext = createContext({
   theme: 'light',
   setTheme: () => {},
   toggleTheme: () => {},
   isHalloween: false,
+  isHalloweenAvailable: false,
   setHalloween: () => {},
   toggleHalloween: () => {},
 })
@@ -25,9 +27,14 @@ export function ThemeProvider({ children }) {
     return 'light'
   })
 
+  const [isHalloweenAvailable, setIsHalloweenAvailable] = useState(() =>
+    isHalloweenSeasonAvailable(),
+  )
+
   const [isHalloween, setIsHalloween] = useState(() => {
     try {
-      return localStorage.getItem('moodshare_halloween') === 'true'
+      const inSeason = isHalloweenSeasonAvailable()
+      return inSeason && localStorage.getItem('moodshare_halloween') === 'true'
     } catch {
       return false
     }
@@ -48,24 +55,34 @@ export function ThemeProvider({ children }) {
   }, [theme])
 
   useEffect(() => {
+    const checkSeason = () => {
+      const available = isHalloweenSeasonAvailable()
+      setIsHalloweenAvailable(available)
+    }
+    checkSeason()
+  }, [])
+
+  useEffect(() => {
     const root = document.documentElement
-    if (isHalloween) {
+    const active = isHalloweenAvailable && isHalloween
+    if (active) {
       root.classList.add('halloween')
     } else {
       root.classList.remove('halloween')
     }
     try {
-      localStorage.setItem('moodshare_halloween', String(isHalloween))
+      localStorage.setItem('moodshare_halloween', String(active))
     } catch {
       // Storage quota or restriction fallback
     }
-  }, [isHalloween])
+  }, [isHalloween, isHalloweenAvailable])
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
   }
 
   const toggleHalloween = () => {
+    if (!isHalloweenAvailable) return
     setIsHalloween((prev) => !prev)
   }
 
@@ -75,7 +92,8 @@ export function ThemeProvider({ children }) {
         theme,
         setTheme,
         toggleTheme,
-        isHalloween,
+        isHalloween: isHalloweenAvailable && isHalloween,
+        isHalloweenAvailable,
         setHalloween: setIsHalloween,
         toggleHalloween,
       }}
