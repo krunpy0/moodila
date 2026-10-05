@@ -23,6 +23,7 @@ import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import { safeNavigateBack } from "../utils/navigation";
 import { haptics, isHapticsEnabled, setHapticsEnabled } from "../utils/haptics";
+import { JackOLanternIcon } from "../components/HalloweenIcons";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -532,6 +533,17 @@ export default function Profile() {
                     <ThemeToggle />
                   </div>
 
+                  {/* Halloween theme toggle */}
+                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
+                    <span className="flex items-center gap-sm text-body-md text-on-surface">
+                      <span className="flex h-6 w-6 items-center justify-center text-primary">
+                        <JackOLanternIcon className="h-5 w-5 fill-current" />
+                      </span>
+                      {t("profile.halloweenTheme")}
+                    </span>
+                    <HalloweenToggle />
+                  </div>
+
                   {/* Vibration toggle */}
                   <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
                     <span className="flex items-center gap-sm text-body-md text-on-surface">
@@ -740,7 +752,15 @@ function LanguageToggle() {
   );
 }
 
-function ToggleSwitch({ checked, onChange, label, iconOn, iconOff }) {
+function ToggleSwitch({
+  checked,
+  onChange,
+  label,
+  iconOn,
+  iconOff,
+  customIconOn,
+  customIconOff,
+}) {
   return (
     <button
       type="button"
@@ -759,11 +779,46 @@ function ToggleSwitch({ checked, onChange, label, iconOn, iconOff }) {
             : "translate-x-0 text-on-surface-variant"
         }`}
       >
-        <span className="material-symbols-outlined text-[16px]">
-          {checked ? iconOn : iconOff}
-        </span>
+        {checked ? (
+          customIconOn || (
+            <span className="material-symbols-outlined text-[16px]">
+              {iconOn}
+            </span>
+          )
+        ) : (
+          customIconOff || (
+            <span className="material-symbols-outlined text-[16px]">
+              {iconOff}
+            </span>
+          )
+        )}
       </span>
     </button>
+  );
+}
+
+function HalloweenToggle() {
+  const { isHalloween, toggleHalloween } = useTheme();
+  const { t } = useLanguage();
+
+  const handleToggle = () => {
+    const next = !isHalloween;
+    toggleHalloween();
+    if (next) {
+      haptics.spooky();
+    } else {
+      haptics.selection();
+    }
+  };
+
+  return (
+    <ToggleSwitch
+      checked={isHalloween}
+      onChange={handleToggle}
+      label={t("profile.halloweenTheme")}
+      customIconOn={<JackOLanternIcon className="h-4 w-4 fill-current text-primary" />}
+      customIconOff={<JackOLanternIcon className="h-3.5 w-3.5 fill-current opacity-30 text-on-surface-variant" />}
+    />
   );
 }
 

@@ -24,6 +24,19 @@
       rel="stylesheet"
     />
     <title>Moodila</title>
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem('moodshare_theme');
+          if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+          }
+          if (localStorage.getItem('moodshare_halloween') === 'true') {
+            document.documentElement.classList.add('halloween');
+          }
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

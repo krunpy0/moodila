@@ -1,6 +1,7 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { Link, useLocation } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
+import { useTheme } from '../context/ThemeContext'
 import { haptics } from '../utils/haptics'
 
 const items = [
@@ -14,6 +15,7 @@ const items = [
 export default function BottomNav() {
   const { pathname } = useLocation()
   const { t } = useLanguage()
+  const { isHalloween } = useTheme()
 
   return (
     <nav
@@ -25,7 +27,9 @@ export default function BottomNav() {
         const label = t(labelKey)
         const classes = `flex h-11 w-11 items-center justify-center rounded-full transition-all duration-fast active:scale-95 ${
           icon === 'add'
-            ? 'h-12 w-12 bg-primary text-on-primary shadow-card'
+            ? `h-12 w-12 bg-primary text-on-primary shadow-card ${
+                isHalloween ? 'shadow-[0_0_16px_rgba(246,124,45,0.45)] ring-2 ring-primary/40' : ''
+              }`
             : active
               ? 'bg-primary-container text-on-primary-container font-semibold'
               : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/40'

@@ -21,7 +21,7 @@ Thumbs.db
 credentials*.json
 *.json.key
 secrets/
-.agents/
+
 # =========================
 # Logs
 # =========================
@@ -85,5 +85,16 @@ coverage/
 *.tmp
 *.temp
 
+# =========================
+# AI Agents & Skills
+# =========================
+.agent/
+.agents/
 *.agents
+.claude/
 *.claude
+.gemini/
+.hallmark
+.impeccable
+hallmark/
+impeccable/

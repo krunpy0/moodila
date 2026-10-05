@@ -107,6 +107,13 @@ export const haptics = {
   },
 
   /**
+   * Spooky rattle pulse [20ms, 40ms pause, 20ms, 40ms pause, 45ms] - for Halloween toggles & festive actions.
+   */
+  spooky() {
+    return runVibrate([20, 40, 20, 40, 45]);
+  },
+
+  /**
    * Custom vibration pattern.
    */
   vibrate(pattern) {
