@@ -47,41 +47,40 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 	}
 
 	query := `
-		SELECT e.id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at,
-		       u.id, u.username, u.display_name, u.avatar_url,
-		       0 AS like_count,
-		       false AS liked_by_me,
-		       '' AS my_reaction,
-		       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = e.id) AS comment_count
-		FROM entries e
-		JOIN users u ON u.id = e.user_id`
+		WITH matching_entries AS (
+			SELECT e.id, e.user_id, e.date, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at
+			FROM entries e
+			LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
+			LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
+			WHERE `
 
 	if includeSelf {
-		query += `
-		LEFT JOIN friendships f ON f.status = 'accepted'
-			AND ((f.requester_id = $1 AND f.addressee_id = e.user_id)
-				OR (f.addressee_id = $1 AND f.requester_id = e.user_id))
-		LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
-		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
-		WHERE (
-			e.user_id = $1
-			OR (
-				f.id IS NOT NULL
-				AND e.is_hidden = false
-				AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
+		query += `e.user_id = ANY (
+				ARRAY[$1::uuid] || 
+				ARRAY(
+					SELECT addressee_id FROM friendships WHERE requester_id = $1 AND status = 'accepted'
+					UNION ALL
+					SELECT requester_id FROM friendships WHERE addressee_id = $1 AND status = 'accepted'
+				)
 			)
-		)`
+			AND (
+				e.user_id = $1
+				OR (
+					e.is_hidden = false
+					AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
+				)
+			)`
 	} else {
-		query += `
-		JOIN friendships f ON f.status = 'accepted'
-			AND ((f.requester_id = $1 AND f.addressee_id = e.user_id)
-				OR (f.addressee_id = $1 AND f.requester_id = e.user_id))
-		LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
-		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
-		WHERE e.is_hidden = false
-		  AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false`
+		query += `e.user_id = ANY (
+				ARRAY(
+					SELECT addressee_id FROM friendships WHERE requester_id = $1 AND status = 'accepted'
+					UNION ALL
+					SELECT requester_id FROM friendships WHERE addressee_id = $1 AND status = 'accepted'
+				)
+			)
+			AND e.is_hidden = false
+			AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false`
 	}
-
 
 	var args []any
 	args = append(args, viewerID)
@@ -89,10 +88,30 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 	if hasCursor {
 		query += ` AND (e.date, e.created_at, e.id) < ($2, $3, $4)`
 		args = append(args, cursorDate, cursorCreatedAt, cursorID)
-		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $5`
+		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $5
+		)
+		SELECT m.id, m.date::text, m.mood, m.tags, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
+		       u.id, u.username, u.display_name, u.avatar_url,
+		       0 AS like_count,
+		       false AS liked_by_me,
+		       '' AS my_reaction,
+		       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = m.id) AS comment_count
+		FROM matching_entries m
+		JOIN users u ON u.id = m.user_id
+		ORDER BY m.date DESC, m.created_at DESC, m.id DESC`
 		args = append(args, limit+1)
 	} else {
-		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $2`
+		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $2
+		)
+		SELECT m.id, m.date::text, m.mood, m.tags, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
+		       u.id, u.username, u.display_name, u.avatar_url,
+		       0 AS like_count,
+		       false AS liked_by_me,
+		       '' AS my_reaction,
+		       (SELECT COUNT(*)::int FROM comments c WHERE c.entry_id = m.id) AS comment_count
+		FROM matching_entries m
+		JOIN users u ON u.id = m.user_id
+		ORDER BY m.date DESC, m.created_at DESC, m.id DESC`
 		args = append(args, limit+1)
 	}
 
