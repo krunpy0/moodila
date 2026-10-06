@@ -53,12 +53,12 @@ CREATE TEMP TABLE tmp_edges (
     PRIMARY KEY (u1_idx, u2_idx)
 ) ON COMMIT DROP;
 
--- Base 30 mutual friends for every user
+-- Base 30 mutual friends for users 0..19998 (user 19999 has 0 friends for edge case testing)
 INSERT INTO tmp_edges (u1_idx, u2_idx)
 SELECT 
-    LEAST(i, (i + s) % 20000),
-    GREATEST(i, (i + s) % 20000)
-FROM generate_series(0, 19999) AS i
+    LEAST(i, (i + s) % 19999),
+    GREATEST(i, (i + s) % 19999)
+FROM generate_series(0, 19998) AS i
 CROSS JOIN generate_series(1, 15) AS s
 ON CONFLICT DO NOTHING;
 
@@ -72,10 +72,10 @@ FROM (
         i,
         -- Skewed extra count: ~70% get 0-10, ~20% get 10-40, ~10% get 40-80
         floor(power(random(), 3.5) * 85)::int AS extra_count
-    FROM generate_series(0, 19999) AS i
+    FROM generate_series(0, 19998) AS i
 ) u
 CROSS JOIN LATERAL (
-    SELECT (u.i + 16 + floor(random() * 19900)::int) % 20000 AS target
+    SELECT (u.i + 16 + floor(random() * 19900)::int) % 19999 AS target
     FROM generate_series(1, u.extra_count)
 ) targets
 WHERE u.i <> target;
@@ -106,13 +106,13 @@ JOIN tmp_load_users u1 ON u1.bot_idx = e.u1_idx
 JOIN tmp_load_users u2 ON u2.bot_idx = e.u2_idx
 ON CONFLICT DO NOTHING;
 
--- 3. Entries (~300,000 entries across the last 365 days)
--- Average 15 entries per user over the past year
+-- 3. Entries (~1,360,000 entries across the last 365 days)
+-- 20% active users (bot_idx % 5 = 0): 200-365 entries over the past year (guaranteed unique dates)
 INSERT INTO entries (id, user_id, date, mood, tags, text, is_hidden, created_at)
 SELECT
     gen_random_uuid(),
     u.id,
-    (CURRENT_DATE - (floor(random() * 365)::int || ' days')::INTERVAL)::date AS d,
+    (CURRENT_DATE - (d || ' days')::INTERVAL)::date,
     1 + (floor(random() * 5))::int,
     CASE (floor(random() * 5))::int
         WHEN 0 THEN ARRAY['work', 'productive']
@@ -121,11 +121,35 @@ SELECT
         WHEN 3 THEN ARRAY['creative', 'music']
         ELSE ARRAY['chill', 'reading']
     END,
-    'Daily diary entry for user ' || u.bot_idx || ': feeling focused, ongoing progress.',
+    'Daily diary entry for active user ' || u.bot_idx || ': feeling focused, ongoing progress.',
     (random() < 0.08), -- 8% globally hidden
-    now() - (floor(random() * 365)::int || ' days')::INTERVAL
+    now() - (d || ' days')::INTERVAL
 FROM tmp_load_users u
-CROSS JOIN LATERAL generate_series(1, 15) AS s
+CROSS JOIN generate_series(0, 364) AS d
+WHERE (u.bot_idx % 5 = 0)
+  AND (d <= (200 + ((u.bot_idx * 17) % 165)))
+ON CONFLICT (user_id, date) DO NOTHING;
+
+-- 80% regular users (bot_idx % 5 <> 0): 15 entries across the year
+INSERT INTO entries (id, user_id, date, mood, tags, text, is_hidden, created_at)
+SELECT
+    gen_random_uuid(),
+    u.id,
+    (CURRENT_DATE - ((s * 24 + (u.bot_idx % 23)) || ' days')::INTERVAL)::date,
+    1 + (floor(random() * 5))::int,
+    CASE (floor(random() * 5))::int
+        WHEN 0 THEN ARRAY['work', 'productive']
+        WHEN 1 THEN ARRAY['rest', 'family']
+        WHEN 2 THEN ARRAY['sports', 'energy']
+        WHEN 3 THEN ARRAY['creative', 'music']
+        ELSE ARRAY['chill', 'reading']
+    END,
+    'Daily diary entry for user ' || u.bot_idx || ': feeling good, regular progress.',
+    (random() < 0.08), -- 8% globally hidden
+    now() - ((s * 24 + (u.bot_idx % 23)) || ' days')::INTERVAL
+FROM tmp_load_users u
+CROSS JOIN generate_series(0, 14) AS s
+WHERE (u.bot_idx % 5 <> 0)
 ON CONFLICT (user_id, date) DO NOTHING;
 
 -- 4. Account-level friend visibility default settings (user_friend_visibility)
@@ -144,7 +168,7 @@ LIMIT 50000
 ON CONFLICT (user_id, friend_id) DO NOTHING;
 
 -- 5. Entry-level friend overrides (entry_friend_visibility)
--- ~5% of visible entries have explicit friend override
+-- A. Entries hidden specifically from friends (override default visible -> is_hidden = true)
 INSERT INTO entry_friend_visibility (entry_id, friend_id, is_hidden, created_at)
 SELECT 
     e.id,
@@ -154,9 +178,23 @@ SELECT
 FROM entries e
 JOIN friendships f ON (f.requester_id = e.user_id OR f.addressee_id = e.user_id) AND f.status = 'accepted'
 WHERE e.is_hidden = false
-  AND random() < 0.05
-LIMIT 40000
+  AND random() < 0.03
+LIMIT 30000
 ON CONFLICT (entry_id, friend_id) DO NOTHING;
+
+-- B. Entries revealed specifically to friends whose default is hidden (override hide_by_default=true -> is_hidden = false)
+INSERT INTO entry_friend_visibility (entry_id, friend_id, is_hidden, created_at)
+SELECT 
+    e.id,
+    ufv.friend_id,
+    false,
+    e.created_at
+FROM entries e
+JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.hide_by_default = true
+WHERE e.is_hidden = false
+  AND random() < 0.20
+LIMIT 20000
+ON CONFLICT (entry_id, friend_id) DO UPDATE SET is_hidden = EXCLUDED.is_hidden;
 
 -- 6. Reactions / Likes (~60,000 reactions across visible entries)
 INSERT INTO likes (entry_id, user_id, reaction, created_at)

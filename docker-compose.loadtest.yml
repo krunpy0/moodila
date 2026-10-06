@@ -11,14 +11,9 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - ${DB_DATA_VOLUME:-./docker-data/postgres}:/var/lib/postgresql
-    deploy:
-      resources:
-        limits:
-          cpus: "${DB_CPUS:-0.25}"
-          memory: "${DB_MEM:-512M}"
-        reservations:
-          cpus: "${DB_CPUS:-0.25}"
-          memory: "${DB_MEM:-512M}"
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track_planning=on", "-c", "max_parallel_workers_per_gather=0"]
+    cpuset: "${CPUSET:-0}"
+    mem_limit: "${DB_MEM:-450m}"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-moodila}"]
       interval: 2s
@@ -41,11 +36,5 @@ services:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-moodila}?sslmode=disable
       - DISABLE_RATE_LIMIT=true
       - GOMAXPROCS=${GOMAXPROCS:-1}
-    deploy:
-      resources:
-        limits:
-          cpus: "${API_CPUS:-0.25}"
-          memory: "${API_MEM:-512M}"
-        reservations:
-          cpus: "${API_CPUS:-0.25}"
-          memory: "${API_MEM:-512M}"
+    cpuset: "${CPUSET:-0}"
+    mem_limit: "${API_MEM:-450m}"

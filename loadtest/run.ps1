@@ -1,16 +1,15 @@
 param (
-    [string]$Cpus = "",
-    [string]$Mem = "",
-    [string]$ApiCpus = "",
-    [string]$DbCpus = "",
+    [string]$Cpuset = "",
+    [string]$Mem = "450m",
     [string]$ApiMem = "",
     [string]$DbMem = "",
+    [string]$Cpus = "",
     [string]$PostgresImage = "postgres:latest",
     [string]$DbDataVolume = "",
     [switch]$Seed,
-    [switch]$Extended,
     [int]$VUs = 150,
-    [int]$Users = 1500,
+    [int]$Users = 300,
+    [int]$WarmupUsers = 10,
     [double]$LoginShare = 0.02,
     [string]$Duration = "1m",
     [string]$Scenario = "ramp",
@@ -38,51 +37,34 @@ function Convert-ToMb ([string]$memStr) {
     return [int]$num
 }
 
-# 1. Calculate CPU limits for API and DB
-if ($ApiCpus -and $DbCpus) {
-    # Both explicitly given
-} elseif ($ApiCpus -and -not $DbCpus) {
-    $DbCpus = $ApiCpus
-} elseif ($DbCpus -and -not $ApiCpus) {
-    $ApiCpus = $DbCpus
-} elseif ($Cpus) {
-    $totalCpu = [double]$Cpus
-    $apiVal = [Math]::Round($totalCpu * 0.5, 2)
-    $dbVal = [Math]::Round($totalCpu - $apiVal, 2)
-    $ApiCpus = "$apiVal"
-    $DbCpus = "$dbVal"
-} else {
-    $ApiCpus = "0.25"
-    $DbCpus = "0.25"
+# 1. Enforce explicit CPU pinning (cpuset) and forbid silent fallbacks
+if (-not $Cpuset) {
+    Write-Host "❌ ОШИБКА: Параметр CPU (-Cpuset) не задан!" -ForegroundColor Red
+    Write-Host "   Молчаливый откат на 0.25 CPU отключён." -ForegroundColor Red
+    Write-Host "   Укажите явно привязку к физическому ядру, например: .\run.ps1 -Cpuset 0" -ForegroundColor Red
+    if ($Cpus) {
+        Write-Host "   Примечание: стенд переведён с квот (-Cpus) на честное динамическое разделение ядра (-Cpuset)." -ForegroundColor Yellow
+    }
+    throw "Параметр CPU (-Cpuset) обязателен. Пример: -Cpuset '0'"
 }
 
-# 2. Calculate RAM limits for API and DB
+# 2. RAM limits for API and DB (default 450m per container)
 if ($ApiMem -and $DbMem) {
     # Both explicitly given
 } elseif ($ApiMem -and -not $DbMem) {
     $DbMem = $ApiMem
 } elseif ($DbMem -and -not $ApiMem) {
     $ApiMem = $DbMem
-} elseif ($Mem) {
-    $totalMb = Convert-ToMb $Mem
-    $halfMb = [int]($totalMb / 2)
-    $ApiMem = "${halfMb}M"
-    $DbMem = "${halfMb}M"
 } else {
-    $ApiMem = "512M"
-    $DbMem = "512M"
+    $ApiMem = $Mem
+    $DbMem = $Mem
 }
 
-# 3. Calculate optimal GOMAXPROCS for Go runtime
-$apiCpuNum = [double]$ApiCpus
-$gomaxprocs = [Math]::Max(1, [int][Math]::Ceiling($apiCpuNum))
-$env:GOMAXPROCS = "$gomaxprocs"
-
-# 4. Set environment variables for docker compose
-$env:API_CPUS = $ApiCpus
-$env:DB_CPUS = $DbCpus
+# 3. Environment configuration for docker compose
+$env:CPUSET = $Cpuset
 $env:API_MEM = $ApiMem
 $env:DB_MEM = $DbMem
+$env:GOMAXPROCS = "1"
 $env:POSTGRES_IMAGE = $PostgresImage
 if ($DbDataVolume) {
     $env:DB_DATA_VOLUME = $DbDataVolume
@@ -90,19 +72,19 @@ if ($DbDataVolume) {
 
 $testName = if ($Extended) { "Расширенный тест лимитов (Breakpoint)" } else { "Стандартный тест нагрузки" }
 $scriptFile = if ($Extended) { "breakpoint-test.js" } else { "load-test.js" }
-$totalCpus = [double]$ApiCpus + [double]$DbCpus
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "  Moodila Load Test: $testName" -ForegroundColor Cyan
-Write-Host "  Аппаратные лимиты стенда:" -ForegroundColor Cyan
-Write-Host "    • Go API:     $ApiCpus vCPU / $ApiMem (GOMAXPROCS=$gomaxprocs)" -ForegroundColor Cyan
-Write-Host "    • PostgreSQL: $DbCpus vCPU / $DbMem (образ: $PostgresImage)" -ForegroundColor Cyan
-Write-Host "    • Суммарно:   $totalCpus vCPU" -ForegroundColor Cyan
+Write-Host "  Запрошенные лимиты запуска:" -ForegroundColor Cyan
+Write-Host "    • Cpuset (ядро): $Cpuset (динамический шеринг между API и DB)" -ForegroundColor Cyan
+Write-Host "    • Память:        API=$ApiMem, DB=$DbMem (суммарно: 900m)" -ForegroundColor Cyan
+Write-Host "    • GOMAXPROCS:    1" -ForegroundColor Cyan
 if ($Extended) {
     Write-Host "  Шаги нагрузки (VUs): $Steps (${StepDuration}s на шаг)" -ForegroundColor Cyan
 } else {
     Write-Host "  Сценарий: $Scenario (до $VUs VUs, $Duration)" -ForegroundColor Cyan
 }
+Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # Check if Docker daemon is running
@@ -162,6 +144,31 @@ if (-not $healthy) {
 
 Write-Host "✅ Backend is healthy and PostgreSQL is connected!" -ForegroundColor Green
 
+# Inspect actual hardware allocation from Docker inspect
+$apiCpuset = (docker inspect moodila-api-loadtest --format '{{.HostConfig.CpusetCpus}}' 2>$null).Trim()
+$apiMemBytes = (docker inspect moodila-api-loadtest --format '{{.HostConfig.Memory}}' 2>$null).Trim()
+$dbCpuset = (docker inspect moodila-postgres-loadtest --format '{{.HostConfig.CpusetCpus}}' 2>$null).Trim()
+$dbMemBytes = (docker inspect moodila-postgres-loadtest --format '{{.HostConfig.Memory}}' 2>$null).Trim()
+
+$apiMemMb = if ($apiMemBytes) { [math]::Round([double]$apiMemBytes / 1MB) } else { 0 }
+$dbMemMb = if ($dbMemBytes) { [math]::Round([double]$dbMemBytes / 1MB) } else { 0 }
+
+$standConfig = "cpuset: $apiCpuset (динамический шеринг 1 ядра) | RAM: ${apiMemMb}M (API) + ${dbMemMb}M (DB)"
+Write-Host "  Фактическая конфигурация контейнеров (docker inspect):" -ForegroundColor Cyan
+Write-Host "    • API:      cpuset=$apiCpuset, Memory=${apiMemMb}MB" -ForegroundColor Cyan
+Write-Host "    • Postgres: cpuset=$dbCpuset, Memory=${dbMemMb}MB" -ForegroundColor Cyan
+Write-Host "    • Стенд:    $standConfig" -ForegroundColor Cyan
+
+# Save stand config for k6 report
+$standInfoJson = @{
+    stand_config = $standConfig
+    api_cpuset = $apiCpuset
+    api_mem_mb = $apiMemMb
+    db_cpuset = $dbCpuset
+    db_mem_mb = $dbMemMb
+} | ConvertTo-Json
+Set-Content -Path "loadtest/stand-config.json" -Value $standInfoJson -Encoding UTF8
+
 # Optional DB seed
 if ($Seed) {
     Write-Host "`n🌱 Seeding database with realistic loadtest data (loadtest/seed.sql)..." -ForegroundColor Yellow
@@ -179,7 +186,7 @@ $k6Cmd = Get-Command "k6" -ErrorAction SilentlyContinue
 Write-Host "`n[3/4] Launching k6 ($scriptFile)..." -ForegroundColor Yellow
 
 # Prepare environment arguments
-$extraEnv = @("-e", "STEPS=$Steps", "-e", "STEP_DURATION=$StepDuration")
+$extraEnv = @("-e", "STEPS=$Steps", "-e", "STEP_DURATION=$StepDuration", "-e", "STAND_CONFIG=$standConfig")
 if ($Scenario) {
     $extraEnv += @("-e", "SCENARIO=$Scenario")
 }
@@ -194,6 +201,9 @@ if ($Users -gt 0) {
 }
 if ($LoginShare -ge 0) {
     $extraEnv += @("-e", "LOGIN_SHARE=$LoginShare")
+}
+if ($WarmupUsers -ge 0) {
+    $extraEnv += @("-e", "WARMUP_USERS=$WarmupUsers")
 }
 
 if ($k6Cmd) {

@@ -355,7 +355,15 @@ export function setup() {
   const setupStartTime = new Date();
   console.log(`[${setupStartTime.toISOString()}] [SETUP] ================================================================`);
   console.log(`[${setupStartTime.toISOString()}] [SETUP] Moodila Real Server Capacity & Saturation Load Test`);
-  console.log(`[${setupStartTime.toISOString()}] [SETUP] Target Server:  ${BASE_URL} (Hardware: 1 vCPU / 1 GB RAM)`);
+  let standConfigSetup = __ENV.STAND_CONFIG;
+  if (!standConfigSetup) {
+    try {
+      standConfigSetup = JSON.parse(open('./stand-config.json')).stand_config;
+    } catch (_) {
+      standConfigSetup = 'cpuset: 0 (динамический 1 CPU) | RAM: 450M+450M';
+    }
+  }
+  console.log(`[${setupStartTime.toISOString()}] [SETUP] Target Server:  ${BASE_URL} (Hardware: ${standConfigSetup})`);
   console.log(`[${setupStartTime.toISOString()}] [SETUP] Scenario Type:  ${SCENARIO_TYPE} (Login share in main stream: ${(LOGIN_SHARE * 100).toFixed(1)}%)`);
   console.log(`[${setupStartTime.toISOString()}] [SETUP] Steps:          ${STEP_RATES.join(' -> ')} req/s (${STEP_DURATION_SEC}s each)`);
   console.log(`[${setupStartTime.toISOString()}] [SETUP] User Sessions:  Pre-authenticating ${USERS_POOL_COUNT} bots uniformly across ${TOTAL_SEEDED_USERS} accounts...`);
@@ -441,8 +449,8 @@ export function setup() {
 
   // 3. Прогрев (Warmup) сразу после логина пула сессий
   // Отправляет по 1 запросу каждой ручки (Feed, Profile, Calendar, Write) для 100-200 юзеров.
-  // Все запросы помечаются тегом op:warmup, исключены из порогов и из статистики ступеней.
-  const WARMUP_COUNT = Math.min(sessions.length, 150);
+  const WARMUP_USERS_LIMIT = parseInt(__ENV.WARMUP_USERS || '10', 10);
+  const WARMUP_COUNT = Math.min(sessions.length, WARMUP_USERS_LIMIT);
   if (WARMUP_COUNT > 0 && SCENARIO_TYPE !== 'login' && SCENARIO_TYPE !== 'login-only') {
     const warmupStartTime = new Date();
     console.log(`[${warmupStartTime.toISOString()}] [WARMUP] 🔥 Warming up Go API and PostgreSQL caches (${WARMUP_COUNT} users, 4 requests each)...`);
@@ -946,6 +954,16 @@ export function handleSummary(data) {
   const normalOnline = Math.round(baseCapacityRps * 7);
   const passiveOnline = Math.round(baseCapacityRps * 15);
 
+  let standConfig = __ENV.STAND_CONFIG;
+  if (!standConfig) {
+    try {
+      const standJson = JSON.parse(open('./stand-config.json'));
+      standConfig = standJson.stand_config;
+    } catch (_) {
+      standConfig = 'cpuset: 0 (динамический 1 CPU) | RAM: 450M (API) + 450M (DB)';
+    }
+  }
+
   // 9. Объективное заключение с явным указанием ступени сбоя и причины
   let conclusion = '';
   if (mainTraffic === 0) {
@@ -959,9 +977,9 @@ export function handleSummary(data) {
       `     • Запросов в setup():  ${cSetup} шт. (логин пула сессий)\n` +
       `     • Запросов в warmup(): ${cWarmup} шт. (прогрев кэшей)\n` +
       `     • Все ступени (RPS):   не запускались\n` +
-      `     • Вердикт:             Основная фаза тестирования не достигнута. Емкость сервера под нагрузкой не оценивалась.`;
-  } else if (failedThresholds.length > 0) {
-    const abortedTarget = abortedStep ? abortedStep.targetRps : 'N/A';
+      `     • Вердикт:             Основная фаза тестирования не достигнута. Емкость сервера (${standConfig}) под нагрузкой не оценивалась.`;
+  } else if (failedThresholds.length > 0 && abortedStep && abortedStep.reqs > 0) {
+    const abortedTarget = abortedStep.targetRps;
     const cancelledSteps = stepResults
       .filter((s) => s.targetRps > abortedTarget)
       .map((s) => `${s.targetRps} req/s`);
@@ -975,7 +993,7 @@ export function handleSummary(data) {
       `     • Сработавший порог:   ${failedThresholds.map((f) => `${f.metricName} [${f.threshExpr}] (факт: ${f.actualValStr})`).join('; ')}` +
       cancelledMsg + `\n` +
       `     • Точка излома (RPS):  ${breakpointStep ? `${breakpointStep.actualRps.toFixed(1)} req/s (ступень ${breakpointStep.targetRps} req/s)` : 'НЕТ (сервер не выдержал начальную нагрузку)'}\n` +
-      `     • Вердикт:             Аппаратный ресурс 1 vCPU / 1 GB RAM исчерпан на ступени ${abortedTarget} req/s.`;
+      `     • Вердикт:             Аппаратный ресурс (${standConfig}) исчерпан на ступени ${abortedTarget} req/s.`;
   } else if (abortedStep && abortedStep.reqs > 0) {
     const abortedTarget = abortedStep.targetRps;
     const cancelledSteps = stepResults
@@ -1002,10 +1020,10 @@ export function handleSummary(data) {
       `🟢 СЕРВЕР УСПЕШНО ВЫДЕРЖАЛ ВСЕ СТУПЕНИ ВПЛОТЬ ДО ${breakpointStep.targetRps} req/s:\n` +
       `     • Реальный предел:     >= ${breakpointStep.actualRps.toFixed(1)} req/s (максимальная ступень теста)\n` +
       `     • Качество сервиса:    p95 = ${breakpointStep.p95.toFixed(1)} ms (< ${P95_LIMIT} ms), ошибок = ${breakpointStep.failRate.toFixed(2)}% (< 1.0%)\n` +
-      `     • Вердикт:             Сервер 1 vCPU / 1 GB RAM показал отличную емкость для текущего профиля нагрузки.`;
+      `     • Вердикт:             Сервер (${standConfig}) показал отличную емкость для текущего профиля нагрузки.`;
   } else {
     conclusion =
-      `🟠 ТЕСТ ЗАВЕРШЕН ПОЛНОСТЬЮ. НАЙДЕН РЕАЛЬНЫЙ ПРЕДЕЛ СЕРВЕРА 1 vCPU / 1 GB RAM:\n` +
+      `🟠 ТЕСТ ЗАВЕРШЕН ПОЛНОСТЬЮ. НАЙДЕН РЕАЛЬНЫЙ ПРЕДЕЛ СЕРВЕРА (${standConfig}):\n` +
       `     • Точка излома:        ${breakpointStep.actualRps.toFixed(1)} req/s (ступень ${breakpointStep.targetRps} req/s)\n` +
       `     • Задержки на пределе: p50 = ${breakpointStep.p50} ms | p95 = ${breakpointStep.p95.toFixed(1)} ms | p99 = ${breakpointStep.p99.toFixed(1)} ms\n` +
       `     • Вердикт:             Стабильная пропускная способность — ${breakpointStep.actualRps.toFixed(1)} req/s. Дальше наступает деградация.`;
@@ -1036,7 +1054,7 @@ export function handleSummary(data) {
   const textSummary = `
 ================================================================================================
           РЕЗУЛЬТАТЫ СТРЕСС-ТЕСТИРОВАНИЯ И ПОИСКА ПРЕДЕЛА СЕРВЕРА (BREAKPOINT)
-          Конфигурация стенда: 1 vCPU / 1 GB RAM | Go API + PostgreSQL
+          Конфигурация стенда: ${standConfig} | Go API + PostgreSQL
 ================================================================================================
 
 1. РАСПРЕДЕЛЕНИЕ ЗАПРОСОВ ПО ОПЕРАЦИЯМ И БАЛАНС:

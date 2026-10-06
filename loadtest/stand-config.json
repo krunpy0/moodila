@@ -1,0 +1,7 @@
+{
+  "stand_config": "cpuset: 1 (динамический шеринг 1 ядра) | RAM: 1024M (API) + 1024M (DB)",
+  "db_cpuset": "1",
+  "api_mem_mb": 1024.0,
+  "db_mem_mb": 1024.0,
+  "api_cpuset": "1"
+}

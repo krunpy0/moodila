@@ -47,39 +47,39 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 	}
 
 	query := `
-		WITH matching_entries AS (
-			SELECT e.id, e.user_id, e.date, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at
-			FROM entries e
-			LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
-			LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
-			WHERE `
+		WITH authors AS (`
 
 	if includeSelf {
-		query += `e.user_id = ANY (
-				ARRAY[$1::uuid] || 
-				ARRAY(
-					SELECT addressee_id FROM friendships WHERE requester_id = $1 AND status = 'accepted'
-					UNION ALL
-					SELECT requester_id FROM friendships WHERE addressee_id = $1 AND status = 'accepted'
-				)
-			)
-			AND (
-				e.user_id = $1
-				OR (
-					e.is_hidden = false
-					AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
-				)
-			)`
+		query += `
+			SELECT $1::uuid AS uid
+			UNION ALL
+			SELECT addressee_id AS uid FROM friendships WHERE requester_id = $1 AND status = 'accepted'
+			UNION ALL
+			SELECT requester_id AS uid FROM friendships WHERE addressee_id = $1 AND status = 'accepted'
+		),`
 	} else {
-		query += `e.user_id = ANY (
-				ARRAY(
-					SELECT addressee_id FROM friendships WHERE requester_id = $1 AND status = 'accepted'
-					UNION ALL
-					SELECT requester_id FROM friendships WHERE addressee_id = $1 AND status = 'accepted'
-				)
-			)
-			AND e.is_hidden = false
-			AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false`
+		query += `
+			SELECT addressee_id AS uid FROM friendships WHERE requester_id = $1 AND status = 'accepted'
+			UNION ALL
+			SELECT requester_id AS uid FROM friendships WHERE addressee_id = $1 AND status = 'accepted'
+		),`
+	}
+
+	query += `
+		matching_entries AS (
+			SELECT x.*
+			FROM authors a
+			CROSS JOIN LATERAL (
+				SELECT e.id, e.user_id, e.date, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at
+				FROM entries e
+				LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
+				LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
+				WHERE e.user_id = a.uid `
+
+	if includeSelf {
+		query += `AND (a.uid = $1 OR (e.is_hidden = false AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false))`
+	} else {
+		query += `AND e.is_hidden = false AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false`
 	}
 
 	var args []any
@@ -89,6 +89,8 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 		query += ` AND (e.date, e.created_at, e.id) < ($2, $3, $4)`
 		args = append(args, cursorDate, cursorCreatedAt, cursorID)
 		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $5
+			) x
+			ORDER BY x.date DESC, x.created_at DESC, x.id DESC LIMIT $5
 		)
 		SELECT m.id, m.date::text, m.mood, m.tags, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
 		       u.id, u.username, u.display_name, u.avatar_url,
@@ -102,6 +104,8 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 		args = append(args, limit+1)
 	} else {
 		query += ` ORDER BY e.date DESC, e.created_at DESC, e.id DESC LIMIT $2
+			) x
+			ORDER BY x.date DESC, x.created_at DESC, x.id DESC LIMIT $2
 		)
 		SELECT m.id, m.date::text, m.mood, m.tags, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
 		       u.id, u.username, u.display_name, u.avatar_url,
