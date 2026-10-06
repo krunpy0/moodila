@@ -28,9 +28,10 @@ type profileUpdateInput struct {
 }
 
 type profileResponse struct {
-	User          models.User         `json:"user"`
-	RecentEntries []models.Entry      `json:"recent_entries"`
-	Friends       []models.FriendUser `json:"friends"`
+	User             models.User         `json:"user"`
+	RecentEntries    []models.Entry      `json:"recent_entries"`
+	Friends          []models.FriendUser `json:"friends"`
+	HalloweenEnabled bool                `json:"halloween_enabled"`
 }
 
 type friendProfileResponse struct {
@@ -93,10 +94,20 @@ func (h Users) Me(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load friends"})
 		return
 	}
+	now := time.Now()
+	if mockHeader := c.GetHeader("X-Mock-Date"); mockHeader != "" {
+		if parsed, err := time.Parse(time.RFC3339, mockHeader); err == nil {
+			now = parsed
+		} else if parsed, err := time.Parse("2006-01-02", mockHeader); err == nil {
+			now = parsed
+		}
+	}
+
 	c.JSON(http.StatusOK, profileResponse{
-		User:          h.resolveUser(user),
-		RecentEntries: h.resolveEntries(recent),
-		Friends:       h.resolveFriendUsers(friends),
+		User:             h.resolveUser(user),
+		RecentEntries:    h.resolveEntries(recent),
+		Friends:          h.resolveFriendUsers(friends),
+		HalloweenEnabled: IsHalloweenSeasonAvailable(now),
 	})
 }
 

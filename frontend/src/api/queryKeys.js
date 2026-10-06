@@ -21,4 +21,5 @@ export const queryKeys = {
   announcementStats: (id) => ['admin', 'announcements', id, 'stats'],
   stats: (period = 'month') => ['stats', period],
   friendVisibilityDefaults: ['friends', 'visibilityDefaults'],
+  features: ['app', 'features'],
 }

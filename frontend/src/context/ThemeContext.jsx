@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { isHalloweenSeasonAvailable } from '../utils/halloweenSeason'
+import { useAppFeaturesQuery } from '../api/queries'
 
 const ThemeContext = createContext({
   theme: 'light',
@@ -27,18 +27,55 @@ export function ThemeProvider({ children }) {
     return 'light'
   })
 
-  const [isHalloweenAvailable, setIsHalloweenAvailable] = useState(() =>
-    isHalloweenSeasonAvailable(),
-  )
-
-  const [isHalloween, setIsHalloween] = useState(() => {
+  // Read initial server feature availability from cache to avoid layout/theme flash
+  const [isHalloweenAvailable, setIsHalloweenAvailable] = useState(() => {
     try {
-      const inSeason = isHalloweenSeasonAvailable()
-      return inSeason && localStorage.getItem('moodshare_halloween') === 'true'
+      return localStorage.getItem('moodshare_server_halloween_available') === 'true'
     } catch {
       return false
     }
   })
+
+  const [isHalloween, setIsHalloween] = useState(() => {
+    try {
+      const cachedAvailable = localStorage.getItem('moodshare_server_halloween_available') === 'true'
+      return cachedAvailable && localStorage.getItem('moodshare_halloween') === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // Fetch seasonal feature availability from the server (single source of truth)
+  const { data: features } = useAppFeaturesQuery()
+
+  // Synchronize state when server features respond
+  useEffect(() => {
+    if (features && typeof features.halloween_enabled === 'boolean') {
+      const enabled = features.halloween_enabled
+      setIsHalloweenAvailable(enabled)
+      try {
+        localStorage.setItem('moodshare_server_halloween_available', String(enabled))
+      } catch {
+        // Storage quota fallback
+      }
+      if (!enabled) {
+        setIsHalloween(false)
+        try {
+          localStorage.setItem('moodshare_halloween', 'false')
+        } catch {
+          // Storage quota fallback
+        }
+      } else {
+        try {
+          if (localStorage.getItem('moodshare_halloween') === 'true') {
+            setIsHalloween(true)
+          }
+        } catch {
+          // Storage quota fallback
+        }
+      }
+    }
+  }, [features])
 
   useEffect(() => {
     const root = document.documentElement
@@ -53,14 +90,6 @@ export function ThemeProvider({ children }) {
       // Storage quota or restriction fallback
     }
   }, [theme])
-
-  useEffect(() => {
-    const checkSeason = () => {
-      const available = isHalloweenSeasonAvailable()
-      setIsHalloweenAvailable(available)
-    }
-    checkSeason()
-  }, [])
 
   useEffect(() => {
     const root = document.documentElement

@@ -141,9 +141,18 @@ func (h Auth) Session(c *gin.Context) {
 	if csrfToken != "" {
 		c.Header("X-CSRF-Token", csrfToken)
 	}
+	now := time.Now()
+	if mockHeader := c.GetHeader("X-Mock-Date"); mockHeader != "" {
+		if parsed, err := time.Parse(time.RFC3339, mockHeader); err == nil {
+			now = parsed
+		} else if parsed, err := time.Parse("2006-01-02", mockHeader); err == nil {
+			now = parsed
+		}
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"user_id":    c.GetString("userID"),
-		"csrf_token": csrfToken,
+		"user_id":           c.GetString("userID"),
+		"csrf_token":        csrfToken,
+		"halloween_enabled": IsHalloweenSeasonAvailable(now),
 	})
 }
 

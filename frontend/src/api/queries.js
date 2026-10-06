@@ -23,6 +23,7 @@ import {
   unpublishAdminAnnouncement,
   updateAdminAnnouncement,
 } from './announcements'
+import { getAppFeatures } from './features'
 
 export { queryKeys }
 
@@ -33,6 +34,14 @@ export const STALE_TIMES = {
   STABLE: 2 * 60_000,    // 2m: specific journal entries & monthly entries
   STATIC: 5 * 60_000,    // 5m: auth session, full friends list
 }
+
+export const useAppFeaturesQuery = () =>
+  useQuery({
+    queryKey: queryKeys.features,
+    queryFn: getAppFeatures,
+    staleTime: STALE_TIMES.STATIC,
+    retry: 1,
+  })
 
 export const useSessionQuery = (enabled) =>
   useQuery({

@@ -95,10 +95,17 @@ async function refreshToken() {
 
 export async function api(path, options = {}) {
   const csrfToken = getCSRFToken()
+  let mockDate = null
+  if (typeof localStorage !== 'undefined') {
+    try {
+      mockDate = localStorage.getItem('moodshare_mock_date')
+    } catch (_) {}
+  }
   const headers = {
     'Content-Type': 'application/json',
     'X-Time-Zone': Intl.DateTimeFormat().resolvedOptions().timeZone,
     ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+    ...(mockDate ? { 'X-Mock-Date': mockDate } : {}),
     ...options.headers,
   }
 
@@ -155,4 +162,5 @@ export async function api(path, options = {}) {
 }
 
 export const fetchClient = api
+export const request = api
 
