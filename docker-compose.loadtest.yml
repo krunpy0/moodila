@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: "${POSTGRES_IMAGE:-postgres:latest}"
+    container_name: moodila-postgres-loadtest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-moodila}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - ${DB_DATA_VOLUME:-./docker-data/postgres}:/var/lib/postgresql
+    deploy:
+      resources:
+        limits:
+          cpus: "${DB_CPUS:-0.25}"
+          memory: "${DB_MEM:-512M}"
+        reservations:
+          cpus: "${DB_CPUS:-0.25}"
+          memory: "${DB_MEM:-512M}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-moodila}"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: moodila-api-loadtest
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-moodila}?sslmode=disable
+      - DISABLE_RATE_LIMIT=true
+      - GOMAXPROCS=${GOMAXPROCS:-1}
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPUS:-0.25}"
+          memory: "${API_MEM:-512M}"
+        reservations:
+          cpus: "${API_CPUS:-0.25}"
+          memory: "${API_MEM:-512M}"

@@ -115,15 +115,28 @@ func main() {
 	}
 	router.Use(gin.Recovery(), middleware.Logger, middleware.CORS(cfg.CORSOrigin))
 
+	if cfg.DisableRateLimit {
+		log.Println("⚠️  RATE LIMITING IS DISABLED (DISABLE_RATE_LIMIT=true) — load testing mode active")
+	}
+
+	createLimiter := func(r rate.Limit, burst int, keyFunc middleware.KeyFunc) gin.HandlerFunc {
+		if cfg.DisableRateLimit {
+			return func(c *gin.Context) {
+				c.Next()
+			}
+		}
+		return middleware.RateLimit(r, burst, keyFunc)
+	}
+
 	// Tier-based Rate Limiters
-	authLimiter := middleware.RateLimit(rate.Every(12*time.Second), 5, middleware.IPKey)
-	forgotLimiter := middleware.RateLimit(rate.Every(60*time.Second), 1, middleware.IPKey)
-	deleteConfirmLimiter := middleware.RateLimit(rate.Every(10*time.Minute), 3, middleware.IPKey)
-	passwordChangeLimiter := middleware.RateLimit(rate.Every(60*time.Second), 5, middleware.UserOrIPKey)
-	uploadLimiter := middleware.RateLimit(rate.Every(4*time.Second), 10, middleware.UserOrIPKey)
-	mutationLimiter := middleware.RateLimit(rate.Every(2*time.Second), 15, middleware.UserOrIPKey)
-	readLimiter := middleware.RateLimit(rate.Every(600*time.Millisecond), 30, middleware.UserOrIPKey)
-	healthLimiter := middleware.RateLimit(rate.Every(200*time.Millisecond), 50, middleware.IPKey)
+	authLimiter := createLimiter(rate.Every(12*time.Second), 5, middleware.IPKey)
+	forgotLimiter := createLimiter(rate.Every(60*time.Second), 1, middleware.IPKey)
+	deleteConfirmLimiter := createLimiter(rate.Every(10*time.Minute), 3, middleware.IPKey)
+	passwordChangeLimiter := createLimiter(rate.Every(60*time.Second), 5, middleware.UserOrIPKey)
+	uploadLimiter := createLimiter(rate.Every(4*time.Second), 10, middleware.UserOrIPKey)
+	mutationLimiter := createLimiter(rate.Every(2*time.Second), 15, middleware.UserOrIPKey)
+	readLimiter := createLimiter(rate.Every(600*time.Millisecond), 30, middleware.UserOrIPKey)
+	healthLimiter := createLimiter(rate.Every(200*time.Millisecond), 50, middleware.IPKey)
 
 	mailClient := mailer.New(cfg.ResendAPIKey, cfg.ResendFromEmail, cfg.AppEnv == "development")
 
@@ -134,6 +147,9 @@ func main() {
 	}
 
 	router.GET("/health", healthLimiter, handlers.Health{Pool: pool}.Get)
+	appFeatures := handlers.AppFeatures{}
+	router.GET("/app/features", readLimiter, appFeatures.Get)
+	router.GET("/features", readLimiter, appFeatures.Get)
 	auth := handlers.Auth{
 		Users:           repository.Users{Pool: pool},
 		PasswordReset:   repository.PasswordReset{Pool: pool},
