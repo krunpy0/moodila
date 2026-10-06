@@ -9,12 +9,13 @@ param (
     [string]$DbDataVolume = "",
     [switch]$Seed,
     [switch]$Extended,
-    [int]$VUs = 30,
-    [int]$Users = 0,
+    [int]$VUs = 150,
+    [int]$Users = 1500,
+    [double]$LoginShare = 0.02,
     [string]$Duration = "1m",
     [string]$Scenario = "ramp",
-    [string]$Steps = "5,10,20,30,50,75,100",
-    [string]$StepDuration = "15",
+    [string]$Steps = "10,25,50,100,150,200,300",
+    [string]$StepDuration = "120",
     [string]$AuthToken = "",
     [switch]$KeepRunning
 )
@@ -178,17 +179,21 @@ $k6Cmd = Get-Command "k6" -ErrorAction SilentlyContinue
 Write-Host "`n[3/4] Launching k6 ($scriptFile)..." -ForegroundColor Yellow
 
 # Prepare environment arguments
-$extraEnv = @()
-if ($Extended) {
-    $extraEnv += @("-e", "STEPS=$Steps", "-e", "STEP_DURATION=$StepDuration")
-} else {
-    $extraEnv += @("-e", "MAX_VUS=$VUs", "-e", "DURATION=$Duration", "-e", "SCENARIO=$Scenario")
+$extraEnv = @("-e", "STEPS=$Steps", "-e", "STEP_DURATION=$StepDuration")
+if ($Scenario) {
+    $extraEnv += @("-e", "SCENARIO=$Scenario")
+}
+if ($VUs -gt 0) {
+    $extraEnv += @("-e", "MAX_VUS=$VUs")
 }
 if ($AuthToken) {
     $extraEnv += @("-e", "AUTH_TOKEN=$AuthToken")
 }
 if ($Users -gt 0) {
     $extraEnv += @("-e", "USERS=$Users")
+}
+if ($LoginShare -ge 0) {
+    $extraEnv += @("-e", "LOGIN_SHARE=$LoginShare")
 }
 
 if ($k6Cmd) {
