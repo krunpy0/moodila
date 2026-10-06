@@ -28,12 +28,50 @@
       (function() {
         try {
           var t = localStorage.getItem('moodshare_theme');
-          if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
+          var isDark = false;
+          if (t) {
+            if (t === 'dark' || t.endsWith('-dark')) {
+              isDark = true;
+            }
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            t = 'dark';
+            isDark = true;
+          } else {
+            t = 'light';
+          }
+          var root = document.documentElement;
+          root.setAttribute('data-theme', t);
+          if (isDark) {
+            root.classList.add('dark');
+            root.style.colorScheme = 'dark';
+          } else {
+            root.classList.remove('dark');
+            root.style.colorScheme = 'light';
+          }
+          var themeMetaColors = {
+            'light': '#F8F7F5',
+            'dark': '#171615',
+            'halloween-light': '#F8F3EB',
+            'halloween-dark': '#131016',
+            'forest-light': '#F3F6F2',
+            'forest-dark': '#111813',
+            'ocean-light': '#F1F5F8',
+            'ocean-dark': '#0E161C',
+            'lavender-light': '#F6F3F8',
+            'lavender-dark': '#18121D',
+            'terracotta-light': '#F9F5F0',
+            'terracotta-dark': '#1A1310',
+            'aurora-light': '#F1F7F6',
+            'aurora-dark': '#0C1414'
+          };
+          var metaColor = themeMetaColors[t] || (isDark ? '#171615' : '#F8F7F5');
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) {
+            meta.setAttribute('content', metaColor);
           }
           var isHalloweenAvailable = localStorage.getItem('moodshare_server_halloween_available') === 'true';
           if (isHalloweenAvailable && localStorage.getItem('moodshare_halloween') === 'true') {
-            document.documentElement.classList.add('halloween');
+            root.classList.add('halloween');
           }
         } catch (_) {}
       })();

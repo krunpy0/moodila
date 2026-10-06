@@ -29,7 +29,7 @@ const CALENDAR_DAYS = [
 
 export default function Landing() {
   const { t, language, toggleLanguage } = useLanguage();
-  const { theme, toggleTheme } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
 
   // 1:1 AddEntry Hero Interactive state
   const [heroMood, setHeroMood] = useState(4);
@@ -142,7 +142,7 @@ export default function Landing() {
               className="h-9 w-9 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-outline-variant/30 transition-colors focus-visible:outline-2 focus-visible:outline-primary"
             >
               <span className="material-symbols-outlined text-[18px]">
-                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                {isDark ? 'light_mode' : 'dark_mode'}
               </span>
             </button>
 

@@ -5,7 +5,6 @@ import { logout } from "../api/auth";
 import { queryKeys, useProfileQuery } from "../api/queries";
 import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
-import { JackOLanternIcon } from "./HalloweenIcons";
 import { haptics } from "../utils/haptics";
 import HeaderBell from "./HeaderBell";
 import AppLogo from "./AppLogo";
@@ -23,7 +22,7 @@ export default function DesktopSidebar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t, language, toggleLanguage } = useLanguage();
-  const { theme, toggleTheme, isHalloween, toggleHalloween, isHalloweenAvailable } = useTheme();
+  const { openThemePicker } = useTheme();
   const profileQuery = useProfileQuery();
 
   const user = profileQuery.data?.user;
@@ -185,47 +184,21 @@ export default function DesktopSidebar() {
               <span>{language.toUpperCase()}</span>
             </button>
 
-            {/* Theme Toggle */}
+            {/* Theme Picker */}
             <button
               type="button"
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Light theme" : "Dark theme"}
-              aria-label={theme === "dark" ? "Light theme" : "Dark theme"}
-              className="flex h-9 w-9 items-center justify-center rounded-sm bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-fast"
+              onClick={() => {
+                haptics.selection();
+                openThemePicker();
+              }}
+              title={t("themes.title", "Тема оформления")}
+              aria-label={t("themes.title", "Тема оформления")}
+              className="flex h-9 w-9 items-center justify-center rounded-sm bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors duration-fast cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">
-                {theme === "dark" ? "light_mode" : "dark_mode"}
+                palette
               </span>
             </button>
-
-            {/* Halloween Theme Toggle - hidden when Halloween season ends (on Nov 5th) */}
-            {isHalloweenAvailable && (
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !isHalloween;
-                  toggleHalloween();
-                  if (next) {
-                    haptics.spooky();
-                  } else {
-                    haptics.selection();
-                  }
-                }}
-                title={
-                  isHalloween
-                    ? t("profile.halloweenDisable")
-                    : t("profile.halloweenEnable")
-                }
-                aria-label={t("profile.halloweenTheme")}
-                className={`flex h-9 w-9 items-center justify-center rounded-sm transition-colors duration-fast ${
-                  isHalloween
-                    ? "bg-primary-container text-primary shadow-xs"
-                    : "bg-surface-container-low text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
-                }`}
-              >
-                <JackOLanternIcon className="h-5 w-5 fill-current" />
-              </button>
-            )}
           </div>
 
           {/* Logout button */}

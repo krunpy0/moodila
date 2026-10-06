@@ -58,13 +58,13 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <LanguageProvider>
+      <LanguageProvider>
+        <ThemeProvider>
           <NotificationsProvider>
             <App />
           </NotificationsProvider>
-        </LanguageProvider>
-      </ThemeProvider>
+        </ThemeProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

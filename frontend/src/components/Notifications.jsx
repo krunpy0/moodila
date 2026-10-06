@@ -64,7 +64,7 @@ export function NotificationsProvider({ children }) {
               type === 'error'
                 ? 'bg-error-container text-on-error-container'
                 : type === 'info'
-                ? 'bg-slate-800 text-slate-100 border border-slate-700'
+                ? 'bg-inverse-surface text-inverse-on-surface border border-outline-variant/30'
                 : 'bg-primary-container text-on-primary-container'
             }`}
           >
@@ -76,7 +76,7 @@ export function NotificationsProvider({ children }) {
               type="button"
               aria-label="Dismiss notification"
               onClick={() => dismiss(id)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer transition-colors"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-on-surface/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer transition-colors"
             >
               <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
                 close

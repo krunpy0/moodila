@@ -652,7 +652,7 @@ export default function Admin() {
             role="dialog"
             aria-modal="true"
             onClick={() => setEditingItem(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
           >
             <div
               ref={editModalRef}
@@ -818,7 +818,7 @@ export default function Admin() {
             role="dialog"
             aria-modal="true"
             onClick={() => setItemToDelete(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
           >
             <div
               ref={deleteModalRef}
@@ -896,7 +896,7 @@ function AnnouncementStatsModal({ item, onClose, modalRef, t }) {
       role="dialog"
       aria-modal="true"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         ref={modalRef}
@@ -1047,7 +1047,7 @@ function AnnouncementStatsModal({ item, onClose, modalRef, t }) {
               {/* Status Badges */}
               <div className="flex flex-col items-end gap-1 shrink-0 text-right">
                 {u.read_at && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-small font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-small font-semibold bg-success/15 text-success">
                     <span className="material-symbols-outlined text-[13px]">visibility</span>
                     <span>{t('admin.statsReadAt', 'Read')}: {new Date(u.read_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                   </span>

@@ -1,10 +1,22 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { useAppFeaturesQuery } from '../api/queries'
+import {
+  THEMES,
+  DEFAULT_THEME_ID,
+  isDarkTheme,
+  getFamilyCounterpartTheme,
+  applyThemeToDOM,
+} from '../utils/themes'
+import ThemePickerModal from '../components/ThemePickerModal'
 
 const ThemeContext = createContext({
-  theme: 'light',
+  theme: DEFAULT_THEME_ID,
+  isDark: false,
   setTheme: () => {},
   toggleTheme: () => {},
+  isThemePickerOpen: false,
+  openThemePicker: () => {},
+  closeThemePicker: () => {},
   isHalloween: false,
   isHalloweenAvailable: false,
   setHalloween: () => {},
@@ -12,20 +24,28 @@ const ThemeContext = createContext({
 })
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
+  const [theme, setThemeState] = useState(() => {
     try {
       const stored = localStorage.getItem('moodshare_theme')
-      if (stored === 'dark' || stored === 'light') {
+      if (stored && THEMES.some((t) => t.id === stored)) {
         return stored
+      }
+      if (stored === 'dark') {
+        return 'dark'
+      }
+      if (stored === 'light') {
+        return 'light'
       }
       if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         return 'dark'
       }
     } catch {
-      // Fall back to light if localStorage/matchMedia is unavailable
+      // Fall back to default light if localStorage/matchMedia is unavailable
     }
-    return 'light'
+    return DEFAULT_THEME_ID
   })
+
+  const [isThemePickerOpen, setIsThemePickerOpen] = useState(false)
 
   // Read initial server feature availability from cache to avoid layout/theme flash
   const [isHalloweenAvailable, setIsHalloweenAvailable] = useState(() => {
@@ -65,6 +85,12 @@ export function ThemeProvider({ children }) {
         } catch {
           // Storage quota fallback
         }
+        // If current active theme was a Halloween theme and season ended, revert to classic light/dark
+        setThemeState((current) => {
+          if (current === 'halloween-light') return 'light'
+          if (current === 'halloween-dark') return 'dark'
+          return current
+        })
       } else {
         try {
           if (localStorage.getItem('moodshare_halloween') === 'true') {
@@ -77,13 +103,9 @@ export function ThemeProvider({ children }) {
     }
   }, [features])
 
+  // Synchronously apply theme attributes whenever theme changes
   useEffect(() => {
-    const root = document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
-    }
+    applyThemeToDOM(theme)
     try {
       localStorage.setItem('moodshare_theme', theme)
     } catch {
@@ -91,6 +113,7 @@ export function ThemeProvider({ children }) {
     }
   }, [theme])
 
+  // Seasonal Halloween styling class
   useEffect(() => {
     const root = document.documentElement
     const active = isHalloweenAvailable && isHalloween
@@ -106,28 +129,50 @@ export function ThemeProvider({ children }) {
     }
   }, [isHalloween, isHalloweenAvailable])
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))
-  }
+  const setTheme = useCallback((nextTheme) => {
+    setThemeState(nextTheme)
+  }, [])
 
-  const toggleHalloween = () => {
+  const toggleTheme = useCallback(() => {
+    setThemeState((prev) => getFamilyCounterpartTheme(prev))
+  }, [])
+
+  const openThemePicker = useCallback(() => {
+    setIsThemePickerOpen(true)
+  }, [])
+
+  const closeThemePicker = useCallback(() => {
+    setIsThemePickerOpen(false)
+  }, [])
+
+  const toggleHalloween = useCallback(() => {
     if (!isHalloweenAvailable) return
     setIsHalloween((prev) => !prev)
-  }
+  }, [isHalloweenAvailable])
+
+  const isDark = isDarkTheme(theme)
 
   return (
     <ThemeContext.Provider
       value={{
         theme,
+        isDark,
         setTheme,
         toggleTheme,
-        isHalloween: isHalloweenAvailable && isHalloween,
+        isThemePickerOpen,
+        openThemePicker,
+        closeThemePicker,
+        isHalloween: theme.startsWith('halloween-') || (isHalloweenAvailable && isHalloween),
         isHalloweenAvailable,
         setHalloween: setIsHalloween,
         toggleHalloween,
       }}
     >
       {children}
+      <ThemePickerModal
+        isOpen={isThemePickerOpen}
+        onClose={closeThemePicker}
+      />
     </ThemeContext.Provider>
   )
 }

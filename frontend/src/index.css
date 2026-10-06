@@ -3,7 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+:root[data-theme="light"] {
   --color-background: 248 247 245;
   --color-on-background: 24 24 23;
 
@@ -109,7 +110,9 @@
   --elevation-modal: 0 20px 60px var(--shadow-color-modal);
 }
 
-.dark {
+.dark,
+:root.dark,
+:root[data-theme="dark"] {
   --color-background: 23 22 21;
   --color-on-background: 241 239 236;
 
@@ -216,12 +219,1019 @@
 }
 
 /* =========================================================================
-   HALLOWEEN THEME TOKENS
+   NEW MOODILA THEMES (5 Families × Light & Dark = 10 Variations)
+   ========================================================================= */
+
+/* --- 1. Forest & Matcha (Light) --- */
+:root[data-theme="forest-light"] {
+  --color-background: 243 246 242;
+  --color-on-background: 20 34 24;
+
+  --color-surface: 243 246 242;
+  --color-surface-dim: 226 233 225;
+  --color-surface-bright: 255 255 255;
+
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 247 250 246;
+  --color-surface-container: 238 244 237;
+  --color-surface-container-high: 231 238 230;
+  --color-surface-container-highest: 223 231 222;
+
+  --color-surface-variant: 223 231 222;
+  --color-surface-tint: 46 104 69;
+
+  --color-on-surface: 20 34 24;
+  --color-on-surface-variant: 78 98 83;
+
+  --color-outline: 130 148 134;
+  --color-outline-variant: 204 216 205;
+
+  --color-inverse-surface: 30 44 34;
+  --color-inverse-on-surface: 242 247 243;
+
+  --color-primary: 46 104 69;
+  --color-on-primary: 255 255 255;
+  --color-primary-container: 215 234 223;
+  --color-on-primary-container: 18 51 32;
+  --color-inverse-primary: 148 209 173;
+  --color-primary-fixed: 215 234 223;
+  --color-primary-fixed-dim: 179 216 193;
+  --color-on-primary-fixed: 12 38 23;
+  --color-on-primary-fixed-variant: 35 77 52;
+
+  --color-secondary: 92 124 109;
+  --color-on-secondary: 255 255 255;
+  --color-secondary-container: 218 234 227;
+  --color-on-secondary-container: 36 60 49;
+  --color-secondary-fixed: 218 234 227;
+  --color-secondary-fixed-dim: 187 210 200;
+  --color-on-secondary-fixed: 21 42 33;
+  --color-on-secondary-fixed-variant: 67 95 82;
+
+  --color-tertiary: 142 107 71;
+  --color-on-tertiary: 255 255 255;
+  --color-tertiary-container: 241 227 211;
+  --color-on-tertiary-container: 68 46 22;
+  --color-tertiary-fixed: 241 227 211;
+  --color-tertiary-fixed-dim: 219 198 174;
+  --color-on-tertiary-fixed: 44 28 11;
+  --color-on-tertiary-fixed-variant: 104 77 48;
+
+  --color-success: 46 112 70;
+  --color-on-success: 255 255 255;
+  --color-success-container: 215 238 222;
+  --color-on-success-container: 18 54 31;
+
+  --color-warning: 168 116 40;
+  --color-on-warning: 255 255 255;
+  --color-warning-container: 246 228 200;
+  --color-on-warning-container: 78 50 12;
+
+  --color-error: 178 77 84;
+  --color-on-error: 255 255 255;
+  --color-error-container: 248 219 221;
+  --color-on-error-container: 88 23 28;
+
+  --color-mood-rad: 46 104 69;
+  --color-mood-rad-container: 215 234 223;
+  --color-on-mood-rad-container: 18 51 32;
+
+  --color-mood-good: 85 135 60;
+  --color-mood-good-container: 230 242 220;
+  --color-on-mood-good-container: 34 58 18;
+
+  --color-mood-meh: 168 122 40;
+  --color-mood-meh-container: 248 234 207;
+  --color-on-mood-meh-container: 75 52 14;
+
+  --color-mood-bad: 186 101 54;
+  --color-mood-bad-container: 250 229 216;
+  --color-on-mood-bad-container: 84 38 12;
+
+  --color-mood-awful: 178 77 84;
+  --color-mood-awful-container: 248 219 221;
+  --color-on-mood-awful-container: 88 23 28;
+
+  --shadow-color-subtle: rgba(20, 34, 24, 0.03);
+  --shadow-color-card: rgba(20, 34, 24, 0.05);
+  --shadow-color-floating: rgba(20, 34, 24, 0.09);
+  --shadow-color-modal: rgba(20, 34, 24, 0.16);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 2. Forest & Matcha (Dark) --- */
+:root[data-theme="forest-dark"] {
+  --color-background: 17 24 19;
+  --color-on-background: 237 243 238;
+
+  --color-surface: 17 24 19;
+  --color-surface-dim: 13 18 14;
+  --color-surface-bright: 34 44 37;
+
+  --color-surface-container-lowest: 12 17 13;
+  --color-surface-container-low: 22 30 25;
+  --color-surface-container: 27 37 30;
+  --color-surface-container-high: 34 46 38;
+  --color-surface-container-highest: 43 57 47;
+
+  --color-surface-variant: 43 57 47;
+  --color-surface-tint: 94 191 133;
+
+  --color-on-surface: 237 243 238;
+  --color-on-surface-variant: 157 179 163;
+
+  --color-outline: 130 148 134;
+  --color-outline-variant: 58 76 64;
+
+  --color-inverse-surface: 237 243 238;
+  --color-inverse-on-surface: 27 37 30;
+
+  --color-primary: 94 191 133;
+  --color-on-primary: 8 40 21;
+  --color-primary-container: 28 71 44;
+  --color-on-primary-container: 211 243 223;
+  --color-inverse-primary: 46 104 69;
+  --color-primary-fixed: 215 234 223;
+  --color-primary-fixed-dim: 179 216 193;
+  --color-on-primary-fixed: 12 38 23;
+  --color-on-primary-fixed-variant: 35 77 52;
+
+  --color-secondary: 143 176 157;
+  --color-on-secondary: 21 42 33;
+  --color-secondary-container: 52 74 62;
+  --color-on-secondary-container: 218 235 227;
+  --color-secondary-fixed: 218 234 227;
+  --color-secondary-fixed-dim: 187 210 200;
+  --color-on-secondary-fixed: 21 42 33;
+  --color-on-secondary-fixed-variant: 67 95 82;
+
+  --color-tertiary: 209 171 123;
+  --color-on-tertiary: 44 28 11;
+  --color-tertiary-container: 88 64 36;
+  --color-on-tertiary-container: 248 231 213;
+  --color-tertiary-fixed: 241 227 211;
+  --color-tertiary-fixed-dim: 219 198 174;
+  --color-on-tertiary-fixed: 44 28 11;
+  --color-on-tertiary-fixed-variant: 104 77 48;
+
+  --color-success: 110 188 136;
+  --color-on-success: 16 48 28;
+  --color-success-container: 32 72 46;
+  --color-on-success-container: 216 244 225;
+
+  --color-warning: 220 178 98;
+  --color-on-warning: 54 36 8;
+  --color-warning-container: 86 62 20;
+  --color-on-warning-container: 250 234 204;
+
+  --color-error: 232 142 146;
+  --color-on-error: 72 16 20;
+  --color-error-container: 98 34 38;
+  --color-on-error-container: 252 216 218;
+
+  --color-mood-rad: 94 191 133;
+  --color-mood-rad-container: 28 71 44;
+  --color-on-mood-rad-container: 211 243 223;
+
+  --color-mood-good: 152 201 108;
+  --color-mood-good-container: 48 74 26;
+  --color-on-mood-good-container: 230 246 216;
+
+  --color-mood-meh: 220 178 94;
+  --color-mood-meh-container: 76 58 20;
+  --color-on-mood-meh-container: 250 236 202;
+
+  --color-mood-bad: 217 130 84;
+  --color-mood-bad-container: 78 40 18;
+  --color-on-mood-bad-container: 250 226 212;
+
+  --color-mood-awful: 214 109 116;
+  --color-mood-awful-container: 76 28 32;
+  --color-on-mood-awful-container: 250 215 218;
+
+  --shadow-color-subtle: rgba(0, 0, 0, 0.28);
+  --shadow-color-card: rgba(0, 0, 0, 0.42);
+  --shadow-color-floating: rgba(0, 0, 0, 0.55);
+  --shadow-color-modal: rgba(0, 0, 0, 0.72);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 3. Ocean Breeze (Light) --- */
+:root[data-theme="ocean-light"] {
+  --color-background: 241 245 248;
+  --color-on-background: 15 30 40;
+
+  --color-surface: 241 245 248;
+  --color-surface-dim: 224 233 239;
+  --color-surface-bright: 255 255 255;
+
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 246 250 253;
+  --color-surface-container: 236 242 247;
+  --color-surface-container-high: 228 236 242;
+  --color-surface-container-highest: 220 230 237;
+
+  --color-surface-variant: 220 230 237;
+  --color-surface-tint: 32 99 140;
+
+  --color-on-surface: 15 30 40;
+  --color-on-surface-variant: 75 97 113;
+
+  --color-outline: 126 146 160;
+  --color-outline-variant: 199 215 226;
+
+  --color-inverse-surface: 24 38 48;
+  --color-inverse-on-surface: 240 246 250;
+
+  --color-primary: 32 99 140;
+  --color-on-primary: 255 255 255;
+  --color-primary-container: 212 231 244;
+  --color-on-primary-container: 13 48 72;
+  --color-inverse-primary: 138 198 235;
+  --color-primary-fixed: 212 231 244;
+  --color-primary-fixed-dim: 174 210 233;
+  --color-on-primary-fixed: 8 36 56;
+  --color-on-primary-fixed-variant: 24 74 106;
+
+  --color-secondary: 60 126 130;
+  --color-on-secondary: 255 255 255;
+  --color-secondary-container: 212 235 237;
+  --color-on-secondary-container: 20 54 56;
+  --color-secondary-fixed: 212 235 237;
+  --color-secondary-fixed-dim: 178 214 216;
+  --color-on-secondary-fixed: 12 40 42;
+  --color-on-secondary-fixed-variant: 42 94 98;
+
+  --color-tertiary: 156 117 58;
+  --color-on-tertiary: 255 255 255;
+  --color-tertiary-container: 248 231 206;
+  --color-on-tertiary-container: 68 46 14;
+  --color-tertiary-fixed: 248 231 206;
+  --color-tertiary-fixed-dim: 228 204 168;
+  --color-on-tertiary-fixed: 44 28 6;
+  --color-on-tertiary-fixed-variant: 114 84 38;
+
+  --color-success: 32 126 108;
+  --color-on-success: 255 255 255;
+  --color-success-container: 208 238 232;
+  --color-on-success-container: 10 56 46;
+
+  --color-warning: 170 124 48;
+  --color-on-warning: 255 255 255;
+  --color-warning-container: 248 232 205;
+  --color-on-warning-container: 76 50 12;
+
+  --color-error: 181 79 93;
+  --color-on-error: 255 255 255;
+  --color-error-container: 248 218 223;
+  --color-on-error-container: 88 24 34;
+
+  --color-mood-rad: 32 126 108;
+  --color-mood-rad-container: 208 238 232;
+  --color-on-mood-rad-container: 10 56 46;
+
+  --color-mood-good: 79 136 64;
+  --color-mood-good-container: 228 242 222;
+  --color-on-mood-good-container: 30 58 20;
+
+  --color-mood-meh: 170 124 48;
+  --color-mood-meh-container: 248 232 205;
+  --color-on-mood-meh-container: 76 50 12;
+
+  --color-mood-bad: 190 102 62;
+  --color-mood-bad-container: 250 230 218;
+  --color-on-mood-bad-container: 86 38 14;
+
+  --color-mood-awful: 181 79 93;
+  --color-mood-awful-container: 248 218 223;
+  --color-on-mood-awful-container: 88 24 34;
+
+  --shadow-color-subtle: rgba(15, 30, 40, 0.03);
+  --shadow-color-card: rgba(15, 30, 40, 0.05);
+  --shadow-color-floating: rgba(15, 30, 40, 0.09);
+  --shadow-color-modal: rgba(15, 30, 40, 0.16);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 4. Ocean Breeze (Dark) --- */
+:root[data-theme="ocean-dark"] {
+  --color-background: 14 22 28;
+  --color-on-background: 236 243 248;
+
+  --color-surface: 14 22 28;
+  --color-surface-dim: 10 16 21;
+  --color-surface-bright: 30 42 52;
+
+  --color-surface-container-lowest: 9 15 20;
+  --color-surface-container-low: 18 28 36;
+  --color-surface-container: 23 35 45;
+  --color-surface-container-high: 30 44 56;
+  --color-surface-container-highest: 38 54 68;
+
+  --color-surface-variant: 38 54 68;
+  --color-surface-tint: 79 174 219;
+
+  --color-on-surface: 236 243 248;
+  --color-on-surface-variant: 149 175 193;
+
+  --color-outline: 126 146 160;
+  --color-outline-variant: 50 68 82;
+
+  --color-inverse-surface: 236 243 248;
+  --color-inverse-on-surface: 23 35 45;
+
+  --color-primary: 79 174 219;
+  --color-on-primary: 7 38 56;
+  --color-primary-container: 24 68 97;
+  --color-on-primary-container: 206 236 251;
+  --color-inverse-primary: 32 99 140;
+  --color-primary-fixed: 212 231 244;
+  --color-primary-fixed-dim: 174 210 233;
+  --color-on-primary-fixed: 8 36 56;
+  --color-on-primary-fixed-variant: 24 74 106;
+
+  --color-secondary: 102 189 188;
+  --color-on-secondary: 12 44 45;
+  --color-secondary-container: 34 76 77;
+  --color-on-secondary-container: 206 238 238;
+  --color-secondary-fixed: 212 235 237;
+  --color-secondary-fixed-dim: 178 214 216;
+  --color-on-secondary-fixed: 12 40 42;
+  --color-on-secondary-fixed-variant: 42 94 98;
+
+  --color-tertiary: 226 186 122;
+  --color-on-tertiary: 48 32 8;
+  --color-tertiary-container: 92 68 28;
+  --color-on-tertiary-container: 252 234 206;
+  --color-tertiary-fixed: 248 231 206;
+  --color-tertiary-fixed-dim: 228 204 168;
+  --color-on-tertiary-fixed: 44 28 6;
+  --color-on-tertiary-fixed-variant: 114 84 38;
+
+  --color-success: 79 210 168;
+  --color-on-success: 6 52 38;
+  --color-success-container: 18 78 58;
+  --color-on-success-container: 204 246 232;
+
+  --color-warning: 228 184 94;
+  --color-on-warning: 56 38 8;
+  --color-warning-container: 90 66 18;
+  --color-on-warning-container: 252 236 200;
+
+  --color-error: 221 113 125;
+  --color-on-error: 70 16 22;
+  --color-error-container: 98 34 42;
+  --color-on-error-container: 252 216 220;
+
+  --color-mood-rad: 79 210 168;
+  --color-mood-rad-container: 18 78 58;
+  --color-on-mood-rad-container: 204 246 232;
+
+  --color-mood-good: 134 197 102;
+  --color-mood-good-container: 44 76 28;
+  --color-on-mood-good-container: 224 246 212;
+
+  --color-mood-meh: 228 184 94;
+  --color-mood-meh-container: 88 64 18;
+  --color-on-mood-meh-container: 252 236 200;
+
+  --color-mood-bad: 223 135 97;
+  --color-mood-bad-container: 84 42 22;
+  --color-on-mood-bad-container: 252 228 216;
+
+  --color-mood-awful: 221 113 125;
+  --color-mood-awful-container: 86 28 36;
+  --color-on-mood-awful-container: 252 216 220;
+
+  --shadow-color-subtle: rgba(0, 0, 0, 0.28);
+  --shadow-color-card: rgba(0, 0, 0, 0.42);
+  --shadow-color-floating: rgba(0, 0, 0, 0.55);
+  --shadow-color-modal: rgba(0, 0, 0, 0.72);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 5. Sunset Lavender (Light) --- */
+:root[data-theme="lavender-light"] {
+  --color-background: 246 243 248;
+  --color-on-background: 33 21 38;
+
+  --color-surface: 246 243 248;
+  --color-surface-dim: 231 224 235;
+  --color-surface-bright: 255 255 255;
+
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 251 248 253;
+  --color-surface-container: 242 236 246;
+  --color-surface-container-high: 234 227 239;
+  --color-surface-container-highest: 226 218 232;
+
+  --color-surface-variant: 226 218 232;
+  --color-surface-tint: 123 75 139;
+
+  --color-on-surface: 33 21 38;
+  --color-on-surface-variant: 100 83 109;
+
+  --color-outline: 148 131 157;
+  --color-outline-variant: 215 203 222;
+
+  --color-inverse-surface: 44 32 50;
+  --color-inverse-on-surface: 246 242 248;
+
+  --color-primary: 123 75 139;
+  --color-on-primary: 255 255 255;
+  --color-primary-container: 240 221 248;
+  --color-on-primary-container: 63 25 76;
+  --color-inverse-primary: 209 168 226;
+  --color-primary-fixed: 240 221 248;
+  --color-primary-fixed-dim: 214 186 226;
+  --color-on-primary-fixed: 48 16 60;
+  --color-on-primary-fixed-variant: 97 55 111;
+
+  --color-secondary: 150 87 104;
+  --color-on-secondary: 255 255 255;
+  --color-secondary-container: 248 223 229;
+  --color-on-secondary-container: 72 26 38;
+  --color-secondary-fixed: 248 223 229;
+  --color-secondary-fixed-dim: 228 190 199;
+  --color-on-secondary-fixed: 52 16 26;
+  --color-on-secondary-fixed-variant: 114 62 76;
+
+  --color-tertiary: 147 110 53;
+  --color-on-tertiary: 255 255 255;
+  --color-tertiary-container: 246 228 200;
+  --color-on-tertiary-container: 68 44 8;
+  --color-tertiary-fixed: 246 228 200;
+  --color-tertiary-fixed-dim: 224 200 162;
+  --color-on-tertiary-fixed: 44 26 4;
+  --color-on-tertiary-fixed-variant: 108 78 32;
+
+  --color-success: 50 125 92;
+  --color-on-success: 255 255 255;
+  --color-success-container: 216 238 228;
+  --color-on-success-container: 18 56 38;
+
+  --color-warning: 166 121 42;
+  --color-on-warning: 255 255 255;
+  --color-warning-container: 246 229 200;
+  --color-on-warning-container: 74 48 10;
+
+  --color-error: 172 72 101;
+  --color-on-error: 255 255 255;
+  --color-error-container: 248 217 226;
+  --color-on-error-container: 84 18 38;
+
+  --color-mood-rad: 50 125 92;
+  --color-mood-rad-container: 216 238 228;
+  --color-on-mood-rad-container: 18 56 38;
+
+  --color-mood-good: 96 134 56;
+  --color-mood-good-container: 232 242 218;
+  --color-on-mood-good-container: 36 56 16;
+
+  --color-mood-meh: 166 121 42;
+  --color-mood-meh-container: 246 229 200;
+  --color-on-mood-meh-container: 74 48 10;
+
+  --color-mood-bad: 189 99 72;
+  --color-mood-bad-container: 250 230 220;
+  --color-on-mood-bad-container: 84 36 18;
+
+  --color-mood-awful: 172 72 101;
+  --color-mood-awful-container: 248 217 226;
+  --color-on-mood-awful-container: 84 18 38;
+
+  --shadow-color-subtle: rgba(33, 21, 38, 0.03);
+  --shadow-color-card: rgba(33, 21, 38, 0.05);
+  --shadow-color-floating: rgba(33, 21, 38, 0.09);
+  --shadow-color-modal: rgba(33, 21, 38, 0.16);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 6. Sunset Lavender (Dark) --- */
+:root[data-theme="lavender-dark"] {
+  --color-background: 24 18 29;
+  --color-on-background: 244 238 247;
+
+  --color-surface: 24 18 29;
+  --color-surface-dim: 18 13 22;
+  --color-surface-bright: 44 34 52;
+
+  --color-surface-container-lowest: 17 12 21;
+  --color-surface-container-low: 30 22 36;
+  --color-surface-container: 36 27 43;
+  --color-surface-container-high: 44 34 52;
+  --color-surface-container-highest: 55 43 65;
+
+  --color-surface-variant: 55 43 65;
+  --color-surface-tint: 188 132 215;
+
+  --color-on-surface: 244 238 247;
+  --color-on-surface-variant: 180 162 189;
+
+  --color-outline: 148 131 157;
+  --color-outline-variant: 68 53 79;
+
+  --color-inverse-surface: 244 238 247;
+  --color-inverse-on-surface: 36 27 43;
+
+  --color-primary: 188 132 215;
+  --color-on-primary: 48 16 64;
+  --color-primary-container: 76 42 92;
+  --color-on-primary-container: 241 214 252;
+  --color-inverse-primary: 123 75 139;
+  --color-primary-fixed: 240 221 248;
+  --color-primary-fixed-dim: 214 186 226;
+  --color-on-primary-fixed: 48 16 60;
+  --color-on-primary-fixed-variant: 97 55 111;
+
+  --color-secondary: 222 152 170;
+  --color-on-secondary: 60 18 30;
+  --color-secondary-container: 88 42 54;
+  --color-on-secondary-container: 248 220 228;
+  --color-secondary-fixed: 248 223 229;
+  --color-secondary-fixed-dim: 228 190 199;
+  --color-on-secondary-fixed: 52 16 26;
+  --color-on-secondary-fixed-variant: 114 62 76;
+
+  --color-tertiary: 224 186 122;
+  --color-on-tertiary: 48 30 6;
+  --color-tertiary-container: 88 64 22;
+  --color-on-tertiary-container: 252 232 202;
+  --color-tertiary-fixed: 246 228 200;
+  --color-tertiary-fixed-dim: 224 200 162;
+  --color-on-tertiary-fixed: 44 26 4;
+  --color-on-tertiary-fixed-variant: 108 78 32;
+
+  --color-success: 101 191 145;
+  --color-on-success: 12 48 30;
+  --color-success-container: 28 74 50;
+  --color-on-success-container: 214 246 228;
+
+  --color-warning: 224 178 89;
+  --color-on-warning: 54 36 6;
+  --color-warning-container: 86 60 16;
+  --color-on-warning-container: 250 234 198;
+
+  --color-error: 214 109 142;
+  --color-on-error: 68 14 30;
+  --color-error-container: 96 30 52;
+  --color-on-error-container: 252 216 228;
+
+  --color-mood-rad: 101 191 145;
+  --color-mood-rad-container: 28 74 50;
+  --color-on-mood-rad-container: 214 246 228;
+
+  --color-mood-good: 160 198 104;
+  --color-mood-good-container: 52 76 26;
+  --color-on-mood-good-container: 232 246 212;
+
+  --color-mood-meh: 224 178 89;
+  --color-mood-meh-container: 82 58 16;
+  --color-on-mood-meh-container: 250 234 198;
+
+  --color-mood-bad: 224 131 104;
+  --color-mood-bad-container: 86 42 26;
+  --color-on-mood-bad-container: 252 226 216;
+
+  --color-mood-awful: 214 109 142;
+  --color-mood-awful-container: 84 26 44;
+  --color-on-mood-awful-container: 252 216 228;
+
+  --shadow-color-subtle: rgba(0, 0, 0, 0.28);
+  --shadow-color-card: rgba(0, 0, 0, 0.42);
+  --shadow-color-floating: rgba(0, 0, 0, 0.55);
+  --shadow-color-modal: rgba(0, 0, 0, 0.72);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 7. Amber Hearth / Terracotta (Light) --- */
+:root[data-theme="terracotta-light"] {
+  --color-background: 249 245 240;
+  --color-on-background: 38 26 20;
+
+  --color-surface: 249 245 240;
+  --color-surface-dim: 236 227 219;
+  --color-surface-bright: 255 255 255;
+
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 253 250 246;
+  --color-surface-container: 244 237 230;
+  --color-surface-container-high: 237 228 219;
+  --color-surface-container-highest: 229 219 209;
+
+  --color-surface-variant: 229 219 209;
+  --color-surface-tint: 155 73 43;
+
+  --color-on-surface: 38 26 20;
+  --color-on-surface-variant: 108 86 74;
+
+  --color-outline: 152 131 119;
+  --color-outline-variant: 221 208 196;
+
+  --color-inverse-surface: 49 35 28;
+  --color-inverse-on-surface: 248 243 239;
+
+  --color-primary: 155 73 43;
+  --color-on-primary: 255 255 255;
+  --color-primary-container: 246 221 210;
+  --color-on-primary-container: 78 24 7;
+  --color-inverse-primary: 235 152 126;
+  --color-primary-fixed: 246 221 210;
+  --color-primary-fixed-dim: 226 182 166;
+  --color-on-primary-fixed: 58 16 4;
+  --color-on-primary-fixed-variant: 122 52 26;
+
+  --color-secondary: 140 99 57;
+  --color-on-secondary: 255 255 255;
+  --color-secondary-container: 244 227 206;
+  --color-on-secondary-container: 66 38 10;
+  --color-secondary-fixed: 244 227 206;
+  --color-secondary-fixed-dim: 222 196 166;
+  --color-on-secondary-fixed: 46 24 4;
+  --color-on-secondary-fixed-variant: 108 72 34;
+
+  --color-tertiary: 94 115 80;
+  --color-on-tertiary: 255 255 255;
+  --color-tertiary-container: 223 235 214;
+  --color-on-tertiary-container: 36 56 26;
+  --color-tertiary-fixed: 223 235 214;
+  --color-tertiary-fixed-dim: 194 212 182;
+  --color-on-tertiary-fixed: 22 40 14;
+  --color-on-tertiary-fixed-variant: 70 90 58;
+
+  --color-success: 58 120 76;
+  --color-on-success: 255 255 255;
+  --color-success-container: 218 238 224;
+  --color-on-success-container: 22 56 32;
+
+  --color-warning: 169 122 40;
+  --color-on-warning: 255 255 255;
+  --color-warning-container: 246 229 200;
+  --color-on-warning-container: 76 48 10;
+
+  --color-error: 175 74 77;
+  --color-on-error: 255 255 255;
+  --color-error-container: 248 218 219;
+  --color-on-error-container: 86 20 24;
+
+  --color-mood-rad: 58 120 76;
+  --color-mood-rad-container: 218 238 224;
+  --color-on-mood-rad-container: 22 56 32;
+
+  --color-mood-good: 103 134 53;
+  --color-mood-good-container: 233 243 216;
+  --color-on-mood-good-container: 40 58 15;
+
+  --color-mood-meh: 169 122 40;
+  --color-mood-meh-container: 246 229 200;
+  --color-on-mood-meh-container: 76 48 10;
+
+  --color-mood-bad: 183 95 52;
+  --color-mood-bad-container: 250 228 215;
+  --color-on-mood-bad-container: 82 34 11;
+
+  --color-mood-awful: 175 74 77;
+  --color-mood-awful-container: 248 218 219;
+  --color-on-mood-awful-container: 86 20 24;
+
+  --shadow-color-subtle: rgba(38, 26, 20, 0.03);
+  --shadow-color-card: rgba(38, 26, 20, 0.05);
+  --shadow-color-floating: rgba(38, 26, 20, 0.09);
+  --shadow-color-modal: rgba(38, 26, 20, 0.16);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 8. Amber Hearth / Terracotta (Dark) --- */
+:root[data-theme="terracotta-dark"] {
+  --color-background: 26 19 16;
+  --color-on-background: 250 242 236;
+
+  --color-surface: 26 19 16;
+  --color-surface-dim: 19 14 12;
+  --color-surface-bright: 46 36 30;
+
+  --color-surface-container-lowest: 18 13 11;
+  --color-surface-container-low: 32 24 20;
+  --color-surface-container: 40 30 26;
+  --color-surface-container-high: 48 37 32;
+  --color-surface-container-highest: 60 47 40;
+
+  --color-surface-variant: 60 47 40;
+  --color-surface-tint: 235 124 89;
+
+  --color-on-surface: 250 242 236;
+  --color-on-surface-variant: 192 167 154;
+
+  --color-outline: 152 131 119;
+  --color-outline-variant: 74 58 50;
+
+  --color-inverse-surface: 250 242 236;
+  --color-inverse-on-surface: 40 30 26;
+
+  --color-primary: 235 124 89;
+  --color-on-primary: 59 20 7;
+  --color-primary-container: 93 39 22;
+  --color-on-primary-container: 253 211 197;
+  --color-inverse-primary: 155 73 43;
+  --color-primary-fixed: 246 221 210;
+  --color-primary-fixed-dim: 226 182 166;
+  --color-on-primary-fixed: 58 16 4;
+  --color-on-primary-fixed-variant: 122 52 26;
+
+  --color-secondary: 217 161 104;
+  --color-on-secondary: 54 28 5;
+  --color-secondary-container: 86 52 22;
+  --color-on-secondary-container: 248 226 200;
+  --color-secondary-fixed: 244 227 206;
+  --color-secondary-fixed-dim: 222 196 166;
+  --color-on-secondary-fixed: 46 24 4;
+  --color-on-secondary-fixed-variant: 108 72 34;
+
+  --color-tertiary: 159 183 143;
+  --color-on-tertiary: 26 44 18;
+  --color-tertiary-container: 54 74 44;
+  --color-on-tertiary-container: 222 238 212;
+  --color-tertiary-fixed: 223 235 214;
+  --color-tertiary-fixed-dim: 194 212 182;
+  --color-on-tertiary-fixed: 22 40 14;
+  --color-on-tertiary-fixed-variant: 70 90 58;
+
+  --color-success: 111 191 130;
+  --color-on-success: 16 48 26;
+  --color-success-container: 32 74 44;
+  --color-on-success-container: 218 246 226;
+
+  --color-warning: 226 180 90;
+  --color-on-warning: 54 36 6;
+  --color-warning-container: 88 62 18;
+  --color-on-warning-container: 252 234 198;
+
+  --color-error: 216 108 112;
+  --color-on-error: 68 16 20;
+  --color-error-container: 96 32 36;
+  --color-on-error-container: 252 216 218;
+
+  --color-mood-rad: 111 191 130;
+  --color-mood-rad-container: 32 74 44;
+  --color-on-mood-rad-container: 218 246 226;
+
+  --color-mood-good: 164 198 100;
+  --color-mood-good-container: 54 76 24;
+  --color-on-mood-good-container: 234 246 210;
+
+  --color-mood-meh: 226 180 90;
+  --color-mood-meh-container: 82 58 16;
+  --color-on-mood-meh-container: 252 234 198;
+
+  --color-mood-bad: 227 128 82;
+  --color-mood-bad-container: 86 42 18;
+  --color-on-mood-bad-container: 252 226 210;
+
+  --color-mood-awful: 216 108 112;
+  --color-mood-awful-container: 86 28 32;
+  --color-on-mood-awful-container: 252 216 218;
+
+  --shadow-color-subtle: rgba(0, 0, 0, 0.28);
+  --shadow-color-card: rgba(0, 0, 0, 0.42);
+  --shadow-color-floating: rgba(0, 0, 0, 0.55);
+  --shadow-color-modal: rgba(0, 0, 0, 0.72);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 9. Aurora Glow (Light) --- */
+:root[data-theme="aurora-light"] {
+  --color-background: 241 247 246;
+  --color-on-background: 16 33 31;
+
+  --color-surface: 241 247 246;
+  --color-surface-dim: 223 234 232;
+  --color-surface-bright: 255 255 255;
+
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 246 251 250;
+  --color-surface-container: 236 244 242;
+  --color-surface-container-high: 228 238 236;
+  --color-surface-container-highest: 220 231 229;
+
+  --color-surface-variant: 220 231 229;
+  --color-surface-tint: 26 110 100;
+
+  --color-on-surface: 16 33 31;
+  --color-on-surface-variant: 70 97 93;
+
+  --color-outline: 122 147 142;
+  --color-outline-variant: 198 216 212;
+
+  --color-inverse-surface: 26 42 40;
+  --color-inverse-on-surface: 239 247 245;
+
+  --color-primary: 26 110 100;
+  --color-on-primary: 255 255 255;
+  --color-primary-container: 208 238 232;
+  --color-on-primary-container: 7 53 47;
+  --color-inverse-primary: 128 208 196;
+  --color-primary-fixed: 208 238 232;
+  --color-primary-fixed-dim: 169 218 209;
+  --color-on-primary-fixed: 4 38 33;
+  --color-on-primary-fixed-variant: 18 84 76;
+
+  --secondary: 51 101 138;
+  --color-secondary: 51 101 138;
+  --color-on-secondary: 255 255 255;
+  --color-secondary-container: 214 232 245;
+  --color-on-secondary-container: 18 48 72;
+  --color-secondary-fixed: 214 232 245;
+  --color-secondary-fixed-dim: 178 209 231;
+  --color-on-secondary-fixed: 12 36 56;
+  --color-on-secondary-fixed-variant: 38 78 108;
+
+  --color-tertiary: 143 75 102;
+  --color-on-tertiary: 255 255 255;
+  --color-tertiary-container: 247 222 232;
+  --color-on-tertiary-container: 68 20 40;
+  --color-tertiary-fixed: 247 222 232;
+  --color-tertiary-fixed-dim: 226 188 203;
+  --color-on-tertiary-fixed: 50 12 28;
+  --color-on-tertiary-fixed-variant: 110 52 76;
+
+  --color-success: 26 128 104;
+  --color-on-success: 255 255 255;
+  --color-success-container: 208 240 232;
+  --color-on-success-container: 8 56 44;
+
+  --color-warning: 168 121 40;
+  --color-on-warning: 255 255 255;
+  --color-warning-container: 246 228 200;
+  --color-on-warning-container: 74 48 10;
+
+  --color-error: 178 75 107;
+  --color-on-error: 255 255 255;
+  --color-error-container: 248 218 228;
+  --color-on-error-container: 86 20 44;
+
+  --color-mood-rad: 26 133 116;
+  --color-mood-rad-container: 208 240 234;
+  --color-on-mood-rad-container: 8 58 48;
+
+  --color-mood-good: 78 136 60;
+  --color-mood-good-container: 228 242 220;
+  --color-on-mood-good-container: 30 58 18;
+
+  --color-mood-meh: 168 121 40;
+  --color-mood-meh-container: 246 228 200;
+  --color-on-mood-meh-container: 74 48 10;
+
+  --color-mood-bad: 186 101 66;
+  --color-mood-bad-container: 250 230 220;
+  --color-on-mood-bad-container: 84 38 16;
+
+  --color-mood-awful: 178 75 107;
+  --color-mood-awful-container: 248 218 228;
+  --color-on-mood-awful-container: 86 20 44;
+
+  --shadow-color-subtle: rgba(16, 33, 31, 0.03);
+  --shadow-color-card: rgba(16, 33, 31, 0.05);
+  --shadow-color-floating: rgba(16, 33, 31, 0.09);
+  --shadow-color-modal: rgba(16, 33, 31, 0.16);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 10. Aurora Glow (Dark) --- */
+:root[data-theme="aurora-dark"] {
+  --color-background: 12 20 20;
+  --color-on-background: 230 248 246;
+
+  --color-surface: 12 20 20;
+  --color-surface-dim: 9 15 15;
+  --color-surface-bright: 28 42 42;
+
+  --color-surface-container-lowest: 8 14 14;
+  --color-surface-container-low: 17 27 27;
+  --color-surface-container: 22 35 35;
+  --color-surface-container-high: 28 44 44;
+  --color-surface-container-highest: 36 56 56;
+
+  --color-surface-variant: 36 56 56;
+  --color-surface-tint: 49 203 177;
+
+  --color-on-surface: 230 248 246;
+  --color-on-surface-variant: 144 182 177;
+
+  --color-outline: 122 147 142;
+  --color-outline-variant: 46 68 66;
+
+  --color-inverse-surface: 230 248 246;
+  --color-inverse-on-surface: 22 35 35;
+
+  --color-primary: 49 203 177;
+  --color-on-primary: 4 39 33;
+  --color-primary-container: 18 73 64;
+  --color-on-primary-container: 195 247 239;
+  --color-inverse-primary: 26 110 100;
+  --color-primary-fixed: 208 238 232;
+  --color-primary-fixed-dim: 169 218 209;
+  --color-on-primary-fixed: 4 38 33;
+  --color-on-primary-fixed-variant: 18 84 76;
+
+  --color-secondary: 93 185 255;
+  --color-on-secondary: 6 36 62;
+  --color-secondary-container: 24 68 106;
+  --color-on-secondary-container: 212 236 255;
+  --color-secondary-fixed: 214 232 245;
+  --color-secondary-fixed-dim: 178 209 231;
+  --color-on-secondary-fixed: 12 36 56;
+  --color-on-secondary-fixed-variant: 38 78 108;
+
+  --color-tertiary: 240 120 168;
+  --color-on-tertiary: 64 12 36;
+  --color-tertiary-container: 98 32 60;
+  --color-on-tertiary-container: 252 218 232;
+  --color-tertiary-fixed: 247 222 232;
+  --color-tertiary-fixed-dim: 226 188 203;
+  --color-on-tertiary-fixed: 50 12 28;
+  --color-on-tertiary-fixed-variant: 110 52 76;
+
+  --color-success: 49 212 168;
+  --color-on-success: 4 48 36;
+  --color-success-container: 16 78 58;
+  --color-on-success-container: 198 248 232;
+
+  --color-warning: 226 186 86;
+  --color-on-warning: 54 38 6;
+  --color-warning-container: 88 64 16;
+  --color-on-warning-container: 252 236 196;
+
+  --color-error: 223 111 154;
+  --color-on-error: 68 14 38;
+  --color-error-container: 98 30 58;
+  --color-on-error-container: 252 216 230;
+
+  --color-mood-rad: 49 203 177;
+  --color-mood-rad-container: 18 73 64;
+  --color-on-mood-rad-container: 195 247 239;
+
+  --color-mood-good: 133 212 93;
+  --color-mood-good-container: 42 78 24;
+  --color-on-mood-good-container: 222 248 206;
+
+  --color-mood-meh: 226 186 86;
+  --color-mood-meh-container: 86 64 16;
+  --color-on-mood-meh-container: 252 236 196;
+
+  --color-mood-bad: 226 134 102;
+  --color-mood-bad-container: 86 42 24;
+  --color-on-mood-bad-container: 252 226 214;
+
+  --color-mood-awful: 223 111 154;
+  --color-mood-awful-container: 88 28 52;
+  --color-on-mood-awful-container: 252 216 230;
+
+  --shadow-color-subtle: rgba(0, 0, 0, 0.28);
+  --shadow-color-card: rgba(0, 0, 0, 0.42);
+  --shadow-color-floating: rgba(0, 0, 0, 0.55);
+  --shadow-color-modal: rgba(0, 0, 0, 0.72);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* =========================================================================
+   HALLOWEEN THEME TOKENS (Autumn Harvest & Spooky Magic)
    - Light: Autumn Harvest Spiced Parchment & Pumpkin Ember
    - Dark:  Gothic Midnight Obsidian & Radiant Jack-o'-Lantern Flame
    ========================================================================= */
 
-:root.halloween {
+:root[data-theme="halloween-light"],
+:root.halloween,
+:root[data-theme].halloween {
   --color-background: 248 243 235;
   --color-on-background: 28 24 22;
 
@@ -322,8 +1332,11 @@
   --shadow-color-modal: rgba(28, 24, 22, 0.18);
 }
 
+:root[data-theme="halloween-dark"],
 .dark.halloween,
-:root.dark.halloween {
+:root.dark.halloween,
+:root[data-theme$="-dark"].halloween,
+:root[data-theme].dark.halloween {
   --color-background: 19 16 22;
   --color-on-background: 245 240 236;
 
@@ -425,6 +1438,14 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+  :root.dark,
+  :root[data-theme="dark"],
+  :root[data-theme$="-dark"] {
+    color-scheme: dark;
+  }
   html {
     scroll-behavior: smooth;
   }
@@ -434,6 +1455,17 @@
     background-color: rgb(var(--color-background));
     color: rgb(var(--color-on-surface));
     transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1), color 200ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  ::selection {
+    background-color: rgb(var(--color-primary) / 0.28);
+    color: inherit;
+  }
+  input,
+  textarea {
+    caret-color: rgb(var(--color-primary));
+  }
+  *:focus-visible {
+    outline-color: rgb(var(--color-primary));
   }
 }
 

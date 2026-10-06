@@ -11,6 +11,7 @@ import { ProfileSkeleton } from "../components/skeleton/PageSkeletons";
 import { useNotifications } from "../components/Notifications";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
+import { getThemeById } from "../utils/themes";
 import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import ChangePasswordForm from "../components/ChangePasswordForm";
@@ -23,7 +24,6 @@ import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import { safeNavigateBack } from "../utils/navigation";
 import { haptics, isHapticsEnabled, setHapticsEnabled } from "../utils/haptics";
-import { JackOLanternIcon } from "../components/HalloweenIcons";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -31,7 +31,6 @@ export default function Profile() {
   const update = useUpdateProfileMutation();
   const { notify } = useNotifications();
   const { t, formatDate } = useLanguage();
-  const { isHalloweenAvailable } = useTheme();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -523,29 +522,16 @@ export default function Profile() {
                     <LanguageToggle />
                   </div>
 
-                  {/* Theme toggle */}
-                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
-                    <span className="flex items-center gap-sm text-body-md text-on-surface">
+                  {/* Theme setting row */}
+                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm gap-3">
+                    <span className="flex items-center gap-sm text-body-md text-on-surface shrink-0 whitespace-nowrap">
                       <span className="material-symbols-outlined text-on-surface-variant">
                         palette
                       </span>
-                      {t("profile.darkTheme")}
+                      {t("profile.theme", "Тема оформления")}
                     </span>
-                    <ThemeToggle />
+                    <ThemeSettingRow />
                   </div>
-
-                  {/* Halloween theme toggle - only visible during Halloween season (until Nov 5th) */}
-                  {isHalloweenAvailable && (
-                    <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
-                      <span className="flex items-center gap-sm text-body-md text-on-surface">
-                        <span className="flex h-6 w-6 items-center justify-center text-primary">
-                          <JackOLanternIcon className="h-5 w-5 fill-current" />
-                        </span>
-                        {t("profile.halloweenTheme")}
-                      </span>
-                      <HalloweenToggle />
-                    </div>
-                  )}
 
                   {/* Vibration toggle */}
                   <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
@@ -800,49 +786,41 @@ function ToggleSwitch({
   );
 }
 
-function HalloweenToggle() {
-  const { isHalloween, toggleHalloween } = useTheme();
-  const { t } = useLanguage();
-
-  const handleToggle = () => {
-    const next = !isHalloween;
-    toggleHalloween();
-    if (next) {
-      haptics.spooky();
-    } else {
-      haptics.selection();
-    }
-  };
+function ThemeSettingRow() {
+  const { theme, openThemePicker } = useTheme();
+  const { language, t } = useLanguage();
+  const isRu = language === "ru";
+  const themeObj = getThemeById(theme);
+  // Show family name on small mobile if desired or full name with flexible layout
+  const themeName = isRu ? themeObj.nameRu : themeObj.nameEn;
 
   return (
-    <ToggleSwitch
-      checked={isHalloween}
-      onChange={handleToggle}
-      label={t("profile.halloweenTheme")}
-      customIconOn={<JackOLanternIcon className="h-4 w-4 fill-current text-primary" />}
-      customIconOff={<JackOLanternIcon className="h-3.5 w-3.5 fill-current opacity-30 text-on-surface-variant" />}
-    />
-  );
-}
-
-function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
-  const { t } = useLanguage();
-  const isDark = theme === "dark";
-
-  const handleToggle = () => {
-    haptics.selection();
-    toggleTheme();
-  };
-
-  return (
-    <ToggleSwitch
-      checked={isDark}
-      onChange={handleToggle}
-      label={t("profile.darkTheme")}
-      iconOn="dark_mode"
-      iconOff="light_mode"
-    />
+    <button
+      type="button"
+      onClick={() => {
+        haptics.selection();
+        openThemePicker();
+      }}
+      className="flex items-center gap-2 rounded-xl py-1.5 px-3 bg-surface-container hover:bg-surface-container-high transition-colors focus-visible:outline-2 focus-visible:outline-primary cursor-pointer max-w-[65%] sm:max-w-none"
+      aria-label={`${t("profile.theme", "Тема оформления")}: ${themeName}`}
+    >
+      <span className="flex items-center shrink-0">
+        <span
+          className="h-3.5 w-3.5 rounded-full border border-black/10 dark:border-white/10"
+          style={{ backgroundColor: themeObj.colors.primary }}
+        />
+        <span
+          className="h-3.5 w-3.5 rounded-full border border-black/10 dark:border-white/10 -ml-1.5"
+          style={{ backgroundColor: themeObj.colors.bg }}
+        />
+      </span>
+      <span className="text-label-md font-semibold text-on-surface truncate">
+        {themeName}
+      </span>
+      <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">
+        chevron_right
+      </span>
+    </button>
   );
 }
 
