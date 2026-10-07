@@ -69,7 +69,10 @@
           if (meta) {
             meta.setAttribute('content', metaColor);
           }
-          var isHalloweenAvailable = localStorage.getItem('moodshare_server_halloween_available') === 'true';
+          var activeThemesStored = localStorage.getItem('moodshare_active_seasonal_themes');
+          var isHalloweenAvailable = activeThemesStored
+            ? activeThemesStored.indexOf('"halloween"') !== -1
+            : localStorage.getItem('moodshare_server_halloween_available') === 'true';
           if (isHalloweenAvailable && localStorage.getItem('moodshare_halloween') === 'true') {
             root.classList.add('halloween');
           }

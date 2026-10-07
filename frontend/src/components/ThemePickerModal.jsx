@@ -1,13 +1,13 @@
 import { useState, useRef, useMemo } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useLanguage } from '../context/LanguageContext'
-import { THEMES, THEME_FAMILIES } from '../utils/themes'
+import { THEME_FAMILIES, getAvailableThemes } from '../utils/themes'
 import useModalKeyboard from '../hooks/useModalKeyboard'
 import { haptics } from '../utils/haptics'
 
 export default function ThemePickerModal({ isOpen, onClose }) {
   const modalRef = useRef(null)
-  const { theme: currentThemeId, setTheme, isHalloweenAvailable } = useTheme()
+  const { theme: currentThemeId, setTheme, activeSeasonalThemes } = useTheme()
   const { language, t } = useLanguage()
   const [filterMode, setFilterMode] = useState('all') // 'all' | 'light' | 'dark'
 
@@ -16,9 +16,8 @@ export default function ThemePickerModal({ isOpen, onClose }) {
   const isRu = language === 'ru'
 
   const availableThemes = useMemo(() => {
-    if (isHalloweenAvailable) return THEMES
-    return THEMES.filter((t) => t.family !== 'halloween')
-  }, [isHalloweenAvailable])
+    return getAvailableThemes(activeSeasonalThemes)
+  }, [activeSeasonalThemes])
 
   const lightCount = useMemo(() => availableThemes.filter((t) => t.mode === 'light').length, [availableThemes])
   const darkCount = useMemo(() => availableThemes.filter((t) => t.mode === 'dark').length, [availableThemes])

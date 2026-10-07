@@ -15,6 +15,7 @@ export const THEME_FAMILIES = {
   },
   halloween: {
     id: 'halloween',
+    seasonal: true,
     ru: 'Хеллоуин',
     en: 'Spooky Autumn',
     descRu: 'Пряная тыква, мистический аметист и мерцание свечей в ночи',
@@ -107,6 +108,7 @@ export const THEMES = [
   {
     id: 'halloween-light',
     family: 'halloween',
+    seasonal: true,
     mode: 'light',
     nameRu: 'Хеллоуин (Светлая)',
     nameEn: 'Spooky Autumn (Light)',
@@ -129,6 +131,7 @@ export const THEMES = [
   {
     id: 'halloween-dark',
     family: 'halloween',
+    seasonal: true,
     mode: 'dark',
     nameRu: 'Хеллоуин (Тёмная)',
     nameEn: 'Spooky Autumn (Dark)',
@@ -436,3 +439,48 @@ export function applyThemeToDOM(themeId) {
     metaTag.setAttribute('content', theme.metaColor)
   }
 }
+
+/**
+ * Checks whether a theme family is designated as seasonal.
+ */
+export function isThemeFamilySeasonal(familyId) {
+  return Boolean(THEME_FAMILIES[familyId]?.seasonal)
+}
+
+/**
+ * Checks whether a specific theme or its family is currently available,
+ * considering active seasonal themes returned by the server.
+ */
+export function isThemeFamilyAvailable(familyId, activeSeasonalThemes = []) {
+  if (!isThemeFamilySeasonal(familyId)) {
+    return true
+  }
+  return activeSeasonalThemes.includes(familyId)
+}
+
+/**
+ * Checks whether a theme by ID is available.
+ */
+export function isThemeAvailable(themeId, activeSeasonalThemes = []) {
+  const theme = getThemeById(themeId)
+  return isThemeFamilyAvailable(theme.family, activeSeasonalThemes)
+}
+
+/**
+ * Returns the list of themes currently available to the user.
+ */
+export function getAvailableThemes(activeSeasonalThemes = []) {
+  return THEMES.filter((t) => isThemeFamilyAvailable(t.family, activeSeasonalThemes))
+}
+
+/**
+ * Resolves a graceful fallback if the current active theme's season has expired.
+ * Reverts to standard 'dark' or 'light' in the same mode.
+ */
+export function getFallbackTheme(currentThemeId, activeSeasonalThemes = []) {
+  if (isThemeAvailable(currentThemeId, activeSeasonalThemes)) {
+    return currentThemeId
+  }
+  return isDarkTheme(currentThemeId) ? 'dark' : 'light'
+}
+

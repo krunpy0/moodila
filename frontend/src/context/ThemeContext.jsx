@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import { useAppFeaturesQuery } from '../api/queries'
 import {
   THEMES,
@@ -6,6 +6,9 @@ import {
   isDarkTheme,
   getFamilyCounterpartTheme,
   applyThemeToDOM,
+  isThemeFamilyAvailable,
+  isThemeAvailable,
+  getFallbackTheme,
 } from '../utils/themes'
 import ThemePickerModal from '../components/ThemePickerModal'
 
@@ -17,6 +20,9 @@ const ThemeContext = createContext({
   isThemePickerOpen: false,
   openThemePicker: () => {},
   closeThemePicker: () => {},
+  activeSeasonalThemes: [],
+  isThemeAvailable: () => true,
+  isFamilyAvailable: () => true,
   isHalloween: false,
   isHalloweenAvailable: false,
   setHalloween: () => {},
@@ -47,19 +53,35 @@ export function ThemeProvider({ children }) {
 
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false)
 
-  // Read initial server feature availability from cache to avoid layout/theme flash
-  const [isHalloweenAvailable, setIsHalloweenAvailable] = useState(() => {
+  // Read initial server seasonal theme availability from cache to avoid layout/theme flash
+  const [activeSeasonalThemes, setActiveSeasonalThemes] = useState(() => {
     try {
-      return localStorage.getItem('moodshare_server_halloween_available') === 'true'
+      const stored = localStorage.getItem('moodshare_active_seasonal_themes')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) return parsed
+      }
+      if (localStorage.getItem('moodshare_server_halloween_available') === 'true') {
+        return ['halloween']
+      }
     } catch {
-      return false
+      // Storage fallback
     }
+    return []
   })
+
+  const isHalloweenAvailable = useMemo(
+    () => activeSeasonalThemes.includes('halloween'),
+    [activeSeasonalThemes]
+  )
 
   const [isHalloween, setIsHalloween] = useState(() => {
     try {
-      const cachedAvailable = localStorage.getItem('moodshare_server_halloween_available') === 'true'
-      return cachedAvailable && localStorage.getItem('moodshare_halloween') === 'true'
+      const cachedStored = localStorage.getItem('moodshare_active_seasonal_themes')
+      const isAvailable = cachedStored
+        ? JSON.parse(cachedStored).includes('halloween')
+        : localStorage.getItem('moodshare_server_halloween_available') === 'true'
+      return isAvailable && localStorage.getItem('moodshare_halloween') === 'true'
     } catch {
       return false
     }
@@ -70,35 +92,44 @@ export function ThemeProvider({ children }) {
 
   // Synchronize state when server features respond
   useEffect(() => {
-    if (features && typeof features.halloween_enabled === 'boolean') {
-      const enabled = features.halloween_enabled
-      setIsHalloweenAvailable(enabled)
+    if (!features) return
+
+    let nextActive = []
+    if (Array.isArray(features.active_seasonal_themes)) {
+      nextActive = features.active_seasonal_themes
+    } else if (features.halloween_enabled) {
+      nextActive = ['halloween']
+    }
+
+    setActiveSeasonalThemes(nextActive)
+
+    try {
+      localStorage.setItem('moodshare_active_seasonal_themes', JSON.stringify(nextActive))
+      localStorage.setItem(
+        'moodshare_server_halloween_available',
+        String(nextActive.includes('halloween'))
+      )
+    } catch {
+      // Storage quota fallback
+    }
+
+    // Gracefully revert any active theme whose season has ended
+    setThemeState((current) => getFallbackTheme(current, nextActive))
+
+    if (!nextActive.includes('halloween')) {
+      setIsHalloween(false)
       try {
-        localStorage.setItem('moodshare_server_halloween_available', String(enabled))
+        localStorage.setItem('moodshare_halloween', 'false')
       } catch {
         // Storage quota fallback
       }
-      if (!enabled) {
-        setIsHalloween(false)
-        try {
-          localStorage.setItem('moodshare_halloween', 'false')
-        } catch {
-          // Storage quota fallback
+    } else {
+      try {
+        if (localStorage.getItem('moodshare_halloween') === 'true') {
+          setIsHalloween(true)
         }
-        // If current active theme was a Halloween theme and season ended, revert to classic light/dark
-        setThemeState((current) => {
-          if (current === 'halloween-light') return 'light'
-          if (current === 'halloween-dark') return 'dark'
-          return current
-        })
-      } else {
-        try {
-          if (localStorage.getItem('moodshare_halloween') === 'true') {
-            setIsHalloween(true)
-          }
-        } catch {
-          // Storage quota fallback
-        }
+      } catch {
+        // Storage quota fallback
       }
     }
   }, [features])
@@ -152,6 +183,16 @@ export function ThemeProvider({ children }) {
 
   const isDark = isDarkTheme(theme)
 
+  const checkThemeAvailable = useCallback(
+    (themeId) => isThemeAvailable(themeId, activeSeasonalThemes),
+    [activeSeasonalThemes]
+  )
+
+  const checkFamilyAvailable = useCallback(
+    (familyId) => isThemeFamilyAvailable(familyId, activeSeasonalThemes),
+    [activeSeasonalThemes]
+  )
+
   return (
     <ThemeContext.Provider
       value={{
@@ -162,6 +203,9 @@ export function ThemeProvider({ children }) {
         isThemePickerOpen,
         openThemePicker,
         closeThemePicker,
+        activeSeasonalThemes,
+        isThemeAvailable: checkThemeAvailable,
+        isFamilyAvailable: checkFamilyAvailable,
         isHalloween: theme.startsWith('halloween-') || (isHalloweenAvailable && isHalloween),
         isHalloweenAvailable,
         setHalloween: setIsHalloween,
