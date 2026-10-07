@@ -302,7 +302,7 @@ export const ru = {
     preferences: "Основные настройки",
     privacyAndSecurity: "Приватность и безопасность",
     account: "Управление аккаунтом",
-    theme: "Тема оформления",
+    theme: "Тема",
     changeTheme: "Выбрать тему",
     darkTheme: "Тёмная тема",
     halloweenTheme: "Хеллоуинское оформление",

@@ -99,7 +99,7 @@ export default function Home() {
 
   return (
     <AppLayout>
-      <div className="w-full min-h-screen bg-gradient-to-b from-primary-container/25 via-surface-container-low/40 to-background">
+      <div className="-mt-safe-top pt-safe-top lg:mt-0 lg:pt-0 w-full min-h-screen bg-gradient-to-b from-primary-container/25 via-surface-container-low/40 to-background">
         <main className="mx-auto min-h-screen w-full max-w-md lg:max-w-6xl xl:max-w-7xl pb-32 lg:pb-12 text-on-background px-0 lg:px-6 py-0 lg:py-6">
           <header className="flex items-center justify-between px-container-margin py-md lg:hidden">
             <Link

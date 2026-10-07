@@ -44,7 +44,7 @@ export default function ThemePickerModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-3 sm:p-container-margin backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/56 p-3 sm:p-container-margin backdrop-blur-sm animate-in fade-in duration-200 overflow-x-hidden"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -53,24 +53,24 @@ export default function ThemePickerModal({ isOpen, onClose }) {
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl lg:rounded-xxl bg-surface-container-lowest p-4 sm:p-6 shadow-modal border border-outline-variant/30 space-y-4 overflow-hidden"
+        className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl lg:rounded-xxl bg-surface-container-lowest p-4 sm:p-6 shadow-modal border border-outline-variant/30 space-y-4 overflow-hidden min-w-0"
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start justify-between gap-3 shrink-0 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
               <span className="material-symbols-outlined text-[22px]">
                 palette
               </span>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h2
                 id="theme-picker-modal-title"
-                className="text-headline-lg-mobile sm:text-headline-md font-bold text-on-surface"
+                className="text-headline-lg-mobile sm:text-headline-md font-bold text-on-surface truncate"
               >
                 {t('themes.title', 'Тема оформления')}
               </h2>
-              <p className="text-body-sm text-on-surface-variant">
+              <p className="text-body-sm text-on-surface-variant line-clamp-2">
                 {t('themes.subtitle', 'Выберите цветовую палитру для дневника')}
               </p>
             </div>
@@ -89,21 +89,21 @@ export default function ThemePickerModal({ isOpen, onClose }) {
         </div>
 
         {/* Filter Segmented Control (All / Light / Dark) */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-container shrink-0">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-container shrink-0 min-w-0">
           <button
             type="button"
             onClick={() => {
               haptics.selection()
               setFilterMode('all')
             }}
-            className={`flex-1 py-1.5 px-2 sm:px-3 rounded-lg text-label-sm sm:text-label-md font-semibold transition-all cursor-pointer whitespace-nowrap text-center ${
+            className={`flex-1 min-w-0 py-1.5 px-2 sm:px-3 rounded-lg text-label-sm sm:text-label-md font-semibold transition-all cursor-pointer text-center ${
               filterMode === 'all'
                 ? 'bg-surface-bright text-on-surface shadow-subtle'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span>{t('themes.filterAll', 'Все')}</span>
-            <span className="hidden xs:inline sm:inline text-on-surface-variant/75 text-[11px] sm:text-label-sm ml-1">({availableThemes.length})</span>
+            <span className="truncate">{t('themes.filterAll', 'Все')}</span>
+            <span className="hidden sm:inline text-on-surface-variant/75 text-[11px] sm:text-label-sm ml-1">({availableThemes.length})</span>
           </button>
           <button
             type="button"
@@ -111,15 +111,15 @@ export default function ThemePickerModal({ isOpen, onClose }) {
               haptics.selection()
               setFilterMode('light')
             }}
-            className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-2 sm:px-3 rounded-lg text-label-sm sm:text-label-md font-semibold transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-1.5 sm:px-3 rounded-lg text-label-sm sm:text-label-md font-semibold transition-all cursor-pointer ${
               filterMode === 'light'
                 ? 'bg-surface-bright text-on-surface shadow-subtle'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[15px] sm:text-[16px]">light_mode</span>
-            <span>{t('themes.filterLight', 'Светлые')}</span>
-            <span className="hidden xs:inline sm:inline text-on-surface-variant/75 text-[11px] sm:text-label-sm ml-0.5">({lightCount})</span>
+            <span className="material-symbols-outlined text-[15px] sm:text-[16px] shrink-0">light_mode</span>
+            <span className="truncate">{t('themes.filterLight', 'Светлые')}</span>
+            <span className="hidden sm:inline text-on-surface-variant/75 text-[11px] sm:text-label-sm ml-0.5">({lightCount})</span>
           </button>
           <button
             type="button"
@@ -127,15 +127,15 @@ export default function ThemePickerModal({ isOpen, onClose }) {
               haptics.selection()
               setFilterMode('dark')
             }}
-            className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-2 sm:px-3 rounded-lg text-label-sm sm:text-label-md font-semibold transition-all cursor-pointer whitespace-nowrap ${
+            className={`flex-1 min-w-0 flex items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-1.5 sm:px-3 rounded-lg text-label-sm sm:text-label-md font-semibold transition-all cursor-pointer ${
               filterMode === 'dark'
                 ? 'bg-surface-bright text-on-surface shadow-subtle'
                 : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <span className="material-symbols-outlined text-[15px] sm:text-[16px]">dark_mode</span>
-            <span>{t('themes.filterDark', 'Тёмные')}</span>
-            <span className="hidden xs:inline sm:inline text-on-surface-variant/75 text-[11px] sm:text-label-sm ml-0.5">({darkCount})</span>
+            <span className="material-symbols-outlined text-[15px] sm:text-[16px] shrink-0">dark_mode</span>
+            <span className="truncate">{t('themes.filterDark', 'Тёмные')}</span>
+            <span className="hidden sm:inline text-on-surface-variant/75 text-[11px] sm:text-label-sm ml-0.5">({darkCount})</span>
           </button>
         </div>
 
@@ -143,7 +143,7 @@ export default function ThemePickerModal({ isOpen, onClose }) {
         <div
           role="radiogroup"
           aria-label={t('themes.title', 'Тема оформления')}
-          className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 overflow-y-auto pr-1 flex-1 min-h-0 focus:outline-none"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 overflow-y-auto overflow-x-hidden pr-1 flex-1 min-h-0 focus:outline-none min-w-0"
         >
           {filteredThemes.map((item) => {
             const isSelected = item.id === currentThemeId
@@ -165,7 +165,7 @@ export default function ThemePickerModal({ isOpen, onClose }) {
                     handleSelectTheme(item.id)
                   }
                 }}
-                className={`group relative flex flex-col rounded-2xl border p-3.5 transition-all duration-normal text-left cursor-pointer outline-none select-none ${
+                className={`group relative flex flex-col rounded-2xl border p-3.5 transition-all duration-normal text-left cursor-pointer outline-none select-none min-w-0 ${
                   isSelected
                     ? 'border-primary bg-primary-container/20 ring-2 ring-primary/40 shadow-card'
                     : 'border-outline-variant/35 bg-surface-container-low hover:border-outline-variant/70 hover:bg-surface-container hover:shadow-subtle'
@@ -245,29 +245,29 @@ export default function ThemePickerModal({ isOpen, onClose }) {
                   </div>
 
                   {/* Color Swatch Line (Canvas, Surface, Primary, Secondary, Tertiary) */}
-                  <div className="flex items-center gap-1 px-0.5 pt-0.5">
+                  <div className="flex items-center gap-1 px-0.5 pt-0.5 w-full">
                     <div
-                      className="h-2 flex-1 rounded-xs border border-black/10"
+                      className="h-2 flex-1 rounded-xs border border-black/10 min-w-0"
                       style={{ backgroundColor: item.colors.bg }}
                       title="Background"
                     />
                     <div
-                      className="h-2 flex-1 rounded-xs border border-black/10"
+                      className="h-2 flex-1 rounded-xs border border-black/10 min-w-0"
                       style={{ backgroundColor: item.colors.surfaceContainer }}
                       title="Surface"
                     />
                     <div
-                      className="h-2 flex-1 rounded-xs"
+                      className="h-2 flex-1 rounded-xs min-w-0"
                       style={{ backgroundColor: item.colors.primary }}
                       title="Primary"
                     />
                     <div
-                      className="h-2 flex-1 rounded-xs"
+                      className="h-2 flex-1 rounded-xs min-w-0"
                       style={{ backgroundColor: item.colors.secondary }}
                       title="Secondary"
                     />
                     <div
-                      className="h-2 flex-1 rounded-xs"
+                      className="h-2 flex-1 rounded-xs min-w-0"
                       style={{ backgroundColor: item.colors.tertiary }}
                       title="Tertiary"
                     />
@@ -275,29 +275,31 @@ export default function ThemePickerModal({ isOpen, onClose }) {
                 </div>
 
                 {/* Theme Name, Mode Badge and Active Checkmark */}
-                <div className="flex items-start justify-between gap-2 pt-1">
+                <div className="flex items-start justify-between gap-2 pt-1 min-w-0">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-body-sm font-bold text-on-surface">
+                      <span className="text-body-sm font-bold text-on-surface break-words">
                         {displayName}
                       </span>
                       <span
-                        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide ${
+                        className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide shrink-0 ${
                           isDark
                             ? 'bg-inverse-surface text-inverse-on-surface'
                             : 'bg-surface-container-high text-on-surface-variant'
                         }`}
                       >
-                        <span className="material-symbols-outlined text-[11px]">
+                        <span className="material-symbols-outlined text-[11px] shrink-0">
                           {isDark ? 'dark_mode' : 'light_mode'}
                         </span>
-                        {isDark
-                          ? t('themes.darkBadge', 'Тёмная')
-                          : t('themes.lightBadge', 'Светлая')}
+                        <span>
+                          {isDark
+                            ? t('themes.darkBadge', 'Тёмная')
+                            : t('themes.lightBadge', 'Светлая')}
+                        </span>
                       </span>
                     </div>
                     {description && (
-                      <p className="text-[12px] text-on-surface-variant line-clamp-2 mt-0.5 leading-snug">
+                      <p className="text-[12px] text-on-surface-variant line-clamp-2 mt-0.5 leading-snug break-words">
                         {description}
                       </p>
                     )}

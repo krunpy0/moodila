@@ -5,7 +5,7 @@ import HalloweenDecorations from './HalloweenDecorations'
 
 export default function AppLayout({ children }) {
   return (
-    <div className="min-h-screen bg-background text-on-background lg:flex relative">
+    <div className="min-h-screen bg-background text-on-background lg:flex relative overflow-x-hidden">
       {/* Atmospheric Halloween ambient layer */}
       <HalloweenDecorations />
 
@@ -13,7 +13,7 @@ export default function AppLayout({ children }) {
       <DesktopSidebar />
 
       {/* Main Page Content Area */}
-      <div className="flex-1 min-w-0 min-h-screen flex flex-col relative z-10">
+      <div className="flex-1 min-w-0 min-h-screen flex flex-col relative z-10 overflow-x-hidden pt-safe-top lg:pt-0">
         {children}
       </div>
 

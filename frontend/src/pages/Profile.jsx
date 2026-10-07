@@ -523,23 +523,25 @@ export default function Profile() {
                   </div>
 
                   {/* Theme setting row */}
-                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm gap-3">
+                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm gap-3 min-w-0">
                     <span className="flex items-center gap-sm text-body-md text-on-surface shrink-0 whitespace-nowrap">
                       <span className="material-symbols-outlined text-on-surface-variant">
                         palette
                       </span>
-                      {t("profile.theme", "Тема оформления")}
+                      {t("profile.theme", "Тема")}
                     </span>
                     <ThemeSettingRow />
                   </div>
 
                   {/* Vibration toggle */}
-                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm">
-                    <span className="flex items-center gap-sm text-body-md text-on-surface">
-                      <span className="material-symbols-outlined text-on-surface-variant">
+                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm gap-3 min-w-0">
+                    <span className="flex items-center gap-sm text-body-md text-on-surface min-w-0">
+                      <span className="material-symbols-outlined text-on-surface-variant shrink-0">
                         vibration
                       </span>
-                      {t("profile.vibration")}
+                      <span className="truncate sm:whitespace-normal">
+                        {t("profile.vibration")}
+                      </span>
                     </span>
                     <HapticsToggle />
                   </div>
@@ -801,8 +803,8 @@ function ThemeSettingRow() {
         haptics.selection();
         openThemePicker();
       }}
-      className="flex items-center gap-2 rounded-xl py-1.5 px-3 bg-surface-container hover:bg-surface-container-high transition-colors focus-visible:outline-2 focus-visible:outline-primary cursor-pointer max-w-[65%] sm:max-w-none"
-      aria-label={`${t("profile.theme", "Тема оформления")}: ${themeName}`}
+      className="flex items-center gap-2 rounded-xl py-1.5 px-3 bg-surface-container hover:bg-surface-container-high transition-colors focus-visible:outline-2 focus-visible:outline-primary cursor-pointer min-w-0 max-w-[65%] sm:max-w-none"
+      aria-label={`${t("profile.theme", "Тема")}: ${themeName}`}
     >
       <span className="flex items-center shrink-0">
         <span
@@ -814,7 +816,7 @@ function ThemeSettingRow() {
           style={{ backgroundColor: themeObj.colors.bg }}
         />
       </span>
-      <span className="text-label-md font-semibold text-on-surface truncate">
+      <span className="text-label-md font-semibold text-on-surface truncate min-w-0">
         {themeName}
       </span>
       <span className="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">
