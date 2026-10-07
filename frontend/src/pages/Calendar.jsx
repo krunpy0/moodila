@@ -1,5 +1,6 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md */
 import { useEffect, useMemo, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { useEntriesQuery, useFriendEntriesQuery, useFriendsQuery } from "../api/queries";
 import { getLocalDate } from "../api/client";
@@ -879,9 +880,9 @@ export default function Calendar() {
       )}
       </>}
 
-      {mobileInspectorOpen && selectedDate && (
+      {mobileInspectorOpen && selectedDate && createPortal(
         <div
-          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-on-surface/40 p-0 sm:p-container-margin backdrop-blur-xs animate-in fade-in duration-200 lg:hidden"
+          className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-on-surface/40 p-0 sm:p-container-margin backdrop-blur-xs animate-in fade-in duration-200 lg:hidden"
           role="presentation"
           onMouseDown={() => setMobileInspectorOpen(false)}
         >
@@ -890,7 +891,7 @@ export default function Calendar() {
             aria-modal="true"
             aria-labelledby="mobile-inspector-title"
             onMouseDown={(event) => event.stopPropagation()}
-            className={`w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-xxl sm:rounded-xxl bg-surface-container-lowest border border-outline-variant/15 p-lg shadow-modal select-none ${inspectorSlideAnim}`}
+            className={`w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-xxl sm:rounded-xxl bg-surface-container-lowest border border-outline-variant/15 p-lg pb-[max(2rem,calc(env(safe-area-inset-bottom,0px)+1.5rem))] shadow-modal select-none ${inspectorSlideAnim}`}
           >
             <button
               type="button"
@@ -1047,7 +1048,8 @@ export default function Calendar() {
               );
             })()}
           </article>
-        </div>
+        </div>,
+        document.body
       )}
 
       </main>

@@ -38,7 +38,7 @@ export default function AvatarCropModal({ imageSrc, onCropComplete, onCancel }) 
       role="dialog"
       aria-modal="true"
       onClick={onCancel}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-4 pt-[max(1rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))] backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div
         ref={modalRef}

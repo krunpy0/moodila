@@ -19,7 +19,7 @@ export default function ImageModal({ src, alt = '', isOpen, onClose }) {
       aria-label={alt || t('addEntry.photo')}
     >
       {/* Action buttons: Open original & Close */}
-      <div className="absolute top-4 right-4 z-[210] flex items-center gap-2">
+      <div className="absolute top-safe-4 right-4 z-[210] flex items-center gap-2">
         <a
           href={src}
           target="_blank"

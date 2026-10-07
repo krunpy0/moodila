@@ -41,7 +41,7 @@ export default function ConfirmAccountDeletion() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-on-background px-container-margin py-xl flex items-center justify-center">
+    <main className="min-h-screen bg-background text-on-background px-container-margin pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-[max(2rem,calc(env(safe-area-inset-bottom,0px)+1rem))] flex items-center justify-center">
       <section className="w-full max-w-md" aria-labelledby="confirm-delete-title">
         <div className="mb-xl text-center">
           <div className="mx-auto mb-md flex h-16 w-16 items-center justify-center rounded-full bg-error-container text-error text-[32px]">

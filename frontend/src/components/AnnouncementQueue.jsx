@@ -96,7 +96,7 @@ export default function AnnouncementQueue() {
     <>
       {/* 1. Floating Banner Mode (Compact Teaser with uncrowded layout) */}
       {item.display_type === 'banner' && !detailModalOpen && (
-        <div className="fixed top-4 inset-x-4 max-w-lg mx-auto z-50 animate-in slide-in-from-top-4 duration-300">
+        <div className="fixed top-safe-4 inset-x-4 max-w-lg mx-auto z-50 animate-in slide-in-from-top-4 duration-300">
           <div
             onClick={() => setDetailModalOpen(true)}
             className={`p-3.5 sm:p-4 rounded-2xl bg-surface-container-lowest text-on-surface shadow-modal border ${config.borderClass} backdrop-blur-md cursor-pointer hover:bg-surface-container-low transition-all`}

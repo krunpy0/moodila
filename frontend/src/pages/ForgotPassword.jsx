@@ -26,7 +26,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <main className="min-h-screen bg-background text-on-background px-container-margin py-xl flex items-center justify-center">
+    <main className="min-h-screen bg-background text-on-background px-container-margin pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-[max(2rem,calc(env(safe-area-inset-bottom,0px)+1rem))] flex items-center justify-center">
       <section className="w-full max-w-md" aria-labelledby="forgot-title">
         <div className="mb-xl text-center">
           <div className="mx-auto mb-md w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-[30px]">

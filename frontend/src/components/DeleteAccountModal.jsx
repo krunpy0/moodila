@@ -52,7 +52,7 @@ export default function DeleteAccountModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-inverse-surface/56 p-container-margin pt-[max(1rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))] backdrop-blur-sm animate-fade-in"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"

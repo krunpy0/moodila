@@ -112,7 +112,7 @@ export default function PWAInstallPrompt() {
     <>
       {/* Offline Status Badge */}
       {isOffline && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-tertiary-container/95 text-on-tertiary-container text-xs font-medium rounded-full cloud-shadow flex items-center gap-2 border border-tertiary/20 backdrop-blur-md transition-all animate-pulse">
+        <div className="fixed top-safe-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-tertiary-container/95 text-on-tertiary-container text-xs font-medium rounded-full cloud-shadow flex items-center gap-2 border border-tertiary/20 backdrop-blur-md transition-all animate-pulse">
           <span className="material-symbols-outlined text-base">wifi_off</span>
           <span>Offline mode</span>
         </div>
@@ -120,7 +120,7 @@ export default function PWAInstallPrompt() {
 
       {/* Sync Success Banner */}
       {syncStatus && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-secondary-container/95 text-on-secondary-container text-xs font-medium rounded-full cloud-shadow flex items-center gap-2 border border-secondary/20 backdrop-blur-md transition-all">
+        <div className="fixed top-safe-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-secondary-container/95 text-on-secondary-container text-xs font-medium rounded-full cloud-shadow flex items-center gap-2 border border-secondary/20 backdrop-blur-md transition-all">
           <span className="material-symbols-outlined text-base">cloud_done</span>
           <span>{syncStatus}</span>
         </div>

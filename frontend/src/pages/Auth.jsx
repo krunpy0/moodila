@@ -52,7 +52,7 @@ export default function Auth() {
   const infoMessage = location.state?.message;
 
   return (
-    <main className="min-h-screen bg-background text-on-background px-container-margin py-xl flex items-center justify-center">
+    <main className="min-h-screen bg-background text-on-background px-container-margin pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-[max(2rem,calc(env(safe-area-inset-bottom,0px)+1rem))] flex items-center justify-center">
       <section
         className="w-full max-w-md lg:max-w-4xl lg:grid lg:grid-cols-2 bg-surface-container-lowest rounded-xl lg:rounded-xxl shadow-modal border border-outline-variant/20 overflow-hidden"
         aria-labelledby="auth-title"

@@ -176,7 +176,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-start justify-center bg-inverse-surface/56 pt-12 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-inverse-surface/56 pt-[max(3rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-[max(1rem,env(safe-area-inset-bottom,0px))] backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div

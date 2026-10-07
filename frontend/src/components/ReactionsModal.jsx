@@ -32,7 +32,7 @@ export default function ReactionsModal({ entryId, isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/56 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/56 backdrop-blur-sm p-4 pt-[max(1rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-[max(1rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))] animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div

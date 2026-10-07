@@ -92,7 +92,7 @@ export default function Admin() {
 
   if (!user || !user.is_admin) {
     return (
-      <div className="min-h-screen bg-background p-container-margin flex flex-col items-center justify-center text-center space-y-md">
+      <div className="min-h-screen bg-background px-container-margin pt-[max(2rem,calc(env(safe-area-inset-top,0px)+1rem))] pb-[max(2rem,calc(env(safe-area-inset-bottom,0px)+1rem))] flex flex-col items-center justify-center text-center space-y-md">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-error-container/30 text-error">
           <span className="material-symbols-outlined text-[36px]">block</span>
         </div>

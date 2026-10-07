@@ -44,7 +44,7 @@ export default function ThemePickerModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/56 p-3 sm:p-container-margin backdrop-blur-sm animate-in fade-in duration-200 overflow-x-hidden"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/56 p-3 sm:p-container-margin pt-[max(0.75rem,calc(env(safe-area-inset-top,0px)+0.5rem))] pb-[max(0.75rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))] backdrop-blur-sm animate-in fade-in duration-200 overflow-x-hidden"
       onClick={onClose}
       role="dialog"
       aria-modal="true"

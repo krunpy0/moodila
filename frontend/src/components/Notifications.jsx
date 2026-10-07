@@ -48,7 +48,7 @@ export function NotificationsProvider({ children }) {
     <NotificationsContext.Provider value={value}>
       {children}
       <div
-        className="pointer-events-none fixed inset-x-0 top-4 z-[100] mx-auto flex w-full max-w-md flex-col gap-sm px-container-margin"
+        className="pointer-events-none fixed inset-x-0 top-safe-4 z-[100] mx-auto flex w-full max-w-md flex-col gap-sm px-container-margin"
         aria-live="polite"
         aria-atomic="true"
       >
