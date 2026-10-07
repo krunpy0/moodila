@@ -45,10 +45,32 @@ func TestNotifications_NilPoolSafety(t *testing.T) {
 		t.Fatalf("expected 0 total and nil error, got total=%d err=%v", total, err)
 	}
 
-	// Test NotifyNewPost
+	// Test NotifyNewPost with nil pool
 	if err := repo.NotifyNewPost(ctx, "author1", models.Entry{ID: "e1"}); err != nil {
 		t.Fatalf("expected nil error on NotifyNewPost with nil pool, got: %v", err)
 	}
+
+	// Test NotifyNewPost with mock PushSender and nil pool (early exit safety)
+	mock := &testMockPushSender{}
+	repoWithPush := Notifications{Pool: nil, PushSender: mock}
+	if err := repoWithPush.NotifyNewPost(ctx, "author1", models.Entry{ID: "e1"}); err != nil {
+		t.Fatalf("expected nil error on NotifyNewPost with mock push sender and nil pool, got: %v", err)
+	}
+}
+
+type testMockPushSender struct {
+	sentSingle []string
+	sentBatch  [][]string
+}
+
+func (m *testMockPushSender) SendToUser(ctx context.Context, userID string, payload models.PushPayload) error {
+	m.sentSingle = append(m.sentSingle, userID)
+	return nil
+}
+
+func (m *testMockPushSender) SendToUsers(ctx context.Context, userIDs []string, payload models.PushPayload) error {
+	m.sentBatch = append(m.sentBatch, userIDs)
+	return nil
 }
 
 func TestFormatPostsCountRu(t *testing.T) {

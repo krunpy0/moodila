@@ -70,7 +70,14 @@ func (s *Service) VAPIDPublicKey() string {
 }
 
 func (s *Service) SendToUser(ctx context.Context, userID string, payload models.PushPayload) error {
-	subs, err := s.repo.GetByUserID(ctx, userID)
+	return s.SendToUsers(ctx, []string{userID}, payload)
+}
+
+func (s *Service) SendToUsers(ctx context.Context, userIDs []string, payload models.PushPayload) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+	subs, err := s.repo.GetByUserIDs(ctx, userIDs)
 	if err != nil || len(subs) == 0 {
 		return err
 	}

@@ -315,9 +315,9 @@ func (r Entries) CanViewFriend(ctx context.Context, userID, friendID string) (bo
 		SELECT EXISTS (
 			SELECT 1
 			FROM friendships
-			WHERE status = 'accepted'
-			  AND ((requester_id = $1 AND addressee_id = $2)
-			    OR (requester_id = $2 AND addressee_id = $1))
+			WHERE LEAST(requester_id, addressee_id) = LEAST($1::uuid, $2::uuid)
+			  AND GREATEST(requester_id, addressee_id) = GREATEST($1::uuid, $2::uuid)
+			  AND status = 'accepted'
 		)`, userID, friendID).Scan(&accepted)
 	return accepted, err
 }

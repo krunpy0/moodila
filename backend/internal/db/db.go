@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,18 +29,32 @@ func Connect(ctx context.Context, dsn string) (*pgxpool.Pool, error) {
 	cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 	cfg.ConnConfig.ConnectTimeout = 10 * time.Second
 
-	cfg.MaxConns = 25
-	cfg.MinConns = 0
-	cfg.MaxConnIdleTime = 15 * time.Second
-	cfg.MaxConnLifetime = 5 * time.Minute
-	cfg.HealthCheckPeriod = 5 * time.Second
-	cfg.BeforeAcquire = func(ctx context.Context, c *pgx.Conn) bool {
-		if c.IsClosed() {
-			return false
+	maxConns := int32(50)
+	if v := os.Getenv("DATABASE_MAX_CONNS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			maxConns = int32(n)
 		}
-		pingCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
-		defer cancel()
-		return c.Ping(pingCtx) == nil
+	} else if cfg.MaxConns > 4 {
+		maxConns = cfg.MaxConns
+	}
+
+	minConns := int32(5)
+	if v := os.Getenv("DATABASE_MIN_CONNS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			minConns = int32(n)
+		}
+	}
+	if minConns > maxConns {
+		minConns = maxConns
+	}
+
+	cfg.MaxConns = maxConns
+	cfg.MinConns = minConns
+	cfg.MaxConnIdleTime = 1 * time.Minute
+	cfg.MaxConnLifetime = 30 * time.Minute
+	cfg.HealthCheckPeriod = 15 * time.Second
+	cfg.BeforeAcquire = func(ctx context.Context, c *pgx.Conn) bool {
+		return !c.IsClosed()
 	}
 
 

@@ -18,3 +18,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS friendships_user_pair_idx
 CREATE INDEX IF NOT EXISTS friendships_addressee_status_idx
     ON friendships (addressee_id, status);
 
+CREATE INDEX IF NOT EXISTS friendships_requester_status_idx
+    ON friendships (requester_id, status);
+

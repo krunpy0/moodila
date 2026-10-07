@@ -11,6 +11,7 @@ import (
 
 type PushSender interface {
 	SendToUser(ctx context.Context, userID string, payload models.PushPayload) error
+	SendToUsers(ctx context.Context, userIDs []string, payload models.PushPayload) error
 }
 
 type Notifications struct {
@@ -181,9 +182,7 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 		URL:   "/feed",
 	}
 
-	for _, fID := range friendIDs {
-		_ = r.PushSender.SendToUser(ctx, fID, payload)
-	}
+	_ = r.PushSender.SendToUsers(ctx, friendIDs, payload)
 
 	return nil
 }

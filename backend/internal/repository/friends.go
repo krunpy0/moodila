@@ -150,15 +150,19 @@ func (r Friends) Pending(ctx context.Context, userID string) ([]models.FriendUse
 
 func (r Friends) Accepted(ctx context.Context, userID string) ([]models.FriendUser, error) {
 	return r.list(ctx, `
-		SELECT u.id, u.username, u.display_name, u.avatar_url, f.id, f.status
-		FROM friendships f
-		JOIN users u ON u.id = CASE
-			WHEN f.requester_id = $1 THEN f.addressee_id
-			ELSE f.requester_id
-		END
-		WHERE (f.requester_id = $1 OR f.addressee_id = $1)
-		  AND f.status = 'accepted'
-		  AND u.deleted_at IS NULL
+		WITH friends AS (
+			SELECT f.id AS friendship_id, f.status, f.addressee_id AS friend_id
+			FROM friendships f
+			WHERE f.requester_id = $1 AND f.status = 'accepted'
+			UNION ALL
+			SELECT f.id AS friendship_id, f.status, f.requester_id AS friend_id
+			FROM friendships f
+			WHERE f.addressee_id = $1 AND f.status = 'accepted'
+		)
+		SELECT u.id, u.username, u.display_name, u.avatar_url, fr.friendship_id, fr.status
+		FROM friends fr
+		JOIN users u ON u.id = fr.friend_id
+		WHERE u.deleted_at IS NULL
 		ORDER BY LOWER(u.display_name), u.username`, userID)
 }
 
@@ -185,17 +189,21 @@ func (r Friends) list(ctx context.Context, query, userID string) ([]models.Frien
 
 func (r Friends) GetFriendsVisibilityDefaults(ctx context.Context, userID string) ([]models.FriendVisibilityDefault, error) {
 	rows, err := r.Pool.Query(ctx, `
+		WITH friends AS (
+			SELECT f.addressee_id AS friend_id
+			FROM friendships f
+			WHERE f.requester_id = $1 AND f.status = 'accepted'
+			UNION ALL
+			SELECT f.requester_id AS friend_id
+			FROM friendships f
+			WHERE f.addressee_id = $1 AND f.status = 'accepted'
+		)
 		SELECT u.id, u.username, u.display_name, u.avatar_url,
 		       COALESCE(ufv.hide_by_default, false) AS hide_by_default
-		FROM friendships f
-		JOIN users u ON u.id = CASE
-			WHEN f.requester_id = $1 THEN f.addressee_id
-			ELSE f.requester_id
-		END
+		FROM friends fr
+		JOIN users u ON u.id = fr.friend_id
 		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = $1 AND ufv.friend_id = u.id
-		WHERE (f.requester_id = $1 OR f.addressee_id = $1)
-		  AND f.status = 'accepted'
-		  AND u.deleted_at IS NULL
+		WHERE u.deleted_at IS NULL
 		ORDER BY LOWER(u.display_name), u.username`, userID)
 	if err != nil {
 		return nil, err
@@ -218,9 +226,9 @@ func (r Friends) SetFriendVisibilityDefault(ctx context.Context, userID, friendI
 	err := r.Pool.QueryRow(ctx, `
 		SELECT EXISTS (
 			SELECT 1 FROM friendships
-			WHERE status = 'accepted'
-			  AND ((requester_id = $1 AND addressee_id = $2)
-			    OR (requester_id = $2 AND addressee_id = $1))
+			WHERE LEAST(requester_id, addressee_id) = LEAST($1::uuid, $2::uuid)
+			  AND GREATEST(requester_id, addressee_id) = GREATEST($1::uuid, $2::uuid)
+			  AND status = 'accepted'
 		)`, userID, friendID).Scan(&isFriend)
 	if err != nil {
 		return err

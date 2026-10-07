@@ -53,15 +53,15 @@ func (r PushSubscriptions) DeleteByEndpointGlobal(ctx context.Context, endpoint 
 	return err
 }
 
-func (r PushSubscriptions) GetByUserID(ctx context.Context, userID string) ([]models.PushSubscription, error) {
-	if r.Pool == nil {
+func (r PushSubscriptions) GetByUserIDs(ctx context.Context, userIDs []string) ([]models.PushSubscription, error) {
+	if r.Pool == nil || len(userIDs) == 0 {
 		return []models.PushSubscription{}, nil
 	}
 	rows, err := r.Pool.Query(ctx, `
 		SELECT id, user_id, endpoint, p256dh, auth, created_at, updated_at
 		FROM push_subscriptions
-		WHERE user_id = $1`,
-		userID,
+		WHERE user_id = ANY($1::uuid[])`,
+		userIDs,
 	)
 	if err != nil {
 		return nil, err
@@ -79,4 +79,8 @@ func (r PushSubscriptions) GetByUserID(ctx context.Context, userID string) ([]mo
 		subs = append(subs, item)
 	}
 	return subs, rows.Err()
+}
+
+func (r PushSubscriptions) GetByUserID(ctx context.Context, userID string) ([]models.PushSubscription, error) {
+	return r.GetByUserIDs(ctx, []string{userID})
 }

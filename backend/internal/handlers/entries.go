@@ -129,9 +129,9 @@ func (h Entries) Save(c *gin.Context) {
 			err := h.Entries.Pool.QueryRow(c.Request.Context(), `
 				SELECT EXISTS (
 					SELECT 1 FROM friendships
-					WHERE status = 'accepted'
-					  AND ((requester_id = $1 AND addressee_id = $2)
-					    OR (requester_id = $2 AND addressee_id = $1))
+					WHERE LEAST(requester_id, addressee_id) = LEAST($1::uuid, $2::uuid)
+					  AND GREATEST(requester_id, addressee_id) = GREATEST($1::uuid, $2::uuid)
+					  AND status = 'accepted'
 				)`, userID, fID).Scan(&isFriend)
 			if err != nil {
 				log.Printf("[ERROR] Entries.Save check friend (user=%s, friend=%s): %v", userID, fID, err)
