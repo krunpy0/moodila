@@ -388,9 +388,9 @@ export default function AddEntry() {
                         type="button"
                         aria-pressed={selected}
                         onClick={() => toggleTag(tag)}
-                        className={`rounded-full px-md py-xs text-label-sm font-medium transition-all duration-fast ${
+                        className={`rounded-full px-md py-xs text-label-sm font-medium transition-colors duration-fast ${
                           selected
-                            ? 'bg-primary-container text-on-primary-container font-semibold shadow-xs'
+                            ? 'bg-primary-container text-on-primary-container shadow-xs'
                             : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                         }`}
                       >

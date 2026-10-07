@@ -80,7 +80,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-container font-sans antialiased overflow-x-clip transition-colors duration-200">
       {/* N5 FLOATING PILL NAVIGATION */}
-      <header className="fixed top-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-4xl" role="banner">
+      <header className="fixed top-safe-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-4xl" role="banner">
         <nav
           aria-label="Main navigation"
           className="flex items-center justify-between px-4 py-2.5 rounded-full bg-surface-container-lowest/85 dark:bg-surface-container/85 backdrop-blur-md border border-outline-variant/30 shadow-floating transition-colors"
@@ -260,9 +260,9 @@ export default function Landing() {
                             type="button"
                             aria-pressed={selected}
                             onClick={() => toggleHeroTag(tag)}
-                            className={`rounded-full px-md py-xs text-label-sm font-medium transition-all duration-fast active:scale-95 ${
+                            className={`rounded-full px-md py-xs text-label-sm font-medium transition-colors duration-fast active:scale-95 ${
                               selected
-                                ? 'bg-primary-container text-on-primary-container font-semibold shadow-xs'
+                                ? 'bg-primary-container text-on-primary-container shadow-xs'
                                 : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                             }`}
                           >
