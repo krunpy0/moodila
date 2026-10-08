@@ -56,6 +56,13 @@ export const THEME_FAMILIES = {
     descRu: 'Полярное сияние, люминесцентный изумруд и космическая магия',
     descEn: 'Polar lights, luminescent emerald, and crisp night wonder',
   },
+  sakura: {
+    id: 'sakura',
+    ru: 'Сакура',
+    en: 'Cherry Blossom',
+    descRu: 'Воздушная лепестково-розовая палитра и глубокий сливовый вечер',
+    descEn: 'Airy petal pink, warm floral undertones, and deep plum elegance',
+  },
 }
 
 export const THEMES = [
@@ -373,6 +380,51 @@ export const THEMES = [
       onSurfaceVariant: '#90B6B1',
       border: '#233838',
       moods: ['#31CBB1', '#85D45D', '#E2BA56', '#E28666', '#DF6F9A'],
+    },
+  },
+
+  // 13. Cherry Blossom Light
+  {
+    id: 'sakura-light',
+    family: 'sakura',
+    mode: 'light',
+    nameRu: 'Сакура (Светлая)',
+    nameEn: 'Cherry Blossom (Light)',
+    metaColor: '#FFF4F6',
+    colors: {
+      bg: '#FFF4F6',
+      surface: '#FFFFFF',
+      surfaceContainer: '#F9E8EC',
+      primary: '#BE4668',
+      onPrimary: '#FFFFFF',
+      secondary: '#7D626B',
+      tertiary: '#BE4668',
+      onSurface: '#3B2530',
+      onSurfaceVariant: '#7D626B',
+      border: '#F5DCE3',
+      moods: ['#357756', '#658A42', '#A97C2F', '#BF6A3C', '#B65156'],
+    },
+  },
+  // 14. Cherry Blossom Dark
+  {
+    id: 'sakura-dark',
+    family: 'sakura',
+    mode: 'dark',
+    nameRu: 'Сакура (Тёмная)',
+    nameEn: 'Cherry Blossom (Dark)',
+    metaColor: '#1B1216',
+    colors: {
+      bg: '#1B1216',
+      surface: '#261A20',
+      surfaceContainer: '#34242C',
+      primary: '#F2A3BA',
+      onPrimary: '#3B1523',
+      secondary: '#B79AA5',
+      tertiary: '#F2A3BA',
+      onSurface: '#F7E9EE',
+      onSurfaceVariant: '#B79AA5',
+      border: '#3A2830',
+      moods: ['#68B88F', '#9FC479', '#DFAD5E', '#DC885D', '#D7787D'],
     },
   },
 ]

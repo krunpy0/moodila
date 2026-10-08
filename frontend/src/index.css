@@ -1223,6 +1223,227 @@
   --elevation-modal: 0 20px 60px var(--shadow-color-modal);
 }
 
+/* --- 11. Cherry Blossom / Sakura (Light) --- */
+:root[data-theme="sakura-light"] {
+  --color-background: 255 244 246;
+  --color-on-background: 59 37 48;
+
+  --color-surface: 255 255 255;
+  --color-surface-dim: 245 220 227;
+  --color-surface-bright: 255 255 255;
+
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container-low: 255 250 252;
+  --color-surface-container: 249 232 236;
+  --color-surface-container-high: 249 232 236;
+  --color-surface-container-highest: 245 220 227;
+
+  --color-surface-variant: 245 220 227;
+  --color-surface-tint: 190 70 104;
+
+  --color-on-surface: 59 37 48;
+  --color-on-surface-variant: 125 98 107;
+
+  --color-outline: 180 154 163;
+  --color-outline-variant: 245 220 227;
+
+  --color-inverse-surface: 59 37 48;
+  --color-inverse-on-surface: 255 244 246;
+
+  --color-primary: 190 70 104;
+  --color-on-primary: 255 255 255;
+  --color-primary-container: 251 221 229;
+  --color-on-primary-container: 107 29 52;
+  --color-inverse-primary: 242 163 186;
+  --color-primary-fixed: 251 221 229;
+  --color-primary-fixed-dim: 242 163 186;
+  --color-on-primary-fixed: 59 21 35;
+  --color-on-primary-fixed-variant: 107 29 52;
+
+  --color-secondary: 107 29 52;
+  --color-on-secondary: 255 255 255;
+  --color-secondary-container: 251 221 229;
+  --color-on-secondary-container: 107 29 52;
+  --color-secondary-fixed: 251 221 229;
+  --color-secondary-fixed-dim: 242 163 186;
+  --color-on-secondary-fixed: 59 21 35;
+  --color-on-secondary-fixed-variant: 107 29 52;
+
+  --color-tertiary: 190 70 104;
+  --color-on-tertiary: 255 255 255;
+  --color-tertiary-container: 251 221 229;
+  --color-on-tertiary-container: 107 29 52;
+  --color-tertiary-fixed: 251 221 229;
+  --color-tertiary-fixed-dim: 242 163 186;
+  --color-on-tertiary-fixed: 59 21 35;
+  --color-on-tertiary-fixed-variant: 107 29 52;
+
+  --color-success: 104 133 111;
+  --color-on-success: 255 255 255;
+  --color-success-container: 220 235 221;
+  --color-on-success-container: 40 67 47;
+
+  --color-warning: 167 122 69;
+  --color-on-warning: 255 255 255;
+  --color-warning-container: 244 228 207;
+  --color-on-warning-container: 95 66 31;
+
+  --color-error: 184 92 96;
+  --color-on-error: 255 255 255;
+  --color-error-container: 247 218 219;
+  --color-on-error-container: 104 31 35;
+
+  --color-mood-rad: 53 119 86;
+  --color-mood-rad-container: 225 239 231;
+  --color-on-mood-rad-container: 24 61 43;
+
+  --color-mood-good: 101 138 66;
+  --color-mood-good-container: 234 241 224;
+  --color-on-mood-good-container: 40 59 21;
+
+  --color-mood-meh: 169 124 47;
+  --color-mood-meh-container: 247 238 217;
+  --color-on-mood-meh-container: 74 53 16;
+
+  --color-mood-bad: 191 106 60;
+  --color-mood-bad-container: 249 233 222;
+  --color-on-mood-bad-container: 84 40 16;
+
+  --color-mood-awful: 182 81 86;
+  --color-mood-awful-container: 248 229 229;
+  --color-on-mood-awful-container: 82 29 33;
+
+  --shadow-color-subtle: rgba(59, 37, 48, 0.03);
+  --shadow-color-card: rgba(59, 37, 48, 0.04);
+  --shadow-color-floating: rgba(59, 37, 48, 0.08);
+  --shadow-color-modal: rgba(59, 37, 48, 0.16);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* --- 12. Cherry Blossom / Sakura (Dark) --- */
+:root[data-theme="sakura-dark"] {
+  --color-background: 27 18 22;
+  --color-on-background: 247 233 238;
+
+  --color-surface: 38 26 32;
+  --color-surface-dim: 27 18 22;
+  --color-surface-bright: 52 36 44;
+
+  --color-surface-container-lowest: 38 26 32;
+  --color-surface-container-low: 45 31 38;
+  --color-surface-container: 52 36 44;
+  --color-surface-container-high: 52 36 44;
+  --color-surface-container-highest: 64 44 54;
+
+  --color-surface-variant: 58 40 48;
+  --color-surface-tint: 242 163 186;
+
+  --color-on-surface: 247 233 238;
+  --color-on-surface-variant: 183 154 165;
+
+  --color-outline: 107 86 96;
+  --color-outline-variant: 58 40 48;
+
+  --color-inverse-surface: 247 233 238;
+  --color-inverse-on-surface: 38 26 32;
+
+  --color-primary: 242 163 186;
+  --color-on-primary: 59 21 35;
+  --color-primary-container: 74 42 56;
+  --color-on-primary-container: 242 163 186;
+  --color-inverse-primary: 190 70 104;
+  --color-primary-fixed: 251 221 229;
+  --color-primary-fixed-dim: 242 163 186;
+  --color-on-primary-fixed: 59 21 35;
+  --color-on-primary-fixed-variant: 107 29 52;
+
+  --color-secondary: 242 163 186;
+  --color-on-secondary: 59 21 35;
+  --color-secondary-container: 74 42 56;
+  --color-on-secondary-container: 242 163 186;
+  --color-secondary-fixed: 251 221 229;
+  --color-secondary-fixed-dim: 242 163 186;
+  --color-on-secondary-fixed: 59 21 35;
+  --color-on-secondary-fixed-variant: 107 29 52;
+
+  --color-tertiary: 242 163 186;
+  --color-on-tertiary: 59 21 35;
+  --color-tertiary-container: 74 42 56;
+  --color-on-tertiary-container: 242 163 186;
+  --color-tertiary-fixed: 251 221 229;
+  --color-tertiary-fixed-dim: 242 163 186;
+  --color-on-tertiary-fixed: 59 21 35;
+  --color-on-tertiary-fixed-variant: 107 29 52;
+
+  --color-success: 136 176 144;
+  --color-on-success: 31 56 36;
+  --color-success-container: 50 82 57;
+  --color-on-success-container: 220 235 221;
+
+  --color-warning: 208 159 100;
+  --color-on-warning: 66 42 9;
+  --color-warning-container: 102 69 27;
+  --color-on-warning-container: 244 228 207;
+
+  --color-error: 237 154 157;
+  --color-on-error: 92 22 26;
+  --color-error-container: 118 43 47;
+  --color-on-error-container: 255 218 219;
+
+  --color-mood-rad: 104 184 143;
+  --color-mood-rad-container: 29 59 44;
+  --color-on-mood-rad-container: 215 240 226;
+
+  --color-mood-good: 159 196 121;
+  --color-mood-good-container: 47 64 28;
+  --color-on-mood-good-container: 229 242 213;
+
+  --color-mood-meh: 223 173 94;
+  --color-mood-meh-container: 71 54 23;
+  --color-on-mood-meh-container: 248 233 203;
+
+  --color-mood-bad: 220 136 93;
+  --color-mood-bad-container: 74 39 21;
+  --color-on-mood-bad-container: 248 223 210;
+
+  --color-mood-awful: 215 120 125;
+  --color-mood-awful-container: 74 30 34;
+  --color-on-mood-awful-container: 248 219 221;
+
+  --shadow-color-subtle: rgba(0, 0, 0, 0.28);
+  --shadow-color-card: rgba(0, 0, 0, 0.42);
+  --shadow-color-floating: rgba(0, 0, 0, 0.55);
+  --shadow-color-modal: rgba(0, 0, 0, 0.72);
+  --elevation-subtle: 0 1px 2px var(--shadow-color-subtle);
+  --elevation-card: 0 4px 20px var(--shadow-color-card);
+  --elevation-floating: 0 10px 36px var(--shadow-color-floating);
+  --elevation-modal: 0 20px 60px var(--shadow-color-modal);
+}
+
+/* Flat background override for Sakura theme (no gradients, flat fills) */
+:root[data-theme="sakura-light"] .bg-gradient-to-b,
+:root[data-theme="sakura-dark"] .bg-gradient-to-b {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+:root[data-theme="sakura-light"] main.bg-background,
+:root[data-theme="sakura-dark"] main.bg-background {
+  background-color: transparent !important;
+}
+
+/* Sakura Petals Decor display rules */
+.sakura-petals {
+  display: none;
+}
+:root[data-theme="sakura-light"] .sakura-petals,
+:root[data-theme="sakura-dark"] .sakura-petals {
+  display: block;
+}
+
 /* =========================================================================
    HALLOWEEN THEME TOKENS (Autumn Harvest & Spooky Magic)
    - Light: Autumn Harvest Spiced Parchment & Pumpkin Ember

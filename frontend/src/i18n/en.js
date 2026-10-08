@@ -637,6 +637,8 @@ export const en = {
       'terracotta-dark': "Amber Hearth (Dark)",
       'aurora-light': "Aurora Glow (Light)",
       'aurora-dark': "Aurora Glow (Dark)",
+      'sakura-light': "Cherry Blossom (Light)",
+      'sakura-dark': "Cherry Blossom (Dark)",
     },
     families: {
       classic: "Soft Editorial",
@@ -646,6 +648,7 @@ export const en = {
       lavender: "Sunset Lavender",
       terracotta: "Amber Hearth",
       aurora: "Aurora Glow",
+      sakura: "Cherry Blossom",
     },
     descriptions: {
       classic: "Warm editorial paper with dusty rose and calm slate tones",
@@ -655,6 +658,7 @@ export const en = {
       lavender: "Dusk twilight, amethyst softness, and cozy evening reflection",
       terracotta: "Terracotta clay, warm spices, and crackling fireside comfort",
       aurora: "Polar lights, luminescent emerald, and crisp night wonder",
+      sakura: "Airy petal pink, warm floral undertones, and deep plum elegance",
     },
   },
 };
