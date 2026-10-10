@@ -151,22 +151,41 @@ func (r Users) DeleteAccount(ctx context.Context, userID string) error {
 		return fmt.Errorf("delete friendships: %w", err)
 	}
 
-	// 4. Delete incoming notifications (where user is recipient)
+	// 4. Delete friend visibility defaults and overrides involving the user
+	if _, err = tx.Exec(ctx, `DELETE FROM user_friend_visibility WHERE user_id = $1 OR friend_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete user_friend_visibility: %w", err)
+	}
+	if _, err = tx.Exec(ctx, `DELETE FROM entry_friend_visibility WHERE friend_id = $1 OR entry_id IN (SELECT id FROM entries WHERE user_id = $1)`, userID); err != nil {
+		return fmt.Errorf("delete entry_friend_visibility: %w", err)
+	}
+
+	// 5. Delete push subscriptions, notification settings, and announcement state
+	if _, err = tx.Exec(ctx, `DELETE FROM push_subscriptions WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete push_subscriptions: %w", err)
+	}
+	if _, err = tx.Exec(ctx, `DELETE FROM notification_settings WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete notification_settings: %w", err)
+	}
+	if _, err = tx.Exec(ctx, `DELETE FROM announcement_user_state WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("delete announcement_user_state: %w", err)
+	}
+
+	// 6. Delete incoming notifications (where user is recipient)
 	if _, err = tx.Exec(ctx, `DELETE FROM notifications WHERE user_id = $1`, userID); err != nil {
 		return fmt.Errorf("delete incoming notifications: %w", err)
 	}
 
-	// 5. Delete outgoing friend notifications (where user is actor)
+	// 7. Delete outgoing friend notifications (where user is actor)
 	if _, err = tx.Exec(ctx, `DELETE FROM notifications WHERE actor_id = $1 AND type IN ('friend_request', 'friend_accept')`, userID); err != nil {
 		return fmt.Errorf("delete outgoing friend notifications: %w", err)
 	}
 
-	// 6. Invalidate active password reset tokens
+	// 8. Invalidate active password reset tokens
 	if _, err = tx.Exec(ctx, `UPDATE password_reset_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL`, userID); err != nil {
 		return fmt.Errorf("invalidate password reset tokens: %w", err)
 	}
 
-	// 7. Invalidate active account deletion tokens
+	// 9. Invalidate active account deletion tokens
 	if _, err = tx.Exec(ctx, `UPDATE account_deletion_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL`, userID); err != nil {
 		return fmt.Errorf("invalidate deletion tokens: %w", err)
 	}

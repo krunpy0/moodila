@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -27,6 +29,10 @@ const (
 	maxDimensionCap     = 20000
 	maxPixelAreaCap     = 50000000
 )
+
+// imageProcessingSem limits concurrent image decoding and resizing to 2 goroutines
+// to prevent memory spikes on servers with limited RAM (e.g. 1 GB RAM VPS).
+var imageProcessingSem = make(chan struct{}, 2)
 
 type Storage struct {
 	Storage      storage.S3
@@ -185,8 +191,20 @@ func (h Storage) Upload(c *gin.Context) {
 
 	var uploadReader io.Reader
 	if shouldCompress(claimContentType) {
-		compressedBytes, err := processAndCompressPhoto(rawBytes, claimContentType)
+		compressedBytes, err := func() ([]byte, error) {
+			select {
+			case imageProcessingSem <- struct{}{}:
+				defer func() { <-imageProcessingSem }()
+			case <-c.Request.Context().Done():
+				return nil, c.Request.Context().Err()
+			}
+			return processAndCompressPhoto(rawBytes, claimContentType)
+		}()
 		if err != nil {
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				c.JSON(http.StatusRequestTimeout, gin.H{"error": "upload request timed out"})
+				return
+			}
 			log.Printf("photo compression failed: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

@@ -26,6 +26,11 @@ import (
 	"golang.org/x/crypto/hkdf"
 )
 
+type pushJob struct {
+	sub          models.PushSubscription
+	payloadBytes []byte
+}
+
 type Service struct {
 	repo       repository.PushSubscriptions
 	vapidPub   string
@@ -33,6 +38,7 @@ type Service struct {
 	subscriber string
 	privKey    *ecdsa.PrivateKey
 	httpClient *http.Client
+	jobs       chan pushJob
 }
 
 
@@ -55,14 +61,42 @@ func NewService(cfg config.Config, repo repository.PushSubscriptions) (*Service,
 		return nil, fmt.Errorf("invalid VAPID keys: %w", err)
 	}
 
-	return &Service{
+	svc := &Service{
 		repo:       repo,
 		vapidPub:   pub,
 		vapidPriv:  priv,
 		subscriber: sub,
 		privKey:    parsedPriv,
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-	}, nil
+		jobs:       make(chan pushJob, 5000),
+	}
+
+	const maxWorkers = 8
+	for i := 0; i < maxWorkers; i++ {
+		go svc.worker()
+	}
+
+	return svc, nil
+}
+
+func (s *Service) worker() {
+	for job := range s.jobs {
+		s.dispatch(job.sub, job.payloadBytes)
+	}
+}
+
+func (s *Service) dispatch(sub models.PushSubscription, payloadBytes []byte) {
+	sendCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	err := s.sendPushNotification(sendCtx, sub, payloadBytes)
+	if err != nil {
+		log.Printf("[push] failed to send to endpoint %s: %v", sub.Endpoint, err)
+		// If push endpoint returned 404 Not Found or 410 Gone, subscription is invalid/expired
+		if strings.Contains(err.Error(), "status 404") || strings.Contains(err.Error(), "status 410") {
+			_ = s.repo.DeleteByEndpointGlobal(sendCtx, sub.Endpoint)
+		}
+	}
 }
 
 func (s *Service) VAPIDPublicKey() string {
@@ -88,19 +122,11 @@ func (s *Service) SendToUsers(ctx context.Context, userIDs []string, payload mod
 	}
 
 	for _, sub := range subs {
-		go func(sub models.PushSubscription) {
-			sendCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-			defer cancel()
-
-			err := s.sendPushNotification(sendCtx, sub, payloadBytes)
-			if err != nil {
-				log.Printf("[push] failed to send to endpoint %s: %v", sub.Endpoint, err)
-				// If push endpoint returned 404 Not Found or 410 Gone, subscription is invalid/expired
-				if strings.Contains(err.Error(), "status 404") || strings.Contains(err.Error(), "status 410") {
-					_ = s.repo.DeleteByEndpointGlobal(sendCtx, sub.Endpoint)
-				}
-			}
-		}(sub)
+		select {
+		case s.jobs <- pushJob{sub: sub, payloadBytes: payloadBytes}:
+		default:
+			log.Printf("[push] warning: push queue full, dropping notification for %s", sub.Endpoint)
+		}
 	}
 	return nil
 }
