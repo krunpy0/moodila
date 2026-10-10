@@ -202,6 +202,16 @@ export default function Auth() {
                     : t("auth.createAccount")}
               </button>
             </form>
+
+            <div className="mt-md text-center text-label-sm text-on-surface-variant/70 flex items-center justify-center gap-2">
+              <Link to="/privacy" className="hover:underline hover:text-on-surface">
+                {t('legal.privacyPolicy')}
+              </Link>
+              <span>•</span>
+              <Link to="/terms" className="hover:underline hover:text-on-surface">
+                {t('legal.termsOfService')}
+              </Link>
+            </div>
           </div>
         </div>
       </section>

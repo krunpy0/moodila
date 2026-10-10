@@ -1058,6 +1058,12 @@ export default function Landing() {
               <a href="#faq" className="hover:text-on-surface transition-colors whitespace-nowrap">
                 {t('landing.navFaq')}
               </a>
+              <Link to="/privacy" className="hover:text-on-surface transition-colors whitespace-nowrap">
+                {t('legal.privacyPolicy')}
+              </Link>
+              <Link to="/terms" className="hover:text-on-surface transition-colors whitespace-nowrap">
+                {t('legal.termsOfService')}
+              </Link>
             </div>
 
             <p className="text-label-sm text-on-surface-variant/80">

@@ -611,6 +611,24 @@ export const en = {
     footerRights: "Moodila. Crafted with care.",
   },
 
+  // Legal
+  legal: {
+    privacyPolicy: "Privacy Policy",
+    termsOfService: "Terms of Service",
+    lastUpdated: "Last updated: October 2026",
+    back: "Back",
+    home: "Home",
+    tocTitle: "Contents",
+    atAGlance: "At a glance",
+    plainLanguageSubtitle: "Key commitments in plain language",
+    contactSupport: "Have questions about our policies?",
+    contactEmailBtn: "support@moodila.krunpy.ru",
+    backToTop: "Back to top",
+    switchDoc: "Switch document",
+    readingTime: "4 min read",
+    operatorNotice: "Data Controller & Operator",
+  },
+
   // Themes
   themes: {
     title: "Appearance Theme",

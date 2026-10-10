@@ -615,6 +615,24 @@ export const ru = {
     footerRights: "Moodila. Сделано с заботой.",
   },
 
+  // Legal
+  legal: {
+    privacyPolicy: "Политика конфиденциальности",
+    termsOfService: "Условия использования",
+    lastUpdated: "Последнее обновление: октябрь 2026",
+    back: "Назад",
+    home: "Главная",
+    tocTitle: "Содержание",
+    atAGlance: "Коротко о главном",
+    plainLanguageSubtitle: "Ключевые принципы простыми словами",
+    contactSupport: "Есть вопросы по условиям или данным?",
+    contactEmailBtn: "support@moodila.krunpy.ru",
+    backToTop: "Наверх",
+    switchDoc: "Переключить документ",
+    readingTime: "4 мин. чтения",
+    operatorNotice: "Оператор персональных данных",
+  },
+
   // Themes
   themes: {
     title: "Тема оформления",

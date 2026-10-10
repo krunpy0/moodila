@@ -34,6 +34,7 @@ const FriendProfile = lazy(() => import('./pages/FriendProfile'))
 const Admin = lazy(() => import('./pages/Admin'))
 const Landing = lazy(() => import('./pages/Landing'))
 const RootRoute = lazy(() => import('./pages/RootRoute'))
+const LegalPage = lazy(() => import('./pages/LegalPage'))
 
 function PageFallback() {
   return <SplashScreen />
@@ -48,6 +49,9 @@ export default function App() {
           <Routes>
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Auth />} />
+            <Route path="/privacy" element={<LegalPage mode="privacy" />} />
+            <Route path="/terms" element={<LegalPage mode="terms" />} />
+            <Route path="/tos" element={<Navigate to="/terms" replace />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/account/confirm-delete" element={<ConfirmAccountDeletion />} />

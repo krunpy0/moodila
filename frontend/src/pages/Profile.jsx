@@ -619,6 +619,44 @@ export default function Profile() {
                     </button>
                     {showChangePassword && <ChangePasswordForm />}
                   </div>
+
+                  {/* Privacy policy */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <Link
+                      to="/privacy"
+                      onClick={() => haptics.selection()}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          verified_user
+                        </span>
+                        {t("legal.privacyPolicy")}
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        chevron_right
+                      </span>
+                    </Link>
+                  </div>
+
+                  {/* Terms of service */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <Link
+                      to="/terms"
+                      onClick={() => haptics.selection()}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          gavel
+                        </span>
+                        {t("legal.termsOfService")}
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        chevron_right
+                      </span>
+                    </Link>
+                  </div>
                 </div>
 
                 {/* Category 3: Account / Danger Zone */}
