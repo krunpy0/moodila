@@ -58,6 +58,22 @@ func TestMarkRead_InvalidUUID(t *testing.T) {
 	}
 }
 
+func TestMarkRead_EntryIDs_InvalidUUID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Notifications{Notifications: repository.Notifications{Pool: &pgxpool.Pool{}}}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request, _ = http.NewRequest(http.MethodPost, "/notifications/read", strings.NewReader(`{"entry_ids": ["invalid-uuid"]}`))
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	h.MarkRead(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 Bad Request for invalid entry UUID, got %d", w.Code)
+	}
+}
+
 func TestNotificationSettingsUnavailable(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := Notifications{

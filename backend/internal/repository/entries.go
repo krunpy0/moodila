@@ -582,6 +582,10 @@ func (r Entries) Delete(ctx context.Context, entryID, userID string) ([]Attachme
 	if len(attachments) == 0 {
 		return nil, ErrNotFound
 	}
+
+	// Clean up notifications pointing to this deleted entry
+	_, _ = r.Pool.Exec(ctx, `DELETE FROM notifications WHERE entity_id = $1`, entryID)
+
 	r.getCache().InvalidateUser(userID)
 	return attachments, nil
 }
@@ -589,19 +593,22 @@ func (r Entries) Delete(ctx context.Context, entryID, userID string) ([]Attachme
 func (r Entries) DeleteByDate(ctx context.Context, userID, date string) ([]AttachmentURLs, error) {
 	rows, err := r.Pool.Query(ctx, `
 		DELETE FROM entries WHERE user_id = $1 AND date = $2
-		RETURNING photo_url, audio_url`, userID, date)
+		RETURNING id, photo_url, audio_url`, userID, date)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	var attachments []AttachmentURLs
+	var deletedIDs []string
 	for rows.Next() {
+		var id string
 		var att AttachmentURLs
-		if err := rows.Scan(&att.PhotoURL, &att.AudioURL); err != nil {
+		if err := rows.Scan(&id, &att.PhotoURL, &att.AudioURL); err != nil {
 			return nil, err
 		}
 		attachments = append(attachments, att)
+		deletedIDs = append(deletedIDs, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -609,6 +616,11 @@ func (r Entries) DeleteByDate(ctx context.Context, userID, date string) ([]Attac
 	if len(attachments) == 0 {
 		return nil, ErrNotFound
 	}
+
+	if len(deletedIDs) > 0 {
+		_, _ = r.Pool.Exec(ctx, `DELETE FROM notifications WHERE entity_id = ANY($1::uuid[])`, deletedIDs)
+	}
+
 	r.getCache().InvalidateUser(userID)
 	return attachments, nil
 }

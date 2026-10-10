@@ -19,7 +19,8 @@ type Notifications struct {
 }
 
 type markReadInput struct {
-	IDs []string `json:"ids"`
+	IDs      []string `json:"ids"`
+	EntryIDs []string `json:"entry_ids"`
 }
 
 func (h Notifications) List(c *gin.Context) {
@@ -71,6 +72,37 @@ func (h Notifications) MarkRead(c *gin.Context) {
 	var input markReadInput
 	_ = c.ShouldBindJSON(&input)
 
+	// Case 1: Mark by visible feed entry IDs
+	if len(input.EntryIDs) > 0 {
+		if len(input.EntryIDs) > 100 {
+			input.EntryIDs = input.EntryIDs[:100]
+		}
+		for _, id := range input.EntryIDs {
+			if !validUUID(id) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid entry ID format"})
+				return
+			}
+		}
+
+		markedIDs, err := h.Notifications.MarkEntriesAsRead(c.Request.Context(), c.GetString("userID"), input.EntryIDs)
+		if err != nil {
+			log.Printf("[ERROR] Notifications.MarkRead by entries (user=%s): %v", c.GetString("userID"), err)
+			_ = c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not mark notifications as read"})
+			return
+		}
+		if markedIDs == nil {
+			markedIDs = []string{}
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "marked as read",
+			"marked_count": len(markedIDs),
+			"marked_ids":   markedIDs,
+		})
+		return
+	}
+
+	// Case 2: Mark by notification IDs (or mark all if empty)
 	for _, id := range input.IDs {
 		if !validUUID(id) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid notification ID format"})
@@ -78,13 +110,21 @@ func (h Notifications) MarkRead(c *gin.Context) {
 		}
 	}
 
-	if err := h.Notifications.MarkAsRead(c.Request.Context(), c.GetString("userID"), input.IDs); err != nil {
+	markedIDs, err := h.Notifications.MarkAsRead(c.Request.Context(), c.GetString("userID"), input.IDs)
+	if err != nil {
 		log.Printf("[ERROR] Notifications.MarkRead (user=%s): %v", c.GetString("userID"), err)
 		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not mark notifications as read"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "marked as read"})
+	if markedIDs == nil {
+		markedIDs = []string{}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "marked as read",
+		"marked_count": len(markedIDs),
+		"marked_ids":   markedIDs,
+	})
 }
 
 

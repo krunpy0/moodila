@@ -38,6 +38,8 @@ func NewLimiter(r rate.Limit, burst int, ttl time.Duration) *Limiter {
 	return l
 }
 
+const maxLimiterEntries = 10000
+
 func (l *Limiter) getLimiter(key string) *rate.Limiter {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -45,6 +47,20 @@ func (l *Limiter) getLimiter(key string) *rate.Limiter {
 	now := time.Now()
 	entry, exists := l.limiters[key]
 	if !exists {
+		if len(l.limiters) >= maxLimiterEntries {
+			for k, e := range l.limiters {
+				if now.Sub(e.lastSeen) > l.ttl/2 {
+					delete(l.limiters, k)
+				}
+			}
+			if len(l.limiters) >= maxLimiterEntries {
+				for k := range l.limiters {
+					delete(l.limiters, k)
+					break
+				}
+			}
+		}
+
 		limiter := rate.NewLimiter(l.r, l.burst)
 		l.limiters[key] = &clientEntry{
 			limiter:  limiter,

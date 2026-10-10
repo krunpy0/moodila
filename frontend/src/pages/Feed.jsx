@@ -1,5 +1,5 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md · genre: editorial */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
 import {
   useInfiniteFeedQuery,
@@ -9,6 +9,7 @@ import {
   useDeleteCommentMutation,
   useProfileQuery,
   useFriendsQuery,
+  useMarkNotificationsAsReadMutation,
 } from "../api/queries";
 import AppLayout from "../components/AppLayout";
 import BottomNav from "../components/BottomNav";
@@ -63,9 +64,10 @@ export default function Feed() {
     });
   };
 
-  const entries = feedQuery.data
-    ? feedQuery.data.pages.flatMap((page) => page.items || page.entries || [])
-    : [];
+  const entries = useMemo(
+    () => (feedQuery.data ? feedQuery.data.pages.flatMap((page) => page.items || page.entries || []) : []),
+    [feedQuery.data]
+  );
 
   useEffect(() => {
     if (!targetEntryId) {
@@ -89,6 +91,58 @@ export default function Feed() {
       return () => clearTimeout(timer);
     }
   }, [targetEntryId, entries, location.key]);
+
+  const markReadMutation = useMarkNotificationsAsReadMutation();
+  const viewedEntryIdsRef = useRef(new Set());
+  const pendingEntryIdsRef = useRef(new Set());
+
+  // Auto-mark notifications for new posts as read when entries scroll into view
+  useEffect(() => {
+    if (!entries || entries.length === 0) return;
+
+    const flushBatch = () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (pendingEntryIdsRef.current.size === 0) return;
+
+      const toSend = Array.from(pendingEntryIdsRef.current).slice(0, 100);
+      toSend.forEach((id) => pendingEntryIdsRef.current.delete(id));
+
+      markReadMutation.mutate({ entry_ids: toSend });
+    };
+
+    const intervalId = setInterval(flushBatch, 2000);
+
+    let observer = null;
+    const rafId = requestAnimationFrame(() => {
+      if (typeof IntersectionObserver === "undefined") return;
+
+      observer = new IntersectionObserver(
+        (observerEntries) => {
+          if (typeof document !== "undefined" && document.hidden) return;
+          for (const obsEntry of observerEntries) {
+            if (obsEntry.isIntersecting) {
+              const entryId = obsEntry.target.getAttribute("data-entry-id");
+              if (entryId && !viewedEntryIdsRef.current.has(entryId)) {
+                viewedEntryIdsRef.current.add(entryId);
+                pendingEntryIdsRef.current.add(entryId);
+              }
+            }
+          }
+        },
+        { threshold: 0.3 }
+      );
+
+      const elements = document.querySelectorAll("[data-feed-entry]");
+      elements.forEach((el) => observer.observe(el));
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearInterval(intervalId);
+      if (observer) observer.disconnect();
+      flushBatch();
+    };
+  }, [entries, markReadMutation]);
 
   const fetchNextPage = feedQuery.fetchNextPage;
   const hasNextPage = feedQuery.hasNextPage;
@@ -392,6 +446,8 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
     return (
       <article
         id={`feed-entry-${entry.id}`}
+        data-feed-entry=""
+        data-entry-id={entry.id}
         className={`rounded-xl lg:rounded-xxl p-lg shadow-card border transition-[background-color,border-color,box-shadow] duration-normal ${moodTintBg[entry.mood] || "bg-surface-container-high/50 border-outline-variant/20"} ${
           isHighlighted ? "ring-2 ring-primary shadow-floating" : ""
         }`}
@@ -463,6 +519,8 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
   return (
     <article
       id={`feed-entry-${entry.id}`}
+      data-feed-entry=""
+      data-entry-id={entry.id}
       className={`rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-card transition-[box-shadow,border-color] duration-normal ${
         isHighlighted ? "ring-2 ring-primary shadow-floating" : ""
       }`}

@@ -108,3 +108,29 @@ func TestRateLimit_UserKey(t *testing.T) {
 		t.Fatalf("User B req 1 expected 200, got %d", wB1.Code)
 	}
 }
+
+func TestLimiter_CapacityCap(t *testing.T) {
+	lim := NewLimiter(rate.Every(time.Second), 5, time.Millisecond*50)
+	// Seed with maxLimiterEntries entries
+	for i := 0; i < maxLimiterEntries; i++ {
+		lim.limiters[string(rune(i))] = &clientEntry{
+			limiter:  rate.NewLimiter(rate.Every(time.Second), 5),
+			lastSeen: time.Now().Add(-time.Hour), // stale
+		}
+	}
+
+	// Request for a new key should trigger pruning and not panic
+	l := lim.getLimiter("new-key")
+	if l == nil {
+		t.Fatal("expected limiter to be returned")
+	}
+
+	lim.mu.RLock()
+	count := len(lim.limiters)
+	lim.mu.RUnlock()
+
+	if count > maxLimiterEntries {
+		t.Fatalf("expected count <= %d, got %d", maxLimiterEntries, count)
+	}
+}
+

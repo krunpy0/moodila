@@ -169,9 +169,17 @@ func createDump(ctx context.Context, dbURL, outputPath string) error {
 
 		if err := cmd.Run(); err == nil {
 			return nil
-		} else {
-			log.Printf("[backup] pg_dump failed (%v: %s), falling back to Go SQL exporter", err, stderr.String())
 		}
+		log.Printf("[backup] pg_dump failed (%v: %s), falling back to Go SQL exporter", err, stderr.String())
+
+		// Clean up any partial output from pg_dump before falling back to avoid corrupt mixed archive
+		if truncErr := outFile.Truncate(0); truncErr != nil {
+			return fmt.Errorf("reset dump file after pg_dump failure: %w", truncErr)
+		}
+		if _, seekErr := outFile.Seek(0, io.SeekStart); seekErr != nil {
+			return fmt.Errorf("seek dump file after pg_dump failure: %w", seekErr)
+		}
+		gzWriter.Reset(outFile)
 	}
 
 	// Method B: Pure Go SQL Exporter fallback

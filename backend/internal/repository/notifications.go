@@ -27,16 +27,37 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 	if userID == actorID {
 		return nil
 	}
-	_, err := r.Pool.Exec(ctx, `
-		INSERT INTO notifications (user_id, actor_id, type, entity_id, content)
-		VALUES ($1, $2, $3, $4, $5)`,
-		userID, actorID, notifType, entityID, content,
-	)
-	if err != nil {
-		return err
+
+	var isInserted bool = true
+	if notifType == "like" {
+		err := r.Pool.QueryRow(ctx, `
+			INSERT INTO notifications (user_id, actor_id, type, entity_id, content)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (user_id, actor_id, entity_id) WHERE type = 'like'
+			DO UPDATE SET content = EXCLUDED.content, created_at = now(), is_read = false
+			RETURNING (xmax = 0)`,
+			userID, actorID, notifType, entityID, content,
+		).Scan(&isInserted)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err := r.Pool.Exec(ctx, `
+			INSERT INTO notifications (user_id, actor_id, type, entity_id, content)
+			VALUES ($1, $2, $3, $4, $5)`,
+			userID, actorID, notifType, entityID, content,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	if r.PushSender != nil {
+		// Suppress push notification spam if reaction emoji was simply changed or updated
+		if notifType == "like" && !isInserted {
+			return nil
+		}
+
 		var actorName string
 		var notifyReactions, notifyComments, notifyFriendRequests bool
 		notifyReactions = true
@@ -110,7 +131,7 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 }
 
 func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry models.Entry) error {
-	if r.Pool == nil || r.PushSender == nil {
+	if r.Pool == nil {
 		return nil
 	}
 
@@ -124,7 +145,8 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 	}
 
 	rows, err := r.Pool.Query(ctx, `
-		SELECT f_user.id
+		SELECT f_user.id,
+		       EXISTS (SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = f_user.id) AS has_push
 		FROM (
 			SELECT CASE 
 				WHEN requester_id = $1 THEN addressee_id 
@@ -139,7 +161,6 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 		LEFT JOIN notification_settings ns ON ns.user_id = f_user.id
 		WHERE COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
 		  AND COALESCE(ns.notify_new_posts, true) = true
-		  AND EXISTS (SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = f_user.id)
 	`, authorID, entry.ID)
 	if err != nil {
 		return err
@@ -147,10 +168,15 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 	defer rows.Close()
 
 	var friendIDs []string
+	var pushFriendIDs []string
 	for rows.Next() {
 		var fID string
-		if err := rows.Scan(&fID); err == nil {
+		var hasPush bool
+		if err := rows.Scan(&fID, &hasPush); err == nil {
 			friendIDs = append(friendIDs, fID)
+			if hasPush {
+				pushFriendIDs = append(pushFriendIDs, fID)
+			}
 		}
 	}
 
@@ -158,31 +184,52 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 		return nil
 	}
 
-	var recentCount int
-	_ = r.Pool.QueryRow(ctx, `
-		SELECT COUNT(*)
-		FROM entries
-		WHERE user_id = $1
-		  AND is_hidden = false
-		  AND created_at >= NOW() - INTERVAL '2 hours'
-	`, authorID).Scan(&recentCount)
-	if recentCount <= 0 {
-		recentCount = 1
+	// 1. Batch insert in-app notifications for eligible friends
+	var snippet *string
+	if entry.Text != "" {
+		runes := []rune(entry.Text)
+		if len(runes) > 80 {
+			snip := string(runes[:80]) + "…"
+			snippet = &snip
+		} else {
+			snippet = &entry.Text
+		}
 	}
+	_, _ = r.Pool.Exec(ctx, `
+		INSERT INTO notifications (user_id, actor_id, type, entity_id, content)
+		SELECT unnest($1::uuid[]), $2, 'new_post', $3, $4
+		ON CONFLICT DO NOTHING`,
+		friendIDs, authorID, entry.ID, snippet,
+	)
 
-	body := authorName + " поделился(ась) новой записью"
-	if recentCount > 1 {
-		body = fmt.Sprintf("%s опубликовал(а) %s", authorName, formatPostsCountRu(recentCount))
+	// 2. Send push notifications to friends who have active push subscriptions
+	if r.PushSender != nil && len(pushFriendIDs) > 0 {
+		var recentCount int
+		_ = r.Pool.QueryRow(ctx, `
+			SELECT COUNT(*)
+			FROM entries
+			WHERE user_id = $1
+			  AND is_hidden = false
+			  AND created_at >= NOW() - INTERVAL '2 hours'
+		`, authorID).Scan(&recentCount)
+		if recentCount <= 0 {
+			recentCount = 1
+		}
+
+		body := authorName + " поделился(ась) новой записью"
+		if recentCount > 1 {
+			body = fmt.Sprintf("%s опубликовал(а) %s", authorName, formatPostsCountRu(recentCount))
+		}
+
+		payload := models.PushPayload{
+			Title: "Moodila",
+			Body:  body,
+			Tag:   "new_post_" + authorID,
+			URL:   "/feed",
+		}
+
+		_ = r.PushSender.SendToUsers(ctx, pushFriendIDs, payload)
 	}
-
-	payload := models.PushPayload{
-		Title: "Moodila",
-		Body:  body,
-		Tag:   "new_post_" + authorID,
-		URL:   "/feed",
-	}
-
-	_ = r.PushSender.SendToUsers(ctx, friendIDs, payload)
 
 	return nil
 }
@@ -252,27 +299,81 @@ func (r Notifications) UnreadCount(ctx context.Context, userID string) (int, err
 	return count, err
 }
 
-func (r Notifications) MarkAsRead(ctx context.Context, userID string, ids []string) error {
+func (r Notifications) MarkAsRead(ctx context.Context, userID string, ids []string) ([]string, error) {
 	if r.Pool == nil {
-		return nil
+		return []string{}, nil
 	}
 	if len(ids) == 0 {
-		_, err := r.Pool.Exec(ctx, `
+		rows, err := r.Pool.Query(ctx, `
 			UPDATE notifications
 			SET is_read = true
-			WHERE user_id = $1 AND is_read = false`,
+			WHERE user_id = $1 AND is_read = false
+			RETURNING id`,
 			userID,
 		)
-		return err
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+		markedIDs := make([]string, 0)
+		for rows.Next() {
+			var mid string
+			if err := rows.Scan(&mid); err == nil {
+				markedIDs = append(markedIDs, mid)
+			}
+		}
+		return markedIDs, rows.Err()
 	}
 
-	_, err := r.Pool.Exec(ctx, `
+	rows, err := r.Pool.Query(ctx, `
 		UPDATE notifications
 		SET is_read = true
-		WHERE user_id = $1 AND id = ANY($2::uuid[])`,
+		WHERE user_id = $1 AND id = ANY($2::uuid[]) AND is_read = false
+		RETURNING id`,
 		userID, ids,
 	)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	markedIDs := make([]string, 0)
+	for rows.Next() {
+		var mid string
+		if err := rows.Scan(&mid); err == nil {
+			markedIDs = append(markedIDs, mid)
+		}
+	}
+	return markedIDs, rows.Err()
+}
+
+func (r Notifications) MarkEntriesAsRead(ctx context.Context, userID string, entryIDs []string) ([]string, error) {
+	if r.Pool == nil || len(entryIDs) == 0 {
+		return []string{}, nil
+	}
+
+	rows, err := r.Pool.Query(ctx, `
+		UPDATE notifications
+		SET is_read = true
+		WHERE user_id = $1
+		  AND type = 'new_post'
+		  AND entity_id = ANY($2::uuid[])
+		  AND is_read = false
+		RETURNING id`,
+		userID, entryIDs,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	markedIDs := make([]string, 0)
+	for rows.Next() {
+		var mid string
+		if err := rows.Scan(&mid); err == nil {
+			markedIDs = append(markedIDs, mid)
+		}
+	}
+	return markedIDs, rows.Err()
 }
 
 // DeleteOlderThanBatch deletes up to batchSize notifications older than the given number of days.

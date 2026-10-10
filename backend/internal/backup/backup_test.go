@@ -1,8 +1,11 @@
 package backup
 
 import (
+	"context"
+	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestSortTablesTopologically_Schema(t *testing.T) {
@@ -156,3 +159,15 @@ func TestFormatSQLValue(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateDump_InvalidDBURL(t *testing.T) {
+	tmpFile := filepath.Join(t.TempDir(), "test_dump.sql.gz")
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := createDump(ctx, "postgres://invalid:invalid@127.0.0.1:54329/nonexistent", tmpFile)
+	if err == nil {
+		t.Fatal("expected error for invalid DB URL, got nil")
+	}
+}
+

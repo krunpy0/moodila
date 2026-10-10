@@ -90,7 +90,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
     onClose()
     if (item.type === 'friend_request' || item.type === 'friend_accept') {
       navigate('/friends')
-    } else if (item.type === 'like' || item.type === 'comment') {
+    } else if (item.type === 'like' || item.type === 'comment' || item.type === 'new_post') {
       if (item.entity_id) {
         navigate(`/feed?entry=${item.entity_id}`)
       } else {
@@ -126,6 +126,14 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
   const renderContent = (item) => {
     const actorName = item.actor_display_name || item.actor_username || t('common.user', 'User')
     switch (item.type) {
+      case 'new_post':
+        return (
+          <>
+            <span className="font-semibold text-on-surface">{actorName}</span>{' '}
+            {t('notifications.newPostPublished', 'поделился(ась) новой записью')}
+            {item.content ? ` “${item.content}”` : ''}
+          </>
+        )
       case 'friend_request':
         return (
           <>
@@ -161,6 +169,8 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
 
   const getTypeIcon = (type) => {
     switch (type) {
+      case 'new_post':
+        return 'article'
       case 'friend_request':
         return 'person_add'
       case 'friend_accept':
@@ -371,7 +381,20 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
                   </div>
 
                   {!item.is_read && (
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-primary mt-2" />
+                    <button
+                      type="button"
+                      aria-label={t('notifications.markRead', 'Прочитать')}
+                      title={t('notifications.markRead', 'Прочитать')}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        haptics.selection()
+                        markReadMutation.mutate([item.id])
+                      }}
+                      className="mt-1 flex items-center gap-1 rounded-full bg-primary/10 hover:bg-primary/20 text-primary px-2.5 py-1 text-label-small font-semibold shrink-0 transition-colors active:scale-95"
+                    >
+                      <span className="material-symbols-outlined text-[15px]">done</span>
+                      <span className="text-[12px]">{t('notifications.markRead', 'Прочитать')}</span>
+                    </button>
                   )}
                 </button>
               ))

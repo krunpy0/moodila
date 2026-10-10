@@ -442,6 +442,8 @@ export const ru = {
     friendRequestAccepted: "принял(а) вашу заявку в друзья",
     likedEntry: "оценил(а) вашу запись",
     commentedEntry: "прокомментировал(а) вашу запись",
+    newPostPublished: "поделился(ась) новой записью",
+    markRead: "Прочитать",
   },
 
   // Admin & Announcements

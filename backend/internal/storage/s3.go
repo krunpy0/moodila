@@ -34,6 +34,18 @@ type S3 struct {
 	ForcePathStyle  bool
 	IsPrivate       bool
 	Now             func() time.Time
+	HTTPClient      *http.Client
+}
+
+var defaultS3Client = &http.Client{
+	Timeout: 30 * time.Second,
+}
+
+func (s S3) getHTTPClient() *http.Client {
+	if s.HTTPClient != nil {
+		return s.HTTPClient
+	}
+	return defaultS3Client
 }
 
 type Upload struct {
@@ -119,12 +131,12 @@ func (s S3) Put(ctx context.Context, objectKey, contentType string, body io.Read
 		return err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, uploadURL, body)
-	log.Printf("presigned PUT url: %s", uploadURL)
+	log.Printf("presigned PUT for object: %s", objectKey)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", contentType)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.getHTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("upload to S3: %w", err)
 	}
@@ -149,7 +161,7 @@ func (s S3) Delete(ctx context.Context, objectKey string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := s.getHTTPClient().Do(req)
 	if err != nil {
 		return fmt.Errorf("delete from S3: %w", err)
 	}

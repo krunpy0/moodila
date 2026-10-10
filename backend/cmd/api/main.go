@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -108,6 +109,21 @@ func main() {
 	}
 
 	router := gin.New()
+	if cfg.TrustedProxies != "" {
+		proxies := strings.Split(cfg.TrustedProxies, ",")
+		var cleaned []string
+		for _, p := range proxies {
+			if t := strings.TrimSpace(p); t != "" {
+				cleaned = append(cleaned, t)
+			}
+		}
+		if err := router.SetTrustedProxies(cleaned); err != nil {
+			log.Printf("warning: could not set trusted proxies: %v", err)
+		}
+	} else {
+		_ = router.SetTrustedProxies(nil)
+	}
+
 	if cfg.SentryDSN != "" {
 		router.Use(sentrygin.New(sentrygin.Options{
 			Repanic: true,

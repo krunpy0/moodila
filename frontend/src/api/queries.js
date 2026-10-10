@@ -324,14 +324,22 @@ export function useMarkNotificationsAsReadMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: markNotificationsAsRead,
-    onMutate: async (ids) => {
+    onMutate: async (payload) => {
+      // If marking by notification IDs or marking all, optimistically update UI
+      const isEntryIdsOnly = payload && !Array.isArray(payload) && payload.entry_ids && (!payload.ids || payload.ids.length === 0)
+      if (isEntryIdsOnly) {
+        // Do not guess unread count for scrolled feed items to prevent counter drift
+        return {}
+      }
+
       await queryClient.cancelQueries({ queryKey: queryKeys.notifications })
       await queryClient.cancelQueries({ queryKey: queryKeys.unreadCount })
 
       const prevNotifications = queryClient.getQueryData(queryKeys.notifications)
       const prevUnreadCount = queryClient.getQueryData(queryKeys.unreadCount)
 
-      // Optimistically update notifications list
+      const ids = Array.isArray(payload) ? payload : (payload?.ids || [])
+
       queryClient.setQueryData(queryKeys.notifications, (old) => {
         if (!Array.isArray(old)) return old
         if (!ids || ids.length === 0) {
@@ -341,22 +349,44 @@ export function useMarkNotificationsAsReadMutation() {
         return old.map((n) => (idSet.has(n.id) ? { ...n, is_read: true } : n))
       })
 
-      // Optimistically update unread count
-      queryClient.setQueryData(queryKeys.unreadCount, (old) => {
-        if (!old) return old
-        if (!ids || ids.length === 0) {
-          return { ...old, unread_count: 0 }
-        }
-        const count = ids.length
-        return {
-          ...old,
-          unread_count: Math.max(0, (old.unread_count || 0) - count),
-        }
-      })
+      if (!ids || ids.length === 0) {
+        queryClient.setQueryData(queryKeys.unreadCount, (old) => old ? { ...old, unread_count: 0 } : old)
+      } else {
+        queryClient.setQueryData(queryKeys.unreadCount, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            unread_count: Math.max(0, (old.unread_count || 0) - ids.length),
+          }
+        })
+      }
 
       return { prevNotifications, prevUnreadCount }
     },
-    onError: (_err, _ids, context) => {
+    onSuccess: (data, payload) => {
+      if (!data) return
+      const isEntryIdsOnly = payload && !Array.isArray(payload) && payload.entry_ids && (!payload.ids || payload.ids.length === 0)
+
+      if (isEntryIdsOnly && data.marked_count > 0) {
+        // Decrement exactly by the number of notifications the server marked as read
+        queryClient.setQueryData(queryKeys.unreadCount, (old) => {
+          if (!old) return old
+          return {
+            ...old,
+            unread_count: Math.max(0, (old.unread_count || 0) - data.marked_count),
+          }
+        })
+
+        if (Array.isArray(data.marked_ids) && data.marked_ids.length > 0) {
+          const idSet = new Set(data.marked_ids)
+          queryClient.setQueryData(queryKeys.notifications, (old) => {
+            if (!Array.isArray(old)) return old
+            return old.map((n) => (idSet.has(n.id) ? { ...n, is_read: true } : n))
+          })
+        }
+      }
+    },
+    onError: (_err, _payload, context) => {
       if (context?.prevNotifications) {
         queryClient.setQueryData(queryKeys.notifications, context.prevNotifications)
       }

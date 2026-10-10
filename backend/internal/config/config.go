@@ -54,6 +54,7 @@ type Config struct {
 	SentryRelease                string
 	SentryTracesSampleRate       float64
 	DisableRateLimit             bool
+	TrustedProxies               string
 }
 
 // Load reads configuration, loading backend/.env first (if present) so local
@@ -110,6 +111,7 @@ func Load() Config {
 		SentryRelease:                getenv("SENTRY_RELEASE", "moodshare@1.0.0"),
 		SentryTracesSampleRate:       parseFloat(os.Getenv("SENTRY_TRACES_SAMPLE_RATE"), defaultTracesSampleRate(appEnv)),
 		DisableRateLimit:             parseBool(getenv("DISABLE_RATE_LIMIT", "false")),
+		TrustedProxies:               os.Getenv("TRUSTED_PROXIES"),
 	}
 }
 

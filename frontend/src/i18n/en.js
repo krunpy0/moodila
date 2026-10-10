@@ -437,6 +437,8 @@ export const en = {
     friendRequestAccepted: "accepted your friend request",
     likedEntry: "liked your entry",
     commentedEntry: "commented on your entry",
+    newPostPublished: "shared a new entry",
+    markRead: "Mark read",
     pushNotSupported: "Push notifications not supported",
   },
 

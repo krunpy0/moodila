@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -174,3 +175,21 @@ func TestResolveAccessURL(t *testing.T) {
 		}
 	})
 }
+
+func TestS3_CustomClientAndTimeout(t *testing.T) {
+	sDefault := S3{}
+	client := sDefault.getHTTPClient()
+	if client == nil {
+		t.Fatal("expected non-nil default HTTP client")
+	}
+	if client.Timeout != 30*time.Second {
+		t.Errorf("expected default timeout 30s, got %v", client.Timeout)
+	}
+
+	customClient := &http.Client{Timeout: 5 * time.Second}
+	sCustom := S3{HTTPClient: customClient}
+	if sCustom.getHTTPClient() != customClient {
+		t.Errorf("expected custom HTTP client to be used")
+	}
+}
+

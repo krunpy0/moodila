@@ -29,8 +29,13 @@ func TestNotifications_NilPoolSafety(t *testing.T) {
 	}
 
 	// Test MarkAsRead
-	if err := repo.MarkAsRead(ctx, "user1", []string{"id1"}); err != nil {
+	if _, err := repo.MarkAsRead(ctx, "user1", []string{"id1"}); err != nil {
 		t.Fatalf("expected nil error on MarkAsRead, got: %v", err)
+	}
+
+	// Test MarkEntriesAsRead
+	if _, err := repo.MarkEntriesAsRead(ctx, "user1", []string{"e1"}); err != nil {
+		t.Fatalf("expected nil error on MarkEntriesAsRead, got: %v", err)
 	}
 
 	// Test DeleteOlderThanBatch
