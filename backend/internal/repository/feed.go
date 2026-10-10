@@ -272,19 +272,23 @@ func (r Feed) React(ctx context.Context, viewerID, entryID, reaction string) (mo
 		return result, pgx.ErrNoRows
 	}
 
-	var exists bool
-	err = r.Pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM likes WHERE entry_id = $1 AND user_id = $2 AND reaction = $3)`, entryID, viewerID, reaction).Scan(&exists)
+	// Atomic toggle: first attempt to delete existing reaction
+	cmdTag, err := r.Pool.Exec(ctx, `DELETE FROM likes WHERE entry_id = $1 AND user_id = $2 AND reaction = $3`, entryID, viewerID, reaction)
 	if err != nil {
 		return result, err
 	}
 
-	if exists {
-		_, err = r.Pool.Exec(ctx, `DELETE FROM likes WHERE entry_id = $1 AND user_id = $2 AND reaction = $3`, entryID, viewerID, reaction)
-	} else {
-		_, err = r.Pool.Exec(ctx, `INSERT INTO likes (entry_id, user_id, reaction) VALUES ($1, $2, $3)`, entryID, viewerID, reaction)
-	}
-	if err != nil {
-		return result, err
+	// If no existing reaction was deleted, insert it with ON CONFLICT DO NOTHING to handle concurrent requests safely
+	if cmdTag.RowsAffected() == 0 {
+		_, err = r.Pool.Exec(ctx, `
+			INSERT INTO likes (entry_id, user_id, reaction)
+			VALUES ($1, $2, $3)
+			ON CONFLICT (entry_id, user_id, reaction) DO NOTHING`,
+			entryID, viewerID, reaction,
+		)
+		if err != nil {
+			return result, err
+		}
 	}
 
 	dummyEntries := []models.FeedEntry{{ID: entryID}}

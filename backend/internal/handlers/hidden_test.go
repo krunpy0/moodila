@@ -173,7 +173,7 @@ func TestHiddenEntriesE2E(t *testing.T) {
 	}
 
 	// Unhide entry1 for subsequent tests
-	_, _ = entriesRepo.UpdateVisibility(ctx, userA.ID, entry1.ID, false)
+	_, _ = entriesRepo.UpdateVisibility(ctx, entry1.ID, userA.ID, false)
 
 	// Create User C (friend of A)
 	userC, err := usersRepo.Create(ctx, fmt.Sprintf("userc_%d@test.com", ts), fmt.Sprintf("userc_%d", (ts+1)%1000000), "User C", "pass")

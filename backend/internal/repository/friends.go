@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"moodshare/internal/models"
@@ -104,8 +105,18 @@ func (r Friends) Request(ctx context.Context, requesterID, addresseeID string) (
 }
 
 func (r Friends) Respond(ctx context.Context, friendshipID, addresseeID, status string) (models.Friendship, error) {
+	if r.Pool == nil {
+		return models.Friendship{}, errors.New("database pool unavailable")
+	}
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return models.Friendship{}, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
 	var friendship models.Friendship
-	err := r.Pool.QueryRow(ctx, `
+	err = tx.QueryRow(ctx, `
 		UPDATE friendships
 		SET status = $3, updated_at = now()
 		WHERE id = $1 AND addressee_id = $2 AND status = 'pending'
@@ -115,8 +126,12 @@ func (r Friends) Respond(ctx context.Context, friendshipID, addresseeID, status 
 		&friendship.ID, &friendship.RequesterID, &friendship.AddresseeID,
 		&friendship.Status, &friendship.CreatedAt, &friendship.UpdatedAt,
 	)
-	if err == nil && status == "accepted" {
-		_, _ = r.Pool.Exec(ctx, `
+	if err != nil {
+		return models.Friendship{}, err
+	}
+
+	if status == "accepted" {
+		_, err = tx.Exec(ctx, `
 			INSERT INTO entry_friend_visibility (entry_id, friend_id, is_hidden)
 			SELECT e.id, $2, true
 			FROM entries e
@@ -125,7 +140,11 @@ func (r Friends) Respond(ctx context.Context, friendshipID, addresseeID, status 
 			ON CONFLICT (entry_id, friend_id) DO NOTHING`,
 			friendship.RequesterID, friendship.AddresseeID,
 		)
-		_, _ = r.Pool.Exec(ctx, `
+		if err != nil {
+			return models.Friendship{}, fmt.Errorf("hide requester custom entries: %w", err)
+		}
+
+		_, err = tx.Exec(ctx, `
 			INSERT INTO entry_friend_visibility (entry_id, friend_id, is_hidden)
 			SELECT e.id, $1, true
 			FROM entries e
@@ -134,8 +153,16 @@ func (r Friends) Respond(ctx context.Context, friendshipID, addresseeID, status 
 			ON CONFLICT (entry_id, friend_id) DO NOTHING`,
 			friendship.RequesterID, friendship.AddresseeID,
 		)
+		if err != nil {
+			return models.Friendship{}, fmt.Errorf("hide addressee custom entries: %w", err)
+		}
 	}
-	return friendship, err
+
+	if err := tx.Commit(ctx); err != nil {
+		return models.Friendship{}, fmt.Errorf("commit tx: %w", err)
+	}
+
+	return friendship, nil
 }
 
 func (r Friends) Pending(ctx context.Context, userID string) ([]models.FriendUser, error) {
@@ -252,8 +279,18 @@ func (r Friends) SetFriendVisibilityDefault(ctx context.Context, userID, friendI
 }
 
 func (r Friends) Delete(ctx context.Context, userID, targetID string) error {
+	if r.Pool == nil {
+		return errors.New("database pool unavailable")
+	}
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
 	var reqID, addrID string
-	err := r.Pool.QueryRow(ctx, `
+	err = tx.QueryRow(ctx, `
 		DELETE FROM friendships
 		WHERE status = 'accepted' AND (
 			(id = $1 AND (requester_id = $2 OR addressee_id = $2))
@@ -271,16 +308,20 @@ func (r Friends) Delete(ctx context.Context, userID, targetID string) error {
 	}
 
 	// Clean up visibility defaults and entry overrides between former friends
-	_, _ = r.Pool.Exec(ctx, `
+	if _, err = tx.Exec(ctx, `
 		DELETE FROM user_friend_visibility
-		WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`, reqID, addrID)
+		WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`, reqID, addrID); err != nil {
+		return fmt.Errorf("delete user_friend_visibility: %w", err)
+	}
 
-	_, _ = r.Pool.Exec(ctx, `
+	if _, err = tx.Exec(ctx, `
 		DELETE FROM entry_friend_visibility
 		WHERE (friend_id = $1 AND entry_id IN (SELECT id FROM entries WHERE user_id = $2))
-		   OR (friend_id = $2 AND entry_id IN (SELECT id FROM entries WHERE user_id = $1))`, reqID, addrID)
+		   OR (friend_id = $2 AND entry_id IN (SELECT id FROM entries WHERE user_id = $1))`, reqID, addrID); err != nil {
+		return fmt.Errorf("delete entry_friend_visibility: %w", err)
+	}
 
-	return nil
+	return tx.Commit(ctx)
 }
 
 func (r Friends) CancelRequest(ctx context.Context, requesterID, targetID string) error {

@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	ErrNotFound  = errors.New("entry not found")
-	ErrForbidden = errors.New("forbidden")
+	ErrNotFound          = errors.New("entry not found")
+	ErrForbidden         = errors.New("forbidden")
+	ErrNotAcceptedFriend = errors.New("friend is not an accepted friend")
 )
 
 // SummaryCache provides thread-safe in-memory caching for month summaries.
@@ -151,12 +152,22 @@ func (r Entries) InvalidateUserCache(userID string) {
 }
 
 func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool, overrides []models.EntryFriendOverride) (models.Entry, bool, []AttachmentURLs, error) {
+	if r.Pool == nil {
+		return models.Entry{}, false, nil, errors.New("database pool unavailable")
+	}
+
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return models.Entry{}, false, nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
 	var oldAtt AttachmentURLs
-	err := r.Pool.QueryRow(ctx, `SELECT photo_url, audio_url FROM entries WHERE user_id = $1 AND date = $2`, userID, date).Scan(&oldAtt.PhotoURL, &oldAtt.AudioURL)
+	err = tx.QueryRow(ctx, `SELECT photo_url, audio_url FROM entries WHERE user_id = $1 AND date = $2`, userID, date).Scan(&oldAtt.PhotoURL, &oldAtt.AudioURL)
 	isNew := errors.Is(err, pgx.ErrNoRows)
 
 	var entry models.Entry
-	err = r.Pool.QueryRow(ctx, `
+	err = tx.QueryRow(ctx, `
 		INSERT INTO entries (user_id, date, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, false))
 		ON CONFLICT (user_id, date) DO UPDATE
@@ -178,24 +189,65 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 	}
 
 	if overrides != nil {
-		_, err = r.Pool.Exec(ctx, `DELETE FROM entry_friend_visibility WHERE entry_id = $1`, entry.ID)
+		if len(overrides) > 0 {
+			fIDs := make([]string, len(overrides))
+			for i, ov := range overrides {
+				fIDs[i] = ov.FriendID
+			}
+
+			// Validate all friends in a single query
+			rows, err := tx.Query(ctx, `
+				SELECT CASE WHEN requester_id = $1::uuid THEN addressee_id::text ELSE requester_id::text END
+				FROM friendships
+				WHERE status = 'accepted'
+				  AND (
+				    (requester_id = $1::uuid AND addressee_id = ANY($2::uuid[]))
+				    OR (addressee_id = $1::uuid AND requester_id = ANY($2::uuid[]))
+				  )`, userID, fIDs)
+			if err != nil {
+				return models.Entry{}, false, nil, fmt.Errorf("verify friends: %w", err)
+			}
+			validFriends := make(map[string]bool, len(fIDs))
+			for rows.Next() {
+				var fid string
+				if err := rows.Scan(&fid); err == nil {
+					validFriends[fid] = true
+				}
+			}
+			rows.Close()
+
+			for _, ov := range overrides {
+				if !validFriends[ov.FriendID] {
+					return models.Entry{}, false, nil, fmt.Errorf("user %s is not an accepted friend: %w", ov.FriendID, ErrNotAcceptedFriend)
+				}
+			}
+		}
+
+		_, err = tx.Exec(ctx, `DELETE FROM entry_friend_visibility WHERE entry_id = $1`, entry.ID)
 		if err != nil {
 			return models.Entry{}, false, nil, err
 		}
-		for _, ov := range overrides {
-			_, err = r.Pool.Exec(ctx, `
+
+		if len(overrides) > 0 {
+			friendIDs := make([]string, len(overrides))
+			isHiddens := make([]bool, len(overrides))
+			for i, ov := range overrides {
+				friendIDs[i] = ov.FriendID
+				isHiddens[i] = ov.IsHidden
+			}
+
+			_, err = tx.Exec(ctx, `
 				INSERT INTO entry_friend_visibility (entry_id, friend_id, is_hidden)
-				VALUES ($1, $2, $3)
-				ON CONFLICT (entry_id, friend_id) DO UPDATE SET is_hidden = EXCLUDED.is_hidden`,
-				entry.ID, ov.FriendID, ov.IsHidden,
+				SELECT $1::uuid, unnest($2::uuid[]), unnest($3::boolean[])`,
+				entry.ID, friendIDs, isHiddens,
 			)
 			if err != nil {
-				return models.Entry{}, false, nil, err
+				return models.Entry{}, false, nil, fmt.Errorf("insert visibility overrides: %w", err)
 			}
 		}
 	}
 
-	ovRows, err := r.Pool.Query(ctx, `SELECT friend_id, is_hidden FROM entry_friend_visibility WHERE entry_id = $1`, entry.ID)
+	ovRows, err := tx.Query(ctx, `SELECT friend_id, is_hidden FROM entry_friend_visibility WHERE entry_id = $1`, entry.ID)
 	if err != nil {
 		return models.Entry{}, false, nil, err
 	}
@@ -209,6 +261,10 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 		entry.FriendOverrides = append(entry.FriendOverrides, ov)
 	}
 	entry.HasCustomVisibility = len(entry.FriendOverrides) > 0
+
+	if err := tx.Commit(ctx); err != nil {
+		return models.Entry{}, false, nil, fmt.Errorf("commit tx: %w", err)
+	}
 
 	r.getCache().InvalidateUser(userID)
 

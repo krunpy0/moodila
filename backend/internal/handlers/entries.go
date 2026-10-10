@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -124,26 +123,6 @@ func (h Entries) Save(c *gin.Context) {
 				return
 			}
 			seen[fID] = true
-
-			var isFriend bool
-			err := h.Entries.Pool.QueryRow(c.Request.Context(), `
-				SELECT EXISTS (
-					SELECT 1 FROM friendships
-					WHERE LEAST(requester_id, addressee_id) = LEAST($1::uuid, $2::uuid)
-					  AND GREATEST(requester_id, addressee_id) = GREATEST($1::uuid, $2::uuid)
-					  AND status = 'accepted'
-				)`, userID, fID).Scan(&isFriend)
-			if err != nil {
-				log.Printf("[ERROR] Entries.Save check friend (user=%s, friend=%s): %v", userID, fID, err)
-				_ = c.Error(err)
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify friendship"})
-				return
-			}
-			if !isFriend {
-				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("user %s is not an accepted friend", fID), "field": "friend_overrides"})
-				return
-			}
-
 			overrides = append(overrides, models.EntryFriendOverride{
 				FriendID: fID,
 				IsHidden: *ov.IsHidden,
@@ -155,6 +134,10 @@ func (h Entries) Save(c *gin.Context) {
 		c.Request.Context(), userID, input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden, overrides,
 	)
 	if err != nil {
+		if errors.Is(err, repository.ErrNotAcceptedFriend) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "field": "friend_overrides"})
+			return
+		}
 		log.Printf("[ERROR] Entries.Save (user=%s, date=%s): %v", userID, input.Date, err)
 		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save entry"})

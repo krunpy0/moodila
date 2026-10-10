@@ -684,6 +684,7 @@ func (h Auth) DeleteAccountConfirm(c *gin.Context) {
 
 	_ = h.AccountDeletion.MarkUsed(c.Request.Context(), tok.ID)
 	_ = h.Mailer.SendAccountDeletedConfirmationEmail(user.Email)
+	h.clearAuthCookies(c)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Account deleted successfully"})
 }
