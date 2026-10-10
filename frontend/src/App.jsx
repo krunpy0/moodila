@@ -10,8 +10,9 @@ import SplashScreen from './components/SplashScreen'
 function SessionUserSync() {
   const { data: session } = useSessionQuery(true)
   useEffect(() => {
-    if (session?.user) {
-      setSentryUser(session.user)
+    const user = session?.user || (session?.user_id ? { user_id: session.user_id } : null)
+    if (user) {
+      setSentryUser(user)
     } else {
       clearSentryUser()
     }

@@ -196,6 +196,11 @@ func (h Auth) Refresh(c *gin.Context) {
 }
 
 func (h Auth) Logout(c *gin.Context) {
+	if userID := h.getUserIDFromContextOrCookies(c); userID != "" {
+		if err := h.Users.InvalidateTokens(c.Request.Context(), userID); err != nil {
+			log.Printf("[WARN] Auth.Logout failed to invalidate tokens for %s: %v", userID, err)
+		}
+	}
 	h.clearAuthCookies(c)
 	c.JSON(http.StatusOK, gin.H{"message": "logged out successfully"})
 }
@@ -205,6 +210,27 @@ type CustomClaims struct {
 	TokenType    string `json:"type,omitempty"`
 	CSRF         string `json:"csrf,omitempty"`
 	TokenVersion int    `json:"token_version,omitempty"`
+}
+
+func (h Auth) getUserIDFromContextOrCookies(c *gin.Context) string {
+	if uid := c.GetString("userID"); uid != "" {
+		return uid
+	}
+	for _, cookieName := range []string{"refresh_token", "access_token"} {
+		if cookieToken, err := c.Cookie(cookieName); err == nil && strings.TrimSpace(cookieToken) != "" {
+			claims := &CustomClaims{}
+			token, err := jwt.ParseWithClaims(strings.TrimSpace(cookieToken), claims, func(token *jwt.Token) (any, error) {
+				if token.Method != jwt.SigningMethodHS256 {
+					return nil, jwt.ErrSignatureInvalid
+				}
+				return []byte(h.JWTSecret), nil
+			}, jwt.WithIssuer("moodshare"))
+			if (err == nil || errors.Is(err, jwt.ErrTokenExpired)) && token != nil && claims.Subject != "" {
+				return claims.Subject
+			}
+		}
+	}
+	return ""
 }
 
 func (h Auth) respondWithCookies(c *gin.Context, status int, userID string, user any) {

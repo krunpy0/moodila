@@ -119,12 +119,31 @@ export function useDeleteEntryMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: deleteEntry,
-    onSuccess: (_, entryIdOrDate) => {
+    onSuccess: (_, target) => {
       queryClient.invalidateQueries({ queryKey: ['entries', 'me'] })
       queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
       queryClient.invalidateQueries({ queryKey: ['feed'] })
-      queryClient.removeQueries({ queryKey: queryKeys.entry(entryIdOrDate) })
+
+      const isDate = typeof target === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(target)
+      if (isDate) {
+        queryClient.removeQueries({ queryKey: queryKeys.entry(target) })
+      } else if (target && typeof target === 'object' && target.date) {
+        queryClient.removeQueries({ queryKey: queryKeys.entry(target.date) })
+      } else {
+        const targetId = typeof target === 'string' ? target : target?.id
+        const queries = queryClient.getQueryCache().findAll({ queryKey: ['entries', 'me', 'date'] })
+        let removed = false
+        for (const query of queries) {
+          if (query.state.data?.id === targetId) {
+            queryClient.removeQueries({ queryKey: query.queryKey })
+            removed = true
+          }
+        }
+        if (!removed) {
+          queryClient.invalidateQueries({ queryKey: ['entries', 'me', 'date'] })
+        }
+      }
     },
   })
 }

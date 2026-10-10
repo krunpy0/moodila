@@ -42,12 +42,14 @@ export const updateEntryVisibility = (entryId, isHidden) =>
     body: JSON.stringify({ is_hidden: isHidden }),
   })
 
-export const deleteEntry = (entryIdOrDate) => {
-  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entryIdOrDate)
+export const deleteEntry = (target) => {
+  const isObj = target && typeof target === 'object'
+  const entryId = isObj ? (target.id || target.date) : target
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entryId)
   if (isUUID) {
-    return api(`/entries/${encodeURIComponent(entryIdOrDate)}`, { method: 'DELETE' })
+    return api(`/entries/${encodeURIComponent(entryId)}`, { method: 'DELETE' })
   }
-  return api(`/entries?date=${encodeURIComponent(entryIdOrDate)}`, { method: 'DELETE' })
+  return api(`/entries?date=${encodeURIComponent(entryId)}`, { method: 'DELETE' })
 }
 
 export const deleteStorageObject = (photoUrl) =>

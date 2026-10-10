@@ -58,6 +58,22 @@ func (r Users) SetPassword(ctx context.Context, userID string, newPassword strin
 	return tx.Commit(ctx)
 }
 
+func (r Users) InvalidateTokens(ctx context.Context, userID string) error {
+	if r.Pool == nil {
+		return errors.New("database pool unavailable")
+	}
+	_, err := r.Pool.Exec(ctx, `
+		UPDATE users
+		SET token_version = token_version + 1
+		WHERE id = $1 AND deleted_at IS NULL`,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("invalidate tokens: %w", err)
+	}
+	return nil
+}
+
 func (r Users) Create(ctx context.Context, email, username, displayName, passwordHash string) (models.User, error) {
 	var user models.User
 	err := r.Pool.QueryRow(ctx, `

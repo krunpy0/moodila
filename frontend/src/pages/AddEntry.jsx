@@ -730,8 +730,8 @@ export default function AddEntry() {
                   disabled={deleteMutation.isPending}
                   onClick={() => {
                     haptics.warning()
-                    const targetId = entryQuery.data?.id || date
-                    deleteMutation.mutate(targetId, {
+                    const targetId = entryQuery.data?.id
+                    deleteMutation.mutate({ id: targetId, date }, {
                       onSuccess: () => {
                         haptics.success()
                         notify(t('common.success'))

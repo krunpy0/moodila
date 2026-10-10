@@ -78,7 +78,11 @@ func (h Storage) SignUpload(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "image must be 10 MB or smaller"})
 		return
 	}
-	prepared, err := h.Storage.PrepareUpload(c.GetString("userID"), input.Filename, input.ContentType)
+	targetContentType := input.ContentType
+	if shouldCompress(input.ContentType) {
+		targetContentType = "image/jpeg"
+	}
+	prepared, err := h.Storage.PrepareUpload(c.GetString("userID"), input.Filename, targetContentType)
 	if err != nil {
 		if err.Error() == "storage is not configured" {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "photo storage is not configured"})
@@ -215,7 +219,16 @@ func (h Storage) Upload(c *gin.Context) {
 		uploadReader = bytes.NewReader(rawBytes)
 	}
 
-	if err := h.Storage.Put(c.Request.Context(), claims.ObjectKey, claims.ContentType, uploadReader); err != nil {
+	uploadObjectKey := claims.ObjectKey
+	uploadContentType := claims.ContentType
+	if shouldCompress(claimContentType) {
+		uploadContentType = "image/jpeg"
+		if strings.HasSuffix(strings.ToLower(uploadObjectKey), ".png") {
+			uploadObjectKey = uploadObjectKey[:len(uploadObjectKey)-4] + ".jpg"
+		}
+	}
+
+	if err := h.Storage.Put(c.Request.Context(), uploadObjectKey, uploadContentType, uploadReader); err != nil {
 		log.Printf("s3 put failed: %v", err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "could not upload file"})
 		return

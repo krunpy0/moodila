@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
@@ -9,6 +10,7 @@ import (
 	"image/png"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -185,6 +187,20 @@ func TestUploadHandler_CompressionAndShortCircuit(t *testing.T) {
 		}
 	})
 
+	t.Run("Valid PNG Re-encoded to JPEG", func(t *testing.T) {
+		token := makeToken("image/png", 5*1024*1024)
+		rawPNG := createTestImage(400, 300)
+
+		req := httptest.NewRequest("PUT", "/storage/entry-photos/upload/"+token, bytes.NewReader(rawPNG))
+		req.Header.Set("Content-Type", "image/png")
+		w := httptest.NewRecorder()
+
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusBadGateway {
+			t.Errorf("expected 502 Bad Gateway, got %d (body: %s)", w.Code, w.Body.String())
+		}
+	})
+
 	t.Run("Short circuit GIF", func(t *testing.T) {
 		token := makeToken("image/gif", 5*1024*1024)
 		gifData := []byte("GIF89a...")
@@ -288,5 +304,39 @@ func TestDeleteObjectHandler(t *testing.T) {
 			t.Errorf("expected 503 Service Unavailable, got %d", w.Code)
 		}
 	})
+}
+
+func TestStorage_SignUpload_PNGtoJPEG(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := Storage{
+		JWTSecret: "test-secret",
+		Storage: storage.S3{
+			Bucket:          "bucket",
+			AccessKeyID:     "key",
+			SecretAccessKey: "sec",
+		},
+	}
+	r := gin.New()
+	r.Use(func(c *gin.Context) {
+		c.Set("userID", "user-123")
+		c.Next()
+	})
+	r.POST("/storage/entry-photos/upload-url", h.SignUpload)
+
+	req := httptest.NewRequest("POST", "/storage/entry-photos/upload-url", bytes.NewBufferString(`{"filename":"test.png","content_type":"image/png","size":1000}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d (body: %s)", w.Code, w.Body.String())
+	}
+	var resp storage.Upload
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if !strings.HasSuffix(resp.PhotoURL, ".jpg") {
+		t.Errorf("expected photo URL to end with .jpg, got %s", resp.PhotoURL)
+	}
 }
 

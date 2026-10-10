@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -131,13 +132,19 @@ func (s S3) Put(ctx context.Context, objectKey, contentType string, body io.Read
 		return err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, uploadURL, body)
-	log.Printf("presigned PUT for object: %s", objectKey)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", contentType)
 	resp, err := s.getHTTPClient().Do(req)
 	if err != nil {
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			if u, parseErr := url.Parse(urlErr.URL); parseErr == nil {
+				u.RawQuery = ""
+				urlErr.URL = u.String()
+			}
+		}
 		return fmt.Errorf("upload to S3: %w", err)
 	}
 	defer resp.Body.Close()
@@ -163,6 +170,13 @@ func (s S3) Delete(ctx context.Context, objectKey string) error {
 	}
 	resp, err := s.getHTTPClient().Do(req)
 	if err != nil {
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			if u, parseErr := url.Parse(urlErr.URL); parseErr == nil {
+				u.RawQuery = ""
+				urlErr.URL = u.String()
+			}
+		}
 		return fmt.Errorf("delete from S3: %w", err)
 	}
 	defer resp.Body.Close()
