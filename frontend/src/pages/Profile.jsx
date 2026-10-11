@@ -2,7 +2,11 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { queryKeys, useProfileQuery, useUpdateProfileMutation } from "../api/queries";
+import {
+  queryKeys,
+  useProfileQuery,
+  useUpdateProfileMutation,
+} from "../api/queries";
 import { uploadEntryPhoto, deleteStorageObject } from "../api/entries";
 import { logout } from "../api/auth";
 import AppLayout from "../components/AppLayout";
@@ -38,7 +42,8 @@ export default function Profile() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFriendPrivacyModal, setShowFriendPrivacyModal] = useState(false);
-  const [showNotificationSettingsModal, setShowNotificationSettingsModal] = useState(false);
+  const [showNotificationSettingsModal, setShowNotificationSettingsModal] =
+    useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
 
   const handleLogout = async () => {
@@ -621,42 +626,8 @@ export default function Profile() {
                   </div>
 
                   {/* Privacy policy */}
-                  <div className="border-t border-surface-container-low pt-xs">
-                    <Link
-                      to="/privacy"
-                      onClick={() => haptics.selection()}
-                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
-                    >
-                      <span className="flex items-center gap-sm">
-                        <span className="material-symbols-outlined text-on-surface-variant">
-                          verified_user
-                        </span>
-                        {t("legal.privacyPolicy")}
-                      </span>
-                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                        chevron_right
-                      </span>
-                    </Link>
-                  </div>
 
                   {/* Terms of service */}
-                  <div className="border-t border-surface-container-low pt-xs">
-                    <Link
-                      to="/terms"
-                      onClick={() => haptics.selection()}
-                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
-                    >
-                      <span className="flex items-center gap-sm">
-                        <span className="material-symbols-outlined text-on-surface-variant">
-                          gavel
-                        </span>
-                        {t("legal.termsOfService")}
-                      </span>
-                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                        chevron_right
-                      </span>
-                    </Link>
-                  </div>
                 </div>
 
                 {/* Category 3: Account / Danger Zone */}
@@ -808,19 +779,17 @@ function ToggleSwitch({
             : "translate-x-0 text-on-surface-variant"
         }`}
       >
-        {checked ? (
-          customIconOn || (
-            <span className="material-symbols-outlined text-[16px]">
-              {iconOn}
-            </span>
-          )
-        ) : (
-          customIconOff || (
-            <span className="material-symbols-outlined text-[16px]">
-              {iconOff}
-            </span>
-          )
-        )}
+        {checked
+          ? customIconOn || (
+              <span className="material-symbols-outlined text-[16px]">
+                {iconOn}
+              </span>
+            )
+          : customIconOff || (
+              <span className="material-symbols-outlined text-[16px]">
+                {iconOff}
+              </span>
+            )}
       </span>
     </button>
   );

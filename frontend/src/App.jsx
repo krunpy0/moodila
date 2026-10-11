@@ -1,44 +1,47 @@
-import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { useSessionQuery } from './api/queries'
-import { setSentryUser, clearSentryUser } from './sentry'
-import AnnouncementQueue from './components/AnnouncementQueue'
-import PWAInstallPrompt from './components/PWAInstallPrompt'
-import ErrorBoundary from './components/ErrorBoundary'
-import SplashScreen from './components/SplashScreen'
+import { lazy, Suspense, useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useSessionQuery } from "./api/queries";
+import { setSentryUser, clearSentryUser } from "./sentry";
+import AnnouncementQueue from "./components/AnnouncementQueue";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import ErrorBoundary from "./components/ErrorBoundary";
+import SplashScreen from "./components/SplashScreen";
 
 function SessionUserSync() {
-  const { data: session } = useSessionQuery(true)
+  const { data: session } = useSessionQuery(true);
   useEffect(() => {
-    const user = session?.user || (session?.user_id ? { user_id: session.user_id } : null)
+    const user =
+      session?.user || (session?.user_id ? { user_id: session.user_id } : null);
     if (user) {
-      setSentryUser(user)
+      setSentryUser(user);
     } else {
-      clearSentryUser()
+      clearSentryUser();
     }
-  }, [session])
-  return null
+  }, [session]);
+  return null;
 }
 
-const Home = lazy(() => import('./pages/Home'))
-const Auth = lazy(() => import('./pages/Auth'))
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
-const ResetPassword = lazy(() => import('./pages/ResetPassword'))
-const ConfirmAccountDeletion = lazy(() => import('./pages/ConfirmAccountDeletion'))
-const AddEntry = lazy(() => import('./pages/AddEntry'))
-const Calendar = lazy(() => import('./pages/Calendar'))
-const Stats = lazy(() => import('./pages/Stats'))
-const Friends = lazy(() => import('./pages/Friends'))
-const Feed = lazy(() => import('./pages/Feed'))
-const Profile = lazy(() => import('./pages/Profile'))
-const FriendProfile = lazy(() => import('./pages/FriendProfile'))
-const Admin = lazy(() => import('./pages/Admin'))
-const Landing = lazy(() => import('./pages/Landing'))
-const RootRoute = lazy(() => import('./pages/RootRoute'))
-const LegalPage = lazy(() => import('./pages/LegalPage'))
+const Home = lazy(() => import("./pages/Home"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ConfirmAccountDeletion = lazy(
+  () => import("./pages/ConfirmAccountDeletion"),
+);
+const AddEntry = lazy(() => import("./pages/AddEntry"));
+const Calendar = lazy(() => import("./pages/Calendar"));
+const Stats = lazy(() => import("./pages/Stats"));
+const Friends = lazy(() => import("./pages/Friends"));
+const Feed = lazy(() => import("./pages/Feed"));
+const Profile = lazy(() => import("./pages/Profile"));
+const FriendProfile = lazy(() => import("./pages/FriendProfile"));
+const Admin = lazy(() => import("./pages/Admin"));
+const Landing = lazy(() => import("./pages/Landing"));
+const RootRoute = lazy(() => import("./pages/RootRoute"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 
 function PageFallback() {
-  return <SplashScreen />
+  return <SplashScreen />;
 }
 
 export default function App() {
@@ -50,12 +53,12 @@ export default function App() {
           <Routes>
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Auth />} />
-            <Route path="/privacy" element={<LegalPage mode="privacy" />} />
-            <Route path="/terms" element={<LegalPage mode="terms" />} />
-            <Route path="/tos" element={<Navigate to="/terms" replace />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/account/confirm-delete" element={<ConfirmAccountDeletion />} />
+            <Route
+              path="/account/confirm-delete"
+              element={<ConfirmAccountDeletion />}
+            />
             <Route path="/" element={<RootRoute />} />
             <Route
               path="/home"
@@ -105,24 +108,45 @@ export default function App() {
                 </RequireAuth>
               }
             />
-            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-            <Route path="/profile/:id" element={<RequireAuth><FriendProfile /></RequireAuth>} />
-            <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
+            <Route
+              path="/profile"
+              element={
+                <RequireAuth>
+                  <Profile />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/profile/:id"
+              element={
+                <RequireAuth>
+                  <FriendProfile />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <Admin />
+                </RequireAuth>
+              }
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </BrowserRouter>
     </ErrorBoundary>
-  )
+  );
 }
 
 function RequireAuth({ children }) {
-  const { isLoading, isError } = useSessionQuery(true)
+  const { isLoading, isError } = useSessionQuery(true);
   if (isError) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
   if (isLoading) {
-    return <SplashScreen />
+    return <SplashScreen />;
   }
   return (
     <>
@@ -130,5 +154,5 @@ function RequireAuth({ children }) {
       <AnnouncementQueue />
       {children}
     </>
-  )
+  );
 }
