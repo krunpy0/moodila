@@ -27,7 +27,7 @@ import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import { safeNavigateBack } from "../utils/navigation";
-import { haptics, isHapticsEnabled, setHapticsEnabled } from "../utils/haptics";
+import { haptics, isHapticsEnabled, setHapticsEnabled, isPC } from "../utils/haptics";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -539,17 +539,19 @@ export default function Profile() {
                   </div>
 
                   {/* Vibration toggle */}
-                  <div className="flex items-center justify-between border-t border-surface-container-low py-sm gap-3 min-w-0">
-                    <span className="flex items-center gap-sm text-body-md text-on-surface min-w-0">
-                      <span className="material-symbols-outlined text-on-surface-variant shrink-0">
-                        vibration
+                  {!isPC() && (
+                    <div className="flex items-center justify-between border-t border-surface-container-low py-sm gap-3 min-w-0">
+                      <span className="flex items-center gap-sm text-body-md text-on-surface min-w-0">
+                        <span className="material-symbols-outlined text-on-surface-variant shrink-0">
+                          vibration
+                        </span>
+                        <span className="truncate sm:whitespace-normal">
+                          {t("profile.vibration")}
+                        </span>
                       </span>
-                      <span className="truncate sm:whitespace-normal">
-                        {t("profile.vibration")}
-                      </span>
-                    </span>
-                    <HapticsToggle />
-                  </div>
+                      <HapticsToggle />
+                    </div>
+                  )}
                 </div>
 
                 {/* Category 2: Privacy & Security */}
@@ -836,6 +838,8 @@ function ThemeSettingRow() {
 function HapticsToggle() {
   const [enabled, setEnabled] = useState(() => isHapticsEnabled());
   const { t } = useLanguage();
+
+  if (isPC()) return null;
 
   const handleToggle = () => {
     const next = !enabled;

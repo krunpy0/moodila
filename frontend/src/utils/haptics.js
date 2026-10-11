@@ -7,11 +7,24 @@ const STORAGE_KEY = 'moodshare_haptics_enabled';
 
 let isEnabledCached = null;
 
-export function isHapticsSupported() {
+export function isPC(nav = typeof navigator !== 'undefined' ? navigator : undefined) {
+  if (typeof window === 'undefined' && !nav) return false;
+  if (!nav) return false;
+  if (nav.userAgentData && typeof nav.userAgentData.mobile === 'boolean') {
+    return !nav.userAgentData.mobile;
+  }
+  const ua = nav.userAgent || '';
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+  const isIPad = /Macintosh/i.test(ua) && (nav.maxTouchPoints || 0) > 1;
+  return !isMobile && !isIPad;
+}
+
+export function isHapticsSupported(nav = typeof navigator !== 'undefined' ? navigator : undefined) {
   return (
     typeof window !== 'undefined' &&
-    typeof navigator !== 'undefined' &&
-    typeof navigator.vibrate === 'function'
+    Boolean(nav) &&
+    typeof nav.vibrate === 'function' &&
+    !isPC(nav)
   );
 }
 
