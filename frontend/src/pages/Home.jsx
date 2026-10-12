@@ -6,6 +6,7 @@ import {
   useEntriesQuery,
   useEntrySummaryQuery,
   useProfileQuery,
+  useSaveEntryMutation,
 } from "../api/queries";
 import AppLayout from "../components/AppLayout";
 import HeaderBell from "../components/HeaderBell";
@@ -13,9 +14,11 @@ import { HomeSkeleton } from "../components/skeleton/PageSkeletons";
 import MoodIcon from "../components/MoodIcon";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
+import { useNotifications } from "../components/Notifications";
 import { haptics } from "../utils/haptics";
 
 const EMPTY_ARRAY = [];
+const MOOD_OPTIONS = [5, 4, 3, 2, 1];
 
 export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), []);
@@ -64,6 +67,36 @@ export default function Home() {
     () => Object.fromEntries(allEntries.map((entry) => [entry.date, entry])),
     [allEntries],
   );
+  const todayKey = getLocalDate();
+  const todayEntry = entriesByDate[todayKey];
+  const saveMutation = useSaveEntryMutation();
+  const { notify } = useNotifications();
+
+  const handleQuickMood = (val) => {
+    haptics.impact();
+    saveMutation.mutate(
+      {
+        date: todayKey,
+        mood: val,
+        tags: todayEntry?.tags || [],
+        text: todayEntry?.text || "",
+        photo_url: todayEntry?.photo_url || null,
+        audio_url: todayEntry?.audio_url || null,
+        audio_duration: todayEntry?.audio_duration || null,
+        is_hidden: todayEntry?.is_hidden ?? false,
+      },
+      {
+        onSuccess: () => {
+          haptics.success();
+          notify(t("home.quickMoodSuccess"));
+        },
+        onError: (err) => {
+          haptics.error();
+          notify(err?.message || t("common.error"), "error");
+        },
+      }
+    );
+  };
   const recent = useMemo(
     () => [...monthEntries].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3),
     [monthEntries],
@@ -175,20 +208,74 @@ export default function Home() {
                       {t("home.howIsItGoing")}
                     </h2>
                   </div>
-                  <Link
-                    to="/entries/new"
-                    onClick={() => haptics.impact()}
-                    className="group flex w-full items-center justify-between rounded-full bg-primary text-on-primary hover:bg-primary/95 p-2 pl-6 pr-2 shadow-card hover:shadow-floating transition-[transform,box-shadow,opacity] duration-normal ease-standard hover:-translate-y-0.5 active:scale-[0.99]"
+                  {/* Quick Mood Log Card */}
+                  <div
+                    aria-label={t("home.quickMoodLog")}
+                    className="rounded-2xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md sm:p-5 lg:p-6 shadow-card space-y-3 sm:space-y-4"
                   >
-                    <span className="text-body-md sm:text-body-lg font-bold">
-                      {t("home.journalToday")}
-                    </span>
-                    <span className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-full bg-on-primary/15 text-on-primary shadow-xs transition-transform duration-fast ease-standard group-hover:translate-x-0.5">
-                      <span className="material-symbols-outlined text-[22px] sm:text-[24px]">
-                        arrow_outward
-                      </span>
-                    </span>
-                  </Link>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-title-medium sm:text-headline-sm font-bold text-on-surface tracking-tight">
+                        {t("home.quickMoodLog")}
+                      </h3>
+                      <Link
+                        to={`/entries/new?date=${todayKey}`}
+                        onClick={() => haptics.selection()}
+                        className="flex items-center gap-1 text-label-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <span>
+                          {todayEntry
+                            ? todayEntry.text
+                              ? t("home.editNote")
+                              : t("home.addNote")
+                            : t("home.fullEntry")}
+                        </span>
+                        <span className="material-symbols-outlined text-[18px]">
+                          {todayEntry ? (todayEntry.text ? "edit" : "edit_note") : "arrow_forward"}
+                        </span>
+                      </Link>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-1 sm:gap-2 pt-1">
+                      {MOOD_OPTIONS.map((val) => {
+                        const moodInfo = getMoodInfo(val, t);
+                        const isSelected = todayEntry?.mood === val;
+                        return (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => handleQuickMood(val)}
+                            disabled={saveMutation.isPending}
+                            aria-label={moodInfo.label}
+                            aria-pressed={isSelected}
+                            className="group flex flex-1 flex-col items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl active:scale-95 transition-transform"
+                          >
+                            <div
+                              className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full transition-all duration-fast ease-out ${moodInfo.bg} ${
+                                isSelected
+                                  ? `ring-2 sm:ring-[3px] ring-current ring-offset-2 ring-offset-surface-container-lowest scale-105 shadow-sm ${moodInfo.color}`
+                                  : "opacity-85 group-hover:opacity-100 group-hover:-translate-y-0.5"
+                              }`}
+                            >
+                              <MoodIcon
+                                mood={val}
+                                className="text-[26px] sm:text-[30px]"
+                                filled={isSelected}
+                              />
+                            </div>
+                            <span
+                              className={`text-[11px] sm:text-[13px] tracking-tight transition-colors text-center ${
+                                isSelected
+                                  ? "font-bold text-on-surface"
+                                  : "text-on-surface-variant group-hover:text-on-surface font-medium"
+                              }`}
+                            >
+                              {moodInfo.shortLabel || moodInfo.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </section>
 
                 <section className="space-y-md">

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { isPC, isHapticsSupported } from './haptics.js'
+import { isPC, isIOS, isHapticsSupported } from './haptics.js'
 
 test('isPC detects desktop PC user agents correctly', () => {
   // Windows PC Chrome
@@ -74,17 +74,47 @@ test('isPC detects mobile and tablet devices correctly', () => {
   )
 })
 
-test('isHapticsSupported returns false on PC even if navigator.vibrate is defined', () => {
-  const desktopChromeNav = {
+test('isIOS detects iPhone, iPad, and iPod correctly', () => {
+  const iphoneNav = {
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+  }
+  assert.equal(isIOS(iphoneNav), true, 'iPhone should be detected as iOS')
+
+  const ipadNav = {
+    userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+    maxTouchPoints: 5,
+  }
+  assert.equal(isIOS(ipadNav), true, 'iPad should be detected as iOS')
+
+  const androidNav = {
+    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+  }
+  assert.equal(isIOS(androidNav), false, 'Android should not be detected as iOS')
+
+  const windowsNav = {
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+  }
+  assert.equal(isIOS(windowsNav), false, 'Windows should not be detected as iOS')
+})
+
+test('isHapticsSupported returns true on iPhone and false on PC', () => {
+  const iphoneNav = {
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+  }
+  assert.equal(
+    isHapticsSupported(iphoneNav),
+    true,
+    'iPhone should support haptics via switch trigger'
+  )
+
+  const desktopNav = {
     userAgentData: { mobile: false },
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
     vibrate: () => true,
   }
-
-  // Node environment without window
   assert.equal(
-    isHapticsSupported(desktopChromeNav),
+    isHapticsSupported(desktopNav),
     false,
-    'Haptics must not be reported as supported on PC'
+    'Desktop PC should not report haptics support'
   )
 })

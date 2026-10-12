@@ -19,13 +19,68 @@ export function isPC(nav = typeof navigator !== 'undefined' ? navigator : undefi
   return !isMobile && !isIPad;
 }
 
+export function isIOS(nav = typeof navigator !== 'undefined' ? navigator : undefined) {
+  if (typeof window === 'undefined' && !nav) return false;
+  if (!nav) return false;
+  const ua = nav.userAgent || '';
+  const isDirectIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isIPadOS = /Macintosh/i.test(ua) && (nav.maxTouchPoints || 0) > 1;
+  return isDirectIOS || isIPadOS;
+}
+
 export function isHapticsSupported(nav = typeof navigator !== 'undefined' ? navigator : undefined) {
-  return (
-    typeof window !== 'undefined' &&
-    Boolean(nav) &&
-    typeof nav.vibrate === 'function' &&
-    !isPC(nav)
-  );
+  if (typeof window === 'undefined' && !nav) return false;
+  if (!nav) return false;
+  if (isPC(nav)) return false;
+  if (typeof nav.vibrate === 'function') return true;
+  return isIOS(nav);
+}
+
+let iosSwitchLabel = null;
+
+function getIOSSwitchLabel() {
+  if (typeof document === 'undefined' || !document.body) return null;
+  if (iosSwitchLabel && document.body.contains(iosSwitchLabel)) {
+    return iosSwitchLabel;
+  }
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.id = 'moodila-ios-haptic-switch';
+  input.setAttribute('switch', '');
+  input.setAttribute('aria-hidden', 'true');
+  input.tabIndex = -1;
+  input.style.position = 'fixed';
+  input.style.top = '-9999px';
+  input.style.left = '-9999px';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+
+  const label = document.createElement('label');
+  label.htmlFor = 'moodila-ios-haptic-switch';
+  label.setAttribute('aria-hidden', 'true');
+  label.style.position = 'fixed';
+  label.style.top = '-9999px';
+  label.style.left = '-9999px';
+  label.style.opacity = '0';
+  label.style.pointerEvents = 'none';
+
+  document.body.appendChild(input);
+  document.body.appendChild(label);
+  iosSwitchLabel = label;
+  return iosSwitchLabel;
+}
+
+export function triggerIOSHaptic() {
+  try {
+    const label = getIOSSwitchLabel();
+    if (label) {
+      label.click();
+      return true;
+    }
+  } catch {
+    // Ignore fallback errors
+  }
+  return false;
 }
 
 export function isHapticsEnabled() {
@@ -55,11 +110,22 @@ export function setHapticsEnabled(enabled) {
 
 function runVibrate(pattern) {
   if (!isHapticsEnabled() || !isHapticsSupported()) return false;
-  try {
-    return navigator.vibrate(pattern);
-  } catch {
-    return false;
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    try {
+      return navigator.vibrate(pattern);
+    } catch {
+      // Fall through to iOS trigger
+    }
   }
+  if (isIOS()) {
+    triggerIOSHaptic();
+    if (Array.isArray(pattern) && pattern.length > 2) {
+      const delay = (pattern[0] || 0) + (pattern[1] || 0);
+      setTimeout(() => triggerIOSHaptic(), Math.max(delay, 50));
+    }
+    return true;
+  }
+  return false;
 }
 
 export const haptics = {

@@ -111,6 +111,11 @@ export const ru = {
     welcomeTitle: "Добро пожаловать в Moodila!",
     welcomeDesc: "Сделайте первую запись своего настроения или найдите друзей.",
     firstEntryBtn: "Сделать первую запись",
+    quickMoodLog: "Быстрый лог настроения",
+    quickMoodSuccess: "Настроение сохранено!",
+    addNote: "Добавить заметку",
+    editNote: "Редактировать",
+    fullEntry: "Подробнее",
   },
 
   // Stats / Analytics Page

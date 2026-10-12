@@ -111,6 +111,11 @@ export const en = {
     welcomeTitle: "Welcome to Moodila!",
     welcomeDesc: "Make your first mood entry or find friends to get started.",
     firstEntryBtn: "Create first entry",
+    quickMoodLog: "Quick mood log",
+    quickMoodSuccess: "Mood logged!",
+    addNote: "Add note",
+    editNote: "Edit note",
+    fullEntry: "Full entry",
   },
 
   // Stats / Analytics Page
