@@ -2,13 +2,52 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 let inMemoryCSRF = ''
 
+function saveCSRFToIDB(token) {
+  try {
+    if (typeof indexedDB === 'undefined') return
+    const req = indexedDB.open('moodila_push_db', 1)
+    req.onupgradeneeded = (e) => {
+      e.target.result.createObjectStore('config')
+    }
+    req.onsuccess = (e) => {
+      const db = e.target.result
+      const tx = db.transaction('config', 'readwrite')
+      tx.objectStore('config').put(token, 'csrf_token')
+    }
+  } catch {}
+}
+
+function clearCSRFFromIDB() {
+  try {
+    if (typeof indexedDB === 'undefined') return
+    const req = indexedDB.open('moodila_push_db', 1)
+    req.onupgradeneeded = (e) => {
+      e.target.result.createObjectStore('config')
+    }
+    req.onsuccess = (e) => {
+      const db = e.target.result
+      const tx = db.transaction('config', 'readwrite')
+      tx.objectStore('config').delete('csrf_token')
+    }
+  } catch {}
+}
+
 export const setCSRFToken = (token) => {
   if (typeof token === 'string' && token.trim() !== '') {
     inMemoryCSRF = token.trim()
+    saveCSRFToIDB(inMemoryCSRF)
     if (typeof localStorage !== 'undefined') {
       try {
         localStorage.setItem('csrf_token', inMemoryCSRF)
-      } catch (_) {}
+      } catch {}
+    }
+  } else if (!token || (typeof token === 'string' && token.trim() === '')) {
+    inMemoryCSRF = ''
+    clearCSRFFromIDB()
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem('csrf_token')
+      } catch {}
     }
   }
 }
@@ -35,7 +74,7 @@ export const getCSRFToken = () => {
         inMemoryCSRF = stored
         return stored
       }
-    } catch (_) {}
+    } catch {}
   }
   return ''
 }

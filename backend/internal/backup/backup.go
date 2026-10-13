@@ -10,7 +10,6 @@ import (
 	"moodshare/internal/db"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -96,7 +95,13 @@ func StartScheduler(ctx context.Context, cfg Config) {
 func PerformBackup(ctx context.Context, cfg Config) error {
 	startTime := time.Now()
 	filename := fmt.Sprintf("moodila_backup_%s.sql.gz", startTime.Format("2006-01-02_15-04-05"))
-	tmpFile := filepath.Join(os.TempDir(), filename)
+	tmp, err := os.CreateTemp("", "moodila_backup_*.sql.gz")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary file: %w", err)
+	}
+	_ = tmp.Chmod(0600)
+	tmpFile := tmp.Name()
+	_ = tmp.Close()
 
 	defer os.Remove(tmpFile)
 

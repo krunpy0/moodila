@@ -23,11 +23,13 @@ type PushSubscriptionInput struct {
 }
 
 type PushPayload struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
-	Icon  string `json:"icon,omitempty"`
-	Badge string `json:"badge,omitempty"`
-	Tag   string `json:"tag,omitempty"`
-	URL   string `json:"url,omitempty"`
+	Title          string `json:"title"`
+	Body           string `json:"body"`
+	Icon           string `json:"icon,omitempty"`
+	Badge          string `json:"badge,omitempty"`
+	Tag            string `json:"tag,omitempty"`
+	URL            string `json:"url,omitempty"`
+	EntryID        string `json:"entry_id,omitempty"`
+	NotificationID string `json:"notification_id,omitempty"`
 }
 

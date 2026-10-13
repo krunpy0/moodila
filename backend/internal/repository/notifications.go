@@ -29,24 +29,26 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 	}
 
 	var isInserted bool = true
+	var insertedID string
 	if notifType == "like" {
 		err := r.Pool.QueryRow(ctx, `
 			INSERT INTO notifications (user_id, actor_id, type, entity_id, content)
 			VALUES ($1, $2, $3, $4, $5)
 			ON CONFLICT (user_id, actor_id, entity_id) WHERE type = 'like'
 			DO UPDATE SET content = EXCLUDED.content, created_at = now(), is_read = false
-			RETURNING (xmax = 0)`,
+			RETURNING id, (xmax = 0)`,
 			userID, actorID, notifType, entityID, content,
-		).Scan(&isInserted)
+		).Scan(&insertedID, &isInserted)
 		if err != nil {
 			return err
 		}
 	} else {
-		_, err := r.Pool.Exec(ctx, `
+		err := r.Pool.QueryRow(ctx, `
 			INSERT INTO notifications (user_id, actor_id, type, entity_id, content)
-			VALUES ($1, $2, $3, $4, $5)`,
+			VALUES ($1, $2, $3, $4, $5)
+			RETURNING id`,
 			userID, actorID, notifType, entityID, content,
-		)
+		).Scan(&insertedID)
 		if err != nil {
 			return err
 		}
@@ -93,8 +95,12 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 
 		if shouldPush {
 			payload := models.PushPayload{
-				Title: "Moodila",
-				URL:   "/feed",
+				Title:          "Moodila",
+				URL:            "/feed",
+				NotificationID: insertedID,
+			}
+			if entityID != nil {
+				payload.EntryID = *entityID
 			}
 
 			cnt := ""
@@ -222,10 +228,11 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 		}
 
 		payload := models.PushPayload{
-			Title: "Moodila",
-			Body:  body,
-			Tag:   "new_post_" + authorID,
-			URL:   "/feed",
+			Title:   "Moodila",
+			Body:    body,
+			Tag:     "new_post_" + authorID,
+			URL:     "/feed",
+			EntryID: entry.ID,
 		}
 
 		_ = r.PushSender.SendToUsers(ctx, pushFriendIDs, payload)

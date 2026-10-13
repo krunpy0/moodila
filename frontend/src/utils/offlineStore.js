@@ -28,12 +28,13 @@ function openDB() {
 /**
  * Save an entry locally when offline
  */
-export async function saveOfflineEntry(entry) {
+export async function saveOfflineEntry(entry, userId) {
   const offlineId = `offline_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   const offlineEntry = {
     ...entry,
+    user_id: userId || entry?.user_id || null,
     offline_id: offlineId,
-    created_at: entry.created_at || new Date().toISOString(),
+    created_at: entry?.created_at || new Date().toISOString(),
     is_offline: true,
   }
 
@@ -68,7 +69,7 @@ export async function getOfflineEntries() {
       req.onsuccess = () => resolve(req.result || [])
       req.onerror = () => reject(req.error)
     })
-  } catch (err) {
+  } catch {
     return getLocalStorageOfflineEntries()
   }
 }
@@ -86,7 +87,7 @@ export async function removeOfflineEntry(offlineId) {
       req.onsuccess = () => resolve(true)
       req.onerror = () => reject(req.error)
     })
-  } catch (err) {
+  } catch {
     const existing = getLocalStorageOfflineEntries()
     const filtered = existing.filter((e) => e.offline_id !== offlineId)
     localStorage.setItem(STORE_ENTRIES, JSON.stringify(filtered))
@@ -95,9 +96,37 @@ export async function removeOfflineEntry(offlineId) {
 }
 
 /**
+ * Clear all offline entries from IndexedDB and localStorage
+ */
+export async function clearOfflineEntries() {
+  try {
+    const db = await openDB()
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_ENTRIES, 'readwrite')
+      const store = tx.objectStore(STORE_ENTRIES)
+      const req = store.clear()
+      req.onsuccess = () => resolve(true)
+      req.onerror = () => reject(req.error)
+    })
+  } catch (err) {
+    console.warn('IndexedDB clear failed:', err)
+  }
+
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.removeItem(STORE_ENTRIES)
+    } catch {
+      // Ignore localStorage removal errors
+    }
+  }
+
+  return true
+}
+
+/**
  * Sync all pending offline entries with backend
  */
-export async function syncOfflineEntries(saveEntryApi) {
+export async function syncOfflineEntries(saveEntryApi, currentUserId) {
   const pending = await getOfflineEntries()
   if (!pending.length) return { synced: 0, failed: 0 }
 
@@ -105,8 +134,12 @@ export async function syncOfflineEntries(saveEntryApi) {
   let failedCount = 0
 
   for (const item of pending) {
+    if (currentUserId && item.user_id !== currentUserId) {
+      continue
+    }
+
     try {
-      const { offline_id, is_offline, ...cleanEntry } = item
+      const { offline_id, is_offline: _is_offline, user_id: _user_id, ...cleanEntry } = item
       await saveEntryApi(cleanEntry)
       await removeOfflineEntry(offline_id)
       syncedCount++

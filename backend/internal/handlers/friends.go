@@ -227,7 +227,7 @@ func (h Friends) Unfriend(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "valid friend_id or friendship_id is required"})
 		return
 	}
-	err := h.Friends.Delete(c.Request.Context(), c.GetString("userID"), targetID)
+	otherUserID, err := h.Friends.Delete(c.Request.Context(), c.GetString("userID"), targetID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "friendship not found"})
 		return
@@ -240,7 +240,7 @@ func (h Friends) Unfriend(c *gin.Context) {
 	}
 	if h.Entries.Pool != nil {
 		h.Entries.InvalidateUserCache(c.GetString("userID"))
-		h.Entries.InvalidateUserCache(targetID)
+		h.Entries.InvalidateUserCache(otherUserID)
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "unfriended successfully"})
 }

@@ -18,7 +18,10 @@ export default function HeaderBell() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
     const handleMessage = (event) => {
-      if (event.data && event.data.type === 'PUSH_NOTIFICATION_RECEIVED') {
+      if (
+        event.data &&
+        (event.data.type === 'PUSH_NOTIFICATION_RECEIVED' || event.data.type === 'PUSH_NOTIFICATION_READ')
+      ) {
         queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
         queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
         queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })

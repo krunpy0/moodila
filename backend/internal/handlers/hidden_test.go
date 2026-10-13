@@ -351,9 +351,12 @@ func TestHiddenEntriesE2E(t *testing.T) {
 
 	// 9. Check unfriend cleans up visibility rows
 	friendshipID := req.ID
-	err = friendsRepo.Delete(ctx, userA.ID, friendshipID)
+	unfriendedID, err := friendsRepo.Delete(ctx, userA.ID, friendshipID)
 	if err != nil {
 		t.Fatalf("unfriend A and B: %v", err)
+	}
+	if unfriendedID != userB.ID {
+		t.Fatalf("expected unfriendedID %s, got %s", userB.ID, unfriendedID)
 	}
 
 	var countDefaults, countOverrides int

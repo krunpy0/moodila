@@ -122,6 +122,16 @@ func (r PasswordReset) ResetPassword(ctx context.Context, tokenHash string, newP
 		return fmt.Errorf("invalidate remaining tokens: %w", err)
 	}
 
+	_, err = tx.Exec(ctx, `
+		UPDATE account_deletion_tokens
+		SET used_at = now()
+		WHERE user_id = $1 AND used_at IS NULL`,
+		userID,
+	)
+	if err != nil {
+		return fmt.Errorf("invalidate account deletion tokens: %w", err)
+	}
+
 	return tx.Commit(ctx)
 }
 

@@ -278,14 +278,14 @@ func (r Friends) SetFriendVisibilityDefault(ctx context.Context, userID, friendI
 	return err
 }
 
-func (r Friends) Delete(ctx context.Context, userID, targetID string) error {
+func (r Friends) Delete(ctx context.Context, userID, targetID string) (string, error) {
 	if r.Pool == nil {
-		return errors.New("database pool unavailable")
+		return "", errors.New("database pool unavailable")
 	}
 
 	tx, err := r.Pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
+		return "", fmt.Errorf("begin tx: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -301,27 +301,35 @@ func (r Friends) Delete(ctx context.Context, userID, targetID string) error {
 		)
 		RETURNING requester_id, addressee_id`, targetID, userID).Scan(&reqID, &addrID)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return pgx.ErrNoRows
+		return "", pgx.ErrNoRows
 	}
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Clean up visibility defaults and entry overrides between former friends
 	if _, err = tx.Exec(ctx, `
 		DELETE FROM user_friend_visibility
 		WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`, reqID, addrID); err != nil {
-		return fmt.Errorf("delete user_friend_visibility: %w", err)
+		return "", fmt.Errorf("delete user_friend_visibility: %w", err)
 	}
 
 	if _, err = tx.Exec(ctx, `
 		DELETE FROM entry_friend_visibility
 		WHERE (friend_id = $1 AND entry_id IN (SELECT id FROM entries WHERE user_id = $2))
 		   OR (friend_id = $2 AND entry_id IN (SELECT id FROM entries WHERE user_id = $1))`, reqID, addrID); err != nil {
-		return fmt.Errorf("delete entry_friend_visibility: %w", err)
+		return "", fmt.Errorf("delete entry_friend_visibility: %w", err)
 	}
 
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return "", fmt.Errorf("commit tx: %w", err)
+	}
+
+	otherUserID := reqID
+	if otherUserID == userID {
+		otherUserID = addrID
+	}
+	return otherUserID, nil
 }
 
 func (r Friends) CancelRequest(ctx context.Context, requesterID, targetID string) error {

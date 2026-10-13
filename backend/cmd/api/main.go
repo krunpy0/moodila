@@ -30,6 +30,9 @@ import (
 
 func main() {
 	cfg := config.Load()
+	if len(cfg.JWTSecret) < 32 {
+		log.Fatal("JWT_SECRET must be set and at least 32 bytes")
+	}
 
 	// Initialize Sentry monitoring if SENTRY_DSN is configured
 	if cfg.SentryDSN != "" {
@@ -219,6 +222,7 @@ func main() {
 	authorized.GET("/stats", readLimiter, statsHandler.Get)
 	authorized.GET("/users/search", readLimiter, friends.Search)
 	authorized.GET("/users/me", readLimiter, users.Me)
+	authorized.GET("/users/me/export", readLimiter, users.ExportData)
 	authorized.PATCH("/users/me", mutationLimiter, users.UpdateMe)
 	authorized.GET("/users/:id/profile", readLimiter, users.FriendProfile)
 	authorized.POST("/friends/request", mutationLimiter, friends.Request)

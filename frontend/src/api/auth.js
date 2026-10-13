@@ -1,4 +1,5 @@
 import { api, setCSRFToken } from './client'
+import { clearOfflineEntries } from '../utils/offlineStore'
 
 export const register = (data) =>
   api('/auth/register', { method: 'POST', body: JSON.stringify(data) })
@@ -11,19 +12,21 @@ export const getSession = () => api('/auth/session')
 export const logout = async () => {
   try {
     const res = await api('/auth/logout', { method: 'POST' })
+    await clearOfflineEntries()
     setCSRFToken('')
     if (typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem('csrf_token')
-      } catch (_) {}
+      } catch {}
     }
     return res
   } catch {
+    await clearOfflineEntries()
     setCSRFToken('')
     if (typeof localStorage !== 'undefined') {
       try {
         localStorage.removeItem('csrf_token')
-      } catch (_) {}
+      } catch {}
     }
     return null
   }

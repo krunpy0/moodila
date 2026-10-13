@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -35,8 +36,16 @@ type profileResponse struct {
 	ActiveSeasonalThemes []string            `json:"active_seasonal_themes"`
 }
 
+type FriendProfileUser struct {
+	ID          string    `json:"id"`
+	Username    string    `json:"username"`
+	DisplayName string    `json:"display_name"`
+	AvatarURL   *string   `json:"avatar_url"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type friendProfileResponse struct {
-	User    models.User         `json:"user"`
+	User    FriendProfileUser   `json:"user"`
 	Entries []models.Entry      `json:"entries"`
 	Summary models.EntrySummary `json:"summary"`
 }
@@ -224,12 +233,64 @@ func (h Users) FriendProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, friendProfileResponse{
-		User:    h.resolveUser(user),
+		User: FriendProfileUser{
+			ID:          user.ID,
+			Username:    user.Username,
+			DisplayName: user.DisplayName,
+			AvatarURL:   h.Storage.ResolveAccessURL(user.AvatarURL),
+			CreatedAt:   user.CreatedAt,
+		},
 		Entries: h.resolveEntries(recent),
 		Summary: summary,
 	})
 }
 
+type exportDataResponse struct {
+	ExportedAt   time.Time      `json:"exported_at"`
+	User         models.User    `json:"user"`
+	TotalEntries int            `json:"total_entries"`
+	Entries      []models.Entry `json:"entries"`
+}
+
+func (h Users) ExportData(c *gin.Context) {
+	if !h.available(c) {
+		return
+	}
+
+	userID := c.GetString("userID")
+	user, err := h.Users.ByID(c.Request.Context(), userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+			return
+		}
+		log.Printf("[ERROR] Users.ExportData ByID (user=%s): %v", userID, err)
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load user profile"})
+		return
+	}
+
+	entries, err := h.Entries.AllByUser(c.Request.Context(), userID)
+	if err != nil {
+		log.Printf("[ERROR] Users.ExportData AllByUser (user=%s): %v", userID, err)
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load entries for export"})
+		return
+	}
+
+	resolvedUser := h.resolveUser(user)
+	resolvedEntries := h.resolveEntries(entries)
+
+	filename := fmt.Sprintf("moodila-export-%s-%s.json", user.Username, time.Now().Format("2006-01-02"))
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+
+	c.JSON(http.StatusOK, exportDataResponse{
+		ExportedAt:   time.Now().UTC(),
+		User:         resolvedUser,
+		TotalEntries: len(resolvedEntries),
+		Entries:      resolvedEntries,
+	})
+}
 
 func (h Users) available(c *gin.Context) bool {
 	if h.Users.Pool != nil && h.Entries.Pool != nil && h.Friends.Pool != nil {

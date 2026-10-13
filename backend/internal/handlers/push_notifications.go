@@ -3,6 +3,8 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"moodshare/internal/models"
 	"moodshare/internal/repository"
@@ -40,6 +42,10 @@ func (h PushNotifications) Subscribe(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "endpoint, keys.p256dh and keys.auth are required"})
 		return
 	}
+	if !isValidPushEndpoint(input.Endpoint) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or unsupported push service endpoint"})
+		return
+	}
 
 	userID := c.GetString("userID")
 	if err := h.Repo.Save(c.Request.Context(), userID, input); err != nil {
@@ -74,5 +80,29 @@ func (h PushNotifications) Unsubscribe(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "push subscription removed"})
+}
+
+func isValidPushEndpoint(endpoint string) bool {
+	u, err := url.Parse(endpoint)
+	if err != nil || u.Scheme != "https" {
+		return false
+	}
+	host := strings.ToLower(u.Hostname())
+	if host == "" {
+		return false
+	}
+	if host == "fcm.googleapis.com" || host == "android.googleapis.com" {
+		return true
+	}
+	if host == "push.services.mozilla.com" || strings.HasSuffix(host, ".push.services.mozilla.com") {
+		return true
+	}
+	if host == "push.apple.com" || strings.HasSuffix(host, ".push.apple.com") {
+		return true
+	}
+	if host == "notify.windows.com" || strings.HasSuffix(host, ".notify.windows.com") {
+		return true
+	}
+	return false
 }
 

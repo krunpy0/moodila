@@ -8,6 +8,7 @@ import {
   useUpdateProfileMutation,
 } from "../api/queries";
 import { uploadEntryPhoto, deleteStorageObject } from "../api/entries";
+import { exportMyData } from "../api/users";
 import { logout } from "../api/auth";
 import AppLayout from "../components/AppLayout";
 import HeaderBell from "../components/HeaderBell";
@@ -45,6 +46,22 @@ export default function Profile() {
   const [showNotificationSettingsModal, setShowNotificationSettingsModal] =
     useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    haptics.selection();
+    setIsExporting(true);
+    try {
+      await exportMyData();
+      haptics.success();
+      notify(t("profile.exportSuccess"));
+    } catch (err) {
+      haptics.error();
+      notify(err?.message || t("common.error"), "error");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleLogout = async () => {
     haptics.warning();
@@ -625,6 +642,28 @@ export default function Profile() {
                       </span>
                     </button>
                     {showChangePassword && <ChangePasswordForm />}
+                  </div>
+
+                  {/* Export diary data */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <button
+                      type="button"
+                      disabled={isExporting}
+                      onClick={handleExport}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1 disabled:opacity-50"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          download
+                        </span>
+                        <span>
+                          {isExporting ? t("profile.exporting") : t("profile.exportData")}
+                        </span>
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        {isExporting ? "hourglass_empty" : "file_download"}
+                      </span>
+                    </button>
                   </div>
 
                   {/* Privacy policy */}

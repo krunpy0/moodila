@@ -169,3 +169,134 @@ export function getLocalizedInsightText(insight, t) {
 
   return insight.text || "";
 }
+
+const TAG_EMOJI_MAP = {
+  // Positive (EN)
+  Calm: "🌿",
+  Chill: "☕",
+  Motivated: "⚡",
+  Grateful: "🙏",
+  Inspired: "💡",
+  Peaceful: "🕊️",
+  Happy: "😊",
+  Excited: "✨",
+  Optimistic: "☀️",
+  // Neutral (EN)
+  Okay: "👌",
+  Neutral: "😐",
+  Bored: "🥱",
+  Focused: "🎯",
+  Steady: "⚓",
+  Meh: "💭",
+  Unsure: "🤔",
+  Indifferent: "😶",
+  // Difficult (EN)
+  Tired: "💤",
+  Anxious: "🌧️",
+  Overwhelmed: "🌊",
+  Suicidal: "🖤",
+  Frustrated: "💢",
+  Lonely: "🥀",
+  Drained: "🔋",
+  Emotional: "💧",
+  Dirty: "🚿",
+  // Positive (RU)
+  Спокойствие: "🌿",
+  Отдых: "☕",
+  Мотивация: "⚡",
+  Благодарность: "🙏",
+  Вдохновение: "💡",
+  Умиротворение: "🕊️",
+  Счастье: "😊",
+  Восторг: "✨",
+  Оптимизм: "☀️",
+  // Neutral (RU)
+  Нормально: "👌",
+  Нейтрально: "😐",
+  Скука: "🥱",
+  Фокус: "🎯",
+  Стабильно: "⚓",
+  "Так себе": "💭",
+  Неуверенность: "🤔",
+  Безразличие: "😶",
+  // Difficult (RU)
+  Усталость: "💤",
+  Тревога: "🌧️",
+  Перегрузка: "🌊",
+  Суицидально: "🖤",
+  Раздражение: "💢",
+  Одиночество: "🥀",
+  Опустошение: "🔋",
+  Эмоционально: "💧",
+  Грязно: "🚿",
+};
+
+const KEYWORD_EMOJI_RULES = [
+  { match: /(устал|сон|выгор|бессил|tired|sleep|drain|exhaust)/i, emoji: "💤" },
+  { match: /(тревог|паник|панич|стресс|нерв|anxi|panic|stress|overwhelm)/i, emoji: "🌧️" },
+  { match: /(груст|печал|плач|слез|тоск|одинок|depress|sad|cry|tear|lonely|alone)/i, emoji: "🥀" },
+  { match: /(зло|бесит|ярост|раздраж|гнев|anger|angry|mad|frustrat)/i, emoji: "💢" },
+  { match: /(радост|счаст|кайф|весел|смех|happy|joy|glad|fun)/i, emoji: "😊" },
+  { match: /(восторг|маги|чудо|sparkle|excit|magic)/i, emoji: "✨" },
+  { match: /(благодар|спас|grate|thank)/i, emoji: "🙏" },
+  { match: /(вдохнов|мотив|идея|план|цел|motiv|inspir|idea|goal)/i, emoji: "💡" },
+  { match: /(спокой|мир|тишин|релакс|умиротвор|calm|peace|chill|relax)/i, emoji: "🌿" },
+  { match: /(спорт|зал|тренир|бег|фитнес|gym|run|workout|fit|sport)/i, emoji: "🏃" },
+  { match: /(работ|дедлайн|проект|work|project|code|focus|фокус)/i, emoji: "🎯" },
+  { match: /(учеб|универ|школ|лекци|экзамен|сесси|study|exam|course)/i, emoji: "📚" },
+  { match: /(еда|кофе|чай|обед|ужин|завтрак|отдых|food|coffee|tea|eat|cook)/i, emoji: "☕" },
+  { match: /(прогулк|парк|природ|солнц|лес|walk|nature|sun)/i, emoji: "🍃" },
+  { match: /(любов|свидан|партнер|love|date)/i, emoji: "💛" },
+  { match: /(друг|друзь|тусов|встреч|компан|friend|party)/i, emoji: "👥" },
+  { match: /(книг|чита|book|read)/i, emoji: "📖" },
+  { match: /(кино|фильм|сериал|movie|cinema)/i, emoji: "🎬" },
+  { match: /(игр|гейм|плей|game|play)/i, emoji: "🎮" },
+  { match: /(музык|песн|трек|music|song)/i, emoji: "🎵" },
+  { match: /(путешеств|поездк|дорог|полет|travel|trip|flight)/i, emoji: "✈️" },
+  { match: /(кот|кошк|собак|животн|питом|cat|dog|pet)/i, emoji: "🐾" },
+  { match: /(дом|уют|семья|home|family)/i, emoji: "🏡" },
+  { match: /(творчеств|рисова|арт|дизайн|art|design|draw)/i, emoji: "🎨" },
+  { match: /(здоровь|болезн|лекарств|врач|боль|health|sick|med)/i, emoji: "💊" },
+  { match: /(покупк|шоппинг|деньг|shop|buy|money)/i, emoji: "🛍️" },
+];
+
+export function getTagSemanticIcon(tag) {
+  if (!tag) return "🏷️";
+  const trimmed = typeof tag === "string" ? tag.trim() : String(tag);
+  if (TAG_EMOJI_MAP[trimmed]) {
+    return TAG_EMOJI_MAP[trimmed];
+  }
+  for (const rule of KEYWORD_EMOJI_RULES) {
+    if (rule.match.test(trimmed)) {
+      return rule.emoji;
+    }
+  }
+  for (const cat of TAG_CATEGORIES) {
+    if (cat.tags.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
+      if (cat.key === "positive") return "😊";
+      if (cat.key === "difficult") return "🌧️";
+      return "🏷️";
+    }
+  }
+  return "🏷️";
+}
+
+export function formatPlural(n, { one, few, many }, lang = "ru") {
+  const count = Math.abs(n || 0);
+  if (lang === "ru" || (typeof lang === "string" && lang.startsWith("ru"))) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod100 >= 11 && mod100 <= 19) {
+      return `${count} ${many}`;
+    }
+    if (mod10 === 1) {
+      return `${count} ${one}`;
+    }
+    if (mod10 >= 2 && mod10 <= 4) {
+      return `${count} ${few}`;
+    }
+    return `${count} ${many}`;
+  }
+  return `${count} ${count === 1 ? one : few || many}`;
+}
+

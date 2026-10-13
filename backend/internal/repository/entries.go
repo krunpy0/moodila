@@ -339,6 +339,27 @@ func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models
 	return entries, rows.Err()
 }
 
+func (r Entries) AllByUser(ctx context.Context, userID string) ([]models.Entry, error) {
+	rows, err := r.Pool.Query(ctx, `
+		SELECT id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden,
+		       EXISTS(SELECT 1 FROM entry_friend_visibility efv WHERE efv.entry_id = entries.id) AS has_custom_visibility,
+		       created_at
+		FROM entries WHERE user_id = $1 ORDER BY date ASC, created_at ASC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	entries := make([]models.Entry, 0)
+	for rows.Next() {
+		var entry models.Entry
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	return entries, rows.Err()
+}
+
 func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
 		SELECT date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden,

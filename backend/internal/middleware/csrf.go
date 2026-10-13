@@ -11,6 +11,12 @@ func CSRF() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		switch c.Request.Method {
 		case http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete:
+			// Allow same-origin service worker mark-read actions
+			if c.Request.URL.Path == "/notifications/mark-read" && c.GetHeader("Sec-Fetch-Site") == "same-origin" {
+				c.Next()
+				return
+			}
+
 			headerCSRF := c.GetHeader("X-CSRF-Token")
 			expectedCSRF := c.GetString("csrfToken")
 			if headerCSRF == "" || expectedCSRF == "" || headerCSRF != expectedCSRF {

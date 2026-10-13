@@ -18,7 +18,11 @@ WORKDIR /app
 
 RUN apk add --no-cache ca-certificates tzdata
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 COPY --from=builder /moodila-api /app/moodila-api
+
+USER appuser
 
 EXPOSE 8080
 

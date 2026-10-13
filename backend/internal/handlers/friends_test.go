@@ -78,3 +78,33 @@ func TestFriendsRequestSelf(t *testing.T) {
 	}
 }
 
+func TestFriendsUnfriend_InvalidUUID(t *testing.T) {
+	h := Friends{Friends: repository.Friends{Pool: &pgxpool.Pool{}}}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = []gin.Param{{Key: "id", Value: "invalid-uuid"}}
+	c.Set("userID", "550e8400-e29b-41d4-a716-446655440000")
+
+	h.Unfriend(c)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400 for invalid UUID, got %d", w.Code)
+	}
+}
+
+func TestFriendsUnfriend_Unavailable(t *testing.T) {
+	h := Friends{Friends: repository.Friends{Pool: nil}}
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Params = []gin.Param{{Key: "id", Value: "550e8400-e29b-41d4-a716-446655440001"}}
+	c.Set("userID", "550e8400-e29b-41d4-a716-446655440000")
+
+	h.Unfriend(c)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503 when pool is nil, got %d", w.Code)
+	}
+}
+

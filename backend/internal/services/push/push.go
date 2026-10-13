@@ -67,7 +67,7 @@ func NewService(cfg config.Config, repo repository.PushSubscriptions) (*Service,
 		vapidPriv:  priv,
 		subscriber: sub,
 		privKey:    parsedPriv,
-		httpClient: &http.Client{Timeout: 10 * time.Second},
+		httpClient: &http.Client{Timeout: 5 * time.Second},
 		jobs:       make(chan pushJob, 5000),
 	}
 
@@ -86,7 +86,7 @@ func (s *Service) worker() {
 }
 
 func (s *Service) dispatch(sub models.PushSubscription, payloadBytes []byte) {
-	sendCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	sendCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	err := s.sendPushNotification(sendCtx, sub, payloadBytes)
@@ -168,7 +168,7 @@ func (s *Service) sendPushNotification(ctx context.Context, sub models.PushSubsc
 		return nil
 	}
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 16*1024))
 	return fmt.Errorf("push service HTTP status %d: %s", resp.StatusCode, string(respBody))
 }
 
