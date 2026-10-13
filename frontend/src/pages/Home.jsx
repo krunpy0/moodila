@@ -18,7 +18,7 @@ import { useNotifications } from "../components/Notifications";
 import { haptics } from "../utils/haptics";
 
 const EMPTY_ARRAY = [];
-const MOOD_OPTIONS = [5, 4, 3, 2, 1];
+const MOOD_OPTIONS = [1, 2, 3, 4, 5];
 
 export default function Home() {
   const today = useMemo(() => new Date(`${getLocalDate()}T12:00:00`), []);
