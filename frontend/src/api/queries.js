@@ -1,9 +1,9 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getSession } from './auth'
+import { getSession, verifyEmail, resendVerification } from './auth'
 import { deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, getStats, saveEntry, updateEntryVisibility } from './entries'
 import { likeEntry, getFeed, getEntryReactions, getComments, addComment, deleteComment } from './feed'
 import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser, getFriendVisibilityDefaults, setFriendVisibilityDefault } from './friends'
-import { getMyProfile, updateMyProfile, getFriendProfile } from './users'
+import { getMyProfile, updateMyProfile, getFriendProfile, blockUser, unblockUser, getBlockedUsers, reportContent, getAdminReports, updateAdminReportStatus } from './users'
 import { queryKeys } from './queryKeys'
 
 import { fetchNotifications, fetchUnreadNotificationCount, markNotificationsAsRead, fetchNotificationSettings, updateNotificationSettings } from './notifications'
@@ -556,3 +556,77 @@ export function useDeleteAnnouncementMutation() {
     },
   })
 }
+
+export const useBlockedUsersQuery = (enabled = true) =>
+  useQuery({
+    queryKey: queryKeys.blockedUsers,
+    queryFn: getBlockedUsers,
+    enabled,
+    staleTime: STALE_TIMES.DYNAMIC,
+  })
+
+export function useBlockUserMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: blockUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.blockedUsers })
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
+}
+
+export function useUnblockUserMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: unblockUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.blockedUsers })
+    },
+  })
+}
+
+export function useReportContentMutation() {
+  return useMutation({
+    mutationFn: reportContent,
+  })
+}
+
+export function useVerifyEmailMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: verifyEmail,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.session })
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+    },
+  })
+}
+
+export function useResendVerificationMutation() {
+  return useMutation({
+    mutationFn: resendVerification,
+  })
+}
+
+export function useAdminReportsQuery(status, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.adminReports(status),
+    queryFn: () => getAdminReports(status),
+    enabled,
+    staleTime: STALE_TIMES.DYNAMIC,
+  })
+}
+
+export function useUpdateAdminReportStatusMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateAdminReportStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] })
+    },
+  })
+}
+

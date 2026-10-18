@@ -1,23 +1,53 @@
-/* Hallmark · designed-as-app · design-system: DESIGN.md */
+import { useState } from "react";
 import { useParams, useNavigate, Link, Navigate } from "react-router-dom";
-import { useFriendProfileQuery, useProfileQuery } from "../api/queries";
+import { useFriendProfileQuery, useProfileQuery, useBlockUserMutation } from "../api/queries";
 import AppLayout from "../components/AppLayout";
 import { ProfileSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import MoodIcon from "../components/MoodIcon";
+import ReportModal from "../components/ReportModal";
+import { useNotifications } from "../components/Notifications";
 import { getMoodInfo, getLocalizedTag } from "../utils/moods";
 import { useLanguage } from "../context/LanguageContext";
 import { safeNavigateBack } from "../utils/navigation";
+import { haptics } from "../utils/haptics";
 
 export default function FriendProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { t, formatDate } = useLanguage();
+  const { t, formatDate, language } = useLanguage();
+  const { notify } = useNotifications();
   const myProfileQuery = useProfileQuery();
+  const blockMutation = useBlockUserMutation();
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const currentUserId = myProfileQuery.data?.user?.id;
 
   const profileQuery = useFriendProfileQuery(id, id !== currentUserId);
+
+  const isRu = language === "ru";
+
+  const handleBlock = () => {
+    if (!user) return;
+    const confirmMsg = isRu
+      ? `Заблокировать пользователя @${user.username}? Он не сможет отправлять вам запросы и видеть ваши записи.`
+      : `Block @${user.username}? They won't be able to send friend requests or see your entries.`;
+    if (window.confirm(confirmMsg)) {
+      haptics.warning();
+      blockMutation.mutate(user.id, {
+        onSuccess: () => {
+          haptics.success();
+          notify(isRu ? `Пользователь @${user.username} заблокирован` : `@${user.username} has been blocked`);
+          navigate("/friends", { replace: true });
+        },
+        onError: (err) => {
+          haptics.error();
+          notify(err?.message || (isRu ? "Ошибка" : "Error"), "error");
+        },
+      });
+    }
+  };
 
   if (currentUserId && id === currentUserId) {
     return <Navigate to="/profile" replace />;
@@ -50,8 +80,58 @@ export default function FriendProfile() {
           <h1 className="text-headline-lg-mobile font-headline-lg-mobile text-on-surface">
             {user ? user.display_name || user.username : t("profile.title")}
           </h1>
-          <div className="w-10" />
+          {user ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((p) => !p)}
+                aria-label="More options"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
+              >
+                <span className="material-symbols-outlined">more_vert</span>
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 top-11 z-30 w-44 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 py-1.5 shadow-floating">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setShowReportModal(true);
+                      }}
+                      className="w-full flex items-center gap-2 px-3.5 py-2 text-left text-body-sm font-medium text-error hover:bg-surface-container"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">flag</span>
+                      {isRu ? "Пожаловаться" : "Report"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleBlock();
+                      }}
+                      className="w-full flex items-center gap-2 px-3.5 py-2 text-left text-body-sm font-medium text-error hover:bg-surface-container"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">block</span>
+                      {isRu ? "Заблокировать" : "Block user"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="w-10" />
+          )}
         </header>
+
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          reportedUserId={user?.id}
+          entityType="user"
+          entityId={user?.id}
+        />
 
         <div className="px-container-margin pt-sm space-y-8">
           {profileQuery.isLoading && <ProfileSkeleton />}

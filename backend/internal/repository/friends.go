@@ -41,6 +41,11 @@ func (r Friends) Search(ctx context.Context, userID, query string) ([]models.Fri
 		WHERE u.id <> $1::uuid
 		  AND u.deleted_at IS NULL
 		  AND (u.username ILIKE $2 OR u.display_name ILIKE $3)
+		  AND NOT EXISTS (
+		      SELECT 1 FROM user_blocks ub
+		      WHERE (ub.blocker_id = $1::uuid AND ub.blocked_id = u.id)
+		         OR (ub.blocker_id = u.id AND ub.blocked_id = $1::uuid)
+		  )
 		ORDER BY
 			CASE
 				WHEN u.username ILIKE $2 THEN 0
@@ -80,6 +85,20 @@ func (r Friends) Request(ctx context.Context, requesterID, addresseeID string) (
 		return friendship, err
 	}
 	if !exists {
+		return friendship, ErrUserNotFound
+	}
+
+	var isBlocked bool
+	err = r.Pool.QueryRow(ctx, `
+		SELECT EXISTS(
+			SELECT 1 FROM user_blocks
+			WHERE (blocker_id = $1 AND blocked_id = $2)
+			   OR (blocker_id = $2 AND blocked_id = $1)
+		)`, requesterID, addresseeID).Scan(&isBlocked)
+	if err != nil {
+		return friendship, err
+	}
+	if isBlocked {
 		return friendship, ErrUserNotFound
 	}
 

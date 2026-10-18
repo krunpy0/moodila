@@ -47,4 +47,11 @@ export const requestAccountDeletion = (password) =>
 export const confirmAccountDeletion = (token) =>
   api('/auth/account/delete-confirm', { method: 'POST', body: JSON.stringify({ token }) })
 
+export const verifyEmail = (token) =>
+  api('/auth/verify-email', { method: 'POST', body: JSON.stringify({ token }) })
+
+export const resendVerification = () =>
+  api('/auth/resend-verification', { method: 'POST' })
+
+
 

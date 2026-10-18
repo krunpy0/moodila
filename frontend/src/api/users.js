@@ -20,4 +20,25 @@ export const exportMyData = async () => {
   return data
 }
 
+export const blockUser = (id) => api(`/users/${id}/block`, { method: 'POST' })
+export const unblockUser = (id) => api(`/users/${id}/block`, { method: 'DELETE' })
+export const getBlockedUsers = () => api('/users/blocked')
+
+export const reportContent = ({ reported_user_id, entity_type, entity_id, reason, details }) =>
+  api('/reports', {
+    method: 'POST',
+    body: JSON.stringify({ reported_user_id, entity_type, entity_id, reason, details }),
+  })
+
+export const getAdminReports = (status) => {
+  const query = status ? `?status=${encodeURIComponent(status)}` : ''
+  return api(`/admin/reports${query}`)
+}
+
+export const updateAdminReportStatus = ({ id, status }) =>
+  api(`/admin/reports/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+
 

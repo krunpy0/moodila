@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/mail"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -28,12 +30,17 @@ import (
 var usernamePattern = regexp.MustCompile(`^[a-z0-9_.-]{2,32}$`)
 
 type Auth struct {
-	Users           repository.Users
-	PasswordReset   repository.PasswordReset
-	AccountDeletion repository.AccountDeletion
-	Mailer          mailer.Mailer
-	Config          config.Config
-	JWTSecret       string
+	Users             repository.Users
+	PasswordReset     repository.PasswordReset
+	AccountDeletion   repository.AccountDeletion
+	EmailVerification repository.EmailVerification
+	Mailer            mailer.Mailer
+	Config            config.Config
+	JWTSecret         string
+}
+
+type verifyEmailInput struct {
+	Token string `json:"token"`
 }
 
 type credentials struct {
@@ -106,6 +113,9 @@ func (h Auth) Register(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create account"})
 		return
 	}
+
+	go h.sendVerificationEmail(context.Background(), user)
+
 	h.respondWithCookies(c, http.StatusCreated, user.ID, user)
 }
 
@@ -714,4 +724,107 @@ func (h Auth) DeleteAccountConfirm(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Account deleted successfully"})
 }
+
+func (h Auth) sendVerificationEmail(ctx context.Context, user models.User) {
+	if h.EmailVerification.Pool == nil {
+		return
+	}
+
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		log.Printf("[ERROR] generating random email verification token: %v", err)
+		return
+	}
+	rawToken := base64.RawURLEncoding.EncodeToString(tokenBytes)
+
+	sum := sha256.Sum256([]byte(rawToken))
+	tokenHash := hex.EncodeToString(sum[:])
+
+	expiresAt := time.Now().Add(24 * time.Hour)
+	_, err := h.EmailVerification.Create(ctx, user.ID, tokenHash, expiresAt)
+	if err != nil {
+		log.Printf("[ERROR] saving email verification token: %v", err)
+		return
+	}
+
+	baseURL := h.Config.AppBaseURL
+	if baseURL == "" {
+		baseURL = h.Config.CORSOrigin
+	}
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+	verifyURL := strings.TrimRight(baseURL, "/") + "/verify-email?token=" + url.QueryEscape(rawToken)
+
+	if err := h.Mailer.SendEmailVerificationEmail(user.Email, verifyURL, 24); err != nil {
+		log.Printf("[ERROR] sending email verification email to %s: %v", user.Email, err)
+	}
+}
+
+func (h Auth) VerifyEmail(c *gin.Context) {
+	if h.EmailVerification.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	var input verifyEmailInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid JSON"})
+		return
+	}
+
+	token := strings.TrimSpace(input.Token)
+	if token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "token is required"})
+		return
+	}
+
+	sum := sha256.Sum256([]byte(token))
+	tokenHash := hex.EncodeToString(sum[:])
+
+	userID, err := h.EmailVerification.Verify(c.Request.Context(), tokenHash)
+	if err != nil {
+		if errors.Is(err, repository.ErrInvalidOrExpiredVerificationToken) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or expired verification token"})
+			return
+		}
+		log.Printf("[ERROR] Auth.VerifyEmail: %v", err)
+		_ = c.Error(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not verify email"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "email verified successfully",
+		"user_id": userID,
+	})
+}
+
+func (h Auth) ResendVerification(c *gin.Context) {
+	if h.Users.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	userID := c.GetString("userID")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	user, err := h.Users.ByID(c.Request.Context(), userID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if user.IsVerified {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "email is already verified"})
+		return
+	}
+
+	h.sendVerificationEmail(c.Request.Context(), user)
+	c.JSON(http.StatusOK, gin.H{"message": "verification email sent"})
+}
+
 

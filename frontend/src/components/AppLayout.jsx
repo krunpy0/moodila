@@ -3,6 +3,7 @@ import DesktopSidebar from './DesktopSidebar'
 import BottomNav from './BottomNav'
 import HalloweenDecorations from './HalloweenDecorations'
 import SakuraPetals from './SakuraPetals'
+import EmailVerificationBanner from './EmailVerificationBanner'
 
 export default function AppLayout({ children }) {
   return (
@@ -18,6 +19,7 @@ export default function AppLayout({ children }) {
 
       {/* Main Page Content Area */}
       <div className="flex-1 min-w-0 min-h-screen flex flex-col pt-safe-top lg:pt-0 relative z-10">
+        <EmailVerificationBanner />
         {children}
       </div>
 

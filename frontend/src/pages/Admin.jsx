@@ -16,6 +16,7 @@ import {
 import { AdminSkeleton } from '../components/skeleton/PageSkeletons'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
 import { useLanguage } from '../context/LanguageContext'
+import AdminReports from '../components/AdminReports'
 
 function getFutureISO(hours) {
   const d = new Date()
@@ -36,6 +37,8 @@ export default function Admin() {
   const unpublishMutation = useUnpublishAnnouncementMutation()
   const archiveMutation = useArchiveAnnouncementMutation()
   const deleteMutation = useDeleteAnnouncementMutation()
+
+  const [mainTab, setMainTab] = useState('announcements')
 
   // Form states for creation
   const [title, setTitle] = useState('')
@@ -234,8 +237,40 @@ export default function Admin() {
           </span>
         </header>
 
-        {/* Create Announcement Section */}
-        <section className="rounded-[24px] bg-surface-container-lowest p-6 shadow-card border border-outline-variant/20 space-y-md mb-lg">
+        {/* Navigation Tabs: Announcements / Reports */}
+        <div className="flex items-center gap-2 mb-lg border-b border-outline-variant/20 pb-3">
+          <button
+            type="button"
+            onClick={() => setMainTab('announcements')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-label-md font-semibold transition-colors ${
+              mainTab === 'announcements'
+                ? 'bg-primary text-on-primary shadow-subtle'
+                : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">campaign</span>
+            <span>{t('admin.tabAnnouncements', 'Объявления')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMainTab('reports')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-label-md font-semibold transition-colors ${
+              mainTab === 'reports'
+                ? 'bg-primary text-on-primary shadow-subtle'
+                : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">flag</span>
+            <span>{t('admin.tabReports', 'Жалобы')}</span>
+          </button>
+        </div>
+
+        {mainTab === 'reports' ? (
+          <AdminReports />
+        ) : (
+          <>
+            {/* Create Announcement Section */}
+            <section className="rounded-[24px] bg-surface-container-lowest p-6 shadow-card border border-outline-variant/20 space-y-md mb-lg">
           <div className="flex items-center justify-between">
             <h2 className="text-headline-lg font-headline-lg font-bold text-on-surface">
               {t('admin.createAnnouncement', 'Create Announcement')}
@@ -645,6 +680,8 @@ export default function Admin() {
             })}
           </div>
         </section>
+      </>
+    )}
 
         {/* Edit Modal */}
         {editingItem && (

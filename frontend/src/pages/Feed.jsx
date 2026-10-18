@@ -10,10 +10,12 @@ import {
   useProfileQuery,
   useFriendsQuery,
   useMarkNotificationsAsReadMutation,
+  useBlockUserMutation,
 } from "../api/queries";
 import AppLayout from "../components/AppLayout";
 import BottomNav from "../components/BottomNav";
 import HeaderBell from "../components/HeaderBell";
+import ReportModal from "../components/ReportModal";
 import { useNotifications } from "../components/Notifications";
 import { FeedSkeleton, FeedCardSkeleton, CommentsSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
@@ -41,8 +43,10 @@ export default function Feed() {
   const feedQuery = useInfiniteFeedQuery(10, includeSelf);
   const friendsQuery = useFriendsQuery();
   const likeMutation = useLikeEntryMutation();
+  const blockMutation = useBlockUserMutation();
+  const [reportTarget, setReportTarget] = useState(null);
   const observerRef = useRef(null);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { notify } = useNotifications();
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -50,6 +54,27 @@ export default function Feed() {
   const scrolledTargetKeyRef = useRef(null);
 
   const friends = friendsQuery.data || [];
+
+  const handleBlock = (author) => {
+    if (!author) return;
+    const isRu = language === "ru";
+    const confirmMsg = isRu
+      ? `Заблокировать пользователя @${author.username}? Его записи пропадут из вашей ленты.`
+      : `Block @${author.username}? Their entries will disappear from your feed.`;
+    if (window.confirm(confirmMsg)) {
+      haptics.warning();
+      blockMutation.mutate(author.id, {
+        onSuccess: () => {
+          haptics.success();
+          notify(isRu ? `@${author.username} заблокирован` : `@${author.username} blocked`);
+        },
+        onError: (err) => {
+          haptics.error();
+          notify(err?.message || (isRu ? "Ошибка" : "Error"), "error");
+        },
+      });
+    }
+  };
 
   const handleToggleIncludeSelf = () => {
     haptics.selection();
@@ -269,6 +294,8 @@ export default function Feed() {
                       key={entry.id}
                       entry={entry}
                       onReact={handleReact}
+                      onReport={setReportTarget}
+                      onBlock={handleBlock}
                       isHighlighted={entry.id === targetEntryId}
                     />
                   ))}
@@ -402,6 +429,13 @@ export default function Feed() {
             </div>
           </div>
         </div>
+        <ReportModal
+          isOpen={Boolean(reportTarget)}
+          onClose={() => setReportTarget(null)}
+          reportedUserId={reportTarget?.reportedUserId}
+          entityType={reportTarget?.entityType}
+          entityId={reportTarget?.entityId}
+        />
         <BottomNav />
       </main>
     </AppLayout>
@@ -416,8 +450,9 @@ const moodTintBg = {
   5: "bg-mood-rad-container/40 border-mood-rad/20",
 };
 
-function FeedCard({ entry, onReact, isHighlighted = false }) {
+function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) {
   const [showComments, setShowComments] = useState(isHighlighted);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isHighlighted) {
@@ -470,6 +505,47 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
               </p>
             </div>
           </Link>
+          {currentUserId && entry.author?.id !== currentUserId && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuOpen((p) => !p)}
+                aria-label="Options"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
+              >
+                <span className="material-symbols-outlined text-[20px]">more_vert</span>
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 top-10 z-30 w-44 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 py-1.5 shadow-floating">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onReport?.({ reportedUserId: entry.author.id, entityType: "entry", entityId: entry.id });
+                      }}
+                      className="w-full flex items-center gap-2 px-3.5 py-2 text-left text-body-sm font-medium text-error hover:bg-surface-container"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">flag</span>
+                      {t("profile.report") || "Пожаловаться"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onBlock?.(entry.author);
+                      }}
+                      className="w-full flex items-center gap-2 px-3.5 py-2 text-left text-body-sm font-medium text-error hover:bg-surface-container"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">block</span>
+                      {t("profile.blockUser") || "Заблокировать"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </header>
 
         <div className="mt-md flex flex-col items-center gap-sm py-sm">
@@ -510,6 +586,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
           <CommentsSection
             entryId={entry.id}
             postAuthorId={entry.author?.id}
+            onReport={onReport}
           />
         )}
       </article>
@@ -549,6 +626,47 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
         >
           <MoodIcon mood={entry.mood} className="text-[24px]" />
         </span>
+        {currentUserId && entry.author?.id !== currentUserId && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((p) => !p)}
+              aria-label="Options"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container"
+            >
+              <span className="material-symbols-outlined text-[20px]">more_vert</span>
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-10 z-30 w-44 rounded-2xl bg-surface-container-lowest border border-outline-variant/30 py-1.5 shadow-floating">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onReport?.({ reportedUserId: entry.author.id, entityType: "entry", entityId: entry.id });
+                    }}
+                    className="w-full flex items-center gap-2 px-3.5 py-2 text-left text-body-sm font-medium text-error hover:bg-surface-container"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">flag</span>
+                    {t("profile.report") || "Пожаловаться"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      onBlock?.(entry.author);
+                    }}
+                    className="w-full flex items-center gap-2 px-3.5 py-2 text-left text-body-sm font-medium text-error hover:bg-surface-container"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">block</span>
+                    {t("profile.blockUser") || "Заблокировать"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </header>
 
       <div className="mt-md space-y-sm">
@@ -605,6 +723,7 @@ function FeedCard({ entry, onReact, isHighlighted = false }) {
         <CommentsSection
           entryId={entry.id}
           postAuthorId={entry.author?.id}
+          onReport={onReport}
         />
       )}
     </article>
@@ -844,7 +963,7 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
   );
 }
 
-function CommentsSection({ entryId, postAuthorId }) {
+function CommentsSection({ entryId, postAuthorId, onReport }) {
   const [commentText, setCommentText] = useState("");
   const commentsQuery = useCommentsQuery(entryId);
   const addMutation = useAddCommentMutation();
@@ -917,7 +1036,7 @@ function CommentsSection({ entryId, postAuthorId }) {
                     {comment.text}
                   </p>
                 </div>
-                {isOwner && (
+                {isOwner ? (
                   <button
                     type="button"
                     onClick={() => handleDelete(comment.id)}
@@ -928,6 +1047,26 @@ function CommentsSection({ entryId, postAuthorId }) {
                       delete
                     </span>
                   </button>
+                ) : (
+                  currentUserId && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onReport?.({
+                          reportedUserId: comment.user_id,
+                          entityType: "comment",
+                          entityId: comment.id,
+                        })
+                      }
+                      title={t("profile.report") || "Пожаловаться"}
+                      aria-label={t("profile.report") || "Пожаловаться"}
+                      className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant/40 hover:bg-surface-container hover:text-error transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">
+                        flag
+                      </span>
+                    </button>
+                  )
                 )}
               </div>
             );

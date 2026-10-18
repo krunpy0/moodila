@@ -22,4 +22,7 @@ export const queryKeys = {
   stats: (period = 'month') => ['stats', period],
   friendVisibilityDefaults: ['friends', 'visibilityDefaults'],
   features: ['app', 'features'],
+  blockedUsers: ['users', 'blocked'],
+  adminReports: (status) => ['admin', 'reports', status || 'all'],
 }
+

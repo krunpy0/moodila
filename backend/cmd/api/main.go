@@ -170,16 +170,18 @@ func main() {
 	router.GET("/app/features", readLimiter, appFeatures.Get)
 	router.GET("/features", readLimiter, appFeatures.Get)
 	auth := handlers.Auth{
-		Users:           repository.Users{Pool: pool},
-		PasswordReset:   repository.PasswordReset{Pool: pool},
-		AccountDeletion: repository.AccountDeletion{Pool: pool},
-		Mailer:          mailClient,
-		Config:          cfg,
-		JWTSecret:       cfg.JWTSecret,
+		Users:             repository.Users{Pool: pool},
+		PasswordReset:     repository.PasswordReset{Pool: pool},
+		AccountDeletion:   repository.AccountDeletion{Pool: pool},
+		EmailVerification: repository.EmailVerification{Pool: pool},
+		Mailer:            mailClient,
+		Config:            cfg,
+		JWTSecret:         cfg.JWTSecret,
 	}
 	router.POST("/auth/register", authLimiter, auth.Register)
 	router.POST("/auth/login", authLimiter, auth.Login)
 	router.POST("/auth/refresh", authLimiter, auth.Refresh)
+	router.POST("/auth/verify-email", authLimiter, auth.VerifyEmail)
 	router.POST("/auth/forgot-password", forgotLimiter, auth.ForgotPassword)
 	router.POST("/auth/reset-password", authLimiter, auth.ResetPassword)
 	router.POST("/auth/account/delete-confirm", deleteConfirmLimiter, auth.DeleteAccountConfirm)
@@ -203,8 +205,15 @@ func main() {
 	friends := handlers.Friends{Friends: repository.Friends{Pool: pool}, Entries: repository.Entries{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
 	users := handlers.Users{Users: usersRepo, Entries: repository.Entries{Pool: pool}, Friends: repository.Friends{Pool: pool}, Storage: storageS3}
 	feed := handlers.Feed{Feed: repository.Feed{Pool: pool}, Notifications: notificationsRepo, Storage: storageS3}
+	moderationHandler := handlers.Moderation{
+		Blocks:  repository.Blocks{Pool: pool},
+		Reports: repository.Reports{Pool: pool},
+		Entries: repository.Entries{Pool: pool},
+		Storage: storageS3,
+	}
 	authorized := router.Group("/", middleware.Auth(cfg.JWTSecret), middleware.CSRF())
 	authorized.PATCH("/auth/password", passwordChangeLimiter, auth.ChangePassword)
+	authorized.POST("/auth/resend-verification", authLimiter, auth.ResendVerification)
 	authorized.POST("/auth/account/delete-request", passwordChangeLimiter, auth.DeleteAccountRequest)
 	authorized.POST("/entries", mutationLimiter, entries.Save)
 	authorized.DELETE("/entries/:id", mutationLimiter, entries.Delete)
@@ -234,6 +243,11 @@ func main() {
 	authorized.GET("/friends/pending", readLimiter, friends.Pending)
 	authorized.GET("/friends/visibility-defaults", readLimiter, friends.GetVisibilityDefaults)
 	authorized.PATCH("/friends/:id/visibility-default", mutationLimiter, friends.SetVisibilityDefault)
+
+	authorized.POST("/users/:id/block", mutationLimiter, moderationHandler.Block)
+	authorized.DELETE("/users/:id/block", mutationLimiter, moderationHandler.Unblock)
+	authorized.GET("/users/blocked", readLimiter, moderationHandler.ListBlocked)
+	authorized.POST("/reports", mutationLimiter, moderationHandler.Report)
 
 	authorized.GET("/feed", readLimiter, feed.List)
 	authorized.POST("/feed/:entry_id/like", mutationLimiter, feed.Like)
@@ -265,6 +279,8 @@ func main() {
 	admin.POST("/announcements/:id/unpublish", mutationLimiter, announcementsHandler.UnpublishAdmin)
 	admin.POST("/announcements/:id/archive", mutationLimiter, announcementsHandler.ArchiveAdmin)
 	admin.DELETE("/announcements/:id", mutationLimiter, announcementsHandler.DeleteAdmin)
+	admin.GET("/reports", readLimiter, moderationHandler.ListReportsAdmin)
+	admin.PATCH("/reports/:id", mutationLimiter, moderationHandler.UpdateReportStatusAdmin)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

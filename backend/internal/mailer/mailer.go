@@ -281,3 +281,93 @@ func (m Mailer) SendAccountDeletedConfirmationEmail(toEmail string) error {
 
 	return nil
 }
+
+func (m Mailer) SendEmailVerificationEmail(toEmail string, verifyURL string, ttlHours int) error {
+	if m.APIKey == "" {
+		log.Printf("[DEV MAIL] Email verification link for %s: %s (expires in %d hours)", toEmail, verifyURL, ttlHours)
+		return nil
+	}
+
+	subject := "Verify your email — Moodila"
+	logoURL := "https://moodila.app/favicon.png"
+	if u, err := url.Parse(verifyURL); err == nil && u.Scheme != "" && u.Host != "" {
+		logoURL = fmt.Sprintf("%s://%s/favicon.png", u.Scheme, u.Host)
+	}
+
+	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify your email</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #fbf9f8; font-family: 'Plus Jakarta Sans', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1b1c1c;">
+  <table width="100%%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 32px;">
+    <tr>
+      <td align="center" style="padding-bottom: 24px;">
+        <div style="width: 56px; height: 56px; border-radius: 16px; overflow: hidden; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.06); background-color: #e8f5e9;">
+          <img src="%s" width="56" height="56" alt="Moodila" style="display: block; width: 56px; height: 56px; border-radius: 16px; object-fit: cover;" />
+        </div>
+        <h1 style="margin: 16px 0 8px 0; font-size: 24px; font-weight: 700; color: #1b1c1c;">Moodila</h1>
+        <p style="margin: 0; font-size: 14px; color: #4d4447;">Email Verification</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size: 15px; line-height: 22px; color: #4d4447; padding-bottom: 24px;">
+        Hello,<br><br>
+        Thank you for joining Moodila! Please confirm your email address by clicking the button below to verify your account:
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding-bottom: 24px;">
+        <a href="%s" target="_blank" style="display: inline-block; background-color: #2e7d32; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 12px;">Verify Email</a>
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size: 13px; line-height: 20px; color: #7f7478; padding-bottom: 16px;">
+        This verification link is valid for <strong>%d hours</strong>. If you did not create a Moodila account, you can safely ignore this email.
+      </td>
+    </tr>
+    <tr>
+      <td style="font-size: 12px; line-height: 18px; color: #7f7478; border-top: 1px solid #f0eded; padding-top: 16px; word-break: break-all;">
+        Or copy and paste this link into your browser:<br>
+        <a href="%s" style="color: #2e7d32; text-decoration: underline;">%s</a>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`, logoURL, verifyURL, ttlHours, verifyURL, verifyURL)
+
+	reqData := resendRequest{
+		From:    m.FromEmail,
+		To:      []string{toEmail},
+		Subject: subject,
+		HTML:    htmlBody,
+	}
+
+	payload, err := json.Marshal(reqData)
+	if err != nil {
+		return fmt.Errorf("marshal resend req: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.resend.com/emails", bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("create resend req: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+m.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := m.HTTPClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("send email via resend: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("resend API error (%d): %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	return nil
+}
+

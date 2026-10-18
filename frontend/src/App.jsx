@@ -28,6 +28,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ConfirmAccountDeletion = lazy(
   () => import("./pages/ConfirmAccountDeletion"),
 );
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AddEntry = lazy(() => import("./pages/AddEntry"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Stats = lazy(() => import("./pages/Stats"));
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="/login" element={<Auth />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route
               path="/account/confirm-delete"
               element={<ConfirmAccountDeletion />}

@@ -25,6 +25,7 @@ import LogoutModal from "../components/LogoutModal";
 import AvatarCropModal from "../components/AvatarCropModal";
 import FriendPrivacyModal from "../components/FriendPrivacyModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
+import BlockedUsersModal from "../components/BlockedUsersModal";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
 import ImageWithSkeleton from "../components/ImageWithSkeleton";
 import { safeNavigateBack } from "../utils/navigation";
@@ -43,6 +44,7 @@ export default function Profile() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showFriendPrivacyModal, setShowFriendPrivacyModal] = useState(false);
+  const [showBlockedUsersModal, setShowBlockedUsersModal] = useState(false);
   const [showNotificationSettingsModal, setShowNotificationSettingsModal] =
     useState(false);
   const [cropImageSrc, setCropImageSrc] = useState(null);
@@ -621,6 +623,28 @@ export default function Profile() {
                     </button>
                   </div>
 
+                  {/* Blocked users */}
+                  <div className="border-t border-surface-container-low pt-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        haptics.selection();
+                        setShowBlockedUsersModal(true);
+                      }}
+                      className="flex w-full items-center justify-between py-sm text-left text-body-md font-medium text-on-surface hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-lg px-1"
+                    >
+                      <span className="flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-on-surface-variant">
+                          block
+                        </span>
+                        {t("profile.blockedUsers")}
+                      </span>
+                      <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                        chevron_right
+                      </span>
+                    </button>
+                  </div>
+
                   {/* Change password */}
                   <div className="border-t border-surface-container-low pt-xs">
                     <button
@@ -729,6 +753,10 @@ export default function Profile() {
               <FriendPrivacyModal
                 isOpen={showFriendPrivacyModal}
                 onClose={() => setShowFriendPrivacyModal(false)}
+              />
+              <BlockedUsersModal
+                isOpen={showBlockedUsersModal}
+                onClose={() => setShowBlockedUsersModal(false)}
               />
               <DeleteAccountModal
                 isOpen={showDeleteModal}
