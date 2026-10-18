@@ -1,59 +1,116 @@
-# MoodShare — Backend (Go)
+# Moodila — Backend (Go)
 
-REST API for MoodShare. Gin + Postgres (Supabase) via `pgx`.
+High-performance REST API powering **Moodila**. Built with Go 1.25 and Gin, using pure SQL queries through `pgxpool` with PostgreSQL (no ORM).
 
-## Photo storage (S3-compatible)
+---
 
-Photos are uploaded directly from the browser using a short-lived, presigned
-S3 PUT URL. The API response remains `{"upload_url":"…","photo_url":"…"}`
-for compatibility with the frontend.
+## Architecture & Features
 
-Set `S3_BUCKET`, `ACCESS_KEY_ID`, and `SECRET_ACCESS_KEY`. Both keys are
-required: the access key identifies the credential and the secret key signs the
-upload URL. Set `S3_ENDPOINT` for any S3-compatible provider (R2, MinIO, B2,
-etc.); leave it empty for AWS S3. `S3_PUBLIC_BASE_URL` should be the public
-bucket or CDN origin used to display saved photos.
+- **Language & Runtime:** Go 1.25.0, Gin web framework.
+- **Database:** PostgreSQL (15+) via `jackc/pgx/v5` connection pool with `QueryExecModeSimpleProtocol`.
+- **Authentication & Security:**
+  - Double JWT (`access_token` and `refresh_token`) stored strictly in `HttpOnly` cookies.
+  - In-token CSRF verification (`X-CSRF-Token` required on mutating requests).
+  - Instant session revocation via `token_version` on password changes and logout.
+  - Per-endpoint token-bucket rate limiting.
+- **Media Processing & S3 Storage:**
+  - Photo uploads are routed through the API (`PUT /storage/entry-photos/upload/:token`).
+  - The server decodes, validates, downscales to 1920px, and recompresses images to JPEG (quality 80) before streaming to S3-compatible storage (AWS S3, Cloudflare R2, MinIO).
+  - CPU and memory usage are guarded by a concurrency semaphore to prevent out-of-memory errors on resource-constrained servers (1 vCPU / 1 GB RAM).
+  - Voice memos are uploaded via signed upload tokens directly to object storage.
+- **Notifications:**
+  - In-app notification center for friend requests, post reactions, comments, and new posts (`new_post`).
+  - Web Push notifications (VAPID RFC 8292) dispatched via an asynchronous background worker pool.
+- **Automated Backups:**
+  - Background scheduler dumps PostgreSQL via `pg_dump` and uploads encrypted snapshots to Google Drive with automated retention cleanup.
 
-Configure bucket CORS to allow browser `PUT` requests from `CORS_ORIGIN` with
-the `Content-Type` request header. The URLs stored in entries must be publicly
-readable, typically through a public bucket or a CDN.
+---
 
-## Structure
+## Project Structure
 
+```text
+backend/
+├── cmd/
+│   ├── api/             # Main HTTP server entrypoint
+│   ├── backup/          # Manual database backup CLI runner
+│   ├── migrate/         # Standalone database migration runner
+│   ├── token/           # Google Drive OAuth2 token generator
+│   ├── verify_feed/     # Feed latency and consistency verifier
+│   └── verify_keys/     # VAPID push keys validation tool
+├── internal/
+│   ├── backup/          # Automated backup scheduler and Google Drive client
+│   ├── config/          # Environment variable parser and defaults
+│   ├── db/              # pgxpool setup and SQL migration engine
+│   ├── handlers/        # Gin HTTP route handlers
+│   ├── mailer/          # Transactional email service (Resend)
+│   ├── middleware/      # Auth, CSRF, admin check, rate limiting, CORS, logger
+│   ├── models/          # Domain models and request/response DTOs
+│   ├── repository/      # Pure SQL repositories and in-memory caches
+│   ├── services/push/   # Web Push notification dispatcher and worker pool
+│   └── storage/         # S3 client and image processing
+└── migrations/          # Sequential, transactional SQL migrations (0001–0021)
 ```
-cmd/api/main.go        entrypoint: config, DB connect, migrations, HTTP server
-internal/
-  config/              env / .env loading
-  db/                  pgx pool + SQL migrator
-  handlers/            HTTP handlers, grouped by feature (health, ...)
-  middleware/          JWT auth, CORS, request logging
-  repository/          SQL queries by entity
-  models/              structs mirroring the DB schema
-migrations/            *.sql migrations, applied in lexical order at startup
+
+---
+
+## Local Development Setup
+
+### 1. Prerequisites
+
+- Go 1.25 or higher
+- PostgreSQL 15+ (local, Docker, or managed instance)
+
+### 2. Configure Environment
+
+Copy the example environment configuration:
+
+```bash
+cp .env.example .env
 ```
 
-## Setup
+Set your PostgreSQL connection string in `.env`:
 
-1. Copy env and add your Supabase connection string:
+```env
+DATABASE_URL=postgresql://postgres:password@localhost:5432/moodila
+```
 
-   ```
-   cp .env.example .env
-   # edit .env → DATABASE_URL=postgresql://postgres.<ref>:<pwd>@...pooler.supabase.com:5432/postgres
-   ```
+> **Note:** For local development over plain HTTP (`http://localhost:...`), ensure `COOKIE_SECURE=false`.
 
-2. Run (uses the local Go toolchain; deps pinned for Go 1.24):
+### 3. Run the Server
 
-   ```
-   GOTOOLCHAIN=local go run ./cmd/api
-   ```
+```bash
+go run ./cmd/api
+```
 
-On startup the server connects to Postgres and applies any pending migrations.
-If `DATABASE_URL` is unset or unreachable, the server still starts and `/health`
-reports the DB status.
+On startup, pending database migrations from `backend/migrations/` are automatically applied in sequential order.
 
-## Endpoints
+### 4. Running Tests
 
-- `GET /health` → `{"status":"ok","db":"connected|unavailable|not_configured","time":"..."}`
-- `POST /auth/register` → create account and return JWT
-- `POST /auth/login` → return JWT
-- `GET /auth/session` → validate `Authorization: Bearer <token>`
+- Run unit tests:
+  ```bash
+  go test ./...
+  ```
+- Run integration tests (requires running PostgreSQL specified by `DATABASE_URL`):
+  ```bash
+  go test -v ./internal/handlers -run TestHiddenEntriesE2E
+  ```
+
+---
+
+## Key API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/health` | Server and database health check |
+| `GET` | `/app/features` | Seasonal themes and dynamic feature flags |
+| `POST`| `/auth/register` | Register a new user account |
+| `POST`| `/auth/login` | Authenticate user and issue HttpOnly cookies |
+| `POST`| `/auth/refresh` | Rotate access token using refresh cookie |
+| `POST`| `/auth/logout` | Revoke session and clear cookies |
+| `GET` | `/auth/session` | Inspect current session and user info |
+| `GET` | `/feed` | Friends' social feed with keyset pagination |
+| `POST`| `/entries` | Create or update daily mood journal entry |
+| `GET` | `/entries/me` | Fetch personal calendar entries for a month |
+| `GET` | `/stats` | Aggregate mood statistics and analytics |
+| `GET` | `/notifications` | User notifications list and unread count |
+| `PUT` | `/storage/entry-photos/upload/:token` | Resizing and uploading entry photo |

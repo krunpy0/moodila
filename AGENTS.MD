@@ -34,7 +34,7 @@
 | **API Handlers & Routes** | `backend/internal/handlers/`, маршруты сконфигурированы в `backend/cmd/api/main.go` |
 | **Business Logic** | Распределена между `backend/internal/handlers/` и `backend/internal/repository/` |
 | **Repository & SQL Queries**| `backend/internal/repository/` (чистый SQL, никакого ORM) |
-| **Migrations & DB Schema** | `backend/migrations/` (файлы `0001_...sql` – `0020_...sql`, `migrations.go`) |
+| **Migrations & DB Schema** | `backend/migrations/` (файлы `0001_...sql` – `0021_...sql`, `migrations.go`) |
 | **Domain Models** | `backend/internal/models/` |
 | **Middleware (Auth, CSRF)** | `backend/internal/middleware/` |
 | **Tests** | Unit/Integration в `backend/internal/**_test.go`; нагрузочные в `loadtest/` |
@@ -54,9 +54,11 @@
 3. **Безопасность и Auth:**
    - Токены хранятся **только в `HttpOnly` Cookies** (`access_token`, `refresh_token`). Клиентский JS не имеет доступа к телу токенов.
    - Все мутирующие запросы (`POST`, `PUT`, `PATCH`, `DELETE`) защищены `middleware.CSRF()` и требуют заголовок `X-CSRF-Token`.
-   - Сессии версионируются через `users.token_version`. При смене пароля или выходе версия инкрементируется, мгновенно аннулируя старые JWT.
-4. **Медиафайлы:**
+   - Сессии версионируются через `users.token_version`. При смене пароля или выходе (`/auth/logout`) версия инкрементируется в БД, мгновенно аннулируя старые JWT.
+4. **Медиафайлы и фоновые задачи:**
    - Загрузка фотографий проходит через API (`PUT /storage/entry-photos/upload/:token`), где картинка валидируется, уменьшается до 1920px и пережимается в JPEG q=80 перед отправкой в S3.
+   - Серверный ресайз ограничен семафором параллелизма для защиты сервера (1 vCPU / 1 GB RAM) от OOM-киллера.
+   - Браузерные Web Push рассылаются через фоновый пул воркеров без блокировки HTTP-хендлеров.
 
 ---
 
@@ -65,8 +67,8 @@
 - **Сохранение производительности ленты (Feed):**
   Лента построена на `WITH authors AS ... CROSS JOIN LATERAL (...)` и Keyset Cursor `(date, created_at, id)`. Никогда не заменяйте этот запрос на наивный плоский `JOIN entries` и не используйте `OFFSET`.
 - **Правила изменения Database Schema:**
-  - Никогда не изменяйте задним числом уже примененные миграции `0001`–`0020`.
-  - Любые изменения структуры БД оформляются строго новым файлом (например, `0021_name.sql`).
+  - Никогда не изменяйте задним числом уже примененные миграции `0001`–`0021`.
+  - Любые изменения структуры БД оформляются строго новым файлом (например, `0022_name.sql`).
   - Миграции должны быть идемпотентными (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`) и выполняться в транзакции.
 - **Каноническое правило приватности (Friend Visibility):**
   Запись видна зрителю только если:
@@ -103,7 +105,7 @@
    ```bash
    cd backend && go test ./...
    ```
-   *(Примечание: тест `hidden_test.go` требует запущенной БД; дефект аргументов на строке 176 описан в `docs/current-state.md`).*
+   *(Примечание: модульные тесты работают без БД; интеграционный E2E-тест `hidden_test.go` требует реальной тестовой БД PostgreSQL).*
 
 ---
 
@@ -119,6 +121,7 @@
 - **Социальная лента (Feed)** → [docs/features/feed.md](docs/features/feed.md)
 - **Друзья и приватность** → [docs/features/friends.md](docs/features/friends.md)
 - **Онбординг и анонсы** → [docs/features/onboarding.md](docs/features/onboarding.md)
+- **Темы и стили** → [docs/themes.md](docs/themes.md)
 - **Развертывание и CI/CD** → [docs/deployment.md](docs/deployment.md)
 - **Архитектурные решения (ADR)** → [docs/decisions/README.md](docs/decisions/README.md)
 
