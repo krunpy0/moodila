@@ -91,7 +91,7 @@ func (r Reports) ListAdmin(ctx context.Context, status string, limit, offset int
 		JOIN users u1 ON u1.id = r.reporter_id
 		JOIN users u2 ON u2.id = r.reported_user_id
 		LEFT JOIN entries e ON r.entity_type = 'entry' AND e.id = r.entity_id
-		LEFT JOIN entry_comments c ON r.entity_type = 'comment' AND c.id = r.entity_id
+		LEFT JOIN comments c ON r.entity_type = 'comment' AND c.id = r.entity_id
 		WHERE ($1 = '' OR r.status = $1)
 		ORDER BY r.created_at DESC
 		LIMIT $2 OFFSET $3`
