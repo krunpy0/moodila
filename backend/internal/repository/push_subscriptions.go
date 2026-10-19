@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strings"
 
 	"moodshare/internal/models"
 
@@ -16,15 +17,50 @@ func (r PushSubscriptions) Save(ctx context.Context, userID string, input models
 	if r.Pool == nil {
 		return nil
 	}
+	locale := strings.ToLower(strings.TrimSpace(input.Locale))
+	if locale != "en" && locale != "ru" {
+		locale = "ru"
+	}
 	_, err := r.Pool.Exec(ctx, `
-		INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, updated_at)
-		VALUES ($1, $2, $3, $4, NOW())
+		INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, locale, updated_at)
+		VALUES ($1, $2, $3, $4, $5, NOW())
 		ON CONFLICT (endpoint) DO UPDATE SET
 			user_id = EXCLUDED.user_id,
 			p256dh = EXCLUDED.p256dh,
 			auth = EXCLUDED.auth,
+			locale = EXCLUDED.locale,
 			updated_at = NOW()`,
-		userID, input.Endpoint, input.Keys.P256dh, input.Keys.Auth,
+		userID, input.Endpoint, input.Keys.P256dh, input.Keys.Auth, locale,
+	)
+	if err != nil {
+		return err
+	}
+
+	// Also sync locale to notification_settings for this user
+	_, _ = r.Pool.Exec(ctx, `
+		INSERT INTO notification_settings (user_id, locale, updated_at)
+		VALUES ($1, $2, NOW())
+		ON CONFLICT (user_id) DO UPDATE SET
+			locale = EXCLUDED.locale,
+			updated_at = NOW()`,
+		userID, locale,
+	)
+	return nil
+}
+
+func (r PushSubscriptions) UpdateLocale(ctx context.Context, userID, locale string) error {
+	if r.Pool == nil {
+		return nil
+	}
+	locale = strings.ToLower(strings.TrimSpace(locale))
+	if locale != "en" && locale != "ru" {
+		locale = "ru"
+	}
+	_, err := r.Pool.Exec(ctx, `
+		UPDATE push_subscriptions
+		SET locale = $2, updated_at = NOW()
+		WHERE user_id = $1`,
+		userID, locale,
 	)
 	return err
 }
@@ -58,7 +94,7 @@ func (r PushSubscriptions) GetByUserIDs(ctx context.Context, userIDs []string) (
 		return []models.PushSubscription{}, nil
 	}
 	rows, err := r.Pool.Query(ctx, `
-		SELECT id, user_id, endpoint, p256dh, auth, created_at, updated_at
+		SELECT id, user_id, endpoint, p256dh, auth, COALESCE(locale, 'ru'), created_at, updated_at
 		FROM push_subscriptions
 		WHERE user_id = ANY($1::uuid[])`,
 		userIDs,
@@ -72,7 +108,7 @@ func (r PushSubscriptions) GetByUserIDs(ctx context.Context, userIDs []string) (
 	for rows.Next() {
 		var item models.PushSubscription
 		if err := rows.Scan(
-			&item.ID, &item.UserID, &item.Endpoint, &item.P256dh, &item.Auth, &item.CreatedAt, &item.UpdatedAt,
+			&item.ID, &item.UserID, &item.Endpoint, &item.P256dh, &item.Auth, &item.Locale, &item.CreatedAt, &item.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

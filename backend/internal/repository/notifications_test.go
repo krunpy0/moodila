@@ -104,3 +104,24 @@ func TestFormatPostsCountRu(t *testing.T) {
 	}
 }
 
+func TestFormatPostsCountEn(t *testing.T) {
+	tests := []struct {
+		count    int
+		expected string
+	}{
+		{1, "1 new entry"},
+		{2, "2 new entries"},
+		{3, "3 new entries"},
+		{5, "5 new entries"},
+		{11, "11 new entries"},
+		{21, "21 new entries"},
+	}
+
+	for _, tc := range tests {
+		got := formatPostsCountEn(tc.count)
+		if got != tc.expected {
+			t.Errorf("formatPostsCountEn(%d) = %q; want %q", tc.count, got, tc.expected)
+		}
+	}
+}
+

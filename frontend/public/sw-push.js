@@ -67,6 +67,29 @@ async function handleMarkAsReadPush(notifData) {
   }
 }
 
+function getLanguageFromIDB() {
+  return new Promise((resolve) => {
+    try {
+      if (!('indexedDB' in self)) return resolve('');
+      const req = indexedDB.open('moodila_push_db', 1);
+      req.onupgradeneeded = (e) => {
+        e.target.result.createObjectStore('config');
+      };
+      req.onsuccess = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('config')) return resolve('');
+        const tx = db.transaction('config', 'readonly');
+        const getReq = tx.objectStore('config').get('language');
+        getReq.onsuccess = () => resolve(getReq.result || '');
+        getReq.onerror = () => resolve('');
+      };
+      req.onerror = () => resolve('');
+    } catch (_) {
+      resolve('');
+    }
+  });
+}
+
 self.addEventListener('push', (event) => {
   if (!event.data) return;
 
@@ -77,34 +100,43 @@ self.addEventListener('push', (event) => {
     data = { body: event.data.text() };
   }
 
-  const title = data.title || 'Moodila';
-  const options = {
-    body: data.body || 'Новое уведомление',
-    icon: data.icon || '/pwa-192x192.png',
-    badge: data.badge || '/pwa-192x192.png',
-    tag: data.tag || 'moodila-notification',
-    data: {
-      url: data.url || '/feed',
-      entry_id: data.entry_id || null,
-      notification_id: data.notification_id || null,
-    },
-    actions: [
-      { action: 'mark-read', title: 'Прочитать' },
-    ],
-    vibrate: [100, 50, 100],
-  };
-
   event.waitUntil(
-    self.registration.showNotification(title, options).then(() => {
-      return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({
-            type: 'PUSH_NOTIFICATION_RECEIVED',
-            payload: data,
-          });
+    (async () => {
+      let lang = data.locale;
+      if (!lang) {
+        lang = await getLanguageFromIDB();
+      }
+      const isEn = lang === 'en';
+      const defaultTitle = 'Moodila';
+      const defaultBody = isEn ? 'New notification' : 'Новое уведомление';
+      const markReadText = data.mark_read_title || (isEn ? 'Mark read' : 'Прочитать');
+
+      const title = data.title || defaultTitle;
+      const options = {
+        body: data.body || defaultBody,
+        icon: data.icon || '/pwa-192x192.png',
+        badge: data.badge || '/pwa-192x192.png',
+        tag: data.tag || 'moodila-notification',
+        data: {
+          url: data.url || '/feed',
+          entry_id: data.entry_id || null,
+          notification_id: data.notification_id || null,
+        },
+        actions: [
+          { action: 'mark-read', title: markReadText },
+        ],
+        vibrate: [100, 50, 100],
+      };
+
+      await self.registration.showNotification(title, options);
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clients.forEach((client) => {
+        client.postMessage({
+          type: 'PUSH_NOTIFICATION_RECEIVED',
+          payload: data,
         });
       });
-    })
+    })()
   );
 });
 

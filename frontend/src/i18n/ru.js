@@ -462,6 +462,7 @@ export const ru = {
     commentedEntry: "прокомментировал(а) вашу запись",
     newPostPublished: "поделился(ась) новой записью",
     markRead: "Прочитать",
+    pushNotSupported: "Push-уведомления не поддерживаются вашим браузером",
   },
 
   // Admin & Announcements

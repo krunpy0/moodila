@@ -62,6 +62,7 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 
 		var actorName string
 		var notifyReactions, notifyComments, notifyFriendRequests bool
+		var recipientLocale string = "ru"
 		notifyReactions = true
 		notifyComments = true
 		notifyFriendRequests = true
@@ -70,17 +71,29 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 			SELECT COALESCE(NULLIF(u.display_name, ''), u.username),
 			       COALESCE(ns.notify_reactions, true),
 			       COALESCE(ns.notify_comments, true),
-			       COALESCE(ns.notify_friend_requests, true)
+			       COALESCE(ns.notify_friend_requests, true),
+			       COALESCE(
+			           (SELECT ps.locale FROM push_subscriptions ps WHERE ps.user_id = $2 ORDER BY ps.updated_at DESC LIMIT 1),
+			           ns.locale,
+			           'ru'
+			       )
 			FROM users u
 			LEFT JOIN notification_settings ns ON ns.user_id = $2
 			WHERE u.id = $1`,
 			actorID, userID,
-		).Scan(&actorName, &notifyReactions, &notifyComments, &notifyFriendRequests)
+		).Scan(&actorName, &notifyReactions, &notifyComments, &notifyFriendRequests, &recipientLocale)
 		if err != nil && actorName == "" {
 			_ = r.Pool.QueryRow(ctx, `SELECT COALESCE(NULLIF(display_name, ''), username) FROM users WHERE id = $1`, actorID).Scan(&actorName)
 		}
+		if recipientLocale != "en" && recipientLocale != "ru" {
+			recipientLocale = "ru"
+		}
 		if actorName == "" {
-			actorName = "Друг"
+			if recipientLocale == "en" {
+				actorName = "A friend"
+			} else {
+				actorName = "Друг"
+			}
 		}
 
 		shouldPush := true
@@ -98,6 +111,7 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 				Title:          "Moodila",
 				URL:            "/feed",
 				NotificationID: insertedID,
+				Locale:         recipientLocale,
 			}
 			if entityID != nil {
 				payload.EntryID = *entityID
@@ -108,25 +122,66 @@ func (r Notifications) Create(ctx context.Context, userID, actorID, notifType st
 				cnt = *content
 			}
 
-			switch notifType {
-			case "like":
-				payload.Body = actorName + " поставил(а) реакцию " + cnt
-				payload.Tag = "reaction"
-				payload.URL = "/feed"
-			case "comment":
-				payload.Body = actorName + " оставил(а) комментарий: " + cnt
-				payload.Tag = "comment"
-				payload.URL = "/feed"
-			case "friend_request":
-				payload.Body = actorName + " отправил(а) вам заявку в друзья"
-				payload.Tag = "friend_request"
-				payload.URL = "/friends"
-			case "friend_accept":
-				payload.Body = actorName + " принял(а) вашу заявку в друзья"
-				payload.Tag = "friend_accept"
-				payload.URL = "/friends"
-			default:
-				payload.Body = actorName + " отправил(а) вам уведомление"
+			if recipientLocale == "en" {
+				payload.MarkReadTitle = "Mark read"
+				switch notifType {
+				case "like":
+					if cnt != "" {
+						payload.Body = actorName + " reacted " + cnt
+					} else {
+						payload.Body = actorName + " liked your entry"
+					}
+					payload.Tag = "reaction"
+					payload.URL = "/feed"
+				case "comment":
+					if cnt != "" {
+						payload.Body = actorName + " commented: " + cnt
+					} else {
+						payload.Body = actorName + " commented on your entry"
+					}
+					payload.Tag = "comment"
+					payload.URL = "/feed"
+				case "friend_request":
+					payload.Body = actorName + " sent you a friend request"
+					payload.Tag = "friend_request"
+					payload.URL = "/friends"
+				case "friend_accept":
+					payload.Body = actorName + " accepted your friend request"
+					payload.Tag = "friend_accept"
+					payload.URL = "/friends"
+				default:
+					payload.Body = actorName + " sent you a notification"
+				}
+			} else {
+				payload.MarkReadTitle = "Прочитать"
+				switch notifType {
+				case "like":
+					if cnt != "" {
+						payload.Body = actorName + " поставил(а) реакцию " + cnt
+					} else {
+						payload.Body = actorName + " оценил(а) вашу запись"
+					}
+					payload.Tag = "reaction"
+					payload.URL = "/feed"
+				case "comment":
+					if cnt != "" {
+						payload.Body = actorName + " оставил(а) комментарий: " + cnt
+					} else {
+						payload.Body = actorName + " оставил(а) комментарий к вашей записи"
+					}
+					payload.Tag = "comment"
+					payload.URL = "/feed"
+				case "friend_request":
+					payload.Body = actorName + " отправил(а) вам заявку в друзья"
+					payload.Tag = "friend_request"
+					payload.URL = "/friends"
+				case "friend_accept":
+					payload.Body = actorName + " принял(а) вашу заявку в друзья"
+					payload.Tag = "friend_accept"
+					payload.URL = "/friends"
+				default:
+					payload.Body = actorName + " отправил(а) вам уведомление"
+				}
 			}
 
 			_ = r.PushSender.SendToUser(ctx, userID, payload)
@@ -146,13 +201,15 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 	if err != nil {
 		return err
 	}
-	if authorName == "" {
-		authorName = "Друг"
-	}
 
 	rows, err := r.Pool.Query(ctx, `
 		SELECT f_user.id,
-		       EXISTS (SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = f_user.id) AS has_push
+		       EXISTS (SELECT 1 FROM push_subscriptions ps WHERE ps.user_id = f_user.id) AS has_push,
+		       COALESCE(
+		           (SELECT ps.locale FROM push_subscriptions ps WHERE ps.user_id = f_user.id ORDER BY ps.updated_at DESC LIMIT 1),
+		           ns.locale,
+		           'ru'
+		       ) AS locale
 		FROM (
 			SELECT CASE 
 				WHEN requester_id = $1 THEN addressee_id 
@@ -174,14 +231,20 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 	defer rows.Close()
 
 	var friendIDs []string
-	var pushFriendIDs []string
+	var pushFriendIDsRu []string
+	var pushFriendIDsEn []string
 	for rows.Next() {
 		var fID string
 		var hasPush bool
-		if err := rows.Scan(&fID, &hasPush); err == nil {
+		var loc string
+		if err := rows.Scan(&fID, &hasPush, &loc); err == nil {
 			friendIDs = append(friendIDs, fID)
 			if hasPush {
-				pushFriendIDs = append(pushFriendIDs, fID)
+				if loc == "en" {
+					pushFriendIDsEn = append(pushFriendIDsEn, fID)
+				} else {
+					pushFriendIDsRu = append(pushFriendIDsRu, fID)
+				}
 			}
 		}
 	}
@@ -209,7 +272,7 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 	)
 
 	// 2. Send push notifications to friends who have active push subscriptions
-	if r.PushSender != nil && len(pushFriendIDs) > 0 {
+	if r.PushSender != nil && (len(pushFriendIDsRu) > 0 || len(pushFriendIDsEn) > 0) {
 		var recentCount int
 		_ = r.Pool.QueryRow(ctx, `
 			SELECT COUNT(*)
@@ -222,23 +285,57 @@ func (r Notifications) NotifyNewPost(ctx context.Context, authorID string, entry
 			recentCount = 1
 		}
 
-		body := authorName + " поделился(ась) новой записью"
-		if recentCount > 1 {
-			body = fmt.Sprintf("%s опубликовал(а) %s", authorName, formatPostsCountRu(recentCount))
+		if len(pushFriendIDsRu) > 0 {
+			authorNameRu := authorName
+			if authorNameRu == "" {
+				authorNameRu = "Друг"
+			}
+			bodyRu := authorNameRu + " поделился(ась) новой записью"
+			if recentCount > 1 {
+				bodyRu = fmt.Sprintf("%s опубликовал(а) %s", authorNameRu, formatPostsCountRu(recentCount))
+			}
+			payloadRu := models.PushPayload{
+				Title:         "Moodila",
+				Body:          bodyRu,
+				Tag:           "new_post_" + authorID,
+				URL:           "/feed",
+				EntryID:       entry.ID,
+				Locale:        "ru",
+				MarkReadTitle: "Прочитать",
+			}
+			_ = r.PushSender.SendToUsers(ctx, pushFriendIDsRu, payloadRu)
 		}
 
-		payload := models.PushPayload{
-			Title:   "Moodila",
-			Body:    body,
-			Tag:     "new_post_" + authorID,
-			URL:     "/feed",
-			EntryID: entry.ID,
+		if len(pushFriendIDsEn) > 0 {
+			authorNameEn := authorName
+			if authorNameEn == "" {
+				authorNameEn = "A friend"
+			}
+			bodyEn := authorNameEn + " shared a new entry"
+			if recentCount > 1 {
+				bodyEn = fmt.Sprintf("%s published %s", authorNameEn, formatPostsCountEn(recentCount))
+			}
+			payloadEn := models.PushPayload{
+				Title:         "Moodila",
+				Body:          bodyEn,
+				Tag:           "new_post_" + authorID,
+				URL:           "/feed",
+				EntryID:       entry.ID,
+				Locale:        "en",
+				MarkReadTitle: "Mark read",
+			}
+			_ = r.PushSender.SendToUsers(ctx, pushFriendIDsEn, payloadEn)
 		}
-
-		_ = r.PushSender.SendToUsers(ctx, pushFriendIDs, payload)
 	}
 
 	return nil
+}
+
+func formatPostsCountEn(count int) string {
+	if count == 1 {
+		return "1 new entry"
+	}
+	return fmt.Sprintf("%d new entries", count)
 }
 
 func formatPostsCountRu(count int) string {

@@ -1,8 +1,25 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { en } from '../i18n/en'
 import { ru } from '../i18n/ru'
+import { api } from '../api/client'
 
 const translations = { en, ru }
+
+function saveLanguageToIDB(lang) {
+  try {
+    if (typeof indexedDB === 'undefined') return
+    const req = indexedDB.open('moodila_push_db', 1)
+    req.onupgradeneeded = (e) => {
+      e.target.result.createObjectStore('config')
+    }
+    req.onsuccess = (e) => {
+      const db = e.target.result
+      if (!db.objectStoreNames.contains('config')) return
+      const tx = db.transaction('config', 'readwrite')
+      tx.objectStore('config').put(lang, 'language')
+    }
+  } catch {}
+}
 
 const LanguageContext = createContext({
   language: 'en',
@@ -30,6 +47,12 @@ export function LanguageProvider({ children }) {
     try {
       localStorage.setItem('moodshare_lang', language)
       document.documentElement.lang = language
+      saveLanguageToIDB(language)
+      // Best-effort sync to server notification settings if authenticated
+      api('/notifications/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ locale: language }),
+      }).catch(() => {})
     } catch {
       // Storage restriction fallback
     }

@@ -65,8 +65,8 @@
 - **`announcement_user_state`:** Состояния взаимодействия пользователя. Составной PK `(announcement_id, user_id)`. Поля: `dismissed_at` (пользователь закрыл прерывающий UI) и `read_at` (пользователь прочитал в инбоксе).
 
 ### 2.7. Служебные таблицы
-- **`notification_settings`:** Персональные настройки пушей (`notify_reactions`, `notify_comments`, `notify_friend_requests`, `notify_new_posts`).
-- **`push_subscriptions`:** Подписки браузеров на Web Push (`endpoint` UNIQUE, `p256dh`, `auth`).
+- **`notification_settings`:** Персональные настройки пушей (`notify_reactions`, `notify_comments`, `notify_friend_requests`, `notify_new_posts`, `locale`).
+- **`push_subscriptions`:** Подписки браузеров на Web Push (`endpoint` UNIQUE, `p256dh`, `auth`, `locale`).
 - **`password_reset_tokens`** и **`account_deletion_tokens`:** Одноразовые токены с SHA-256 хешами и сроком жизни.
 - **`schema_migrations`:** Таблица истории миграций (`version TEXT PRIMARY KEY`, `applied_at`).
 

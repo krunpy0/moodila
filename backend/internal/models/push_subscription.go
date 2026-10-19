@@ -13,6 +13,7 @@ type PushSubscription struct {
 	Endpoint  string    `json:"endpoint"`
 	P256dh    string    `json:"p256dh"`
 	Auth      string    `json:"auth"`
+	Locale    string    `json:"locale"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -20,6 +21,7 @@ type PushSubscription struct {
 type PushSubscriptionInput struct {
 	Endpoint string               `json:"endpoint"`
 	Keys     PushSubscriptionKeys `json:"keys"`
+	Locale   string               `json:"locale,omitempty"`
 }
 
 type PushPayload struct {
@@ -31,5 +33,7 @@ type PushPayload struct {
 	URL            string `json:"url,omitempty"`
 	EntryID        string `json:"entry_id,omitempty"`
 	NotificationID string `json:"notification_id,omitempty"`
+	Locale         string `json:"locale,omitempty"`
+	MarkReadTitle  string `json:"mark_read_title,omitempty"`
 }
 

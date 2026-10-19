@@ -4,10 +4,11 @@ export function fetchVAPIDPublicKey() {
   return api('/notifications/vapid-public-key')
 }
 
-export function savePushSubscription(subscription) {
+export function savePushSubscription(subscription, locale) {
+  const lang = locale || (typeof localStorage !== 'undefined' ? localStorage.getItem('moodshare_lang') : 'ru') || 'ru'
   return api('/notifications/push-subscription', {
     method: 'POST',
-    body: JSON.stringify(subscription),
+    body: JSON.stringify({ ...subscription, locale: lang }),
   })
 }
 
@@ -30,20 +31,22 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export async function subscribeToPushNotifications() {
+  const isEn = typeof localStorage !== 'undefined' && localStorage.getItem('moodshare_lang') === 'en'
+
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    throw new Error('Push-уведомления не поддерживаются вашим браузером')
+    throw new Error(isEn ? 'Push notifications not supported by your browser' : 'Push-уведомления не поддерживаются вашим браузером')
   }
 
   const permission = await Notification.requestPermission()
   if (permission !== 'granted') {
-    throw new Error('Разрешение на push-уведомления отклонено')
+    throw new Error(isEn ? 'Push notifications permission denied' : 'Разрешение на push-уведомления отклонено')
   }
 
   const registration = await navigator.serviceWorker.ready
   const { public_key } = await fetchVAPIDPublicKey()
 
   if (!public_key) {
-    throw new Error('Сервер не вернул VAPID ключ')
+    throw new Error(isEn ? 'Server did not return VAPID key' : 'Сервер не вернул VAPID ключ')
   }
 
   const convertedVapidKey = urlBase64ToUint8Array(public_key)
@@ -57,7 +60,8 @@ export async function subscribeToPushNotifications() {
   }
 
   const subJSON = subscription.toJSON()
-  await savePushSubscription(subJSON)
+  const lang = isEn ? 'en' : 'ru'
+  await savePushSubscription(subJSON, lang)
 
   return subJSON
 }

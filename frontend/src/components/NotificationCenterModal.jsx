@@ -153,6 +153,7 @@ export default function NotificationCenterModal({ isOpen, onClose }) {
           <>
             <span className="font-semibold text-on-surface">{actorName}</span>{' '}
             {t('notifications.likedEntry', { name: '' }).trim()}
+            {item.content ? ` ${item.content}` : ''}
           </>
         )
       case 'comment':
