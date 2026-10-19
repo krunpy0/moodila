@@ -41,4 +41,9 @@ export const updateAdminReportStatus = ({ id, status }) =>
     body: JSON.stringify({ status }),
   })
 
+export const deleteAdminReportedContent = (id) =>
+  api(`/admin/reports/${id}/delete-content`, {
+    method: 'POST',
+  })
+
 

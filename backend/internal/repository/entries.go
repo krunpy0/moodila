@@ -611,6 +611,38 @@ func (r Entries) Delete(ctx context.Context, entryID, userID string) ([]Attachme
 	return attachments, nil
 }
 
+func (r Entries) DeleteAdmin(ctx context.Context, entryID string) (string, []AttachmentURLs, error) {
+	rows, err := r.Pool.Query(ctx, `
+		DELETE FROM entries WHERE id = $1
+		RETURNING user_id, photo_url, audio_url`, entryID)
+	if err != nil {
+		return "", nil, err
+	}
+	defer rows.Close()
+
+	var attachments []AttachmentURLs
+	var authorID string
+	for rows.Next() {
+		var uid string
+		var att AttachmentURLs
+		if err := rows.Scan(&uid, &att.PhotoURL, &att.AudioURL); err != nil {
+			return "", nil, err
+		}
+		authorID = uid
+		attachments = append(attachments, att)
+	}
+	if err := rows.Err(); err != nil {
+		return "", nil, err
+	}
+	if len(attachments) == 0 {
+		return "", nil, ErrNotFound
+	}
+
+	_, _ = r.Pool.Exec(ctx, `DELETE FROM notifications WHERE entity_id = $1`, entryID)
+	r.getCache().InvalidateUser(authorID)
+	return authorID, attachments, nil
+}
+
 func (r Entries) DeleteByDate(ctx context.Context, userID, date string) ([]AttachmentURLs, error) {
 	rows, err := r.Pool.Query(ctx, `
 		DELETE FROM entries WHERE user_id = $1 AND date = $2

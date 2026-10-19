@@ -543,6 +543,17 @@ export const en = {
     markReviewed: "Approve (Reviewed)",
     markDismissed: "Dismiss",
     markPending: "Reopen (Pending)",
+    confirmDeleteComment: "Delete this comment and mark report as reviewed?",
+    confirmDeleteEntry: "Delete this post and mark report as reviewed?",
+    contentDeletedSuccess: "Content deleted and report reviewed",
+    reportedContentHeader: "Reported Content",
+    openInFeed: "Open in Feed",
+    contentAlreadyDeleted: "Content is deleted or unavailable.",
+    noTextInEntry: "Post has no text",
+    openPostWithComment: "Open post with this comment",
+    viewUserProfile: "View Profile",
+    deleteCommentAction: "Delete Comment",
+    deletePostAction: "Delete Post",
   },
 
   reports: {

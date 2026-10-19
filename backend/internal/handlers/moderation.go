@@ -213,6 +213,12 @@ func (h Moderation) ListReportsAdmin(c *gin.Context) {
 		return
 	}
 
+	for i := range reports {
+		reports[i].EntryPhotoURL = h.Storage.ResolveAccessURL(reports[i].EntryPhotoURL)
+		reports[i].EntryAudioURL = h.Storage.ResolveAccessURL(reports[i].EntryAudioURL)
+		reports[i].ReportedAvatarURL = h.Storage.ResolveAccessURL(reports[i].ReportedAvatarURL)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"reports": reports})
 }
 
@@ -254,4 +260,68 @@ func (h Moderation) UpdateReportStatusAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": input.Status})
 }
 
+func (h Moderation) DeleteReportedContentAdmin(c *gin.Context) {
+	reportID := strings.TrimSpace(c.Param("id"))
+	if !validUUID(reportID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "valid report id is required"})
+		return
+	}
+
+	if h.Reports.Pool == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "database unavailable"})
+		return
+	}
+
+	report, err := h.Reports.GetReport(c.Request.Context(), reportID)
+	if err != nil {
+		log.Printf("[ERROR] Moderation.DeleteReportedContentAdmin (id=%s): %v", reportID, err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "report not found"})
+		return
+	}
+
+	if report.EntityID == nil || *report.EntityID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "report has no associated entity_id"})
+		return
+	}
+
+	entityID := *report.EntityID
+
+	if report.EntityType == "entry" {
+		authorID, attachments, err := h.Entries.DeleteAdmin(c.Request.Context(), entityID)
+		if err != nil && !errors.Is(err, repository.ErrNotFound) {
+			log.Printf("[ERROR] Moderation.DeleteReportedContentAdmin entry (id=%s): %v", entityID, err)
+			_ = c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete entry"})
+			return
+		}
+		if len(attachments) > 0 && authorID != "" {
+			for _, att := range attachments {
+				if att.PhotoURL != nil && *att.PhotoURL != "" {
+					if key, err := h.Storage.ExtractObjectKey(*att.PhotoURL, authorID); err == nil {
+						_ = h.Storage.Delete(c.Request.Context(), key)
+					}
+				}
+				if att.AudioURL != nil && *att.AudioURL != "" {
+					if key, err := h.Storage.ExtractObjectKey(*att.AudioURL, authorID); err == nil {
+						_ = h.Storage.Delete(c.Request.Context(), key)
+					}
+				}
+			}
+		}
+	} else if report.EntityType == "comment" {
+		if err := h.Reports.DeleteCommentAdmin(c.Request.Context(), entityID); err != nil {
+			log.Printf("[ERROR] Moderation.DeleteReportedContentAdmin comment (id=%s): %v", entityID, err)
+			_ = c.Error(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not delete comment"})
+			return
+		}
+	}
+
+	// Auto-mark report as reviewed
+	_ = h.Reports.UpdateStatusAdmin(c.Request.Context(), reportID, "reviewed")
+
+	c.JSON(http.StatusOK, gin.H{"message": "content deleted", "status": "reviewed"})
+}
+
 var _ models.BlockedUser
+

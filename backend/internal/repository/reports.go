@@ -76,6 +76,7 @@ func (r Reports) ListAdmin(ctx context.Context, status string, limit, offset int
 			r.reported_user_id,
 			COALESCE(u2.username, ''),
 			COALESCE(u2.display_name, ''),
+			u2.avatar_url,
 			r.entity_type,
 			r.entity_id::text,
 			r.reason,
@@ -86,6 +87,20 @@ func (r Reports) ListAdmin(ctx context.Context, status string, limit, offset int
 				WHEN r.entity_type = 'comment' THEN COALESCE(c.text, '')
 				ELSE ''
 			END AS content_snippet,
+			e.date::text,
+			e.mood,
+			e.text,
+			e.photo_url,
+			e.audio_url,
+			e.audio_duration,
+			COALESCE(e.tags, '{}'::text[]),
+			c.text,
+			c.entry_id::text,
+			CASE
+				WHEN r.entity_type = 'entry' AND e.id IS NULL AND r.entity_id IS NOT NULL THEN true
+				WHEN r.entity_type = 'comment' AND c.id IS NULL AND r.entity_id IS NOT NULL THEN true
+				ELSE false
+			END AS is_content_deleted,
 			r.created_at
 		FROM content_reports r
 		JOIN users u1 ON u1.id = r.reporter_id
@@ -113,12 +128,23 @@ func (r Reports) ListAdmin(ctx context.Context, status string, limit, offset int
 			&item.ReportedUserID,
 			&item.ReportedUsername,
 			&item.ReportedDisplayName,
+			&item.ReportedAvatarURL,
 			&item.EntityType,
 			&item.EntityID,
 			&item.Reason,
 			&item.Details,
 			&item.Status,
 			&item.ContentSnippet,
+			&item.EntryDate,
+			&item.EntryMood,
+			&item.EntryText,
+			&item.EntryPhotoURL,
+			&item.EntryAudioURL,
+			&item.EntryAudioDuration,
+			&item.EntryTags,
+			&item.CommentText,
+			&item.CommentEntryID,
+			&item.IsContentDeleted,
 			&item.CreatedAt,
 		)
 		if err != nil {
@@ -135,6 +161,35 @@ func (r Reports) ListAdmin(ctx context.Context, status string, limit, offset int
 	}
 
 	return reports, nil
+}
+
+func (r Reports) GetReport(ctx context.Context, reportID string) (*models.ContentReport, error) {
+	if r.Pool == nil {
+		return nil, errors.New("database pool unavailable")
+	}
+
+	var report models.ContentReport
+	err := r.Pool.QueryRow(ctx, `
+		SELECT id, reporter_id, reported_user_id, entity_type, entity_id::text, reason, details, status, created_at
+		FROM content_reports
+		WHERE id = $1`, reportID,
+	).Scan(
+		&report.ID, &report.ReporterID, &report.ReportedUserID,
+		&report.EntityType, &report.EntityID, &report.Reason,
+		&report.Details, &report.Status, &report.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &report, nil
+}
+
+func (r Reports) DeleteCommentAdmin(ctx context.Context, commentID string) error {
+	if r.Pool == nil {
+		return errors.New("database pool unavailable")
+	}
+	_, err := r.Pool.Exec(ctx, `DELETE FROM comments WHERE id = $1`, commentID)
+	return err
 }
 
 func (r Reports) UpdateStatusAdmin(ctx context.Context, reportID, status string) error {

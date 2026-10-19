@@ -281,6 +281,7 @@ func main() {
 	admin.DELETE("/announcements/:id", mutationLimiter, announcementsHandler.DeleteAdmin)
 	admin.GET("/reports", readLimiter, moderationHandler.ListReportsAdmin)
 	admin.PATCH("/reports/:id", mutationLimiter, moderationHandler.UpdateReportStatusAdmin)
+	admin.POST("/reports/:id/delete-content", mutationLimiter, moderationHandler.DeleteReportedContentAdmin)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

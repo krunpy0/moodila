@@ -3,7 +3,7 @@ import { getSession, verifyEmail, resendVerification } from './auth'
 import { deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, getStats, saveEntry, updateEntryVisibility } from './entries'
 import { likeEntry, getFeed, getEntryReactions, getComments, addComment, deleteComment } from './feed'
 import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser, getFriendVisibilityDefaults, setFriendVisibilityDefault } from './friends'
-import { getMyProfile, updateMyProfile, getFriendProfile, blockUser, unblockUser, getBlockedUsers, reportContent, getAdminReports, updateAdminReportStatus } from './users'
+import { getMyProfile, updateMyProfile, getFriendProfile, blockUser, unblockUser, getBlockedUsers, reportContent, getAdminReports, updateAdminReportStatus, deleteAdminReportedContent } from './users'
 import { queryKeys } from './queryKeys'
 
 import { fetchNotifications, fetchUnreadNotificationCount, markNotificationsAsRead, fetchNotificationSettings, updateNotificationSettings } from './notifications'
@@ -629,4 +629,16 @@ export function useUpdateAdminReportStatusMutation() {
     },
   })
 }
+
+export function useDeleteAdminReportedContentMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteAdminReportedContent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'reports'] })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
+    },
+  })
+}
+
 

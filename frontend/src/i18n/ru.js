@@ -547,6 +547,17 @@ export const ru = {
     markReviewed: "Принять (Рассмотрено)",
     markDismissed: "Отклонить",
     markPending: "В ожидающие",
+    confirmDeleteComment: "Удалить этот комментарий и пометить жалобу рассмотренной?",
+    confirmDeleteEntry: "Удалить эту публикацию и пометить жалобу рассмотренной?",
+    contentDeletedSuccess: "Публикация удалена, жалоба рассмотрена",
+    reportedContentHeader: "Проверяемый контент",
+    openInFeed: "Открыть в ленте",
+    contentAlreadyDeleted: "Публикация удалена или недоступна.",
+    noTextInEntry: "Запись без текста (только настроение / медиа)",
+    openPostWithComment: "Открыть пост с этим комментарием",
+    viewUserProfile: "Открыть профиль",
+    deleteCommentAction: "Удалить комментарий",
+    deletePostAction: "Удалить публикацию",
   },
 
   reports: {
