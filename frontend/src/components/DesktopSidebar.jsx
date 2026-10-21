@@ -47,7 +47,7 @@ export default function DesktopSidebar() {
   return (
     <aside
       aria-label="Desktop Sidebar"
-      className="hidden lg:flex flex-col w-72 h-screen sticky top-0 bg-surface-container-lowest shadow-card border-r border-outline-variant/20 p-6 z-40 shrink-0 select-none justify-between overflow-y-auto"
+      className="hidden lg:flex flex-col w-72 h-screen sticky top-0 self-start bg-surface-container-lowest shadow-card border-r border-outline-variant/20 p-6 z-40 shrink-0 select-none justify-between overflow-y-auto"
     >
       {/* Top Header & Branding */}
       <div className="space-y-6">
