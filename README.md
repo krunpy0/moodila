@@ -53,6 +53,7 @@ Unlike typical social media, Moodila has no algorithmic feeds, no follower count
 - **Data Ownership:** Your entries, photos, and voice notes stay on your own server and database.
 
 <p align="center">
+  <img src="docs/screenshots/friends-privacy.png" width="48%" alt="Friends List" />
   <img src="docs/screenshots/privacy-settings.png" width="48%" alt="Two-Tier Friend Privacy Settings" />
 </p>
 

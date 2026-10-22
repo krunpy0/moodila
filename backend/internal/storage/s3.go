@@ -303,6 +303,9 @@ func (s S3) ResolveAccessURL(rawURL *string) *string {
 	if val == "" {
 		return nil
 	}
+	if strings.HasPrefix(val, "/avatars/") {
+		return &val
+	}
 	if strings.HasPrefix(val, "http://") || strings.HasPrefix(val, "https://") || strings.HasPrefix(val, "storage/v1/object/public/") {
 		log.Printf("ERROR: unmigrated full URL or legacy path found in database/input: %s", val)
 		return &val
