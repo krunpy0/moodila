@@ -2,6 +2,10 @@
 
 A cozy, private mood tracker and micro-journal for you and your close circle.
 
+<p align="center">
+  <img src="docs/screenshots/desktop-home.png" alt="Moodila Desktop & App Preview" width="100%" />
+</p>
+
 ---
 
 ## What is Moodila?
@@ -15,26 +19,54 @@ Unlike typical social media, Moodila has no algorithmic feeds, no follower count
 ## ✨ Features
 
 ### For Everyday Journaling
-- **Fast Mood Logging:** Check in with a single tap on a 5-point scale (from *Awful* to *Rad*).
+
+- **Fast Mood Logging:** Check in with a single tap on a 5-point scale (from _Awful_ to _Rad_).
 - **Rich Entries:** Add written reflections, categorized tags (Positive, Neutral, Difficult), photos, or voice notes.
 - **Visual Calendar:** Monthly overview showing dominant moods, top tags of the month, and smooth day-by-day browsing.
 - **Meaningful Insights:** Clear charts, weekday heatmaps, and tag correlation trends to help you understand your emotional patterns over time.
 
+<p align="center">
+  <img src="docs/screenshots/home-journal.png" width="48%" alt="Quick Mood Logging & Recent Entries" />
+  <img src="docs/screenshots/entry-editor.png" width="48%" alt="Rich Entry Editor with Categorized Tags" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/calendar-view.png" width="48%" alt="Visual Monthly Mood Calendar" />
+  <img src="docs/screenshots/analytics-insights.png" width="48%" alt="Emotional Insights and Analytics" />
+</p>
+
 ### For Staying Connected
+
 - **Calm, Chronological Feed:** See what your friends have been up to in a quiet, chronological feed without algorithms or ads.
 - **Friendly Interactions:** React with emojis and leave comments on friends' shared days.
 - **Gentle Notifications:** In-app notification center and optional Web Push alerts when friends interact with your entries.
 
+<p align="center">
+  <img src="docs/screenshots/friends-feed.png" width="48%" alt="Calm Chronological Feed with Friends" />
+</p>
+
 ### Thoughtful Privacy & Control
+
 - **Private by Default:** You decide who sees every entry.
 - **Two-Tier Privacy:** Set default visibility per friend, or override visibility on specific days.
 - **New Friend Protection:** Historical entries with custom privacy rules stay hidden when accepting new friend requests.
 - **Data Ownership:** Your entries, photos, and voice notes stay on your own server and database.
 
+<p align="center">
+  <img src="docs/screenshots/privacy-settings.png" width="48%" alt="Two-Tier Friend Privacy Settings" />
+</p>
+
 ### Design & Experience
+
 - **14 Expressive Themes:** 7 color palettes (Classic, Forest, Ocean, Lavender, Terracotta, Aurora, and Sakura) in both Light and Dark modes, plus seasonal dynamic themes.
 - **Installable PWA:** Works on iOS, Android, and Desktop as an installable app with offline caching and safe-area support.
 - **Bilingual:** Full English and Russian localization.
+
+<p align="center">
+  <img src="docs/screenshots/theme-picker.png" width="31%" alt="Appearance Theme Picker" />
+  <img src="docs/screenshots/calendar-sakura-light.png" width="31%" alt="Sakura Light Theme with Ambient Petals" />
+  <img src="docs/screenshots/home-forest-dark.png" width="31%" alt="Forest Dark Theme (Pine & Matcha)" />
+</p>
 
 ---
 
@@ -42,14 +74,14 @@ Unlike typical social media, Moodila has no algorithmic feeds, no follower count
 
 Moodila is built to be fast, reliable, and lightweight, running smoothly even on a minimal VPS (1 vCPU / 1 GB RAM):
 
-| Layer | Technologies | Highlights |
-|---|---|---|
-| **Backend** | Go 1.25, Gin, `pgxpool` | Pure SQL (no ORM overhead), token-bucket rate limiting, secure cookie sessions with CSRF |
-| **Frontend** | React 19, Vite 8, Tailwind CSS | TanStack React Query v5 caching, Oxlint, mobile-first responsive layout |
-| **Database** | PostgreSQL 15+ | Optimized LATERAL joins and keyset pagination for fast feed queries |
-| **Storage** | S3-compatible (AWS S3, R2, MinIO) | Server-side image resizing (1920px JPEG) with concurrency throttling |
-| **Integrations** | VAPID Web Push, Resend Email | Push worker pool, transactional emails for password resets |
-| **Backups** | Google Drive API v3 | Automated scheduled database dumps with retention pruning |
+| Layer            | Technologies                      | Highlights                                                                               |
+| ---------------- | --------------------------------- | ---------------------------------------------------------------------------------------- |
+| **Backend**      | Go 1.25, Gin, `pgxpool`           | Pure SQL (no ORM overhead), token-bucket rate limiting, secure cookie sessions with CSRF |
+| **Frontend**     | React 19, Vite 8, Tailwind CSS    | TanStack React Query v5 caching, Oxlint, mobile-first responsive layout                  |
+| **Database**     | PostgreSQL 15+                    | Optimized LATERAL joins and keyset pagination for fast feed queries                      |
+| **Storage**      | S3-compatible (AWS S3, R2, MinIO) | Server-side image resizing (1920px JPEG) with concurrency throttling                     |
+| **Integrations** | VAPID Web Push, Resend Email      | Push worker pool, transactional emails for password resets                               |
+| **Backups**      | Google Drive API v3               | Automated scheduled database dumps with retention pruning                                |
 
 ---
 
@@ -78,20 +110,24 @@ This starts a local PostgreSQL instance on `localhost:5432` with user `postgres`
 ### Step 2: Set Up & Run the Backend
 
 1. Navigate to the backend directory:
+
    ```bash
    cd backend
    ```
 
 2. Copy the sample environment file:
+
    ```bash
    cp .env.example .env
    ```
 
 3. Ensure `DATABASE_URL` in `backend/.env` points to your PostgreSQL instance:
+
    ```env
    DATABASE_URL=postgresql://postgres:postgres@localhost:5432/moodila
    ```
-   *(For local plain HTTP development, `COOKIE_SECURE=false` is already recommended).*
+
+   _(For local plain HTTP development, `COOKIE_SECURE=false` is already recommended)._
 
 4. Run the API:
    ```bash
@@ -104,21 +140,25 @@ This starts a local PostgreSQL instance on `localhost:5432` with user `postgres`
 ### Step 3: Set Up & Run the Frontend
 
 1. Open a new terminal and navigate to the frontend directory:
+
    ```bash
    cd frontend
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. (Optional) Copy `.env.example` if your backend runs on a different port:
+
    ```bash
    cp .env.example .env
    ```
 
 4. Start the development server:
+
    ```bash
    npm run dev
    ```
