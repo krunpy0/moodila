@@ -20,6 +20,9 @@ export default defineConfig({
   },
   build: {
     sourcemap: hasSentryToken ? "hidden" : false,
+    rolldownOptions: {
+      input: ["index.html", "landing-preview.html"],
+    },
   },
   plugins: [
     react(),
