@@ -86,6 +86,20 @@ export default function AddEntry() {
     }
   }
 
+  const pastePhoto = (event) => {
+    const imageItem = Array.from(event.clipboardData?.items || []).find(
+      (item) => item.kind === 'file' && item.type.startsWith('image/'),
+    )
+    if (!imageItem) return
+
+    const file = imageItem.getAsFile()
+    if (!file) return
+    event.preventDefault()
+    const extension = file.type.split('/')[1]?.replace('jpeg', 'jpg') || 'png'
+    const imageFile = new File([file], `pasted-image.${extension}`, { type: file.type })
+    void selectPhoto({ target: { files: [imageFile], value: '' } })
+  }
+
   const [recordingTime, setRecordingTime] = useState(0)
   const [audioBlob, setAudioBlob] = useState(null)
   const [audioDuration, setAudioDuration] = useState(null)
@@ -413,6 +427,7 @@ export default function AddEntry() {
             id="entry-text"
             value={form.text}
             maxLength={5000}
+            onPaste={pastePhoto}
             onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
             placeholder={t('addEntry.notePlaceholder')}
             className="min-h-[210px] w-full resize-none overflow-hidden bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"

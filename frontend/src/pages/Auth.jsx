@@ -7,14 +7,16 @@ import { useLanguage } from "../context/LanguageContext";
 import AppLogo from "../components/AppLogo";
 
 export default function Auth() {
-  const [mode, setMode] = useState("login");
+  const location = useLocation();
+  const [mode, setMode] = useState(() =>
+    location.state?.mode === "register" ? "register" : "login",
+  );
   const [form, setForm] = useState({
     email: "",
     password: "",
     username: "",
   });
   const [error, setError] = useState("");
-  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useLanguage();

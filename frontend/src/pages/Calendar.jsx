@@ -442,7 +442,7 @@ export default function Calendar() {
                         className="flex h-20 lg:h-28 xl:h-32 flex-col items-center gap-1 lg:gap-2 p-1 lg:p-2 rounded-xl lg:rounded-2xl text-body-md text-on-surface-variant/35 select-none"
                       >
                         <span className="lg:text-body-lg font-medium tabular-nums">{date.getDate()}</span>
-                        <span className="flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-full bg-surface-container-low/40 border border-outline-variant/10 text-on-surface-variant/20">
+                        <span className="flex aspect-square w-full max-w-10 sm:max-w-11 lg:max-w-12 shrink-0 items-center justify-center rounded-full bg-surface-container-low/40 border border-outline-variant/10 text-on-surface-variant/20">
                           <span className="h-1.5 w-1.5 rounded-full bg-outline-variant/30" />
                         </span>
                       </div>
@@ -465,7 +465,7 @@ export default function Calendar() {
                       </span>
 
                       <span
-                        className={`flex h-10 w-10 sm:h-11 sm:w-11 lg:h-12 lg:w-12 items-center justify-center rounded-full transition-[transform,background-color,border-color] duration-fast ease-out group-hover:-translate-y-0.5 ${
+                        className={`flex aspect-square w-full max-w-10 sm:max-w-11 lg:max-w-12 shrink-0 items-center justify-center rounded-full transition-[transform,background-color,border-color] duration-fast ease-out group-hover:-translate-y-0.5 ${
                           mood
                             ? mood.bg
                             : "bg-surface-container border border-outline-variant/20 text-on-surface-variant/50 group-hover:bg-surface-container-high group-hover:text-on-surface-variant"

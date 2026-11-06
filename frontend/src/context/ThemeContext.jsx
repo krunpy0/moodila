@@ -29,7 +29,7 @@ const ThemeContext = createContext({
   toggleHalloween: () => {},
 })
 
-export function ThemeProvider({ children }) {
+export function ThemeProvider({ children, persist = true }) {
   const [theme, setThemeState] = useState(() => {
     try {
       const stored = localStorage.getItem('moodshare_theme')
@@ -103,6 +103,8 @@ export function ThemeProvider({ children }) {
 
     setActiveSeasonalThemes(nextActive)
 
+    if (!persist) return
+
     try {
       localStorage.setItem('moodshare_active_seasonal_themes', JSON.stringify(nextActive))
       localStorage.setItem(
@@ -132,17 +134,18 @@ export function ThemeProvider({ children }) {
         // Storage quota fallback
       }
     }
-  }, [features])
+  }, [features, persist])
 
   // Synchronously apply theme attributes whenever theme changes
   useEffect(() => {
     applyThemeToDOM(theme)
+    if (!persist) return
     try {
       localStorage.setItem('moodshare_theme', theme)
     } catch {
       // Storage quota or restriction fallback
     }
-  }, [theme])
+  }, [theme, persist])
 
   // Seasonal Halloween styling class
   useEffect(() => {
@@ -153,12 +156,13 @@ export function ThemeProvider({ children }) {
     } else {
       root.classList.remove('halloween')
     }
+    if (!persist) return
     try {
       localStorage.setItem('moodshare_halloween', String(active))
     } catch {
       // Storage quota or restriction fallback
     }
-  }, [isHalloween, isHalloweenAvailable])
+  }, [isHalloween, isHalloweenAvailable, persist])
 
   const setTheme = useCallback((nextTheme) => {
     setThemeState(nextTheme)

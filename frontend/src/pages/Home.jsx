@@ -213,7 +213,7 @@ export default function Home() {
                     aria-label={t("home.quickMoodLog")}
                     className="rounded-2xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md sm:p-5 lg:p-6 shadow-card space-y-3 sm:space-y-4"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-3">
                       <h3 className="text-title-medium sm:text-headline-sm font-bold text-on-surface tracking-tight">
                         {t("home.quickMoodLog")}
                       </h3>
@@ -235,7 +235,7 @@ export default function Home() {
                       </Link>
                     </div>
 
-                    <div className="flex items-center justify-between gap-1 sm:gap-2 pt-1">
+                    <div className="grid grid-cols-5 items-start gap-2 pt-1">
                       {MOOD_OPTIONS.map((val) => {
                         const moodInfo = getMoodInfo(val, t);
                         const isSelected = todayEntry?.mood === val;
@@ -247,10 +247,10 @@ export default function Home() {
                             disabled={saveMutation.isPending}
                             aria-label={moodInfo.label}
                             aria-pressed={isSelected}
-                            className="group flex flex-1 flex-col items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl active:scale-95 transition-transform"
+                            className="group flex min-w-0 flex-col items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl active:scale-95 transition-transform"
                           >
                             <div
-                              className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full transition-all duration-fast ease-out ${moodInfo.bg} ${
+                              className={`flex aspect-square w-full max-w-12 sm:max-w-14 items-center justify-center rounded-full transition-all duration-fast ease-out ${moodInfo.bg} ${
                                 isSelected
                                   ? `ring-2 sm:ring-[3px] ring-current ring-offset-2 ring-offset-surface-container-lowest scale-105 shadow-sm ${moodInfo.color}`
                                   : "opacity-85 group-hover:opacity-100 group-hover:-translate-y-0.5"
@@ -263,7 +263,7 @@ export default function Home() {
                               />
                             </div>
                             <span
-                              className={`text-[11px] sm:text-[13px] tracking-tight transition-colors text-center ${
+                              className={`max-w-full break-words text-[11px] sm:text-[13px] tracking-tight transition-colors text-center ${
                                 isSelected
                                   ? "font-bold text-on-surface"
                                   : "text-on-surface-variant group-hover:text-on-surface font-medium"
@@ -284,7 +284,7 @@ export default function Home() {
                       {t("home.thisWeekMood")}
                     </h2>
                   </div>
-                  <div className="flex justify-between gap-sm overflow-x-auto rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-6 shadow-card">
+                  <div className="grid grid-cols-7 gap-1 lg:gap-sm rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-6 shadow-card">
                     {week.map((date) => {
                       const key = formatDate(date);
                       const entry = entriesByDate[key];
@@ -303,17 +303,17 @@ export default function Home() {
                             }
                             haptics.selection();
                           }}
-                          className={`flex min-w-12 lg:min-w-16 flex-1 flex-col items-center gap-xs lg:gap-sm transition-transform duration-fast ease-out hover:-translate-y-0.5 ${isFuture ? "opacity-40" : ""}`}
+                          className={`flex min-w-0 flex-col items-center gap-xs lg:gap-sm transition-transform duration-fast ease-out hover:-translate-y-0.5 ${isFuture ? "opacity-40" : ""}`}
                         >
                           <span
-                            className={`flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-full ${
+                            className={`flex aspect-square w-full max-w-12 lg:max-w-16 shrink-0 items-center justify-center rounded-full ${
                               mood ? mood.bg : "bg-surface-container-high"
                             } ${isToday ? "ring-2 lg:ring-4 ring-primary" : ""}`}
                           >
                             {entry ? (
-                              <MoodIcon mood={entry.mood} className="text-[26px] lg:text-[34px]" />
+                              <MoodIcon mood={entry.mood} className="text-[clamp(16px,6vw,26px)] lg:text-[34px]" />
                             ) : (
-                              <span className="material-symbols-outlined text-[20px] lg:text-[26px] text-on-surface-variant">
+                              <span className="material-symbols-outlined text-[clamp(16px,6vw,20px)] lg:text-[26px] text-on-surface-variant">
                                 add
                               </span>
                             )}

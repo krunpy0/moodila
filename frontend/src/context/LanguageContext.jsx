@@ -30,7 +30,7 @@ const LanguageContext = createContext({
   formatDate: (dateStr) => dateStr,
 })
 
-export function LanguageProvider({ children }) {
+export function LanguageProvider({ children, persist = true }) {
   const [language, setLanguage] = useState(() => {
     try {
       const stored = localStorage.getItem('moodshare_lang')
@@ -44,6 +44,8 @@ export function LanguageProvider({ children }) {
   })
 
   useEffect(() => {
+    document.documentElement.lang = language
+    if (!persist) return
     try {
       localStorage.setItem('moodshare_lang', language)
       document.documentElement.lang = language
@@ -56,7 +58,7 @@ export function LanguageProvider({ children }) {
     } catch {
       // Storage restriction fallback
     }
-  }, [language])
+  }, [language, persist])
 
   const toggleLanguage = () => {
     setLanguage((prev) => (prev === 'ru' ? 'en' : 'ru'))
