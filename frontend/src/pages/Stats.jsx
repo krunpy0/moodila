@@ -73,7 +73,19 @@ export default function Stats() {
           </section>
           {insights.length > 0 && <section className="stats-observations">
             <h2>{t("stats.insightsTitle")}</h2>
-            <ul>{insights.map((insight, idx) => <li key={insight.id || idx}>{getLocalizedInsightText(insight, t)}</li>)}</ul>
+            <ul>{insights.map((insight, idx) => {
+              const key = insight.template_key || insight.templateKey || insight.id || "";
+              const direction = key.includes("lower") ? "lower" : key.includes("higher") ? "higher" : null;
+              const subject = insight.params?.tag ? `#${getLocalizedTag(insight.params.tag, t)}` : insight.params?.day ? t("stats.observationDay", { day: t(`stats.insights.daysPlural.${insight.params.day}`) }) : null;
+              return <li key={insight.id || idx}>
+                {subject && <div className="stats-observation-heading"><strong>{subject}</strong>
+                  {direction && insight.params?.diff != null && <span className={`stats-insight-diff stats-insight-${direction}`}>
+                    {direction === "lower" ? "−" : "+"}{insight.params.diff} <span>{t(`stats.${direction}ThanAverage`)}</span>
+                  </span>}
+                </div>}
+                <p>{getLocalizedInsightText(insight, t)}</p>
+              </li>;
+            })}</ul>
           </section>}
           {hasEntries && <div className="stats-breakdown">
             <section aria-labelledby="stats-distribution-title">
@@ -93,13 +105,15 @@ export default function Stats() {
           <section className="stats-section" aria-labelledby="stats-tags-title">
             <h2 id="stats-tags-title">{t("stats.tagCorrelation")}</h2><p className="stats-note">{t("stats.tagNote")}</p>
             {(highestTag || lowestTag) && <dl className="stats-tag-extremes">
-              {[[highestTag, "highestMoodTag"], [lowestTag, "lowestMoodTag"]].map(([tag, label]) => tag && <div key={label}>
+              {[[highestTag, "highestMoodTag"], [lowestTag, "lowestMoodTag"]].map(([tag, label]) => tag && <div key={label} className="stats-tag-extreme">
                 <dt>{t("stats." + label)}</dt><dd><span>#{getLocalizedTag(tag.tag, t)}</span><strong>{Number(tag.avg_mood).toFixed(1)}<span className="font-normal text-body-sm text-on-surface-variant"> / 5</span></strong></dd>
               </div>)}
             </dl>}
             <p className="stats-note mt-5">{t("stats.minTagDataNote")}</p>
             {validTags.length === 0 ? <p className="py-6 text-body-sm text-on-surface-variant">{t("stats.insufficientData")}</p> : <div className="stats-tags">{validTags.map((item) => <div key={item.tag} className="stats-tag-row">
-              <span className="min-w-0 break-words">#{getLocalizedTag(item.tag, t)}</span><span className="shrink-0 tabular-nums"><strong>{Number(item.avg_mood).toFixed(1)}</strong><span className="text-on-surface-variant ml-2">({item.entry_count})</span></span>
+              <div className="stats-tag-name"><MoodIcon mood={Math.round(item.avg_mood)} className="text-[22px]" /><strong>#{getLocalizedTag(item.tag, t)}</strong></div>
+              <div className="stats-tag-measure"><strong>{Number(item.avg_mood).toFixed(1)}<span> / 5</span></strong><span>{t("stats.totalEntries")}: {item.entry_count}</span></div>
+              <div className="stats-tag-track" aria-hidden="true"><div className={moodBarColors[Math.round(item.avg_mood)]} style={{ width: `${item.avg_mood / 5 * 100}%` }} /></div>
             </div>)}</div>}
           </section>
           <section className="stats-section stats-calendar" aria-labelledby="stats-calendar-title">

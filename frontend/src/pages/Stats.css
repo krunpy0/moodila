@@ -18,7 +18,15 @@
 .stats-chart-note { margin-top: 4px; }
 .stats-note { margin-top: 6px; }
 .stats-observations { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 24px; padding: 24px 0; border-bottom: 1px solid rgb(var(--color-outline-variant)); }
-.stats-observations ul { display: grid; gap: 10px; font-size: 14px; line-height: 1.65; }
+.stats-observations ul { display: grid; gap: 0; font-size: 14px; line-height: 1.6; }
+.stats-observations li { padding: 16px 0; border-bottom: 1px solid rgb(var(--color-outline-variant)); }
+.stats-observations li:first-child { padding-top: 0; }
+.stats-observations li:last-child { border-bottom: 0; padding-bottom: 0; }
+.stats-observation-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.stats-observation-heading > strong { font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
+.stats-insight-diff { font-size: 19px; font-weight: 750; font-variant-numeric: tabular-nums; color: rgb(var(--color-primary)); }
+.stats-insight-diff > span { font-size: 12px; font-weight: 600; color: rgb(var(--color-on-surface)); }
+.stats-observations li p { max-width: 60ch; color: rgb(var(--color-on-surface)); }
 .stats-breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding: 32px 0; border-bottom: 1px solid rgb(var(--color-outline-variant)); }
 .stats-breakdown section { min-width: 0; }
 .stats-distribution { display: grid; gap: 16px; padding-top: 24px; }
@@ -27,12 +35,21 @@
 .stats-bar { height: 100%; border-radius: inherit; }
 .stats-distribution-value { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .stats-section { padding: 32px 0; border-bottom: 1px solid rgb(var(--color-outline-variant)); }
-.stats-tag-extremes { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 24px; }
-.stats-tag-extremes dt { font-size: 12px; color: rgb(var(--color-on-surface-variant)); }
+.stats-tag-extremes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; padding: 20px; border-radius: 12px; background: rgb(var(--color-surface-container)); }
+.stats-tag-extremes dt { font-size: 13px; font-weight: 600; color: rgb(var(--color-on-surface)); }
 .stats-tag-extremes dd { display: flex; justify-content: space-between; gap: 16px; margin-top: 6px; font-size: 17px; overflow-wrap: anywhere; }
-.stats-tag-extremes strong { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stats-tag-extremes dd > span { font-weight: 700; }
+.stats-tag-extremes strong { white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 23px; color: rgb(var(--color-primary)); }
 .stats-tags { display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; margin-top: 8px; }
-.stats-tag-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgb(var(--color-outline-variant) / .5); font-size: 14px; }
+.stats-tag-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 10px 16px; padding: 18px 0; border-bottom: 1px solid rgb(var(--color-outline-variant)); font-size: 15px; }
+.stats-tag-name { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.stats-tag-name > span { flex-shrink: 0; }
+.stats-tag-measure { display: grid; gap: 3px; text-align: right; font-variant-numeric: tabular-nums; }
+.stats-tag-measure > strong { font-size: 20px; line-height: 1.2; }
+.stats-tag-measure > strong > span { font-size: 12px; font-weight: 500; }
+.stats-tag-measure > span { font-size: 12px; color: rgb(var(--color-on-surface-variant)); }
+.stats-tag-track { grid-column: 1 / -1; height: 5px; background: rgb(var(--color-surface-container-high)); border-radius: 3px; overflow: hidden; }
+.stats-tag-track > div { height: 100%; border-radius: inherit; }
 .stats-calendar { border-bottom: 0; }
 .stats-empty { padding: 40px 0; max-width: 48ch; font-size: 14px; line-height: 1.6; }
 .stats-link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 12px; color: rgb(var(--color-primary)); font-weight: 650; text-decoration: underline; text-underline-offset: 4px; }

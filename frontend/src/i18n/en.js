@@ -126,6 +126,9 @@ export const en = {
 
   // Stats / Analytics Page
   stats: {
+    observationDay: "{day}",
+    lowerThanAverage: "below average",
+    higherThanAverage: "above average",
     periodLabel: "Statistics period",
     retry: "Try again",
     addEntry: "Add an entry",

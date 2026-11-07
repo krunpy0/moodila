@@ -126,6 +126,9 @@ export const ru = {
 
   // Stats / Analytics Page
   stats: {
+    observationDay: "По {day}",
+    lowerThanAverage: "ниже среднего",
+    higherThanAverage: "выше среднего",
     periodLabel: "Период статистики",
     retry: "Попробовать снова",
     addEntry: "Добавить запись",
