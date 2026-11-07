@@ -8,6 +8,8 @@ import { THEMES } from "../utils/themes";
 import Home from "../pages/Home";
 import Calendar from "../pages/Calendar";
 import AddEntry from "../pages/AddEntry";
+import Feed from "../pages/Feed";
+import Profile from "../pages/Profile";
 
 const params = new URLSearchParams(window.location.search);
 const screen = params.get("screen");
@@ -61,6 +63,8 @@ export default function PreviewApp({ client }) {
               <Route path="/home" element={<Home />} />
               <Route path="/calendar" element={<Calendar />} />
               <Route path="/entries/new" element={<AddEntry />} />
+              <Route path="/feed" element={<Feed />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
           </MemoryRouter>

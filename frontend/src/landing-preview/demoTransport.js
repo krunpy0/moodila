@@ -25,6 +25,7 @@ export function createDemoFetch({ now = new Date(), language = "en" } = {}) {
     if (path === "/app/features" || path === "/features") return json({ active_seasonal_themes: ["sakura"], seasonal_themes: [] });
     if (path === "/auth/session") return json({ user_id: user.id, user });
     if (path === "/users/me") return json({ user, entry_count: entries.size });
+    if (path === "/feed") return json({ items: [], next_cursor: null });
     if (path === "/friends" || path === "/friends/visibility-defaults") return json(friends);
     if (path === "/notifications/unread-count") return json({ unread_count: 0 });
     if (path === "/announcements/active-prompt") return json(null);
