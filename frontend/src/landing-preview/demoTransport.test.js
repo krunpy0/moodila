@@ -37,3 +37,14 @@ test("calendar stays consistent after saving and deleting a demo entry", async (
   assert.equal(summary.entry_count, month.length);
   assert.ok(month.every(entry => entry.date.startsWith("2026-11") && entry.date !== "2026-11-06"));
 });
+
+test("feed and profile show the demo friends and their natural posts", async () => {
+  const fetch = createDemoFetch(options);
+  const feed = await (await fetch("/feed?limit=10&include_self=false")).json();
+  const profile = await (await fetch("/users/me")).json();
+  assert.equal(feed.items.length, 6);
+  assert.equal(new Set(feed.items.map((entry) => entry.author.id)).size, 2);
+  assert.match(feed.items[0].text, /кофейне у парка|посидеть и поговорить|ужин/);
+  assert.equal(profile.friends.length, 2);
+  assert.equal(profile.recent_entries.length, 5);
+});

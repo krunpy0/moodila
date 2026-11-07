@@ -3,19 +3,38 @@ export function createDemoFetch({ now = new Date(), language = "en" } = {}) {
   const dateKey = (date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
   const today = dateKey(now);
   const entries = new Map();
-  const sampleText = language === "ru"
-    ? "Долго гуляли, болтали обо всём. Хочется запомнить этот день."
-    : "A long walk and a conversation about everything. A day worth remembering.";
   const user = { id: "demo-user", username: "alex", display_name: language === "ru" ? "Саша" : "Alex", is_verified: true };
   for (let offset = 0; offset < 20; offset++) {
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset);
     const key = dateKey(date);
-    entries.set(key, { id: `demo-${key}`, user_id: user.id, date: key, mood: [4, 3, 5, 4, 2, 4, 5][offset % 7], tags: ["Calm", "Grateful"], text: sampleText, is_hidden: false, photo_url: null, audio_url: null, friend_overrides: [] });
+    entries.set(key, { id: `demo-${key}`, user_id: user.id, date: key, mood: [4, 3, 5, 4, 2, 4, 5][offset % 7], tags: ["Calm", "Grateful"], text: language === "ru" ? "Долго гуляли, болтали обо всём. Хочется запомнить этот день." : "A long walk and a conversation about everything. A day worth remembering.", is_hidden: false, photo_url: null, audio_url: null, friend_overrides: [] });
   }
   const friends = [
     { id: "demo-friend-1", username: "mira", display_name: language === "ru" ? "Мира" : "Mira", hide_by_default: false },
     { id: "demo-friend-2", username: "leo", display_name: language === "ru" ? "Лёва" : "Leo", hide_by_default: false },
   ];
+  const feed = friends.flatMap((friend, friendIndex) => Array.from({ length: 3 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() - index);
+    const key = dateKey(date);
+    const russianPosts = [
+      ["Утро началось без спешки", "Прошёлся пешком до работы и заодно забрал кофе в маленькой кофейне у парка."],
+      ["Наконец увиделись", "Давно собирались встретиться. Хорошо, что сегодня получилось просто посидеть и поговорить."],
+      ["Тихий вечер дома", "Приготовил ужин, включил старый фильм и впервые за неделю никуда не торопился."],
+    ];
+    const englishPosts = [
+      ["A slower start to the morning", "Walked to work and picked up coffee from the little place by the park."],
+      ["We finally caught up", "We had been trying to meet for weeks. Glad we could sit down and talk without rushing."],
+      ["A quiet evening at home", "Made dinner, put on an old film, and let myself have nowhere else to be."],
+    ];
+    const [title, text] = (language === "ru" ? russianPosts : englishPosts)[(index + friendIndex) % 3];
+    return {
+      id: `demo-feed-${friendIndex}-${key}`, user_id: friend.id, date: key,
+      created_at: new Date(date.getTime() - (friendIndex + 1) * 3600000).toISOString(),
+      mood: [4, 5, 3][(index + friendIndex) % 3], tags: ["Calm", "Friends"],
+      text: `${title}. ${text}`, is_hidden: false, photo_url: null, audio_url: null,
+      author: friend, reactions: [], my_reactions: [], like_count: 0, comment_count: 0,
+    };
+  }));
   const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
   return async (input, options = {}) => {
     const url = new URL(typeof input === "string" ? input : input.url, "https://demo.invalid");
@@ -24,8 +43,8 @@ export function createDemoFetch({ now = new Date(), language = "en" } = {}) {
     const body = typeof options.body === "string" ? JSON.parse(options.body) : {};
     if (path === "/app/features" || path === "/features") return json({ active_seasonal_themes: ["sakura"], seasonal_themes: [] });
     if (path === "/auth/session") return json({ user_id: user.id, user });
-    if (path === "/users/me") return json({ user, entry_count: entries.size });
-    if (path === "/feed") return json({ items: [], next_cursor: null });
+    if (path === "/users/me") return json({ user, entry_count: entries.size, friends, recent_entries: [...entries.values()].slice(0, 5) });
+    if (path === "/feed") return json({ items: feed, next_cursor: null });
     if (path === "/friends" || path === "/friends/visibility-defaults") return json(friends);
     if (path === "/notifications/unread-count") return json({ unread_count: 0 });
     if (path === "/announcements/active-prompt") return json(null);
