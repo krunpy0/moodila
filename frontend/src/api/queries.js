@@ -259,7 +259,6 @@ export function useLikeEntryMutation() {
       }
     },
     onSettled: (_, __, { entryId }) => {
-      queryClient.invalidateQueries({ queryKey: ['feed'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
       if (entryId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.reactions(entryId) })
@@ -274,7 +273,13 @@ export function useAddCommentMutation() {
     mutationFn: addComment,
     onSuccess: (comment) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.comments(comment.entry_id) })
-      queryClient.invalidateQueries({ queryKey: ['feed'] })
+      queryClient.setQueriesData({ queryKey: ['feed'] }, (old) => {
+        if (!old?.pages) return old
+        return { ...old, pages: old.pages.map((page) => {
+          const key = page.items ? 'items' : (page.entries ? 'entries' : null)
+          return key ? { ...page, [key]: page[key].map((entry) => entry.id === comment.entry_id ? { ...entry, comment_count: (entry.comment_count || 0) + 1 } : entry) } : page
+        }) }
+      })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
     },
   })
@@ -291,10 +296,17 @@ export function useDeleteCommentMutation() {
       const entryId = typeof variables === 'object' ? variables.entryId : null
       if (entryId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.comments(entryId) })
+        queryClient.setQueriesData({ queryKey: ['feed'] }, (old) => {
+          if (!old?.pages) return old
+          return { ...old, pages: old.pages.map((page) => {
+            const key = page.items ? 'items' : (page.entries ? 'entries' : null)
+            return key ? { ...page, [key]: page[key].map((entry) => entry.id === entryId ? { ...entry, comment_count: Math.max(0, (entry.comment_count || 0) - 1) } : entry) } : page
+          }) }
+        })
       } else {
         queryClient.invalidateQueries({ queryKey: ['feed', 'comments'] })
+        queryClient.invalidateQueries({ queryKey: ['feed'] })
       }
-      queryClient.invalidateQueries({ queryKey: ['feed'] })
     },
   })
 }

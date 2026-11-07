@@ -31,30 +31,30 @@ func (r Friends) Search(ctx context.Context, userID, query string) ([]models.Fri
 	containsPattern := "%" + escapedQuery + "%"
 
 	rows, err := r.Pool.Query(ctx, `
+		WITH matches AS (
+			SELECT u.id, u.username, u.display_name, u.avatar_url
+			FROM users u
+			WHERE u.id <> $1::uuid
+			  AND u.deleted_at IS NULL
+			  AND (u.username ILIKE $2 OR u.display_name ILIKE $3)
+			  AND NOT EXISTS (
+			      SELECT 1 FROM user_blocks ub
+			      WHERE (ub.blocker_id = $1::uuid AND ub.blocked_id = u.id)
+			         OR (ub.blocker_id = u.id AND ub.blocked_id = $1::uuid)
+			  )
+			ORDER BY CASE WHEN u.username ILIKE $2 THEN 0 WHEN u.display_name ILIKE $2 THEN 1 ELSE 2 END,
+			         LOWER(u.display_name), u.username
+			LIMIT 20
+		)
 		SELECT u.id, u.username, u.display_name, u.avatar_url,
 		       f.id, f.status,
 		       CASE WHEN f.id IS NULL THEN NULL ELSE f.requester_id = $1 END
-		FROM users u
+		FROM matches u
 		LEFT JOIN friendships f ON
 			LEAST(f.requester_id, f.addressee_id) = LEAST($1::uuid, u.id)
 			AND GREATEST(f.requester_id, f.addressee_id) = GREATEST($1::uuid, u.id)
-		WHERE u.id <> $1::uuid
-		  AND u.deleted_at IS NULL
-		  AND (u.username ILIKE $2 OR u.display_name ILIKE $3)
-		  AND NOT EXISTS (
-		      SELECT 1 FROM user_blocks ub
-		      WHERE (ub.blocker_id = $1::uuid AND ub.blocked_id = u.id)
-		         OR (ub.blocker_id = u.id AND ub.blocked_id = $1::uuid)
-		  )
-		ORDER BY
-			CASE
-				WHEN u.username ILIKE $2 THEN 0
-				WHEN u.display_name ILIKE $2 THEN 1
-				ELSE 2
-			END,
-			LOWER(u.display_name),
-			u.username
-		LIMIT 20`,
+		ORDER BY CASE WHEN u.username ILIKE $2 THEN 0 WHEN u.display_name ILIKE $2 THEN 1 ELSE 2 END,
+		         LOWER(u.display_name), u.username`,
 		userID, prefixPattern, containsPattern,
 	)
 	if err != nil {

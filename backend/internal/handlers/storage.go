@@ -258,15 +258,14 @@ func processAndCompressPhoto(raw []byte, contentType string) ([]byte, error) {
 		return nil, fmt.Errorf("decode image pixels: %w", err)
 	}
 
+	origW, origH := img.Bounds().Dx(), img.Bounds().Dy()
+	if origW > maxImageSide || origH > maxImageSide {
+		img = resizeImage(img, maxImageSide)
+	}
 	if orientation > 1 && orientation <= 8 {
 		img = fixEXIFOrientation(img, orientation)
 	}
-
-	origW, origH := img.Bounds().Dx(), img.Bounds().Dy()
-	var resizedImg image.Image = img
-	if origW > maxImageSide || origH > maxImageSide {
-		resizedImg = resizeImage(img, maxImageSide)
-	}
+	resizedImg := img
 
 	newW, newH := resizedImg.Bounds().Dx(), resizedImg.Bounds().Dy()
 
