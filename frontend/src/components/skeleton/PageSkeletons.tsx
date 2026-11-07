@@ -57,25 +57,13 @@ export function AddEntrySkeleton() {
 }
 
 export function StatsSkeleton() {
-  return <div className="space-y-lg" role="status" aria-label="Loading stats">
-    <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
-      {Array.from({ length: 3 }, (_, i) => (
-        <div key={i} className="flex items-start gap-md rounded-xl lg:rounded-xxl bg-surface-container-lowest p-md shadow-card border border-outline-variant/15">
-          <SkeletonCircle size="2.5rem" />
-          <div className="flex-1 space-y-2">
-            <Skeleton width="80%" height="1rem" />
-            <Skeleton width="50%" height="0.75rem" />
-          </div>
-        </div>
-      ))}
+  return <div role="status" aria-label="Loading stats">
+    <section className="stats-dynamics space-y-4">
+      <Skeleton width="55%" height="1.5rem" />
+      <Skeleton width="65%" height="1.25rem" />
+      <Skeleton width="100%" height="210px" borderRadius="8px" />
     </section>
-    <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/15 space-y-md">
-      <div className="flex justify-between items-center">
-        <Skeleton width="40%" height="1.5rem" />
-        <Skeleton width="6rem" height="2rem" borderRadius="9999px" />
-      </div>
-      <Skeleton width="100%" height="14rem" borderRadius="16px" />
-    </section>
+    <div className="stats-breakdown">{[0, 1].map((key) => <div key={key} className="space-y-4"><Skeleton width="70%" height="1.25rem" /><Skeleton width="100%" height="170px" borderRadius="8px" /></div>)}</div>
   </div>
 }
 

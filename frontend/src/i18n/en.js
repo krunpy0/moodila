@@ -126,8 +126,14 @@ export const en = {
 
   // Stats / Analytics Page
   stats: {
+    periodLabel: "Statistics period",
+    retry: "Try again",
+    addEntry: "Add an entry",
+    chartNote: "Gaps in the line are days without entries.",
+    tagNote: "Average mood in tagged entries. Association does not imply cause.",
+    calendarNote: "The full year, regardless of the selected period. Select a day to see its mood.",
     title: "Analytics",
-    subtitle: "Patterns and insights of your mood",
+    subtitle: "How your mood changes over time",
     periods: {
       week: "Week",
       month: "Month",
@@ -135,7 +141,7 @@ export const en = {
     },
     moodDynamics: "Mood Dynamics",
     insightsHeader: "Insights",
-    insightsTitle: "Insights & Patterns",
+    insightsTitle: "Observations",
     insights: {
       day_lower: "Mood is usually lower on {day} (by {diff} below average)",
       day_higher: "Mood is usually higher on {day} (by {diff} above average)",
@@ -171,7 +177,7 @@ export const en = {
     totalEntries: "Total entries",
     entriesCount: "entries",
     noStatsData:
-      "Not enough logged entries for statistics yet. Log more days in your journal!",
+      "Log your mood in the journal to start seeing your history here.",
   },
 
   // Add Entry Page

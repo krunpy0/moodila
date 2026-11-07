@@ -1,4 +1,3 @@
-/* Hallmark · macrostructure: Stat-Led · tone: soft-editorial · design-system: DESIGN.md */
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useStatsQuery } from "../api/queries";
@@ -9,6 +8,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { StatsSkeleton } from "../components/skeleton/PageSkeletons";
 import { safeNavigateBack } from "../utils/navigation";
 import { getLocalDate } from "../api/client";
+import "./Stats.css";
 
 export default function Stats() {
   const [period, setPeriod] = useState("month");
@@ -16,7 +16,7 @@ export default function Stats() {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
-  const { data: stats, isLoading, isError, error } = useStatsQuery(period);
+  const { data: stats, isLoading, isError, error, refetch } = useStatsQuery(period);
 
   const moodSeries = stats?.mood_series || [];
   const heatmapData = stats?.heatmap_data || [];
@@ -31,343 +31,121 @@ export default function Stats() {
   const heroMoodLevel = stats?.overall_avg_mood ? Math.round(stats.overall_avg_mood) : 3;
   const heroMoodInfo = getMoodInfo(heroMoodLevel, t);
 
+  const validTags = tagCorrelation.filter((item) => item.has_enough_data);
+  const hasEntries = stats?.total_entries > 0;
+
   return (
     <AppLayout>
-      <main className="mx-auto min-h-screen w-full max-w-md md:max-w-2xl lg:max-w-5xl xl:max-w-6xl bg-background pb-32 lg:pb-12 text-on-surface px-container-margin-mobile md:px-container-margin py-xs md:py-sm">
-        {/* Header */}
-        <header className="py-md flex items-center justify-between">
-          <div className="flex items-center gap-sm">
-            <button
-              type="button"
-              onClick={() => safeNavigateBack(navigate, "/home")}
-              aria-label={t("common.back")}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-container-lowest text-on-surface-variant shadow-subtle border border-outline-variant/25 active:scale-95 transition-transform"
-            >
-              <span className="material-symbols-outlined text-[20px]">arrow_back</span>
+      <main className="stats-page text-on-surface">
+        <header className="stats-header">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => safeNavigateBack(navigate, "/home")} aria-label={t("common.back")} className="stats-back">
+              <span aria-hidden="true" className="material-symbols-outlined">arrow_back</span>
             </button>
-            <div>
-              <h1 className="text-headline-lg font-headline-lg lg:text-3xl font-bold tracking-tight">
-                {t("stats.title")}
-              </h1>
-              <p className="text-label-sm font-label-sm text-on-surface-variant">
-                {t("stats.subtitle")}
-              </p>
-            </div>
+            <div><h1>{t("stats.title")}</h1><p className="text-on-surface-variant text-body-sm mt-1">{t("stats.subtitle")}</p></div>
+          </div>
+          <div className="stats-period" role="group" aria-label={t("stats.periodLabel")}>
+            {["week", "month", "year"].map((p) => <button key={p} type="button" onClick={() => { setPeriod(p); setActiveHeatmapDay(null); }} aria-pressed={period === p}>{t("stats.periods." + p)}</button>)}
           </div>
         </header>
-
-        {isLoading ? (
-          <StatsSkeleton />
-        ) : isError ? (
-          <div className="py-8 text-center text-error">
-            {error?.message || t("common.error")}
-          </div>
-        ) : (
-          <div className="space-y-lg">
-            {/* Editorial Hero Summary & Dynamics Chart */}
-            <section className="rounded-2xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 lg:p-8 shadow-card space-y-md">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-md">
-                <div className="flex items-center gap-md">
-                  {stats?.overall_avg_mood ? (
-                    <>
-                      <div className={`flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl ${heroMoodInfo.bg}`}>
-                        <MoodIcon mood={heroMoodLevel} className="text-[28px]" />
-                      </div>
-                      <div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-display-md font-bold tracking-tight text-on-surface tabular-nums">
-                            {Number(stats.overall_avg_mood).toFixed(1)}
-                          </span>
-                          <span className="text-body-md font-semibold text-on-surface-variant">/ 5</span>
-                          <span className={`text-label-md font-bold px-2.5 py-0.5 rounded-full ${heroMoodInfo.bg} ${heroMoodInfo.onContainer}`}>
-                            {heroMoodInfo.label}
-                          </span>
-                        </div>
-                        <p className="text-label-sm font-medium text-on-surface-variant tabular-nums mt-0.5">
-                          {t("stats.avgMood")} • {stats.total_entries} {t("stats.entriesCount")}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <div>
-                      <h2 className="text-headline-sm font-bold text-on-surface">
-                        {t("stats.moodDynamics")}
-                      </h2>
-                      <p className="text-label-sm text-on-surface-variant">
-                        {t("stats.noStatsData")}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Period Switcher */}
-                <div className="flex rounded-full bg-surface-container-low p-1 self-start sm:self-auto border border-outline-variant/15">
-                  {["week", "month", "year"].map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setPeriod(p)}
-                      className={`px-3.5 py-1.5 text-label-md font-semibold rounded-full transition-colors ${
-                        period === p
-                          ? "bg-surface-container-lowest text-on-surface font-bold shadow-subtle"
-                          : "text-on-surface-variant hover:text-on-surface"
-                      }`}
-                    >
-                      {t(`stats.periods.${p}`)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Mood Line Chart SVG (Tactile stroke, labeled Y-axis, clean intervals) */}
-              <div className="pt-xs">
-                <MoodLineChart series={moodSeries} />
-              </div>
-            </section>
-
-            {/* Observations & Patterns List */}
-            {insights.length > 0 && (
-              <section className="space-y-sm">
-                <div className="flex items-center gap-1.5 text-on-surface-variant">
-                  <span className="material-symbols-outlined text-[18px] text-primary">psychology</span>
-                  <h2 className="text-label-lg font-bold tracking-wider uppercase">
-                    {t("stats.insightsTitle")}
-                  </h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
-                  {insights.map((insight, idx) => {
-                    const isPositive = insight.type === "positive" || String(insight.template_key).includes("higher");
-                    const isNegative = insight.type === "negative" || String(insight.template_key).includes("lower");
-                    const iconName = isPositive ? "trending_up" : isNegative ? "trending_down" : "auto_awesome";
-                    const badgeClass = isPositive
-                      ? "text-mood-rad bg-mood-rad-container"
-                      : isNegative
-                      ? "text-mood-bad bg-mood-bad-container"
-                      : "text-primary bg-primary-container";
-
-                    return (
-                      <div
-                        key={insight.id || idx}
-                        className="flex items-start gap-md rounded-xl bg-surface-container-low border border-outline-variant/15 p-md shadow-subtle"
-                      >
-                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${badgeClass} mt-0.5`}>
-                          <span className="material-symbols-outlined text-[18px]">{iconName}</span>
-                        </span>
-                        <p className="text-body-md font-medium text-on-surface leading-snug">
-                          {getLocalizedInsightText(insight, t)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* Mood Balance & Weekly Rhythm Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-md lg:gap-6">
-              {/* Mood Distribution */}
-              <section className="lg:col-span-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[20px]">pie_chart</span>
-                  <h2 className="text-headline-sm font-bold text-on-surface">
-                    {t("stats.moodDistribution")}
-                  </h2>
-                </div>
-                <div className="space-y-sm pt-xs">
-                  {[5, 4, 3, 2, 1].map((level) => {
-                    const dist = moodDistribution.find((d) => d.mood === level) || {
-                      count: 0,
-                      percentage: 0,
-                    };
-                    const moodInfo = getMoodInfo(level, t);
-                    const moodBarColors = {
-                      5: "bg-mood-rad",
-                      4: "bg-mood-good",
-                      3: "bg-mood-meh",
-                      2: "bg-mood-bad",
-                      1: "bg-mood-awful",
-                    };
-                    return (
-                      <div key={level} className="flex items-center gap-sm">
-                        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${moodInfo.bg}`}>
-                          <MoodIcon mood={level} className="text-[18px]" />
-                        </span>
-                        <div className="w-20 text-body-sm font-medium text-on-surface truncate">
-                          {moodInfo.label}
-                        </div>
-                        <div className="flex-1 h-3 rounded-full bg-surface-container-low overflow-hidden">
-                          <div
-                            className={`h-full w-full rounded-full ${moodBarColors[level] || "bg-primary"} origin-left transition-transform duration-300 ease-out`}
-                            style={{ transform: `scaleX(${dist.percentage / 100})` }}
-                          />
-                        </div>
-                        <span className="w-16 text-right text-label-sm font-bold text-on-surface-variant tabular-nums">
-                          {dist.percentage}% ({dist.count})
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-
-              {/* Day-of-Week Pattern */}
-              <section className="lg:col-span-6 rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[20px]">calendar_view_week</span>
-                  <h2 className="text-headline-sm font-bold text-on-surface">
-                    {t("stats.dayOfWeekPattern")}
-                  </h2>
-                </div>
-                <DayOfWeekBarChart data={dayOfWeekAverages} language={language} t={t} />
-              </section>
+        {isLoading ? <StatsSkeleton /> : isError ? <div role="alert" className="stats-empty">
+          <p className="text-error">{error?.message || t("common.error")}</p>
+          <button type="button" className="stats-link" onClick={() => refetch()}>{t("stats.retry")}</button>
+        </div> : <>
+          <section className="stats-dynamics" aria-labelledby="stats-dynamics-title">
+            <div className="stats-section-heading">
+              <h2 id="stats-dynamics-title">{t("stats.moodDynamics")}</h2>
+              {hasEntries && <p className="text-body-sm text-on-surface-variant tabular-nums">{t("stats.totalEntries")}: <strong className="text-on-surface">{stats.total_entries}</strong></p>}
             </div>
-
-            {/* Tag Influence & Context */}
-            <section className="rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-xs">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[20px]">tag</span>
-                  <h2 className="text-headline-sm font-bold text-on-surface">
-                    {t("stats.tagCorrelation")}
-                  </h2>
-                </div>
-                <span className="text-label-sm text-on-surface-variant font-medium">
-                  {t("stats.minTagDataNote")}
-                </span>
+            {hasEntries ? <>
+              <div className="stats-average">
+                <MoodIcon mood={heroMoodLevel} className="text-[24px]" />
+                <span>{t("stats.avgMood")}</span>
+                <strong>{Number(stats.overall_avg_mood).toLocaleString(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}<span className="text-on-surface-variant font-normal text-body-sm"> / 5</span></strong>
+                <span className="text-on-surface-variant">{heroMoodInfo.label}</span>
               </div>
-
-              {/* Top / Bottom Tag Highlight Cards */}
-              {(highestTag || lowestTag) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-sm">
-                  {highestTag && (
-                    <div className="flex items-center gap-md rounded-xl bg-mood-rad-container/25 border border-mood-rad/20 p-md shadow-subtle">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-mood-rad-container border border-mood-rad/30">
-                        <MoodIcon mood={Math.min(5, Math.max(1, Math.round(highestTag.avg_mood)))} className="text-[26px]" />
-                      </span>
-                      <div className="min-w-0">
-                        <span className="text-label-sm font-semibold text-on-mood-rad-container block">
-                          {t("stats.highestMoodTag")}
-                        </span>
-                        <p className="text-body-md font-bold text-on-surface truncate">
-                          #{getLocalizedTag(highestTag.tag, t)}{" "}
-                          <span className="text-mood-rad font-bold tabular-nums">
-                            ({Number(highestTag.avg_mood).toFixed(1)})
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {lowestTag && (
-                    <div className="flex items-center gap-md rounded-xl bg-mood-awful-container/25 border border-mood-awful/20 p-md shadow-subtle">
-                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-mood-awful-container border border-mood-awful/30">
-                        <MoodIcon mood={Math.min(5, Math.max(1, Math.round(lowestTag.avg_mood)))} className="text-[26px]" />
-                      </span>
-                      <div className="min-w-0">
-                        <span className="text-label-sm font-semibold text-on-mood-awful-container block">
-                          {t("stats.lowestMoodTag")}
-                        </span>
-                        <p className="text-body-md font-bold text-on-surface truncate">
-                          #{getLocalizedTag(lowestTag.tag, t)}{" "}
-                          <span className="text-mood-awful font-bold tabular-nums">
-                            ({Number(lowestTag.avg_mood).toFixed(1)})
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tags Grid / List */}
-              {(() => {
-                const validTags = tagCorrelation.filter((item) => item.has_enough_data);
-                if (validTags.length === 0) {
-                  return (
-                    <div className="py-6 text-center text-body-sm text-on-surface-variant font-medium">
-                      {t("stats.insufficientData")}
-                    </div>
-                  );
-                }
-                return (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-xs pt-xs">
-                    {validTags.map((item) => {
-                      const tagMoodLevel = Math.min(5, Math.max(1, Math.round(item.avg_mood)));
-                      const tagMoodInfo = getMoodInfo(tagMoodLevel, t);
-                      return (
-                        <div
-                          key={item.tag}
-                          className="flex items-center justify-between rounded-xl bg-surface-container-low border border-outline-variant/15 py-2 px-3 transition-colors hover:bg-surface-container"
-                        >
-                          <div className="flex items-center gap-2.5 truncate max-w-[170px]">
-                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tagMoodInfo.bg}`}>
-                              <MoodIcon mood={tagMoodLevel} className="text-[17px]" />
-                            </span>
-                            <span className="text-body-md font-semibold text-on-surface truncate">
-                              #{getLocalizedTag(item.tag, t)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-body-md font-bold text-on-surface tabular-nums">
-                              {Number(item.avg_mood).toFixed(1)}
-                            </span>
-                            <span className="text-label-sm text-on-surface-variant tabular-nums">
-                              ({item.entry_count})
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
+              <MoodLineChart series={moodSeries} t={t} />
+              <p className="stats-chart-note">{t("stats.chartNote")}</p>
+            </> : <div className="stats-empty">
+              <p className="font-semibold">{t("stats.noData")}</p><p className="text-on-surface-variant mt-2">{t("stats.noStatsData")}</p>
+              <button type="button" className="stats-link" onClick={() => navigate("/entries/new")}>{t("stats.addEntry")}</button>
+            </div>}
+          </section>
+          {insights.length > 0 && <section className="stats-observations">
+            <h2>{t("stats.insightsTitle")}</h2>
+            <ul>{insights.map((insight, idx) => <li key={insight.id || idx}>{getLocalizedInsightText(insight, t)}</li>)}</ul>
+          </section>}
+          {hasEntries && <div className="stats-breakdown">
+            <section aria-labelledby="stats-distribution-title">
+              <h2 id="stats-distribution-title">{t("stats.moodDistribution")}</h2>
+              <div className="stats-distribution">{[5, 4, 3, 2, 1].map((level) => {
+                const dist = moodDistribution.find((d) => d.mood === level) || { count: 0, percentage: 0 };
+                const moodInfo = getMoodInfo(level, t);
+                return <div key={level} className="stats-distribution-row">
+                  <MoodIcon mood={level} className="text-[22px]" /><span>{moodInfo.label}</span>
+                  <div className="stats-bar-track" aria-hidden="true"><div style={{ width: dist.percentage + "%" }} className={"stats-bar " + moodBarColors[level]} /></div>
+                  <span className="stats-distribution-value">{dist.percentage}% <span className="text-on-surface-variant">({dist.count})</span></span>
+                </div>;
+              })}</div>
             </section>
-
-            {/* Annual Heatmap (Moodila Emotional Spectrum) */}
-            <section className="rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md md:p-6 shadow-card space-y-md">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[20px]">grid_on</span>
-                  <h2 className="text-headline-sm font-bold text-on-surface">
-                    {t("stats.annualHeatmap")}
-                  </h2>
-                </div>
-              </div>
-
-              {/* Heatmap Component */}
-              <AnnualHeatmap
-                heatmapData={heatmapData}
-                activeDay={activeHeatmapDay}
-                setActiveDay={setActiveHeatmapDay}
-                t={t}
-              />
-            </section>
-          </div>
-        )}
+            <section aria-labelledby="stats-weekdays-title"><h2 id="stats-weekdays-title">{t("stats.dayOfWeekPattern")}</h2><DayOfWeekBarChart data={dayOfWeekAverages} language={language} /></section>
+          </div>}
+          <section className="stats-section" aria-labelledby="stats-tags-title">
+            <h2 id="stats-tags-title">{t("stats.tagCorrelation")}</h2><p className="stats-note">{t("stats.tagNote")}</p>
+            {(highestTag || lowestTag) && <dl className="stats-tag-extremes">
+              {[[highestTag, "highestMoodTag"], [lowestTag, "lowestMoodTag"]].map(([tag, label]) => tag && <div key={label}>
+                <dt>{t("stats." + label)}</dt><dd><span>#{getLocalizedTag(tag.tag, t)}</span><strong>{Number(tag.avg_mood).toFixed(1)}<span className="font-normal text-body-sm text-on-surface-variant"> / 5</span></strong></dd>
+              </div>)}
+            </dl>}
+            <p className="stats-note mt-5">{t("stats.minTagDataNote")}</p>
+            {validTags.length === 0 ? <p className="py-6 text-body-sm text-on-surface-variant">{t("stats.insufficientData")}</p> : <div className="stats-tags">{validTags.map((item) => <div key={item.tag} className="stats-tag-row">
+              <span className="min-w-0 break-words">#{getLocalizedTag(item.tag, t)}</span><span className="shrink-0 tabular-nums"><strong>{Number(item.avg_mood).toFixed(1)}</strong><span className="text-on-surface-variant ml-2">({item.entry_count})</span></span>
+            </div>)}</div>}
+          </section>
+          <section className="stats-section stats-calendar" aria-labelledby="stats-calendar-title">
+            <h2 id="stats-calendar-title">{t("stats.annualHeatmap")}</h2><p className="stats-note mb-5">{t("stats.calendarNote")}</p>
+            <AnnualHeatmap heatmapData={heatmapData} activeDay={activeHeatmapDay} setActiveDay={setActiveHeatmapDay} t={t} />
+          </section>
+        </>}
       </main>
     </AppLayout>
   );
 }
 
+const moodBarColors = { 5: "bg-mood-rad", 4: "bg-mood-good", 3: "bg-mood-meh", 2: "bg-mood-bad", 1: "bg-mood-awful" };
+
 /* Mood Line Chart SVG Component */
-function MoodLineChart({ series }) {
+function MoodLineChart({ series, t }) {
+  const chartRef = useRef(null);
+  const [width, setWidth] = useState(360);
+  useEffect(() => {
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
+    if (chartRef.current) observer.observe(chartRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   if (!series || series.length === 0) {
     return null;
   }
 
-  // Width is 360, X-margin left is 34, right margin is 346
   const plotLeft = 34;
-  const plotRight = 346;
+  const plotRight = width - 18;
   const plotWidth = plotRight - plotLeft;
 
   const validPoints = series.map((pt, index) => {
     const x = (index / (series.length - 1 || 1)) * plotWidth + plotLeft;
-    const y = pt.mood ? 80 - ((pt.mood - 1) / 4) * 60 : 80;
-    return { ...pt, x, y, hasVal: pt.mood !== null };
+    const y = pt.mood ? 170 - ((pt.mood - 1) / 4) * 140 : 170;
+    return { ...pt, x, y, hasVal: pt.mood != null };
   });
 
   const loggedPoints = validPoints.filter((p) => p.hasVal);
-  const pathD = getSmoothPath(loggedPoints);
+  const segments = [];
+  validPoints.forEach((point, index) => {
+    if (!point.hasVal) return;
+    if (index === 0 || !validPoints[index - 1].hasVal) segments.push([]);
+    segments[segments.length - 1].push(point);
+  });
+  const pathD = segments.map(getSmoothPath).join(" ");
 
   // Smart decimation for X-axis labels to prevent overlap
   const total = validPoints.length;
@@ -381,18 +159,19 @@ function MoodLineChart({ series }) {
   const isDense = total > 31;
 
   return (
-    <div className="relative w-full">
-      <svg viewBox="0 0 360 115" className="w-full overflow-visible">
+    <div ref={chartRef} className="stats-line-chart">
+      <svg viewBox={`0 0 ${width} 210`} className="w-full overflow-visible" role="img" aria-label={t("stats.moodDynamics")}>
+        <title>{t("stats.moodDynamics")}</title>
         {/* Y-axis Grid lines & Level labels */}
         {[1, 2, 3, 4, 5].map((level) => {
-          const y = 80 - ((level - 1) / 4) * 60;
+          const y = 170 - ((level - 1) / 4) * 140;
           return (
             <g key={level}>
               <text
                 x={plotLeft - 8}
                 y={y + 3}
                 textAnchor="end"
-                className="fill-on-surface-variant text-[10px] font-semibold tabular-nums select-none"
+                className="fill-on-surface-variant text-[11px] font-semibold tabular-nums select-none"
               >
                 {level}
               </text>
@@ -410,13 +189,13 @@ function MoodLineChart({ series }) {
           );
         })}
 
-        {/* Clean, tactile Bézier Path (no area gradient slop) */}
+        {/* Break the curve at days without entries. */}
         {loggedPoints.length > 0 && (
           <path
             d={pathD}
             fill="none"
             stroke="rgb(var(--color-primary))"
-            strokeWidth="2.5"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -429,17 +208,17 @@ function MoodLineChart({ series }) {
               <circle
                 cx={pt.x}
                 cy={pt.y}
-                r={isDense ? "2.5" : "3.5"}
+                r={isDense ? "2" : "3"}
                 className="fill-surface-container-lowest stroke-primary"
-                strokeWidth={isDense ? "1.5" : "2"}
+                strokeWidth="1.2"
               />
             )}
             {shouldShowLabel(i) && (
               <text
                 x={pt.x}
-                y="104"
+                y="198"
                 textAnchor="middle"
-                className="fill-on-surface-variant text-[10px] font-medium tabular-nums select-none"
+                className="fill-on-surface-variant text-[11px] font-medium tabular-nums select-none"
               >
                 {pt.label}
               </text>
@@ -447,6 +226,7 @@ function MoodLineChart({ series }) {
           </g>
         ))}
       </svg>
+      <dl className="sr-only">{loggedPoints.map((point) => <div key={point.date}><dt>{point.date}</dt><dd>{point.mood} / 5</dd></div>)}</dl>
     </div>
   );
 }
@@ -560,7 +340,7 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
       }
     });
 
-    return headers;
+    return headers.filter((header, index) => !headers[index + 1] || headers[index + 1].weekIdx - header.weekIdx >= 3);
   }, [weeks, months]);
 
   // Auto-scroll to today (current date) on mount/update
@@ -657,8 +437,8 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
         <div
           className="grid gap-[3px] inline-grid select-none"
           style={{
-            gridTemplateColumns: `auto repeat(${weeks.length}, minmax(11px, 12px))`,
-            gridTemplateRows: `auto repeat(7, minmax(11px, 12px))`,
+            gridTemplateColumns: `auto repeat(${weeks.length}, 24px)`,
+            gridTemplateRows: `auto repeat(7, 24px)`,
           }}
         >
           {/* Sticky top-left corner */}
@@ -703,7 +483,7 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
                       gridRow: dIdx + 2,
                       gridColumn: wIdx + 2,
                     }}
-                    className="h-3 w-3 rounded-[2px] opacity-0 pointer-events-none"
+                    className="h-6 w-6 rounded-[4px] opacity-0 pointer-events-none"
                   />
                 );
               }
@@ -718,13 +498,15 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
                   ref={isToday ? todayRef : null}
                   type="button"
                   data-today={isToday ? "true" : undefined}
+                  aria-label={`${formatDate(day.date)}: ${hasMood ? `${day.mood}/5` : t("stats.noData")}`}
+                  aria-pressed={isSelected}
                   title={`${formatDate(day.date)}${isToday ? ` (${t("common.today")})` : ""}: ${hasMood ? `${day.mood}/5` : t("stats.noData")}`}
                   onClick={() => setActiveDay(day)}
                   style={{
                     gridRow: dIdx + 2,
                     gridColumn: wIdx + 2,
                   }}
-                  className={`h-3 w-3 rounded-[2px] border transition-colors focus:outline-none ${
+                  className={`h-6 w-6 rounded-[4px] border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
                     hasMood
                       ? moodColors[day.mood]
                       : "bg-surface-container-low border-outline-variant/20 dark:bg-surface-container/60 hover:border-outline-variant/60"
@@ -744,7 +526,7 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
 
       {/* Selected Day Floating Detail */}
       {activeDay && (
-        <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-3 text-body-sm shadow-subtle border border-outline-variant/20">
+        <div role="status" className="flex items-center justify-between gap-2 rounded-lg bg-surface-container-low p-3 text-body-sm">
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-primary text-[20px]">calendar_today</span>
             <div>
@@ -762,7 +544,7 @@ function AnnualHeatmap({ heatmapData, activeDay, setActiveDay, t }) {
           <button
             type="button"
             onClick={() => setActiveDay(null)}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-high transition-colors"
             aria-label={t("common.close")}
           >
             <span className="material-symbols-outlined text-[18px]">close</span>
