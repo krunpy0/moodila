@@ -71,7 +71,7 @@ export default function Landing() {
           <div className="lp-privacy-panel"><figure><LandingAppPreview screen="privacy" title={copy.privacyPreview} /><figcaption>{copy.demo}</figcaption></figure></div>
         </section>
 
-        <section className="lp-device lp-container" aria-labelledby="device-title"><div className="lp-device-icon"><Icon name="phone" /></div><div><h2 id="device-title">{copy.deviceTitle}</h2><p>{copy.deviceBody}</p></div><Link className="lp-text-link" to="/login">{copy.deviceLink}<Icon name="arrow" /></Link></section>
+        <section className="lp-device lp-container" aria-labelledby="device-title"><div><h2 id="device-title">{copy.deviceTitle}</h2><p>{copy.deviceBody}</p><Link className="lp-text-link" to="/login">{copy.deviceLink}<Icon name="arrow" /></Link></div></section>
 
         <section className="lp-faq lp-container lp-section" id="questions" aria-labelledby="questions-title"><div className="lp-section-copy"><h2 id="questions-title">{copy.faqTitle}</h2><p>{copy.note}</p></div><div className="lp-questions">{copy.faqs.map(([question, answer]) => <details key={question}><summary>{question}<Icon name="down" /></summary><p>{answer}</p></details>)}</div></section>
 
