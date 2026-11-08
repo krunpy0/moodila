@@ -267,15 +267,18 @@ export default function Calendar() {
             )}
           </div>
         ) : (
+          <div className="relative">
           <button
             type="button"
             aria-expanded={friendMenuOpen}
             onClick={() => setFriendMenuOpen((open) => !open)}
             className="flex w-full items-center justify-between rounded-[24px] bg-surface-container-lowest p-md text-left cloud-shadow active:scale-[0.98]"
           >
-            <span className="text-headline-lg-mobile font-headline-lg-mobile font-bold">{t('calendar.myCalendar')}</span>
+            <span className="min-w-0 pr-12 text-headline-lg-mobile font-headline-lg-mobile font-bold">{t('calendar.myCalendar')}</span>
             <span className="material-symbols-outlined text-primary">expand_more</span>
           </button>
+          {!friendIdParam && <Link to="/entries/search" aria-label={t('entrySearch.title')} title={t('entrySearch.title')} className="absolute right-12 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-primary hover:bg-primary-container focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"><span className="material-symbols-outlined" aria-hidden="true">search</span></Link>}
+          </div>
         )}
         {!selectedFriend && friendMenuOpen && (
           <div className="mt-xs rounded-[24px] bg-surface-container-lowest p-md cloud-shadow">

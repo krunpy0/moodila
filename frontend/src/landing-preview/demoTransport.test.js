@@ -48,3 +48,17 @@ test("feed and profile show the demo friends and their natural posts", async () 
   assert.equal(profile.friends.length, 2);
   assert.equal(profile.recent_entries.length, 5);
 });
+
+test("journal search uses literal text, dates, multiple filters and media", async () => {
+  const fetch = createDemoFetch(options);
+  await fetch('/entries', { method: 'POST', body: JSON.stringify({ date: '2026-11-06', mood: 5, text: 'ЭКЗАМЁН 100%', tags: ['Calm', 'Свой'], photo_url: 'demo.jpg', audio_url: 'voice.webm', is_hidden: true }) });
+  const search = async query => (await fetch('/entries/search?' + query)).json();
+  const found = await search(new URLSearchParams([['q', 'экзамен'], ['mood', '1'], ['mood', '5'], ['tag', 'Calm'], ['tag', 'Свой'], ['photo', 'true'], ['audio', 'true'], ['from', '2026-11-06'], ['to', '2026-11-06']]));
+  assert.equal(found.entries.length, 1);
+  assert.equal(found.entries[0].is_hidden, true);
+  assert.equal((await search('q=100%25')).entries.length, 1);
+  assert.equal((await search('q=экзамен&cursor=2026-11-06')).entries.length, 0);
+  assert.equal((await search('q=экзамен&tag=missing')).entries.length, 0);
+  const tags = await (await fetch('/entries/tags')).json();
+  assert.ok(tags.includes('Свой'));
+});

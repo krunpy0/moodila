@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSession, verifyEmail, resendVerification } from './auth'
-import { deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, getStats, saveEntry, updateEntryVisibility } from './entries'
+import { searchEntries, getEntrySearchTags, deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, getStats, saveEntry, updateEntryVisibility } from './entries'
 import { likeEntry, getFeed, getEntryReactions, getComments, addComment, deleteComment } from './feed'
 import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser, getFriendVisibilityDefaults, setFriendVisibilityDefault } from './friends'
 import { getMyProfile, updateMyProfile, getFriendProfile, blockUser, unblockUser, getBlockedUsers, reportContent, getAdminReports, updateAdminReportStatus, deleteAdminReportedContent } from './users'
@@ -654,3 +654,16 @@ export function useDeleteAdminReportedContentMutation() {
 }
 
 
+
+export const useEntrySearchQuery = (filters) => useInfiniteQuery({
+  queryKey: ['entries', 'me', 'search', filters],
+  queryFn: ({ pageParam, signal }) => searchEntries(filters, pageParam, signal),
+  initialPageParam: undefined,
+  getNextPageParam: (page) => page.next_cursor || undefined,
+  staleTime: STALE_TIMES.DYNAMIC,
+})
+export const useEntrySearchTagsQuery = () => useQuery({
+  queryKey: ['entries', 'me', 'tags'],
+  queryFn: getEntrySearchTags,
+  staleTime: STALE_TIMES.DYNAMIC,
+})

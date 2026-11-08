@@ -226,6 +226,8 @@ func main() {
 
 	statsHandler := handlers.Stats{Entries: repository.Entries{Pool: pool}}
 	authorized.GET("/entries/me", readLimiter, entries.Me)
+	authorized.GET("/entries/search", readLimiter, entries.Search)
+	authorized.GET("/entries/tags", readLimiter, entries.SearchTags)
 	authorized.GET("/entries/friend/:friend_id", readLimiter, entries.Friend)
 	authorized.GET("/entries/summary", readLimiter, entries.Summary)
 	authorized.GET("/stats", readLimiter, statsHandler.Get)

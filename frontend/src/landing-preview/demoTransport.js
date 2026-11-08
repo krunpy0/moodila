@@ -54,6 +54,22 @@ export function createDemoFetch({ now = new Date(), language = "en" } = {}) {
       const list = [...entries.values()].filter(entry => entry.date.startsWith(url.searchParams.get("month") || today.slice(0, 7)));
       return json({ entry_count: list.length, dominant_mood: 4, top_tag: "Calm" });
     }
+    if (path === "/entries/tags") return json([...new Set([...entries.values()].flatMap(entry => entry.tags))]);
+    if (path === "/entries/search") {
+      const p = url.searchParams;
+      const normalize = text => text.toLowerCase().replaceAll("ё", "е");
+      const list = [...entries.values()].filter(entry =>
+        normalize(entry.text).includes(normalize(p.get("q") || "")) &&
+        (!p.get("from") || entry.date >= p.get("from")) &&
+        (!p.get("to") || entry.date <= p.get("to")) &&
+        (!p.get("cursor") || entry.date < p.get("cursor")) &&
+        (!p.has("mood") || p.getAll("mood").includes(String(entry.mood))) &&
+        p.getAll("tag").every(tag => entry.tags.includes(tag)) &&
+        (p.get("photo") !== "true" || entry.photo_url) &&
+        (p.get("audio") !== "true" || entry.audio_url)
+      ).sort((a, b) => b.date.localeCompare(a.date));
+      return json({ entries: list.slice(0, 20), next_cursor: list.length > 20 ? list[19].date : "" });
+    }
     if (path === "/entries/me") {
       const date = url.searchParams.get("date");
       if (date) return entries.has(date) ? json(entries.get(date)) : json({ error: "No entry" }, 404);

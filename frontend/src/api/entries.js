@@ -129,3 +129,10 @@ export async function uploadEntryAudio(audioBlob) {
 }
 
 
+
+export const searchEntries = (filters, cursor, signal) => {
+  const params = new URLSearchParams(filters)
+  if (cursor) params.set('cursor', cursor)
+  return api(`/entries/search?${params}`, { signal })
+}
+export const getEntrySearchTags = () => api('/entries/tags')

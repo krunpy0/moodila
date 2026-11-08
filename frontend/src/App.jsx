@@ -30,6 +30,7 @@ const ConfirmAccountDeletion = lazy(
 );
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const AddEntry = lazy(() => import("./pages/AddEntry"));
+const EntrySearch = lazy(() => import("./pages/EntrySearch"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Stats = lazy(() => import("./pages/Stats"));
 const Friends = lazy(() => import("./pages/Friends"));
@@ -62,6 +63,7 @@ export default function App() {
               element={<ConfirmAccountDeletion />}
             />
             <Route path="/" element={<RootRoute />} />
+            <Route path="/entries/search" element={<RequireAuth><EntrySearch /></RequireAuth>} />
             <Route
               path="/home"
               element={
