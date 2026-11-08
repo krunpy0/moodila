@@ -228,12 +228,14 @@ func TestAppFeaturesHTTPHandler(t *testing.T) {
 }
 
 func TestSeasonalThemeWindows(t *testing.T) {
-	newYearWindow := SeasonalThemeWindow{
-		ID:         "new-year",
-		StartMonth: time.December,
-		StartDay:   15,
-		EndMonth:   time.January,
-		EndDay:     15,
+	var newYearWindow SeasonalThemeWindow
+	for _, window := range DefaultSeasonalWindows {
+		if window.ID == "new-year" {
+			newYearWindow = window
+		}
+	}
+	if newYearWindow.ID == "" {
+		t.Fatal("new-year season is not registered")
 	}
 
 	tests := []struct {
@@ -241,12 +243,12 @@ func TestSeasonalThemeWindows(t *testing.T) {
 		date     time.Time
 		expected bool
 	}{
-		{"Dec 14 before start", time.Date(2026, time.December, 14, 23, 59, 59, 0, time.UTC), false},
-		{"Dec 15 start boundary", time.Date(2026, time.December, 15, 0, 0, 0, 0, time.UTC), true},
+		{"Nov 30 before start", time.Date(2026, time.November, 30, 23, 59, 59, 0, time.UTC), false},
+		{"Dec 1 start boundary", time.Date(2026, time.December, 1, 0, 0, 0, 0, time.UTC), true},
 		{"Dec 31 new year eve", time.Date(2026, time.December, 31, 23, 59, 59, 0, time.UTC), true},
 		{"Jan 1 new year day", time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC), true},
-		{"Jan 14 inside season", time.Date(2027, time.January, 14, 23, 59, 59, 0, time.UTC), true},
-		{"Jan 15 end boundary", time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC), false},
+		{"Jan 7 inside season", time.Date(2027, time.January, 7, 23, 59, 59, 0, time.UTC), true},
+		{"Jan 8 end boundary", time.Date(2027, time.January, 8, 0, 0, 0, 0, time.UTC), false},
 		{"Jan 16 after season", time.Date(2027, time.January, 16, 12, 0, 0, 0, time.UTC), false},
 		{"July 4 summer off-season", time.Date(2026, time.July, 4, 12, 0, 0, 0, time.UTC), false},
 	}
@@ -268,4 +270,3 @@ func TestSeasonalThemesOverride(t *testing.T) {
 		t.Fatalf("unexpected active themes from override: %v", active)
 	}
 }
-

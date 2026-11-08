@@ -20,7 +20,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label={t('nav.home')}
-      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-4 mx-auto z-50 flex max-w-md items-center justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-3 py-2 shadow-floating backdrop-blur-xl lg:hidden select-none touch-manipulation"
+      className="winter-nav fixed bottom-[max(1rem,env(safe-area-inset-bottom))] inset-x-4 mx-auto z-50 flex max-w-md items-center justify-around rounded-full bg-surface/90 border border-outline-variant/30 px-3 py-2 shadow-floating backdrop-blur-xl lg:hidden select-none touch-manipulation"
     >
       {items.map(([to, icon, labelKey]) => {
         const active = to && pathname === to

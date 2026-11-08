@@ -1,7 +1,7 @@
 /**
  * Moodila Theme System Specification & Metadata
  * 
- * Defines 6 theme families, each with Light and Dark variants (12 themes total).
+ * Defines theme families, each with Light and Dark variants.
  * All tokens are authored as CSS variables in `src/index.css`.
  */
 
@@ -19,6 +19,12 @@ export const THEME_FAMILIES = {
     en: 'Cherry Blossom',
     descRu: 'Воздушная лепестково-розовая палитра и глубокий сливовый вечер',
     descEn: 'Airy petal pink, warm floral undertones, and deep plum elegance',
+  },
+  'new-year': {
+    id: 'new-year', seasonal: true,
+    ru: 'Новый год', en: 'New Year',
+    descRu: 'Мягкий снег, зимние вечера и тихое мерцание гирлянды',
+    descEn: 'Soft snow, winter evenings, and softly twinkling lights',
   },
   halloween: {
     id: 'halloween',
@@ -425,6 +431,48 @@ export const THEMES = [
       onSurfaceVariant: '#90B6B1',
       border: '#233838',
       moods: ['#31CBB1', '#85D45D', '#E2BA56', '#E28666', '#DF6F9A'],
+    },
+  },
+  {
+    id: 'new-year-light',
+    family: 'new-year',
+    mode: 'light',
+    nameRu: 'Новый год (Светлая)',
+    nameEn: 'New Year (Light)',
+    metaColor: '#F5F3F1',
+    colors: {
+      bg: '#F5F3F1',
+      surface: '#FFFFFF',
+      surfaceContainer: '#ECE8E5',
+      primary: '#8C5C70',
+      onPrimary: '#FFFFFF',
+      secondary: '#61727A',
+      tertiary: '#8A7642',
+      onSurface: '#181817',
+      onSurfaceVariant: '#6A6661',
+      border: '#D8D4CF',
+      moods: ['#357756', '#658A42', '#A97C2F', '#BF6A3C', '#B65156'],
+    },
+  },
+  {
+    id: 'new-year-dark',
+    family: 'new-year',
+    mode: 'dark',
+    nameRu: 'Новый год (Тёмная)',
+    nameEn: 'New Year (Dark)',
+    metaColor: '#241D20',
+    colors: {
+      bg: '#241D20',
+      surface: '#151515',
+      surfaceContainer: '#30292C',
+      primary: '#D8A1B5',
+      onPrimary: '#402331',
+      secondary: '#A8BBC1',
+      tertiary: '#D0BE83',
+      onSurface: '#F1EFEC',
+      onSurfaceVariant: '#B9B4AE',
+      border: '#494044',
+      moods: ['#68B88F', '#9FC479', '#DFAD5E', '#DC885D', '#D7787D'],
     },
   },
 ]

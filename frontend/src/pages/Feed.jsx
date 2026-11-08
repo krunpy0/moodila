@@ -316,7 +316,7 @@ export default function Feed() {
                   {!feedQuery.isLoading &&
                     !feedQuery.isError &&
                     entries.length === 0 && (
-                      <div className="rounded-lg bg-surface-container-lowest p-lg sm:p-xl border border-outline-variant/20 shadow-card relative overflow-hidden">
+                      <div className="winter-snow rounded-lg bg-surface-container-lowest p-lg sm:p-xl border border-outline-variant/20 shadow-card relative overflow-hidden">
                         <div className="flex items-start gap-md">
                           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-container text-on-primary-container">
                             <span className="material-symbols-outlined text-[26px] text-primary">
@@ -484,7 +484,7 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
         id={`feed-entry-${entry.id}`}
         data-feed-entry=""
         data-entry-id={entry.id}
-        className={`rounded-xl lg:rounded-xxl p-lg shadow-card border transition-[background-color,border-color,box-shadow] duration-normal ${moodTintBg[entry.mood] || "bg-surface-container-high/50 border-outline-variant/20"} ${
+        className={`winter-snow rounded-xl lg:rounded-xxl p-lg shadow-card border transition-[background-color,border-color,box-shadow] duration-normal ${moodTintBg[entry.mood] || "bg-surface-container-high/50 border-outline-variant/20"} ${
           isHighlighted ? "ring-2 ring-primary shadow-floating" : ""
         }`}
       >
@@ -601,7 +601,7 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
       id={`feed-entry-${entry.id}`}
       data-feed-entry=""
       data-entry-id={entry.id}
-      className={`rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-card transition-[box-shadow,border-color] duration-normal ${
+      className={`winter-snow rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-lg shadow-card transition-[box-shadow,border-color] duration-normal ${
         isHighlighted ? "ring-2 ring-primary shadow-floating" : ""
       }`}
     >

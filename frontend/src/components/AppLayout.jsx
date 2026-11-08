@@ -2,6 +2,7 @@
 import DesktopSidebar from './DesktopSidebar'
 import BottomNav from './BottomNav'
 import HalloweenDecorations from './HalloweenDecorations'
+import NewYearDecorations from './NewYearDecorations'
 import SakuraPetals from './SakuraPetals'
 import EmailVerificationBanner from './EmailVerificationBanner'
 
@@ -10,6 +11,7 @@ export default function AppLayout({ children }) {
     <div className="min-h-screen bg-background text-on-background lg:flex relative">
       {/* Atmospheric Sakura ambient layer */}
       <SakuraPetals />
+      <NewYearDecorations />
 
       {/* Atmospheric Halloween ambient layer */}
       <HalloweenDecorations />

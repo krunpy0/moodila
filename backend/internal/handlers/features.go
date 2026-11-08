@@ -50,9 +50,9 @@ var DefaultSeasonalWindows = []SeasonalThemeWindow{
 	{
 		ID:         "new-year",
 		StartMonth: time.December,
-		StartDay:   15,
+		StartDay:   1,
 		EndMonth:   time.January,
-		EndDay:     15, // Active until Jan 15th 00:00:00 (spans across year-end boundary)
+		EndDay:     8, // Active through January 7th, inclusive
 	},
 }
 
@@ -148,4 +148,3 @@ func (h AppFeatures) Get(c *gin.Context) {
 		ServerTime:           now.UTC(),
 	})
 }
-

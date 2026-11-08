@@ -167,7 +167,7 @@ export default function Home() {
               {/* Left Column: Hero Greeting, Week Mood, Recent Logs */}
               <div className="lg:col-span-7 space-y-lg flex flex-col justify-between">
                 {summary.entry_count === 0 && (
-                  <section className="rounded-2xl bg-surface-container-lowest p-lg lg:p-8 shadow-card border border-primary/20 space-y-sm animate-in fade-in">
+                  <section className="winter-snow rounded-2xl bg-surface-container-lowest p-lg lg:p-8 shadow-card border border-primary/20 space-y-sm animate-in fade-in">
                     <div className="flex items-center gap-sm">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-container text-primary">
                         <span className="material-symbols-outlined text-[24px]">waving_hand</span>
@@ -211,7 +211,7 @@ export default function Home() {
                   {/* Quick Mood Log Card */}
                   <div
                     aria-label={t("home.quickMoodLog")}
-                    className="rounded-2xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md sm:p-5 lg:p-6 shadow-card space-y-3 sm:space-y-4"
+                    className="winter-snow rounded-2xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md sm:p-5 lg:p-6 shadow-card space-y-3 sm:space-y-4"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-title-medium sm:text-headline-sm font-bold text-on-surface tracking-tight">
@@ -284,7 +284,7 @@ export default function Home() {
                       {t("home.thisWeekMood")}
                     </h2>
                   </div>
-                  <div className="grid grid-cols-7 gap-1 lg:gap-sm rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-6 shadow-card">
+                  <div className="winter-snow grid grid-cols-7 gap-1 lg:gap-sm rounded-xl lg:rounded-xxl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-6 shadow-card">
                     {week.map((date) => {
                       const key = formatDate(date);
                       const entry = entriesByDate[key];
@@ -353,7 +353,7 @@ export default function Home() {
                         <Link
                           key={entry.date}
                           to={`/entries/new?date=${entry.date}`}
-                          className="flex items-center gap-md lg:gap-lg rounded-xl lg:rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-5 shadow-card hover:shadow-floating hover:border-outline-variant/40 transition-[box-shadow,border-color] duration-normal ease-standard"
+                          className="winter-snow flex items-center gap-md lg:gap-lg rounded-xl lg:rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-md lg:p-5 shadow-card hover:shadow-floating hover:border-outline-variant/40 transition-[box-shadow,border-color] duration-normal ease-standard"
                         >
                           <span
                             className={`flex h-12 w-12 lg:h-14 lg:w-14 shrink-0 items-center justify-center rounded-lg ${mood.bg}`}
@@ -387,7 +387,7 @@ export default function Home() {
                     {!isLoading && !error && recent.length === 0 && (
                       <Link
                         to="/entries/new"
-                        className="flex min-h-24 lg:min-h-28 items-center justify-center rounded-xl lg:rounded-2xl bg-surface-container-lowest p-md lg:p-6 text-body-sm lg:text-body-md text-on-surface-variant shadow-card border border-outline-variant/15 hover:border-outline-variant/30 transition-colors"
+                        className="winter-snow flex min-h-24 lg:min-h-28 items-center justify-center rounded-xl lg:rounded-2xl bg-surface-container-lowest p-md lg:p-6 text-body-sm lg:text-body-md text-on-surface-variant shadow-card border border-outline-variant/15 hover:border-outline-variant/30 transition-colors"
                       >
                         {t("home.emptyRecent")}
                       </Link>
@@ -403,7 +403,7 @@ export default function Home() {
                   aria-labelledby="summary-title"
                 >
                   {/* Monthly Summary Primary Card */}
-                  <div className="rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-lg lg:p-7 shadow-card flex flex-col justify-between">
+                  <div className="winter-snow rounded-2xl bg-surface-container-lowest border border-outline-variant/20 p-lg lg:p-7 shadow-card flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between">
                         <h2
@@ -452,7 +452,7 @@ export default function Home() {
                   {/* Dominant Mood and Most Used Tag Subgrid */}
                   <div className="grid grid-cols-2 gap-md lg:gap-lg">
                     {/* Dominant Mood Tile */}
-                    <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-xl lg:rounded-xxl bg-primary-container/30 border border-outline-variant/20 p-lg lg:p-8 shadow-card">
+                    <div className="winter-snow flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-xl lg:rounded-xxl bg-primary-container/30 border border-outline-variant/20 p-lg lg:p-8 shadow-card">
                       <span className="text-label-sm lg:text-body-sm font-medium text-on-surface-variant">
                         {t("home.dominantMood")}
                       </span>
@@ -469,7 +469,7 @@ export default function Home() {
                     </div>
 
                     {/* Most Used Tag Tile */}
-                    <div className="flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-xl lg:rounded-xxl bg-secondary-container/30 border border-outline-variant/20 p-lg lg:p-8 shadow-card">
+                    <div className="winter-snow flex min-h-[140px] lg:min-h-[180px] flex-col justify-between rounded-xl lg:rounded-xxl bg-secondary-container/30 border border-outline-variant/20 p-lg lg:p-8 shadow-card">
                       <span className="text-label-sm lg:text-body-sm font-medium text-on-surface-variant">
                         {t("home.mostUsedTag")}
                       </span>

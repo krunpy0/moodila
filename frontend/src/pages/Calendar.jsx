@@ -404,7 +404,7 @@ export default function Calendar() {
         >
           <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
             {/* Left 7 columns: Month Calendar Grid */}
-            <div className="lg:col-span-7 lg:bg-surface-container-lowest lg:p-6 lg:rounded-xl xl:rounded-xxl lg:shadow-card lg:border lg:border-outline-variant/15">
+            <div className="winter-snow lg:col-span-7 lg:bg-surface-container-lowest lg:p-6 lg:rounded-xl xl:rounded-xxl lg:shadow-card lg:border lg:border-outline-variant/15">
               <div className="grid grid-cols-7 text-center select-none">
                 {weekdays.map((day) => (
                   <span
@@ -556,7 +556,7 @@ export default function Calendar() {
             </div>
 
             {/* Right 5 columns: Day Detail Inspector (Desktop Only) */}
-            <div className="hidden lg:block lg:col-span-5 bg-surface-container-lowest p-6 lg:p-8 rounded-xl lg:rounded-2xl shadow-card border border-outline-variant/15 min-h-[480px]">
+            <div className="winter-snow hidden lg:block lg:col-span-5 bg-surface-container-lowest p-6 lg:p-8 rounded-xl lg:rounded-2xl shadow-card border border-outline-variant/15 min-h-[480px]">
               {(() => {
                 const activeDateStr = selectedDate || getLocalDate();
                 const activeEntry = entriesByDate[activeDateStr];

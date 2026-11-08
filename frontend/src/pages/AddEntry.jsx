@@ -364,7 +364,7 @@ export default function AddEntry() {
           <AddEntrySkeleton />
         ) : (
           <form onSubmit={submit} className="space-y-lg px-container-margin lg:px-0 mt-4">
-        <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
+        <section className="winter-snow rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
           <h2 className="mb-md text-label-lg font-bold text-on-surface-variant">
             {t('addEntry.title')}
           </h2>
@@ -423,7 +423,7 @@ export default function AddEntry() {
           </div>
         </section>
 
-        <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
+        <section className="winter-snow rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
           <label htmlFor="entry-text" className="mb-md block text-label-lg font-label-lg text-on-surface-variant">
             {t('addEntry.optionalNote')}
           </label>
@@ -563,7 +563,7 @@ export default function AddEntry() {
           </div>
         </section>
 
-        <section className="flex items-center justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
+        <section className="winter-snow flex items-center justify-between rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20">
           <div className="flex items-center gap-md">
             <span className="material-symbols-outlined text-[24px] text-on-surface-variant">
               {form.is_hidden ? 'lock' : 'public'}
@@ -609,7 +609,7 @@ export default function AddEntry() {
         </section>
 
         {!form.is_hidden && friendsList.length > 0 && (
-          <section className="rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20 space-y-md animate-in fade-in duration-200">
+          <section className="winter-snow rounded-xl lg:rounded-xxl bg-surface-container-lowest p-lg shadow-card border border-outline-variant/20 space-y-md animate-in fade-in duration-200">
             <div className="flex items-center justify-between">
               <button
                 type="button"

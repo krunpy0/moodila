@@ -1,0 +1,58 @@
+/* Winter surfaces retain the classic rose accents and semantic mood colors. */
+:root[data-theme="new-year-light"] {
+  --color-background: 245 243 241;
+  --color-surface: 245 243 241;
+  --color-surface-container: 236 232 229;
+  --winter-flake: 124 133 139;
+}
+
+:root[data-theme="new-year-dark"] {
+  --color-background: 36 29 32;
+  --color-surface: 36 29 32;
+  --color-surface-container-lowest: 21 21 21;
+  --color-surface-container-low: 28 26 27;
+  --color-surface-container: 48 41 44;
+  --color-outline-variant: 73 64 68;
+  --winter-flake: 239 234 236;
+}
+
+:root[data-theme^="new-year-"] main.bg-background { background: transparent; }
+
+.winter-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  color: rgb(var(--winter-flake));
+  background-image: radial-gradient(circle at 11% 14%, currentColor .7px, transparent 1.2px),
+    radial-gradient(circle at 72% 41%, currentColor .6px, transparent 1.1px),
+    radial-gradient(circle at 34% 78%, currentColor .8px, transparent 1.3px);
+  background-size: 137px 211px, 191px 263px, 229px 307px;
+  opacity: .38;
+}
+.winter-background svg { position: absolute; }
+:root[data-theme^="new-year-"] .winter-snow { position: relative; }
+:root[data-theme^="new-year-"] :is(.winter-snow, .winter-nav)::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: -9px;
+  left: -3px;
+  width: 88px;
+  height: 24px;
+  pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 110 30'%3E%3Cdefs%3E%3ClinearGradient id='s' x2='.15' y2='1'%3E%3Cstop stop-color='%23fff'/%3E%3Cstop offset='.5' stop-color='%23f3f3f6'/%3E%3Cstop offset='1' stop-color='%23c5c9d1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M2 29C1 18 7 10 17 8C25 1 34 4 41 5C50 1 56 7 64 6C75 3 80 10 88 8C98 8 102 12 109 13C95 18 85 13 77 16C65 20 59 13 49 16C36 20 28 13 19 19C10 22 9 25 2 29Z' fill='url(%23s)'/%3E%3C/svg%3E") left top / 100% 100% no-repeat;
+}
+:root[data-theme^="new-year-"] .winter-snow:nth-child(even)::before {
+  left: auto;
+  right: -3px;
+  transform: scaleX(-1);
+}
+:root[data-theme^="new-year-"] .winter-nav::before {
+  left: -2px;
+  width: calc(100% + 4px);
+  top: -15px;
+  height: 36px;
+  background-image: url('../assets/new-year-nav-snow.svg');
+  filter: drop-shadow(0 2px 2px rgb(20 27 38 / 18%));
+}
