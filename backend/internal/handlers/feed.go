@@ -68,7 +68,6 @@ func (h Feed) List(c *gin.Context) {
 	})
 }
 
-
 func (h Feed) Like(c *gin.Context) {
 	if !h.available(c) {
 		return
@@ -184,6 +183,10 @@ func (h Feed) AddComment(c *gin.Context) {
 	}
 
 	comment, err := h.Feed.AddComment(c.Request.Context(), c.GetString("userID"), entryID, text)
+	if errors.Is(err, repository.ErrCommentsClosed) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "comments are closed for this entry", "code": "comments_closed"})
+		return
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "entry not found or access denied"})
 		return
@@ -226,7 +229,6 @@ func (h Feed) DeleteComment(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "comment deleted"})
 }
-
 
 func (h Feed) available(c *gin.Context) bool {
 	if h.Feed.Pool != nil {

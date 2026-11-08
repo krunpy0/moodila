@@ -69,3 +69,15 @@ func TestVisibilityInputValidation(t *testing.T) {
 	}
 }
 
+func TestValidateSupportPreference(t *testing.T) {
+	today := time.Date(2026, 7, 22, 0, 0, 0, 0, time.UTC)
+	for _, value := range []string{"", "listen", "advice", "reach_out", "no_discussion", "custom", "LISTEN"} {
+		t.Run(value, func(t *testing.T) {
+			err := validateEntryAt(entryInput{Date: "2026-07-22", Mood: 3, SupportPreference: &value}, today)
+			valid := value != "custom" && value != "LISTEN"
+			if (err == nil) != valid {
+				t.Fatalf("preference %q: %v", value, err)
+			}
+		})
+	}
+}

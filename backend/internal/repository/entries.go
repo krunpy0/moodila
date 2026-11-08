@@ -151,7 +151,7 @@ func (r Entries) InvalidateUserCache(userID string) {
 	r.getCache().InvalidateUser(userID)
 }
 
-func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool, overrides []models.EntryFriendOverride) (models.Entry, bool, []AttachmentURLs, error) {
+func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags []string, text string, photoURL, audioURL *string, audioDuration *int, isHidden *bool, supportPreference *string, overrides []models.EntryFriendOverride) (models.Entry, bool, []AttachmentURLs, error) {
 	if r.Pool == nil {
 		return models.Entry{}, false, nil, errors.New("database pool unavailable")
 	}
@@ -168,20 +168,21 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 
 	var entry models.Entry
 	err = tx.QueryRow(ctx, `
-		INSERT INTO entries (user_id, date, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, false))
+		INSERT INTO entries (user_id, date, mood, tags, support_preference, text, photo_url, audio_url, audio_duration, is_hidden)
+		VALUES ($1, $2, $3, $4, COALESCE($10, ''), $5, $6, $7, $8, COALESCE($9, false))
 		ON CONFLICT (user_id, date) DO UPDATE
-		SET mood = EXCLUDED.mood,
+		SET support_preference = COALESCE($10, entries.support_preference),
+		    mood = EXCLUDED.mood,
 		    tags = EXCLUDED.tags,
 		    text = EXCLUDED.text,
 		    photo_url = EXCLUDED.photo_url,
 		    audio_url = EXCLUDED.audio_url,
 		    audio_duration = EXCLUDED.audio_duration,
 		    is_hidden = COALESCE($9, entries.is_hidden)
-		RETURNING id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden, created_at`,
-		userID, date, mood, tags, text, photoURL, audioURL, audioDuration, isHidden,
+		RETURNING id, user_id, date::text, mood, tags, support_preference, text, photo_url, audio_url, audio_duration, is_hidden, created_at`,
+		userID, date, mood, tags, text, photoURL, audioURL, audioDuration, isHidden, supportPreference,
 	).Scan(
-		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
+		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference,
 		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.CreatedAt,
 	)
 	if err != nil {
@@ -286,14 +287,14 @@ func (r Entries) Save(ctx context.Context, userID, date string, mood int, tags [
 func (r Entries) ByDate(ctx context.Context, userID, date string) (models.Entry, error) {
 	var entry models.Entry
 	err := r.Pool.QueryRow(ctx, `
-		SELECT id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden,
+		SELECT id, user_id, date::text, mood, tags, support_preference, text, photo_url, audio_url, audio_duration, is_hidden,
 		       EXISTS(SELECT 1 FROM entry_friend_visibility efv WHERE efv.entry_id = entries.id) AS has_custom_visibility,
 		       created_at
 		FROM entries
 		WHERE user_id = $1 AND date = $2`,
 		userID, date,
 	).Scan(
-		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
+		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference,
 		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt,
 	)
 	if err != nil {
@@ -320,7 +321,7 @@ func (r Entries) ByDate(ctx context.Context, userID, date string) (models.Entry,
 
 func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models.Entry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden,
+		SELECT id, user_id, date::text, mood, tags, support_preference, text, photo_url, audio_url, audio_duration, is_hidden,
 		       EXISTS(SELECT 1 FROM entry_friend_visibility efv WHERE efv.entry_id = entries.id) AS has_custom_visibility,
 		       created_at
 		FROM entries WHERE user_id = $1 ORDER BY date DESC, created_at DESC LIMIT $2`, userID, limit)
@@ -331,7 +332,7 @@ func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models
 	entries := make([]models.Entry, 0)
 	for rows.Next() {
 		var entry models.Entry
-		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -341,7 +342,7 @@ func (r Entries) Recent(ctx context.Context, userID string, limit int) ([]models
 
 func (r Entries) AllByUser(ctx context.Context, userID string) ([]models.Entry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden,
+		SELECT id, user_id, date::text, mood, tags, support_preference, text, photo_url, audio_url, audio_duration, is_hidden,
 		       EXISTS(SELECT 1 FROM entry_friend_visibility efv WHERE efv.entry_id = entries.id) AS has_custom_visibility,
 		       created_at
 		FROM entries WHERE user_id = $1 ORDER BY date ASC, created_at ASC`, userID)
@@ -352,7 +353,7 @@ func (r Entries) AllByUser(ctx context.Context, userID string) ([]models.Entry, 
 	entries := make([]models.Entry, 0)
 	for rows.Next() {
 		var entry models.Entry
-		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -362,7 +363,7 @@ func (r Entries) AllByUser(ctx context.Context, userID string) ([]models.Entry, 
 
 func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden,
+		SELECT date::text, mood, tags, support_preference, text, photo_url, audio_url, audio_duration, is_hidden,
 		       EXISTS(SELECT 1 FROM entry_friend_visibility efv WHERE efv.entry_id = entries.id) AS has_custom_visibility,
 		       created_at
 		FROM entries
@@ -378,7 +379,7 @@ func (r Entries) ByMonth(ctx context.Context, userID, month, nextMonth string) (
 	entries := make([]models.CalendarEntry, 0)
 	for rows.Next() {
 		var entry models.CalendarEntry
-		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -401,7 +402,7 @@ func (r Entries) CanViewFriend(ctx context.Context, userID, friendID string) (bo
 
 func (r Entries) VisibleByMonth(ctx context.Context, authorID, viewerID, month, nextMonth string) ([]models.CalendarEntry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT e.date::text, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, false AS is_hidden, false AS has_custom_visibility, e.created_at
+		SELECT e.date::text, e.mood, e.tags, e.support_preference, e.text, e.photo_url, e.audio_url, e.audio_duration, false AS is_hidden, false AS has_custom_visibility, e.created_at
 		FROM entries e
 		LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $2
 		LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $2
@@ -420,7 +421,7 @@ func (r Entries) VisibleByMonth(ctx context.Context, authorID, viewerID, month, 
 	entries := make([]models.CalendarEntry, 0)
 	for rows.Next() {
 		var entry models.CalendarEntry
-		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -467,7 +468,7 @@ func (r Entries) Summary(ctx context.Context, userID, month, nextMonth string) (
 
 func (r Entries) VisibleRecent(ctx context.Context, authorID, viewerID string, limit int) ([]models.Entry, error) {
 	rows, err := r.Pool.Query(ctx, `
-		SELECT e.id, e.user_id, e.date::text, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.is_hidden,
+		SELECT e.id, e.user_id, e.date::text, e.mood, e.tags, e.support_preference, e.text, e.photo_url, e.audio_url, e.audio_duration, e.is_hidden,
 		       false AS has_custom_visibility, e.created_at
 		FROM entries e
 		LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $2
@@ -484,7 +485,7 @@ func (r Entries) VisibleRecent(ctx context.Context, authorID, viewerID string, l
 	entries := make([]models.Entry, 0)
 	for rows.Next() {
 		var entry models.Entry
-		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
+		if err := rows.Scan(&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt); err != nil {
 			return nil, err
 		}
 		entries = append(entries, entry)
@@ -559,12 +560,12 @@ func (r Entries) UpdateVisibility(ctx context.Context, entryID, userID string, i
 		UPDATE entries
 		SET is_hidden = $1
 		WHERE id = $2
-		RETURNING id, user_id, date::text, mood, tags, text, photo_url, audio_url, audio_duration, is_hidden,
+		RETURNING id, user_id, date::text, mood, tags, support_preference, text, photo_url, audio_url, audio_duration, is_hidden,
 		          EXISTS(SELECT 1 FROM entry_friend_visibility WHERE entry_id = $2) AS has_custom_visibility,
 		          created_at`,
 		isHidden, entryID,
 	).Scan(
-		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags,
+		&entry.ID, &entry.UserID, &entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference,
 		&entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.IsHidden, &entry.HasCustomVisibility, &entry.CreatedAt,
 	)
 
@@ -573,7 +574,6 @@ func (r Entries) UpdateVisibility(ctx context.Context, entryID, userID string, i
 	}
 	return entry, err
 }
-
 
 type AttachmentURLs struct {
 	PhotoURL *string
@@ -677,5 +677,3 @@ func (r Entries) DeleteByDate(ctx context.Context, userID, date string) ([]Attac
 	r.getCache().InvalidateUser(userID)
 	return attachments, nil
 }
-
-

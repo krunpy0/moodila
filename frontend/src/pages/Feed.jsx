@@ -12,6 +12,7 @@ import {
   useMarkNotificationsAsReadMutation,
   useBlockUserMutation,
 } from "../api/queries";
+import SupportPreferenceNote from "../components/SupportPreferenceNote";
 import AppLayout from "../components/AppLayout";
 import BottomNav from "../components/BottomNav";
 import HeaderBell from "../components/HeaderBell";
@@ -573,6 +574,7 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
           )}
         </div>
 
+        <SupportPreferenceNote value={entry.support_preference} />
         <footer className="relative mt-sm border-t border-surface-container pt-sm">
           <ReactionsSection
             entry={entry}
@@ -586,6 +588,7 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
           <CommentsSection
             entryId={entry.id}
             postAuthorId={entry.author?.id}
+            commentsClosed={entry.support_preference === "no_discussion"}
             onReport={onReport}
           />
         )}
@@ -710,6 +713,7 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
         )}
       </div>
 
+      <SupportPreferenceNote value={entry.support_preference} />
       <footer className="relative mt-md border-t border-surface-container pt-sm">
         <ReactionsSection
           entry={entry}
@@ -723,6 +727,7 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
         <CommentsSection
           entryId={entry.id}
           postAuthorId={entry.author?.id}
+            commentsClosed={entry.support_preference === "no_discussion"}
           onReport={onReport}
         />
       )}
@@ -963,7 +968,7 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
   );
 }
 
-function CommentsSection({ entryId, postAuthorId, onReport }) {
+function CommentsSection({ entryId, postAuthorId, onReport, commentsClosed }) {
   const [commentText, setCommentText] = useState("");
   const commentsQuery = useCommentsQuery(entryId);
   const addMutation = useAddCommentMutation();
@@ -977,7 +982,7 @@ function CommentsSection({ entryId, postAuthorId, onReport }) {
   const handleSend = (e) => {
     e.preventDefault();
     const trimmed = commentText.trim();
-    if (!trimmed || addMutation.isPending) return;
+    if (!trimmed || addMutation.isPending || commentsClosed) return;
     addMutation.mutate(
       { entryId, text: trimmed },
       {
@@ -987,7 +992,7 @@ function CommentsSection({ entryId, postAuthorId, onReport }) {
         },
         onError: (err) => {
           haptics.error();
-          notify(err.message, "error");
+          notify(err.message === "comments are closed for this entry" ? t("support.closed") : err.message, "error");
         },
       },
     );
@@ -1072,7 +1077,7 @@ function CommentsSection({ entryId, postAuthorId, onReport }) {
             );
           })}
 
-          {comments.length === 0 && (
+          {comments.length === 0 && !commentsClosed && (
             <p className="py-xs text-center text-body-sm text-on-surface-variant/70">
               {t("feed.addComment")}
             </p>
@@ -1080,6 +1085,7 @@ function CommentsSection({ entryId, postAuthorId, onReport }) {
         </div>
       )}
 
+      {commentsClosed ? <p className="mt-md text-body-sm text-on-surface-variant">{t("support.closed")}</p> : (
       <form onSubmit={handleSend} className="mt-md flex items-center gap-xs">
         <input
           type="text"
@@ -1098,6 +1104,7 @@ function CommentsSection({ entryId, postAuthorId, onReport }) {
           <span className="material-symbols-outlined text-[18px]">send</span>
         </button>
       </form>
+      )}
     </div>
   );
 }

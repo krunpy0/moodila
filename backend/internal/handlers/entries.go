@@ -28,15 +28,16 @@ type friendOverrideInput struct {
 }
 
 type entryInput struct {
-	Date            string                `json:"date"`
-	Mood            int                   `json:"mood"`
-	Tags            []string              `json:"tags"`
-	Text            string                `json:"text"`
-	PhotoURL        *string               `json:"photo_url"`
-	AudioURL        *string               `json:"audio_url"`
-	AudioDuration   *int                  `json:"audio_duration"`
-	IsHidden        *bool                 `json:"is_hidden"`
-	FriendOverrides []friendOverrideInput `json:"friend_overrides"`
+	SupportPreference *string               `json:"support_preference"`
+	Date              string                `json:"date"`
+	Mood              int                   `json:"mood"`
+	Tags              []string              `json:"tags"`
+	Text              string                `json:"text"`
+	PhotoURL          *string               `json:"photo_url"`
+	AudioURL          *string               `json:"audio_url"`
+	AudioDuration     *int                  `json:"audio_duration"`
+	IsHidden          *bool                 `json:"is_hidden"`
+	FriendOverrides   []friendOverrideInput `json:"friend_overrides"`
 }
 
 type visibilityInput struct {
@@ -131,7 +132,7 @@ func (h Entries) Save(c *gin.Context) {
 	}
 
 	entry, isNew, replaced, err := h.Entries.Save(
-		c.Request.Context(), userID, input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden, overrides,
+		c.Request.Context(), userID, input.Date, input.Mood, input.Tags, input.Text, input.PhotoURL, input.AudioURL, input.AudioDuration, input.IsHidden, input.SupportPreference, overrides,
 	)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotAcceptedFriend) {
@@ -159,8 +160,6 @@ func (h Entries) Save(c *gin.Context) {
 
 	c.JSON(http.StatusOK, h.resolveEntry(entry))
 }
-
-
 
 func (h Entries) resolveEntry(e models.Entry) models.Entry {
 	e.PhotoURL = h.Storage.ResolveAccessURL(e.PhotoURL)
@@ -398,10 +397,6 @@ func (h Entries) Delete(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "entry deleted"})
 }
 
-
-
-
-
 func monthBounds(month string) (string, string, error) {
 	start, err := time.Parse("2006-01", month)
 	if err != nil || start.Format("2006-01") != month {
@@ -411,6 +406,13 @@ func monthBounds(month string) (string, string, error) {
 }
 
 func validateEntryAt(input entryInput, today time.Time) error {
+	if input.SupportPreference != nil {
+		switch *input.SupportPreference {
+		case "", "listen", "advice", "reach_out", "no_discussion":
+		default:
+			return errors.New("invalid support_preference")
+		}
+	}
 	date, err := time.Parse(time.DateOnly, input.Date)
 	if err != nil {
 		return errors.New("date must be YYYY-MM-DD")

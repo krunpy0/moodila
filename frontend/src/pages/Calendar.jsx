@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { useEntriesQuery, useFriendEntriesQuery, useFriendsQuery } from "../api/queries";
 import { getLocalDate } from "../api/client";
+import SupportPreferenceNote from '../components/SupportPreferenceNote'
 import AppLayout from "../components/AppLayout";
 import { CalendarSkeleton } from "../components/skeleton/PageSkeletons";
 import VoiceNotePlayer from "../components/VoiceNotePlayer";
@@ -613,6 +614,7 @@ export default function Calendar() {
                             </p>
                           </div>
 
+                          <SupportPreferenceNote value={activeEntry.support_preference} />
                           {/* Badges & Media */}
                           {activeEntry.tags?.length > 0 && (
                             <div className="flex flex-wrap gap-2">
@@ -981,6 +983,7 @@ export default function Calendar() {
                         </p>
                       </div>
 
+                      <SupportPreferenceNote value={activeEntry.support_preference} />
                       {activeEntry.tags?.length > 0 && (
                         <div className="flex flex-wrap gap-xs">
                           {activeEntry.tags.map((tag) => (

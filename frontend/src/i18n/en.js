@@ -1,4 +1,19 @@
 export const en = {
+  support: {
+    "title": "How can you support me?",
+    "optional": "Optional. Just for this entry.",
+    "clear": "Remove preference",
+    "listen": "Just listen",
+    "listenHint": "I want to share; I do not need advice right now.",
+    "advice": "I want help",
+    "adviceHint": "Feel free to suggest a solution or share your experience.",
+    "reach_out": "Reach out to me",
+    "reach_outHint": "I want to talk things through.",
+    "no_discussion": "No discussion for now",
+    "no_discussionHint": "I want to share, but I am not ready to discuss it.",
+    "closeHint": "This option only closes new comments. Existing comments will stay, and reactions will remain available.",
+    "closed": "The author is not ready to discuss this. New comments are closed; reactions are welcome."
+},
   entrySearch: {
     shown: "{count} entries",
     "title": "Search your journal",

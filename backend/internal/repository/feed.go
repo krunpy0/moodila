@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"sort"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var ErrCommentsClosed = errors.New("comments are closed for this entry")
 
 type Feed struct {
 	Pool *pgxpool.Pool
@@ -70,7 +73,7 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 			SELECT x.*
 			FROM authors a
 			CROSS JOIN LATERAL (
-				SELECT e.id, e.user_id, e.date, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at
+				SELECT e.id, e.user_id, e.date, e.mood, e.tags, e.support_preference, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at
 				FROM entries e
 				LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
 				LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
@@ -92,7 +95,7 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 			) x
 			ORDER BY x.date DESC, x.created_at DESC, x.id DESC LIMIT $5
 		)
-		SELECT m.id, m.date::text, m.mood, m.tags, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
+		SELECT m.id, m.date::text, m.mood, m.tags, m.support_preference, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
 		       u.id, u.username, u.display_name, u.avatar_url,
 		       0 AS like_count,
 		       false AS liked_by_me,
@@ -107,7 +110,7 @@ func (r Feed) List(ctx context.Context, viewerID string, limit int, cursor strin
 			) x
 			ORDER BY x.date DESC, x.created_at DESC, x.id DESC LIMIT $2
 		)
-		SELECT m.id, m.date::text, m.mood, m.tags, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
+		SELECT m.id, m.date::text, m.mood, m.tags, m.support_preference, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
 		       u.id, u.username, u.display_name, u.avatar_url,
 		       0 AS like_count,
 		       false AS liked_by_me,
@@ -373,7 +376,20 @@ func (r Feed) AddComment(ctx context.Context, viewerID, entryID, text string) (m
 		return comment, pgx.ErrNoRows
 	}
 
-	err = r.Pool.QueryRow(ctx, `
+	tx, err := r.Pool.Begin(ctx)
+	if err != nil {
+		return comment, err
+	}
+	defer tx.Rollback(ctx)
+	var preference string
+	// Serialize comment creation with changes to the author's discussion preference.
+	if err := tx.QueryRow(ctx, `SELECT support_preference FROM entries WHERE id = $1 FOR UPDATE`, entryID).Scan(&preference); err != nil {
+		return comment, err
+	}
+	if preference == "no_discussion" {
+		return comment, ErrCommentsClosed
+	}
+	err = tx.QueryRow(ctx, `
 		WITH inserted AS (
 			INSERT INTO comments (entry_id, user_id, text)
 			VALUES ($1, $2, $3)
@@ -387,7 +403,10 @@ func (r Feed) AddComment(ctx context.Context, viewerID, entryID, text string) (m
 		&comment.Author.ID, &comment.Author.Username, &comment.Author.DisplayName, &comment.Author.AvatarURL,
 	)
 
-	return comment, err
+	if err != nil {
+		return comment, err
+	}
+	return comment, tx.Commit(ctx)
 }
 
 func (r Feed) DeleteComment(ctx context.Context, viewerID, commentID string) error {
@@ -438,7 +457,6 @@ func (r Feed) canAccessEntry(ctx context.Context, viewerID, entryID string) (boo
 	return accessible, err
 }
 
-
 type feedRow interface {
 	Scan(...any) error
 }
@@ -446,10 +464,9 @@ type feedRow interface {
 func scanFeedEntry(row feedRow) (models.FeedEntry, error) {
 	var entry models.FeedEntry
 	err := row.Scan(
-		&entry.ID, &entry.Date, &entry.Mood, &entry.Tags, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.CreatedAt,
+		&entry.ID, &entry.Date, &entry.Mood, &entry.Tags, &entry.SupportPreference, &entry.Text, &entry.PhotoURL, &entry.AudioURL, &entry.AudioDuration, &entry.CreatedAt,
 		&entry.Author.ID, &entry.Author.Username, &entry.Author.DisplayName, &entry.Author.AvatarURL,
 		&entry.LikeCount, &entry.LikedByMe, &entry.MyReaction, &entry.CommentCount,
 	)
 	return entry, err
 }
-

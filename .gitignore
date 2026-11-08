@@ -100,3 +100,6 @@ coverage/
 .impeccable
 hallmark/
 impeccable/
+
+.build/
+outputs/

@@ -24,7 +24,7 @@ export default function AddEntry() {
   const { t, formatDate } = useLanguage()
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
-  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false })
+  const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false, support_preference: '' })
   const [friendOverridesMap, setFriendOverridesMap] = useState({})
   const [isFriendVisibilityOpen, setIsFriendVisibilityOpen] = useState(false)
   const [status, setStatus] = useState('')
@@ -108,13 +108,17 @@ export default function AddEntry() {
   const audioChunksRef = useRef([])
 
   useEffect(() => {
+    setForm((current) => ({ ...current, support_preference: '' }))
+  }, [date])
+
+  useEffect(() => {
     if (futureDate) {
       setStatus(t('common.error'))
       return
     }
     if (entryQuery.data) {
       const { mood, tags, text, photo_url: photoURL, audio_url: audioURL, audio_duration: audioDur, is_hidden: isHidden, friend_overrides: overrides } = entryQuery.data
-      setForm({ date, mood, tags, text, photo_url: photoURL || null, audio_url: audioURL || null, audio_duration: audioDur || null, is_hidden: Boolean(isHidden) })
+      setForm({ date, mood, tags, text, photo_url: photoURL || null, audio_url: audioURL || null, audio_duration: audioDur || null, is_hidden: Boolean(isHidden), support_preference: entryQuery.data.support_preference || '' })
       setAudioDuration(audioDur || null)
       const map = {}
       if (Array.isArray(overrides)) {
@@ -130,6 +134,7 @@ export default function AddEntry() {
       setForm((prev) => ({
         ...prev,
         date,
+        support_preference: '',
       }))
       setFriendOverridesMap({})
     }
@@ -445,6 +450,36 @@ export default function AddEntry() {
               {form.text?.length || 0} / 5000
             </span>
           </div>
+          <fieldset className="mt-lg border-t border-outline-variant/30 pt-lg" aria-describedby="support-optional">
+            <legend className="sr-only">{t('support.title')}</legend>
+            <div className="flex flex-wrap items-center justify-between gap-xs">
+              <h2 className="text-label-lg font-semibold text-on-surface">{t('support.title')}</h2>
+              {form.support_preference && (
+                <button type="button" onClick={() => setForm((current) => ({ ...current, support_preference: '' }))}
+                  className="min-h-11 rounded-full px-sm text-body-sm text-primary hover:bg-primary-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  {t('support.clear')}
+                </button>
+              )}
+            </div>
+            <p id="support-optional" className="mt-xs text-body-sm text-on-surface-variant">{t('support.optional')}</p>
+            <div className="mt-sm space-y-xs">
+              {['listen', 'advice', 'reach_out', 'no_discussion'].map((value) => (
+                <label key={value} className={`flex cursor-pointer items-start gap-sm rounded-md p-sm transition-colors hover:bg-surface-container ${form.support_preference === value ? 'bg-surface-container' : ''}`}>
+                  <input type="radio" name="support_preference" value={value} checked={form.support_preference === value}
+                    onChange={() => setForm((current) => ({ ...current, support_preference: value }))}
+                    aria-describedby={value === 'no_discussion' && form.support_preference === value ? 'support-close-hint' : undefined}
+                    className="mt-1 h-4 w-4 shrink-0 accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" />
+                  <span>
+                    <span className="block text-body-sm font-semibold text-on-surface">{t(`support.${value}`)}</span>
+                    <span className="mt-xs block text-body-sm text-on-surface-variant">{t(`support.${value}Hint`)}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            {form.support_preference === 'no_discussion' && (
+              <p id="support-close-hint" className="mt-sm text-body-sm leading-relaxed text-on-surface-variant">{t('support.closeHint')}</p>
+            )}
+          </fieldset>
           {(form.photo_url || isUploadingPhoto) && (
             <div className="mb-md">
               <ImageWithSkeleton

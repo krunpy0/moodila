@@ -111,6 +111,7 @@ export function useSaveEntryMutation() {
     queryClient.invalidateQueries({ queryKey: ['entries', 'me'] })
     queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
     queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+    queryClient.invalidateQueries({ queryKey: ['feed'] })
     queryClient.setQueryData(queryKeys.entry(entry.date), entry)
   }})
 }
@@ -156,6 +157,7 @@ export function useUpdateEntryVisibilityMutation() {
       queryClient.invalidateQueries({ queryKey: ['entries', 'me'] })
       queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
+      queryClient.invalidateQueries({ queryKey: ['feed'] })
       queryClient.setQueryData(queryKeys.entry(entry.date), entry)
     },
   })

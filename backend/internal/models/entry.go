@@ -8,6 +8,7 @@ type EntryFriendOverride struct {
 }
 
 type Entry struct {
+	SupportPreference   string                `json:"support_preference"`
 	ID                  string                `json:"id"`
 	UserID              string                `json:"user_id"`
 	Date                string                `json:"date"`
@@ -24,6 +25,7 @@ type Entry struct {
 }
 
 type CalendarEntry struct {
+	SupportPreference   string    `json:"support_preference"`
 	Date                string    `json:"date"`
 	Mood                int       `json:"mood"`
 	Tags                []string  `json:"tags"`
@@ -35,7 +37,6 @@ type CalendarEntry struct {
 	HasCustomVisibility bool      `json:"has_custom_visibility"`
 	CreatedAt           time.Time `json:"created_at"`
 }
-
 
 type EntrySummary struct {
 	EntryCount   int     `json:"entry_count"`
