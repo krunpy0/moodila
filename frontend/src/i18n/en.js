@@ -239,6 +239,7 @@ export const en = {
     selectMood: "Select mood",
     tagsHeader: "What made you feel this way?",
     optionalNote: "Write a note (optional)",
+    draftSaveError: "Could not save the draft on this device. Copy your text before leaving.",
     notePlaceholder: "Describe your day or thoughts…",
     hideFromFriends: "Hide from all friends",
     hideDescription: "Only you will see this entry on your calendar.",

@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getLocalDate } from '../api/client'
-import { useDeleteEntryMutation, useEntryQuery, useFriendVisibilityDefaultsQuery, useSaveEntryMutation, useUpdateEntryVisibilityMutation } from '../api/queries'
+import { useDeleteEntryMutation, useEntryQuery, useFriendVisibilityDefaultsQuery, useSaveEntryMutation, useSessionQuery, useUpdateEntryVisibilityMutation } from '../api/queries'
 import { uploadEntryPhoto, uploadEntryAudio, deleteStorageObject } from '../api/entries'
 import AppLayout from '../components/AppLayout'
 import { useNotifications } from '../components/Notifications'
@@ -16,6 +16,7 @@ import { AddEntrySkeleton } from '../components/skeleton/PageSkeletons'
 import { useModalKeyboard } from '../hooks/useModalKeyboard'
 import { safeNavigateBack } from '../utils/navigation'
 import { haptics } from '../utils/haptics'
+import { readEntryDraft, writeEntryDraft } from '../utils/entryDraft'
 
 export default function AddEntry() {
   const [params, setSearchParams] = useSearchParams()
@@ -24,6 +25,8 @@ export default function AddEntry() {
   const { t, formatDate } = useLanguage()
   const date = params.get('date') || getLocalDate()
   const futureDate = date > getLocalDate()
+  const sessionQuery = useSessionQuery(true)
+  const userId = sessionQuery.data?.user_id
   const [form, setForm] = useState({ date, mood: 0, tags: [], text: '', photo_url: null, audio_url: null, audio_duration: null, is_hidden: false, support_preference: '' })
   const [friendOverridesMap, setFriendOverridesMap] = useState({})
   const [isFriendVisibilityOpen, setIsFriendVisibilityOpen] = useState(false)
@@ -118,7 +121,7 @@ export default function AddEntry() {
     }
     if (entryQuery.data) {
       const { mood, tags, text, photo_url: photoURL, audio_url: audioURL, audio_duration: audioDur, is_hidden: isHidden, friend_overrides: overrides } = entryQuery.data
-      setForm({ date, mood, tags, text, photo_url: photoURL || null, audio_url: audioURL || null, audio_duration: audioDur || null, is_hidden: Boolean(isHidden), support_preference: entryQuery.data.support_preference || '' })
+      setForm({ date, mood, tags, text: readEntryDraft(userId, date) ?? text, photo_url: photoURL || null, audio_url: audioURL || null, audio_duration: audioDur || null, is_hidden: Boolean(isHidden), support_preference: entryQuery.data.support_preference || '' })
       setAudioDuration(audioDur || null)
       const map = {}
       if (Array.isArray(overrides)) {
@@ -134,11 +137,12 @@ export default function AddEntry() {
       setForm((prev) => ({
         ...prev,
         date,
+        text: readEntryDraft(userId, date) ?? '',
         support_preference: '',
       }))
       setFriendOverridesMap({})
     }
-  }, [date, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error, t])
+  }, [date, userId, futureDate, entryQuery.data, entryQuery.isError, entryQuery.isLoading, entryQuery.error, t])
 
   const friendsList = friendDefaultsQuery.data || []
 
@@ -304,6 +308,7 @@ export default function AddEntry() {
     setStatus(t('addEntry.savingEntry'))
     saveMutation.mutate(payload, {
       onSuccess: (saved) => {
+        writeEntryDraft(userId, payload.date, null)
         haptics.success()
         notify(t('common.success'))
         navigate(`/calendar?month=${saved.date.slice(0, 7)}`, { replace: true })
@@ -360,7 +365,7 @@ export default function AddEntry() {
           <div className="w-11" />
         </header>
 
-        {entryQuery.isLoading ? (
+        {entryQuery.isLoading || sessionQuery.isLoading ? (
           <AddEntrySkeleton />
         ) : (
           <form onSubmit={submit} className="space-y-lg px-container-margin lg:px-0 mt-4">
@@ -433,7 +438,13 @@ export default function AddEntry() {
             value={form.text}
             maxLength={5000}
             onPaste={pastePhoto}
-            onChange={(event) => setForm((current) => ({ ...current, text: event.target.value }))}
+            onChange={(event) => {
+              const text = event.target.value
+              setForm((current) => ({ ...current, text }))
+              if (!writeEntryDraft(userId, date, text)) {
+                notify(t('addEntry.draftSaveError'), 'error')
+              }
+            }}
             placeholder={t('addEntry.notePlaceholder')}
             className="min-h-[210px] w-full resize-none overflow-hidden bg-transparent p-0 text-body-md font-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40"
           />
@@ -783,6 +794,7 @@ export default function AddEntry() {
                     const targetId = entryQuery.data?.id
                     deleteMutation.mutate({ id: targetId, date }, {
                       onSuccess: () => {
+                        writeEntryDraft(userId, date, null)
                         haptics.success()
                         notify(t('common.success'))
                         navigate('/calendar', { replace: true })
