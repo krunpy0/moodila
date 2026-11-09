@@ -315,6 +315,8 @@ export const en = {
     likesCount: "{count} likes",
     commentsCount: "{count} comments",
     addComment: "Write a comment…",
+    commentActions: "Comment actions",
+    editComment: "Edit comment",
     sendComment: "Post",
     includeMyPosts: "Include my posts",
     includeMyPostsDesc: "Show your own entries in the feed",

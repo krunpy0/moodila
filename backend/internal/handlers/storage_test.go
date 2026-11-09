@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -47,24 +49,24 @@ func createTestJPEGWithEXIF(w, h int, orientation uint16, bigEndian bool) []byte
 	var tiff bytes.Buffer
 	if bigEndian {
 		tiff.WriteString("MM")
-		tiff.Write([]byte{0x00, 0x2A}) // magic
-		tiff.Write([]byte{0x00, 0x00, 0x00, 0x08}) // IFD0 offset
-		tiff.Write([]byte{0x00, 0x01}) // 1 entry
-		tiff.Write([]byte{0x01, 0x12}) // Tag 0x0112 (Orientation)
-		tiff.Write([]byte{0x00, 0x03}) // Type SHORT
-		tiff.Write([]byte{0x00, 0x00, 0x00, 0x01}) // Count 1
+		tiff.Write([]byte{0x00, 0x2A})                                // magic
+		tiff.Write([]byte{0x00, 0x00, 0x00, 0x08})                    // IFD0 offset
+		tiff.Write([]byte{0x00, 0x01})                                // 1 entry
+		tiff.Write([]byte{0x01, 0x12})                                // Tag 0x0112 (Orientation)
+		tiff.Write([]byte{0x00, 0x03})                                // Type SHORT
+		tiff.Write([]byte{0x00, 0x00, 0x00, 0x01})                    // Count 1
 		tiff.Write([]byte{byte(orientation >> 8), byte(orientation)}) // Value
-		tiff.Write([]byte{0x00, 0x00}) // Padding
+		tiff.Write([]byte{0x00, 0x00})                                // Padding
 	} else {
 		tiff.WriteString("II")
-		tiff.Write([]byte{0x2A, 0x00}) // magic
-		tiff.Write([]byte{0x08, 0x00, 0x00, 0x00}) // IFD0 offset
-		tiff.Write([]byte{0x01, 0x00}) // 1 entry
-		tiff.Write([]byte{0x12, 0x01}) // Tag 0x0112
-		tiff.Write([]byte{0x03, 0x00}) // Type SHORT
-		tiff.Write([]byte{0x01, 0x00, 0x00, 0x00}) // Count 1
+		tiff.Write([]byte{0x2A, 0x00})                                // magic
+		tiff.Write([]byte{0x08, 0x00, 0x00, 0x00})                    // IFD0 offset
+		tiff.Write([]byte{0x01, 0x00})                                // 1 entry
+		tiff.Write([]byte{0x12, 0x01})                                // Tag 0x0112
+		tiff.Write([]byte{0x03, 0x00})                                // Type SHORT
+		tiff.Write([]byte{0x01, 0x00, 0x00, 0x00})                    // Count 1
 		tiff.Write([]byte{byte(orientation), byte(orientation >> 8)}) // Value
-		tiff.Write([]byte{0x00, 0x00}) // Padding
+		tiff.Write([]byte{0x00, 0x00})                                // Padding
 	}
 
 	exifPayload := append([]byte("Exif\x00\x00"), tiff.Bytes()...)
@@ -173,6 +175,29 @@ func TestUploadHandler_CompressionAndShortCircuit(t *testing.T) {
 		return signed
 	}
 
+	t.Run("Cancelled queued uploads do not read bodies", func(t *testing.T) {
+		for i := 0; i < cap(uploadProcessingSem); i++ {
+			uploadProcessingSem <- struct{}{}
+		}
+		defer func() {
+			for i := 0; i < cap(uploadProcessingSem); i++ {
+				<-uploadProcessingSem
+			}
+		}()
+		for _, contentType := range []string{"image/jpeg", "image/gif", "audio/webm"} {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			body := &uploadReadProbe{}
+			req := httptest.NewRequest("PUT", "/storage/entry-photos/upload/"+makeToken(contentType, 1024), body).WithContext(ctx)
+			req.Header.Set("Content-Type", contentType)
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			if w.Code != http.StatusRequestTimeout || body.read {
+				t.Fatalf("%s: status=%d body read=%v", contentType, w.Code, body.read)
+			}
+		}
+	})
+
 	t.Run("Valid JPEG Compress Success", func(t *testing.T) {
 		token := makeToken("image/jpeg", 5*1024*1024)
 		rawPNG := createTestImage(2000, 1500)
@@ -242,6 +267,13 @@ func TestUploadHandler_CompressionAndShortCircuit(t *testing.T) {
 			t.Errorf("expected 400 Bad Request for size limit, got %d (body: %s)", w.Code, w.Body.String())
 		}
 	})
+}
+
+type uploadReadProbe struct{ read bool }
+
+func (p *uploadReadProbe) Read([]byte) (int, error) {
+	p.read = true
+	return 0, io.EOF
 }
 
 func TestDeleteObjectHandler(t *testing.T) {
@@ -339,4 +371,3 @@ func TestStorage_SignUpload_PNGtoJPEG(t *testing.T) {
 		t.Errorf("expected photo URL to end with .jpg, got %s", resp.PhotoURL)
 	}
 }
-

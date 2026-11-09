@@ -56,6 +56,7 @@ AND (e.date, e.created_at, e.id) < ($cursorDate, $cursorCreatedAt, $cursorID)
 ```
 
 ### 2.3. Сортировка и лимиты
+- Ответ содержит один массив `items` и `next_cursor`; дублирующего поля `entries` нет. Фронтенд также умеет читать старый ответ через fallback `page.entries`.
 - **Сортировка:** Строго детерминированная: `ORDER BY date DESC, created_at DESC, id DESC`.
 - **Лимиты страницы:**
   - Дефолтный `limit = 10`.

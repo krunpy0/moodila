@@ -257,6 +257,7 @@ func main() {
 	authorized.GET("/feed/:entry_id/comments", readLimiter, feed.GetComments)
 	authorized.POST("/feed/:entry_id/comments", mutationLimiter, feed.AddComment)
 	authorized.DELETE("/feed/comments/:comment_id", mutationLimiter, feed.DeleteComment)
+	authorized.PATCH("/feed/comments/:comment_id", mutationLimiter, feed.EditComment)
 	authorized.GET("/notifications", readLimiter, notificationsHandler.List)
 	authorized.GET("/notifications/unread-count", readLimiter, notificationsHandler.UnreadCount)
 	authorized.POST("/notifications/mark-read", mutationLimiter, notificationsHandler.MarkRead)

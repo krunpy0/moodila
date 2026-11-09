@@ -34,3 +34,9 @@ export const deleteComment = (commentId) =>
   api(`/feed/comments/${encodeURIComponent(commentId)}`, {
     method: 'DELETE',
   })
+
+export const editComment = ({ commentId, text }) =>
+  api(`/feed/comments/${encodeURIComponent(commentId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ text }),
+  })

@@ -36,7 +36,7 @@
 | **API Handlers & Routes** | `backend/internal/handlers/`, маршруты сконфигурированы в `backend/cmd/api/main.go` |
 | **Business Logic** | Распределена между `backend/internal/handlers/` и `backend/internal/repository/` |
 | **Repository & SQL Queries**| `backend/internal/repository/` (чистый SQL, никакого ORM) |
-| **Migrations & DB Schema** | `backend/migrations/` (файлы `0001_...sql` – `0024_...sql`, `migrations.go`) |
+| **Migrations & DB Schema** | `backend/migrations/` (файлы `0001_...sql` – `0025_...sql`, `migrations.go`) |
 | **Domain Models** | `backend/internal/models/` |
 | **Middleware (Auth, CSRF)** | `backend/internal/middleware/` |
 | **Tests** | Unit/Integration в `backend/internal/**_test.go`; нагрузочные в `loadtest/` |
@@ -59,7 +59,7 @@
    - Сессии версионируются через `users.token_version`. При смене пароля или выходе (`/auth/logout`) версия инкрементируется в БД, запрещая последующий refresh токенов с прежней положительной версией. `middleware.Auth` не сверяет версию с БД: уже выданный access JWT может работать до истечения (15 минут). Logout логирует ошибку инвалидации и всё равно очищает cookies.
 4. **Медиафайлы и фоновые задачи:**
    - Загрузка фотографий проходит через API (`PUT /storage/entry-photos/upload/:token`), где JPEG/PNG декодируются, уменьшаются до 1920px и пережимаются в JPEG q=80. Разрешённые WebP/GIF идут без этой обработки; типы и ограничения проверяйте в `handlers/storage.go`.
-   - Серверный ресайз ограничен канальным семафором на 2 операции. Тело запроса читается до захвата семафора; это не абсолютная защита от OOM. JPEG EXIF-ориентация нормализуется после уменьшения. Аудио также идёт через этот API upload endpoint, без перекодирования.
+   - Канальный семафор допускает 2 загрузки одновременно: слот захватывается до чтения тела и удерживается до завершения отправки в S3. Это не абсолютная защита от OOM. JPEG EXIF-ориентация нормализуется после уменьшения. Аудио также идёт через этот API upload endpoint, без перекодирования.
    - Браузерные Web Push рассылаются через фоновый пул воркеров без блокировки HTTP-хендлеров.
 
 ---
@@ -69,8 +69,8 @@
 - **Сохранение производительности ленты (Feed):**
   Лента построена на `WITH authors AS ... CROSS JOIN LATERAL (...)` и Keyset Cursor `(date, created_at, id)`. Никогда не заменяйте этот запрос на наивный плоский `JOIN entries` и не используйте `OFFSET`.
 - **Правила изменения Database Schema:**
-  - Никогда не изменяйте задним числом уже примененные миграции `0001`–`0024`.
-  - Любые изменения структуры БД оформляются строго новым файлом (например, `0025_name.sql`; сначала проверьте последний номер в каталоге).
+  - Никогда не изменяйте задним числом уже примененные миграции `0001`–`0025`.
+  - Любые изменения структуры БД оформляются строго новым файлом (например, `0026_name.sql`; сначала проверьте последний номер в каталоге).
   - Миграции должны быть идемпотентными (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`) и выполняться в транзакции.
 - **Каноническое правило приватности (Friend Visibility):**
   Запись видна зрителю только если:
@@ -112,7 +112,8 @@
    - `internal/handlers/hidden_test.go` использует ту же настройку, применяет миграции, создаёт и удаляет тестовые аккаунты; при недоступной БД пропускается.
    - `internal/repository/entries_search_test.go` использует `SEARCH_TEST_DATABASE_URL` и ожидает актуальную схему.
    - `internal/repository/support_preference_test.go` использует `TEST_DATABASE_URL` и применяет миграции.
-   Используйте отдельную тестовую БД. Не запускайте интеграционные тесты на production. Если БД недоступна, отдельно выполните `go test ./... -skip 'TestCheckSchema|TestHiddenEntriesE2E|TestEntrySearchDatabase|TestSupportPreferenceIntegration'` и явно сообщите о пропущенных проверках.
+   - `internal/handlers/performance_test.go` использует `TEST_DATABASE_URL` с уже применёнными миграциями и проверяет число SQL-запросов статистики, формат ленты и поиск пользователей.
+   Используйте отдельную тестовую БД. Не запускайте интеграционные тесты на production. Если БД недоступна, отдельно выполните `go test ./... -skip 'TestCheckSchema|TestHiddenEntriesE2E|TestEntrySearchDatabase|TestSupportPreferenceIntegration|TestPerformanceIntegration'` и явно сообщите о пропущенных проверках.
 
 5. **Тесты frontend (Node.js, без Vitest):**
    ```bash

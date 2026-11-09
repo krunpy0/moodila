@@ -26,15 +26,19 @@ func (h Stats) Get(c *gin.Context) {
 	}
 
 	timeZone := c.GetHeader("X-Time-Zone")
+	scope := c.Query("scope")
+	if scope != "" && scope != "summary" && scope != "series" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "scope must be summary or series"})
+		return
+	}
 
-	stats, err := h.Entries.GetStats(c.Request.Context(), c.GetString("userID"), period, timeZone)
+	stats, err := h.Entries.GetStats(c.Request.Context(), c.GetString("userID"), period, timeZone, scope)
 	if err != nil {
 		log.Printf("[ERROR] Stats.Get (user=%s, period=%s): %v", c.GetString("userID"), period, err)
 		_ = c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not load stats"})
 		return
 	}
-
 
 	c.JSON(http.StatusOK, stats)
 }

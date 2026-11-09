@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSession, verifyEmail, resendVerification } from './auth'
 import { searchEntries, getEntrySearchTags, deleteEntry, getEntry, getEntriesByMonth, getEntrySummary, getFriendEntriesByMonth, getStats, saveEntry, updateEntryVisibility } from './entries'
-import { likeEntry, getFeed, getEntryReactions, getComments, addComment, deleteComment } from './feed'
+import { likeEntry, getFeed, getEntryReactions, getComments, addComment, deleteComment, editComment } from './feed'
 import { acceptFriendRequest, cancelFriendRequest, declineFriendRequest, getFriends, getPendingFriends, searchUsers, sendFriendRequest, unfriendUser, getFriendVisibilityDefaults, setFriendVisibilityDefault } from './friends'
 import { getMyProfile, updateMyProfile, getFriendProfile, blockUser, unblockUser, getBlockedUsers, reportContent, getAdminReports, updateAdminReportStatus, deleteAdminReportedContent } from './users'
 import { queryKeys } from './queryKeys'
@@ -54,7 +54,18 @@ export const useSessionQuery = (enabled) =>
 export const useEntryQuery = (date, enabled = true) => useQuery({ queryKey: queryKeys.entry(date), queryFn: () => getEntry(date), enabled, staleTime: STALE_TIMES.STABLE, retry: false, meta: { ignore404: true } })
 export const useEntriesQuery = (month, enabled = true) => useQuery({ queryKey: queryKeys.entries(month), queryFn: () => getEntriesByMonth(month), enabled: Boolean(month) && enabled, staleTime: STALE_TIMES.STABLE })
 export const useEntrySummaryQuery = (month) => useQuery({ queryKey: queryKeys.entrySummary(month), queryFn: () => getEntrySummary(month), staleTime: STALE_TIMES.STANDARD })
-export const useStatsQuery = (period = 'month') => useQuery({ queryKey: queryKeys.stats(period), queryFn: () => getStats(period), staleTime: STALE_TIMES.STANDARD })
+export function useStatsQuery(period = 'month') {
+  const summary = useQuery({ queryKey: queryKeys.stats('summary'), queryFn: () => getStats('month', 'summary'), staleTime: STALE_TIMES.STANDARD })
+  const series = useQuery({ queryKey: queryKeys.stats(period), queryFn: () => getStats(period, 'series'), staleTime: STALE_TIMES.STANDARD })
+  return {
+    ...series,
+    data: summary.data && series.data ? { ...summary.data, period, mood_series: series.data.mood_series } : undefined,
+    isLoading: summary.isLoading || series.isLoading,
+    isError: summary.isError || series.isError,
+    error: summary.error || series.error,
+    refetch: () => Promise.all([summary.refetch(), series.refetch()]),
+  }
+}
 export const useFriendEntriesQuery = (friendId, month, enabled = true) => useQuery({ queryKey: queryKeys.friendEntries(friendId, month), queryFn: () => getFriendEntriesByMonth(friendId, month), enabled: Boolean(friendId) && Boolean(month) && enabled, staleTime: STALE_TIMES.STABLE })
 export const useFriendsQuery = () => useQuery({ queryKey: queryKeys.friends, queryFn: getFriends, staleTime: STALE_TIMES.STATIC })
 export const usePendingFriendsQuery = () => useQuery({ queryKey: queryKeys.pendingFriends, queryFn: getPendingFriends, staleTime: STALE_TIMES.DYNAMIC })
@@ -108,6 +119,7 @@ export function useUpdateNotificationSettingsMutation() {
 export function useSaveEntryMutation() {
   const queryClient = useQueryClient()
   return useMutation({ mutationFn: saveEntry, onSuccess: (entry) => {
+    queryClient.invalidateQueries({ queryKey: ['stats'] })
     queryClient.invalidateQueries({ queryKey: ['entries', 'me'] })
     queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
     queryClient.invalidateQueries({ queryKey: queryKeys.profile })
@@ -121,6 +133,7 @@ export function useDeleteEntryMutation() {
   return useMutation({
     mutationFn: deleteEntry,
     onSuccess: (_, target) => {
+      queryClient.invalidateQueries({ queryKey: ['stats'] })
       queryClient.invalidateQueries({ queryKey: ['entries', 'me'] })
       queryClient.invalidateQueries({ queryKey: ['entries', 'summary'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.profile })
@@ -283,6 +296,18 @@ export function useAddCommentMutation() {
         }) }
       })
       queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
+    },
+  })
+}
+
+export function useEditCommentMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: editComment,
+    onSuccess: (result, { entryId, commentId }) => {
+      queryClient.setQueryData(queryKeys.comments(entryId), (old) => old?.map((comment) =>
+        comment.id === commentId ? { ...comment, text: result.text } : comment))
+      queryClient.invalidateQueries({ queryKey: queryKeys.comments(entryId) })
     },
   })
 }

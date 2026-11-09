@@ -1,11 +1,47 @@
 package repository
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"moodshare/internal/models"
 )
+
+func TestSummaryCacheBounded(t *testing.T) {
+	cache := NewSummaryCache(time.Hour)
+	defer cache.Stop()
+	cache.maxItems = 3
+	for i := 0; i < 20; i++ {
+		key := fmt.Sprintf("user%d:2026-11:all", i)
+		cache.Set(key, models.EntrySummary{EntryCount: i})
+		if len(cache.items) > cache.maxItems {
+			t.Fatalf("cache exceeded limit: %d", len(cache.items))
+		}
+		if got, ok := cache.Get(key); !ok || got.EntryCount != i {
+			t.Fatalf("new item missing: %+v, %v", got, ok)
+		}
+	}
+	cache.Set("user19:2026-11:all", models.EntrySummary{EntryCount: 99})
+	if len(cache.items) != 3 {
+		t.Fatal("updating an existing item evicted another key")
+	}
+	if got, _ := cache.Get("user19:2026-11:all"); got.EntryCount != 99 {
+		t.Fatal("existing item was not updated")
+	}
+}
+
+func BenchmarkSummaryCacheFull(b *testing.B) {
+	cache := NewSummaryCache(time.Hour)
+	defer cache.Stop()
+	for i := 0; i < cache.maxItems; i++ {
+		cache.Set(fmt.Sprintf("user%d:2026-11:all", i), models.EntrySummary{})
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		cache.Set(fmt.Sprintf("new%d:2026-11:all", i), models.EntrySummary{})
+	}
+}
 
 func TestSummaryCacheHitAndExpiration(t *testing.T) {
 	cache := NewSummaryCache(100 * time.Millisecond)
@@ -93,4 +129,3 @@ func TestEntriesInvalidateUserCache(t *testing.T) {
 		t.Fatal("expected userA keyA to be invalidated in default cache via repoDefault")
 	}
 }
-

@@ -30,9 +30,8 @@ const (
 	maxPixelAreaCap     = 50000000
 )
 
-// imageProcessingSem limits concurrent image decoding and resizing to 2 goroutines
-// to prevent memory spikes on servers with limited RAM (e.g. 1 GB RAM VPS).
-var imageProcessingSem = make(chan struct{}, 2)
+// Bound buffered uploads, including time spent decoding and sending them to S3.
+var uploadProcessingSem = make(chan struct{}, 2)
 
 type Storage struct {
 	Storage      storage.S3
@@ -176,6 +175,14 @@ func (h Storage) Upload(c *gin.Context) {
 		return
 	}
 
+	select {
+	case uploadProcessingSem <- struct{}{}:
+		defer func() { <-uploadProcessingSem }()
+	case <-c.Request.Context().Done():
+		c.JSON(http.StatusRequestTimeout, gin.H{"error": "upload request timed out"})
+		return
+	}
+
 	readLimit := claims.MaxSize + 1
 	rawBytes, err := io.ReadAll(io.LimitReader(c.Request.Body, readLimit))
 	if err != nil {
@@ -195,15 +202,7 @@ func (h Storage) Upload(c *gin.Context) {
 
 	var uploadReader io.Reader
 	if shouldCompress(claimContentType) {
-		compressedBytes, err := func() ([]byte, error) {
-			select {
-			case imageProcessingSem <- struct{}{}:
-				defer func() { <-imageProcessingSem }()
-			case <-c.Request.Context().Done():
-				return nil, c.Request.Context().Err()
-			}
-			return processAndCompressPhoto(rawBytes, claimContentType)
-		}()
+		compressedBytes, err := processAndCompressPhoto(rawBytes, claimContentType)
 		if err != nil {
 			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 				c.JSON(http.StatusRequestTimeout, gin.H{"error": "upload request timed out"})
@@ -311,7 +310,7 @@ func resizeImage(src image.Image, maxSide int) image.Image {
 	yRatio := float64(h) / float64(nh)
 
 	for y := 0; y < nh; y++ {
-		sy := (float64(y) + 0.5) * yRatio - 0.5
+		sy := (float64(y)+0.5)*yRatio - 0.5
 		y0 := int(math.Floor(sy))
 		y1 := y0 + 1
 		fy := sy - float64(y0)
@@ -323,7 +322,7 @@ func resizeImage(src image.Image, maxSide int) image.Image {
 		}
 
 		for x := 0; x < nw; x++ {
-			sx := (float64(x) + 0.5) * xRatio - 0.5
+			sx := (float64(x)+0.5)*xRatio - 0.5
 			x0 := int(math.Floor(sx))
 			x1 := x0 + 1
 			fx := sx - float64(x0)
@@ -606,5 +605,3 @@ func (h Storage) DeleteObject(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "object deleted"})
 }
-
-

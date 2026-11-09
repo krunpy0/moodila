@@ -317,6 +317,8 @@ export const ru = {
     likesCount: "{count} отклик(ов)",
     commentsCount: "{count} комментарий(ев)",
     addComment: "Написать комментарий…",
+    commentActions: "Действия с комментарием",
+    editComment: "Редактировать комментарий",
     sendComment: "Отправить",
     includeMyPosts: "Показывать мои записи",
     includeMyPostsDesc: "Включать собственные записи в ленту",

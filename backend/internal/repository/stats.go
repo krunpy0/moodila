@@ -57,7 +57,7 @@ var monthNamesShort = map[time.Month]string{
 	time.December:  "Dec",
 }
 
-func (r Entries) GetStats(ctx context.Context, userID, period, timeZone string) (models.StatsResponse, error) {
+func (r Entries) GetStats(ctx context.Context, userID, period, timeZone, scope string) (models.StatsResponse, error) {
 	loc := time.UTC
 	if timeZone = strings.TrimSpace(timeZone); timeZone != "" {
 		if l, err := time.LoadLocation(timeZone); err == nil {
@@ -76,6 +76,11 @@ func (r Entries) GetStats(ctx context.Context, userID, period, timeZone string) 
 		DayOfWeekAverages: make([]models.DayOfWeekAverage, 0),
 		MoodDistribution:  make([]models.MoodDistribution, 0),
 		Insights:          make([]models.StatInsight, 0),
+	}
+	if scope == "series" {
+		series, err := r.fetchMoodSeries(ctx, userID, period, now)
+		resp.MoodSeries = series
+		return resp, err
 	}
 
 	// 1. Overall Avg & Total Entries
@@ -97,9 +102,11 @@ func (r Entries) GetStats(ctx context.Context, userID, period, timeZone string) 
 	}
 
 	// 2. Mood Series for requested period (week, month, year)
-	resp.MoodSeries, err = r.fetchMoodSeries(ctx, userID, period, now)
-	if err != nil {
-		return resp, fmt.Errorf("failed to fetch mood series: %w", err)
+	if scope != "summary" {
+		resp.MoodSeries, err = r.fetchMoodSeries(ctx, userID, period, now)
+		if err != nil {
+			return resp, fmt.Errorf("failed to fetch mood series: %w", err)
+		}
 	}
 
 	// 3. Heatmap Data for current calendar year

@@ -105,17 +105,16 @@ func (c *SummaryCache) Set(key string, summary models.EntrySummary) {
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if _, exists := c.items[key]; !exists && len(c.items) >= c.maxItems {
+		for k := range c.items {
+			delete(c.items, k)
+			break
+		}
+	}
 	now := time.Now()
 	c.items[key] = summaryCacheItem{
 		summary:   summary,
 		expiresAt: now.Add(c.ttl),
-	}
-	if len(c.items) > c.maxItems {
-		for k, item := range c.items {
-			if now.After(item.expiresAt) {
-				delete(c.items, k)
-			}
-		}
 	}
 }
 

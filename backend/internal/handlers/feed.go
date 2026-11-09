@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"moodshare/internal/repository"
 	"moodshare/internal/storage"
@@ -63,7 +64,6 @@ func (h Feed) List(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"items":       entries,
-		"entries":     entries,
 		"next_cursor": nextCursor,
 	})
 }
@@ -177,7 +177,7 @@ func (h Feed) AddComment(c *gin.Context) {
 	}
 
 	text := strings.TrimSpace(input.Text)
-	if text == "" || len(text) > 500 {
+	if text == "" || utf8.RuneCountInString(text) > 500 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "comment text must be 1 to 500 characters"})
 		return
 	}

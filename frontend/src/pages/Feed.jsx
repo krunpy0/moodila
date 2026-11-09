@@ -12,6 +12,7 @@ import {
   useMarkNotificationsAsReadMutation,
   useBlockUserMutation,
 } from "../api/queries";
+import CommentCard from "../components/CommentCard";
 import SupportPreferenceNote from "../components/SupportPreferenceNote";
 import AppLayout from "../components/AppLayout";
 import BottomNav from "../components/BottomNav";
@@ -587,7 +588,6 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
         {showComments && (
           <CommentsSection
             entryId={entry.id}
-            postAuthorId={entry.author?.id}
             commentsClosed={entry.support_preference === "no_discussion"}
             onReport={onReport}
           />
@@ -726,8 +726,7 @@ function FeedCard({ entry, onReact, onReport, onBlock, isHighlighted = false }) 
       {showComments && (
         <CommentsSection
           entryId={entry.id}
-          postAuthorId={entry.author?.id}
-            commentsClosed={entry.support_preference === "no_discussion"}
+          commentsClosed={entry.support_preference === "no_discussion"}
           onReport={onReport}
         />
       )}
@@ -968,7 +967,7 @@ function ReactionChip({ reactionItem, onToggle, onLongPress }) {
   );
 }
 
-function CommentsSection({ entryId, postAuthorId, onReport, commentsClosed }) {
+function CommentsSection({ entryId, onReport, commentsClosed }) {
   const [commentText, setCommentText] = useState("");
   const commentsQuery = useCommentsQuery(entryId);
   const addMutation = useAddCommentMutation();
@@ -1019,63 +1018,14 @@ function CommentsSection({ entryId, postAuthorId, onReport, commentsClosed }) {
         <CommentsSkeleton />
       ) : (
         <div className="space-y-md">
-          {comments.map((comment) => {
-            const isOwner =
-              currentUserId &&
-              (comment.user_id === currentUserId || postAuthorId === currentUserId);
-            const commentAuthor =
-              comment.author.display_name || comment.author.username;
-            return (
-              <div key={comment.id} className="flex items-start gap-sm">
-                <Avatar author={comment.author} small />
-                <div className="min-w-0 flex-1 rounded-2xl bg-surface-container-low p-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="truncate text-label-sm font-semibold text-on-surface">
-                      {commentAuthor}
-                    </span>
-                    <span className="text-label-sm text-on-surface-variant/60 tabular-nums">
-                      {formatFeedDate(comment.created_at, null, t, dateLocale)}
-                    </span>
-                  </div>
-                  <p className="mt-xs whitespace-pre-wrap text-body-sm text-on-surface">
-                    {comment.text}
-                  </p>
-                </div>
-                {isOwner ? (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(comment.id)}
-                    aria-label={t("common.delete")}
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant/50 hover:bg-error-container/30 hover:text-error transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      delete
-                    </span>
-                  </button>
-                ) : (
-                  currentUserId && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onReport?.({
-                          reportedUserId: comment.user_id,
-                          entityType: "comment",
-                          entityId: comment.id,
-                        })
-                      }
-                      title={t("profile.report") || "Пожаловаться"}
-                      aria-label={t("profile.report") || "Пожаловаться"}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant/40 hover:bg-surface-container hover:text-error transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">
-                        flag
-                      </span>
-                    </button>
-                  )
-                )}
-              </div>
-            );
-          })}
+          {comments.map((comment) => (
+            <CommentCard key={comment.id} comment={comment} entryId={entryId}
+              isOwn={comment.user_id === currentUserId} canAct={Boolean(currentUserId)}
+              avatar={<Avatar author={comment.author} small />}
+              date={formatFeedDate(comment.created_at, null, t, dateLocale)}
+              onDelete={() => handleDelete(comment.id)} deleting={deleteMutation.isPending}
+              onReport={onReport} />
+          ))}
 
           {comments.length === 0 && !commentsClosed && (
             <p className="py-xs text-center text-body-sm text-on-surface-variant/70">
