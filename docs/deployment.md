@@ -47,7 +47,7 @@
 
 ## 2. Компоненты инфраструктуры
 
-1. **Сервер:** Linux VPS (минимальные подтвержденные нагрузочным тестированием требования — 1 ядро vCPU и 1 GB оперативной памяти).
+1. **Сервер:** Linux VPS (целевой профиль — 1 ядро vCPU и 1 GB RAM; актуальные пределы определяются нагрузочным тестом).
 2. **Reverse Proxy:**
    - Обрабатывает SSL/TLS сертификаты.
    - Раздает статические файлы клиентского приложения из директории скомпилированного фронтенда.
@@ -97,18 +97,18 @@
 ## 4. Конфигурация переменных окружения
 
 ### 4.1. Backend (`backend/.env`)
-Все настройки считываются через `internal/config/config.go`:
+Основные настройки — `internal/config/config.go`; параметры пула и сезонности читаются также в соответствующих подсистемах. Переменные процесса имеют приоритет над `.env`:
 
 | Переменная | Обязательность | Значение по умолчанию | Описание |
 |---|---|---|---|
 | `PORT` | Нет | `8080` | Локальный порт для прослушивания HTTP |
-| `DATABASE_URL` | **Да** | — | Строка подключения к PostgreSQL |
-| `JWT_SECRET` | **Да** (в prod) | `dev-secret-change-me` | Ключ подписи JWT токенов (HMAC-SHA256) |
+| `DATABASE_URL` | Для данных | — | Без доступной БД API стартует с ограниченными возможностями |
+| `JWT_SECRET` | **Да, во всех средах** | — | Ключ HS256, минимум 32 байта; иначе API завершает запуск |
 | `CORS_ORIGIN` | Нет | `http://localhost:5173` | Разрешенные источники (через запятую) |
-| `APIPublicURL` / `API_PUBLIC_URL` | Нет | `http://localhost:8080` | Публичный URL API для генерации ссылок загрузки |
+| `API_PUBLIC_URL` | Нет | `http://localhost:8080` | Публичный URL API для генерации ссылок загрузки |
 | `APP_ENV` | Нет | `development` | Режим работы (`production` или `development`) |
 | `COOKIE_SECURE` | Нет | `true` (если `APP_ENV=production`) | Флаг Secure для auth-кук |
-| `COOKIE_SAMESITE`| Нет | `lax` | Режим SameSite (`lax`, `strict`, `none`) |
+| `COOKIE_SAMESITE`| Нет | `none` (без Secure применяется `lax`) | Режим SameSite (`lax`, `strict`, `none`) |
 | `COOKIE_DOMAIN` | Нет | — | Домен для кук (при использовании поддоменов) |
 | `S3_ENDPOINT` | Нет | — | Кастомный endpoint для Cloudflare R2 / MinIO |
 | `S3_REGION` | Нет | `us-east-1` | Регион бакета |
@@ -137,7 +137,7 @@
 ### 4.2. Frontend (`frontend/.env`)
 | Переменная | Описание |
 |---|---|
-| `VITE_API_URL` | URL бэкенд API (в prod обычно пустой или `/` при использовании единого домена через Reverse Proxy) |
+| `VITE_API_URL` | Базовый URL API без завершающего `/`. Пустое значение в `client.js` означает `http://localhost:8080`, а не текущий домен; задайте production URL явно |
 | `VITE_SENTRY_RELEASE` | Версия релиза для связывания клиентских логов в Sentry |
 | `SENTRY_AUTH_TOKEN` | Токен авторизации для загрузки Source Maps при сборке Vite |
 | `SENTRY_ORG` / `SENTRY_PROJECT` | Организация и проект в Sentry |
@@ -151,3 +151,28 @@
   ```bash
   cd backend && go run ./cmd/backup
   ```
+
+
+## 6. Дополнительные параметры и эксплуатационные границы
+
+| Переменная | По умолчанию | Назначение |
+|---|---|---|
+| `DATABASE_MAX_CONNS`, `DATABASE_MIN_CONNS` | 50 / 5 (см. также DSN) | Пул PostgreSQL; минимум ограничивается максимумом |
+| `TRUSTED_PROXIES` | пусто | Доверенные IP/CIDR прокси через запятую; без значения Gin не доверяет прокси |
+| `S3_IS_PRIVATE` | `false` | Подписанные URL чтения для приватного бакета |
+| `AWS_SESSION_TOKEN` | пусто | Временные credentials S3 |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | пусто | Fallback для `ACCESS_KEY_ID`, `SECRET_ACCESS_KEY` |
+| `RESET_TOKEN_TTL_MINUTES`, `ACCOUNT_DELETE_TOKEN_TTL_MINUTES` | 30 / 30 | Сроки действия email-токенов |
+| `TLS_CERT`, `TLS_KEY` | пусто | Прямой HTTPS API, если заданы оба |
+| `GDRIVE_CREDENTIALS_JSON`, `GDRIVE_CREDENTIALS_FILE` | пусто | Альтернатива OAuth credentials для бэкапа |
+| `SENTRY_RELEASE` | `moodshare@1.0.0` | Релиз backend |
+| `SENTRY_TRACES_SAMPLE_RATE` | 0.1 в production, иначе 0 | Частота трейсинга |
+| `SEASONAL_THEMES_OVERRIDE` | пусто | Замена активных сезонных тем списком ID |
+
+Workflow использует SSH-секреты `SSH_KEY`, `KNOWN_HOSTS`, `USER`, `HOST`, опционально `PORT` (22). Lint и тесты в нём не запускаются. Конфигурация reverse proxy, systemd и серверный `deploy.sh` не поставляются этим workflow: схему выше следует сверять с реальным сервером.
+
+`VITE_API_URL` встраивается при сборке. Клиентский Sentry настраивается в `frontend/src/sentry.js`. Source maps включаются при наличии `SENTRY_AUTH_TOKEN`. Сборка создаёт обе entry: `index.html` и `landing-preview.html`.
+
+Бэкап сначала использует `pg_dump`, если он доступен, а при отсутствии или ошибке переходит к встроенному Go-экспорту INSERT-ов. В runtime Dockerfile PostgreSQL client не установлен, поэтому применяется fallback. Он не создаёт схему и не эквивалентен полному дампу `pg_dump`: для восстановления нужна подготовленная схема; `session_replication_role` требует соответствующих прав. Период 3 часа и хранение 7 дней — настраиваемые defaults. Проверка восстановления должна выполняться в отдельной БД; загрузка файла не подтверждает восстановимость.
+
+API продолжает запуск при недоступной БД и при ошибке миграций (с логированием). Проверяйте `/health`, журнал миграций и доступность рабочих API. Изменения схемы — только новыми файлами после `0024`, каждый применяется транзакционно.

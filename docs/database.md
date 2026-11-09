@@ -8,7 +8,7 @@
 
 1. **Чистый SQL без ORM:** Все запросы пишутся вручную в слое `internal/repository/`. Это дает полный контроль над планами выполнения (`EXPLAIN ANALYZE`), позволяет использовать продвинутые возможности PostgreSQL (`CROSS JOIN LATERAL`, `UNNEST`, кортежные сравнения) и исключает накладные расходы на рефлексию.
 2. **Пул соединений `pgxpool.Pool`:** Настроен в `internal/db/db.go`. Лимиты соединений по умолчанию: `minConns = 5`, `maxConns = 50` (настраиваются через переменные `DATABASE_MIN_CONNS` и `DATABASE_MAX_CONNS`).
-3. **Simple Protocol (`QueryExecModeSimpleProtocol`):** Бэкенд намеренно использует простой протокол выполнения запросов. Это обеспечивает 100% совместимость с пулерами транзакций PgBouncer (включая Supabase Transaction Pooler), где подготовленные выражения (Prepared Statements) запрещены, и позволяет выполнять многооператорные SQL-миграции в одном вызове `Exec`.
+3. **Simple Protocol (`QueryExecModeSimpleProtocol`):** Бэкенд намеренно использует простой протокол выполнения запросов. Это рассчитано на совместимость с пулерами транзакций PgBouncer (включая Supabase Transaction Pooler), где подготовленные выражения (Prepared Statements) запрещены, и позволяет выполнять многооператорные SQL-миграции в одном вызове `Exec`.
 
 ---
 
@@ -38,12 +38,12 @@
 
 ### 2.1. `users` (Пользователи)
 - **Первичный ключ:** `id UUID DEFAULT gen_random_uuid()`.
-- **Поля:** `email` (UNIQUE), `username` (UNIQUE), `password_hash`, `display_name`, `avatar_url`, `is_admin` (BOOLEAN DEFAULT false), `token_version` (INT NOT NULL DEFAULT 1), `deleted_at` (TIMESTAMPTZ, мягкое удаление), `created_at`.
-- **Особенности:** Поле `token_version` инкрементируется при смене пароля или выходе со всех устройств, что мгновенно инвалидирует все выданные ранее токены.
+- **Поля:** `email` (UNIQUE), `username` (UNIQUE), `password_hash`, `display_name`, `avatar_url`, `is_admin` (BOOLEAN DEFAULT false), `token_version` (INT NOT NULL DEFAULT 1), `deleted_at` (TIMESTAMPTZ, мягкое удаление), `email_verified_at` (TIMESTAMPTZ), `created_at`.
+- **Особенности:** Поле `token_version` инкрементируется при смене пароля или выходе со всех устройств, что блокирует refresh со старой положительной версией; access JWT не сверяется с БД в middleware и может действовать до истечения.
 
 ### 2.2. `entries` (Записи настроения и дня)
 - **Первичный ключ:** `id UUID DEFAULT gen_random_uuid()`.
-- **Поля:** `user_id` (FK `users` ON DELETE CASCADE), `date` (DATE NOT NULL), `mood` (SMALLINT 1–5), `tags` (TEXT[] NOT NULL DEFAULT '{}'), `text` (TEXT NOT NULL DEFAULT ''), `photo_url` (TEXT), `audio_url` (TEXT), `audio_duration` (INT), `is_hidden` (BOOLEAN NOT NULL DEFAULT false), `created_at`.
+- **Поля:** `user_id` (FK `users` ON DELETE CASCADE), `date` (DATE NOT NULL), `mood` (SMALLINT 1–5), `tags` (TEXT[] NOT NULL DEFAULT '{}'), `text` (TEXT NOT NULL DEFAULT ''), `support_preference` (TEXT NOT NULL DEFAULT '', CHECK: '', listen, advice, reach_out, no_discussion), `photo_url` (TEXT), `audio_url` (TEXT), `audio_duration` (INT), `is_hidden` (BOOLEAN NOT NULL DEFAULT false), `created_at`.
 - **Ограничения:** `UNIQUE (user_id, date)`. Пользователь может иметь строго одну запись за конкретную календарную дату.
 
 ### 2.3. `friendships` (Связи дружбы)
@@ -68,6 +68,9 @@
 - **`notification_settings`:** Персональные настройки пушей (`notify_reactions`, `notify_comments`, `notify_friend_requests`, `notify_new_posts`, `locale`).
 - **`push_subscriptions`:** Подписки браузеров на Web Push (`endpoint` UNIQUE, `p256dh`, `auth`, `locale`).
 - **`password_reset_tokens`** и **`account_deletion_tokens`:** Одноразовые токены с SHA-256 хешами и сроком жизни.
+- **`email_verification_tokens`:** SHA-256 хеши токенов подтверждения email, срок жизни, `used_at`; миграция `0022`.
+- **`user_blocks`:** направленная пара `(blocker_id, blocked_id)`, запрет блокировки себя; миграция `0022`.
+- **`content_reports`:** жалобы на `entry`, `comment`, `user`, причина, детали и статус `pending` / `reviewed` / `dismissed`; миграция `0022`.
 - **`schema_migrations`:** Таблица истории миграций (`version TEXT PRIMARY KEY`, `applied_at`).
 
 ---
@@ -161,8 +164,8 @@ LIMIT 1;
 
 ## 5. Система миграций (`backend/migrations/`)
 
-- Миграции хранятся в виде чистых SQL-файлов с 4-значным префиксом (`0001_create_users.sql` ... `0021_notifications_enhancements.sql`).
+- Миграции хранятся в виде чистых SQL-файлов с 4-значным префиксом (`0001_create_users.sql` ... `0024_entry_support_preference.sql`).
 - Все миграции встроены в бинарный файл через `embed.FS` (`backend/migrations/migrations.go`).
-- При старте API или при запуске CLI `go run ./cmd/migrate` функция `db.Migrate` считывает директорию в лексикографическом порядке.
+- При старте API функция `db.Migrate` считывает директорию в лексикографическом порядке. Отдельной CLI `cmd/migrate` в текущих исходниках нет.
 - Каждая новая миграция выполняется в **отдельной транзакции** вместе с записью в таблицу `schema_migrations`.
-- **Правило внесения изменений:** Никогда не редактируйте примененные миграции с 0001 по 0021. Любые изменения схемы выполняются исключительно созданием нового файла с очередным порядковым номером (например, `0022_...sql`).
+- **Правило внесения изменений:** Никогда не редактируйте примененные миграции с 0001 по 0024. Любые изменения схемы выполняются исключительно созданием нового файла с очередным порядковым номером (например, `0025_...sql`; перед созданием проверьте последний номер).

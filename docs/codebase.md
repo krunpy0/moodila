@@ -30,10 +30,9 @@ backend/
 ├── cmd/
 │   ├── api/main.go               # Точка входа HTTP API, сборка DI, роутинг, graceful shutdown
 │   ├── backup/main.go            # CLI-утилита для ручного запуска бэкапа БД
-│   ├── migrate/main.go           # CLI-утилита для отдельного наката миграций
 │   ├── token/main.go             # Генератор Google Drive OAuth2 Refresh Token
 │   ├── verify_feed/main.go       # Верификатор эквивалентности алгоритмов ленты (200 пользователей)
-│   └── verify_keys/main.go       # Проверка валидности VAPID-ключей для Web Push
+│   └── verify_keys/main.go       # Проверка нормализации ключей медиа в БД
 ├── internal/
 │   ├── backup/                   # Резервное копирование PostgreSQL в Google Drive
 │   │   ├── backup.go             # Фоновый планировщик, pg_dump, Drive API v3 uploader
@@ -42,11 +41,13 @@ backend/
 │   │   └── config.go             # Парсинг переменных окружения и .env файлов
 │   ├── db/                       # Слой управления БД
 │   │   ├── db.go                 # Инициализация pgxpool.Pool и встроенный runner миграций
-│   │   └── schema_test.go        # Интеграционные тесты миграций
+│   │   └── schema_test.go        # Проверка истории миграций в доступной БД
 │   ├── handlers/                 # HTTP-хендлеры Gin (транспортный слой)
 │   │   ├── announcements.go      # Публичные анонсы, активный промпт, инбокс, админ-управление
-│   │   ├── auth.go               # Регистрация, логин, рефреш токенов, смена пароля, удаление
-│   │   ├── entries.go            # Сохранение, удаление записей, видимость, сводка месяца
+│   │   ├── auth.go               # Регистрация, login/refresh, пароли, удаление, подтверждение email
+│   │   ├── entries.go            # CRUD, видимость, сводка, support_preference
+│   │   ├── entries_search.go     # Поиск своего дневника и список тегов
+│   │   ├── moderation.go         # Блокировки, жалобы, удаление контента
 │   │   ├── features.go           # Доступность сезонных тем и фич (/app/features)
 │   │   ├── feed.go               # Социальная лента, лайки/реакции, комментарии
 │   │   ├── friends.go            # Поиск пользователей, заявки, управление дефолтами приватности
@@ -57,7 +58,7 @@ backend/
 │   │   ├── storage.go            # Подписание токенов загрузки, сжатие фото (1920px JPEG), удаление
 │   │   └── users.go              # Текущий профиль (/users/me), обновление аватара/имени, профиль друга
 │   ├── mailer/                   # Почтовый клиент Resend
-│   │   └── mailer.go             # Отправка писем сброса пароля и удаления аккаунта
+│   │   └── mailer.go             # Resend REST: сброс пароля, удаление, подтверждение email
 │   ├── middleware/               # Сквозные middleware Gin
 │   │   ├── admin.go              # Авторизация администратора (проверка users.is_admin)
 │   │   ├── auth.go               # JWT аутентификация по HttpOnly cookie (access_token)
@@ -80,6 +81,10 @@ backend/
 │   │   ├── account_deletion.go   # Токены удаления аккаунтов и удаление записей пользователя
 │   │   ├── announcements.go      # Запросы активных промптов, инбокса, учет прочтений
 │   │   ├── entries.go            # CRUD записей, VisibleByMonth, SummaryCache
+│   │   ├── entries_search.go     # Фильтры, поиск, keyset по дате
+│   │   ├── email_verification.go # Токены подтверждения email
+│   │   ├── blocks.go             # Блокировки и очистка связей
+│   │   ├── reports.go            # Жалобы и обработка администратором
 │   │   ├── feed.go               # Оптимизированная лента с LATERAL join, батч реакций
 │   │   ├── friends.go            # Управление связями дружбы, видимость по умолчанию
 │   │   ├── notification_settings.go # Настройки push-типов пользователя
@@ -94,7 +99,7 @@ backend/
 │   │       └── vapid.go          # Загрузка и декодирование VAPID ключей
 │   └── storage/                  # Клиент объектного хранилища S3
 │       └── s3.go                 # Генерация presigned URL, стриминг Put, Delete
-├── migrations/                   # SQL-миграции 0001–0020
+├── migrations/                   # SQL-миграции 0001–0024
 │   └── migrations.go             # Встраивание файлов миграций через embed.FS
 ├── Dockerfile                    # Multi-stage production build (alpine:3.21)
 └── go.mod / go.sum               # Модуль moodshare (Go 1.25)
@@ -110,7 +115,7 @@ frontend/
 │   ├── favicon.svg
 │   ├── icons.svg                 # SVG спрайт иконок
 │   ├── sw-push.js                # Service Worker для обработки push-уведомлений и кликов
-│   └── manifest.webmanifest      # Манифест PWA
+│   └── pwa-512x512.png           # Иконка PWA; manifest генерирует VitePWA
 ├── src/
 │   ├── api/                      # Сетевой слой и интеграция с API
 │   │   ├── client.js             # Базовый fetch-клиент (cookies credentials, авто-рефреш, CSRF)
@@ -118,7 +123,7 @@ frontend/
 │   │   ├── queries.js            # Кастомные хуки React Query (useQuery, useMutation, useInfiniteQuery)
 │   │   ├── announcements.js      # API-вызовы подсистемы объявлений
 │   │   ├── auth.js               # API-вызовы логина, регистрации, сессии, сброса пароля
-│   │   ├── entries.js            # API-вызовы дневника (сохранение, удаление, видимость)
+│   │   ├── entries.js            # Дневник, поиск, теги, видимость
 │   │   ├── features.js           # Запрос сезонных тем (/app/features)
 │   │   ├── feed.js               # API-вызовы социальной ленты, лайков, комментариев
 │   │   ├── friends.js            # API-вызовы друзей, поиска, видимости по умолчанию
@@ -127,6 +132,12 @@ frontend/
 │   │   ├── push.js               # Регистрация Service Worker и подписка на Web Push
 │   │   └── users.js              # Профиль пользователя, аватар, имя
 │   ├── components/               # Переиспользуемые UI-компоненты
+│   │   ├── SupportPreferenceNote.jsx # Предпочтение поддержки
+│   │   ├── LandingAppPreview.jsx # iframe с demo transport
+│   │   ├── EmailVerificationBanner.jsx # Подтверждение email
+│   │   ├── ReportModal.jsx       # Отправка жалобы
+│   │   ├── BlockedUsersModal.jsx # Управление блокировками
+│   │   ├── AdminReports.jsx      # Разбор жалоб
 │   │   ├── AppLayout.jsx         # Оболочка с safe-area insets для iPhone notch / Dynamic Island
 │   │   ├── BottomNav.jsx         # Нижняя панель навигации мобильного интерфейса
 │   │   ├── DesktopSidebar.jsx    # Боковая панель для широких экранов
@@ -146,7 +157,7 @@ frontend/
 │   │   └── skeleton/             # Скелетоны экранов (PageSkeletons, SkeletonText, etc.)
 │   ├── context/                  # React Contexts
 │   │   ├── LanguageContext.jsx   # Переключение языков (ru / en)
-│   │   └── ThemeContext.jsx      # Управление темами (12 тем, сезонный календарь)
+│   │   └── ThemeContext.jsx      # 7 постоянных и 2 сезонных семейства, 18 вариантов
 │   ├── hooks/                    # Вспомогательные хуки
 │   │   ├── useDebounce.js        # Дебаунс ввода (поиск пользователей)
 │   │   ├── useModalKeyboard.js   # Доступность модальных окон (ESC, Tab focus trap)
@@ -157,13 +168,15 @@ frontend/
 │   ├── pages/                    # Экраны приложения (React Router lazy)
 │   │   ├── Home.jsx              # Главный экран дневника (календарная полоса, запись за день)
 │   │   ├── AddEntry.jsx          # Создание / редактирование записи настроения
+│   │   ├── EntrySearch.jsx       # Поиск своего дневника
+│   │   ├── VerifyEmail.jsx       # Подтверждение email по ссылке
 │   │   ├── Calendar.jsx          # Месячный календарь (свой и друзей, инспектор дня)
 │   │   ├── Feed.jsx              # Социальная лента с бесконечным скроллом
 │   │   ├── Friends.jsx           # Список друзей, поиск, входящие заявки
 │   │   ├── FriendProfile.jsx     # Профиль друга со статистикой и открытыми записями
 │   │   ├── Stats.jsx             # Аналитика, графики, корреляция тегов, инсайты
 │   │   ├── Profile.jsx           # Настройки профиля, темы, безопасность, экспорт
-│   │   ├── Admin.jsx             # Панель администратора анонсов
+│   │   ├── Admin.jsx             # Панель администратора анонсов и жалоб
 │   │   ├── Landing.jsx           # Промо-лендинг для неавторизованных пользователей
 │   │   ├── Auth.jsx              # Формы входа и регистрации
 │   │   ├── ForgotPassword.jsx    # Запрос ссылки сброса пароля
@@ -173,14 +186,16 @@ frontend/
 │   ├── utils/                    # Вспомогательные утилиты
 │   │   ├── audioManager.js       # Единственный глобальный звуковой менеджер (остановка других плееров)
 │   │   ├── cropImage.js          # Кадрирование изображений canvas
-│   │   ├── haptics.js            # Тактильный отклик (Web Vibration API + iOS Audio Haptics)
+│   │   ├── haptics.js            # Тактильный отклик (Web Vibration API + iOS switch fallback)
 │   │   ├── moods.js              # Цвета, названия и иконки 5 уровней настроения
-│   │   ├── offlineStore.js       # IndexedDB / localStorage хранилище для работы офлайн
-│   │   └── themes.js             # Определение 6 семейств тем (Classic, Forest, Ocean, etc.)
+│   │   ├── offlineStore.js       # IndexedDB очередь офлайн-записей
+│   │   └── themes.js             # Метаданные 9 семейств тем и 18 вариантов
+│   ├── landing-preview/         # Demo entry, transport и тесты
 │   ├── App.jsx                   # Декларативная маршрутизация и провайдеры
 │   ├── main.jsx                  # Точка входа React SPA
 │   ├── sentry.js                 # Инициализация клиентского Sentry
 │   └── index.css                 # Дизайн-токены, CSS-переменные тем, стили Tailwind
+├── landing-preview.html          # Entry интерактивных превью
 ├── package.json                  # Скрипты dev, build, lint (oxlint)
 ├── tailwind.config.js            # Настройки шрифтов, радиусов, safe-area отступов
 └── vite.config.js                # Vite плагины: React, PWA (Workbox), Sentry
@@ -194,7 +209,7 @@ frontend/
 
 | Задача | Файлы бэкенда | Файлы фронтенда | База данных |
 |---|---|---|---|
-| **Изменение полей записи дневника** (новые атрибуты, эмодзи, вложения) | `internal/models/entry.go`<br>`internal/handlers/entries.go`<br>`internal/repository/entries.go` | `src/api/entries.js`<br>`src/api/queries.js`<br>`src/pages/AddEntry.jsx`<br>`src/pages/Home.jsx`<br>`src/pages/Calendar.jsx` | Новая миграция в `migrations/002X_...sql` |
+| **Изменение полей записи дневника** (новые атрибуты, эмодзи, вложения) | `internal/models/entry.go`<br>`internal/handlers/entries.go`<br>`internal/repository/entries.go` | `src/api/entries.js`<br>`src/api/queries.js`<br>`src/pages/AddEntry.jsx`<br>`src/pages/Home.jsx`<br>`src/pages/Calendar.jsx` | Новая миграция со следующим свободным номером (после 0024) |
 | **Оптимизация или изменение алгоритма социальной ленты** | `internal/repository/feed.go`<br>`internal/handlers/feed.go`<br>`cmd/verify_feed/main.go` | `src/api/feed.js`<br>`src/pages/Feed.jsx`<br>`src/api/queries.js` | Индексы в `migrations/` при необходимости |
 | **Изменение системы приватности или видимости** | `internal/repository/entries.go`<br>`internal/repository/friends.go`<br>`internal/handlers/friends.go` | `src/components/FriendPrivacyModal.jsx`<br>`src/pages/AddEntry.jsx`<br>`src/pages/Friends.jsx` | Таблицы `user_friend_visibility` и `entry_friend_visibility` |
 | **Добавление нового типа уведомлений** | `internal/models/notification.go`<br>`internal/repository/notifications.go`<br>`internal/services/push/push.go` | `src/components/NotificationCenterModal.jsx`<br>`public/sw-push.js`<br>`src/i18n/ru.js`, `en.js` | Таблицы `notifications`, `notification_settings` |
@@ -202,3 +217,16 @@ frontend/
 | **Добавление новой темы оформления** | `internal/handlers/features.go` | `src/utils/themes.js`<br>`src/index.css`<br>`src/components/ThemePickerModal.jsx` | Не затрагивает БД |
 | **Изменение лимитов Rate Limiter** | `internal/middleware/ratelimit.go`<br>`cmd/api/main.go` | — | Не затрагивает БД |
 | **Изменение пайплайна развертывания** | `Dockerfile`<br>`docker-compose*.yml` | `vite.config.js` | `.github/workflows/go.yml` |
+
+
+Дополнительные маршруты изменений (пути относительно `backend/internal/` и `frontend/src/`):
+
+| Задача | Ключевые файлы и проверки |
+|---|---|
+| Поиск по дневнику | `handlers/entries_search.go`, `repository/entries_search.go`, `pages/EntrySearch.jsx`, `utils/entrySearch.js`; [контракт](features/search.md) |
+| Предпочтение поддержки | `models/entry.go`, `models/feed.go`, `handlers/entries.go`, `repository/entries.go`, `repository/feed.go`, SupportPreferenceNote, AddEntry/Calendar/Feed; [контракт](features/support.md) |
+| Блокировки и жалобы | `handlers/moderation.go`, `repository/blocks.go`, `repository/reports.go`, поиск/дружба, `api/users.js`, ReportModal/BlockedUsersModal/AdminReports; [ограничения](features/moderation.md) |
+| Подтверждение email | `handlers/auth.go`, `repository/email_verification.go`, `models/user.go`, `mailer/mailer.go`, VerifyEmail/EmailVerificationBanner |
+| API экрана с превью | Основной экран и API + `landing-preview/demoTransport.js`, `demoTransport.test.js`; сборка обеих HTML entry |
+
+Карта показывает основные файлы, а не полный список. Перед изменением находите все вызовы через `rg`, включая тесты, переводы и demo transport. API-маршруты — `backend/cmd/api/main.go`, клиентские — `frontend/src/App.jsx`.

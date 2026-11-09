@@ -2,6 +2,8 @@
 
 Краткий контекстный гайд для AI-агентов и разработчиков. Содержит ключевые правила работы с кодовой базой, карту системы, ограничения и указатели на подробную документацию.
 
+Сверено с кодом: **9 ноября 2026 года**. Сначала проверяйте `git status --short`: не перезаписывайте чужие изменения.
+
 ---
 
 ## 1. О проекте (Project Summary)
@@ -9,7 +11,7 @@
 **Moodila** — кроссплатформенное мобильное PWA-приложение (дневник настроения и дня) с социальной лентой, двухуровневой системой приватности, аналитикой и Web Push уведомлениями.
 - **Backend:** Go REST API на базе Gin, работающий с PostgreSQL через пул `pgxpool` на чистом SQL (без ORM).
 - **Frontend:** React 19 SPA / PWA (Vite 8, Tailwind CSS, TanStack React Query v5).
-- **Целевая среда:** Linux VPS (1 vCPU / 1 GB RAM, высокая производительность под нагрузкой).
+- **Целевая среда:** Linux VPS (1 vCPU / 1 GB RAM, целевой профиль; текущую производительность подтверждать измерениями).
 
 ---
 
@@ -34,7 +36,7 @@
 | **API Handlers & Routes** | `backend/internal/handlers/`, маршруты сконфигурированы в `backend/cmd/api/main.go` |
 | **Business Logic** | Распределена между `backend/internal/handlers/` и `backend/internal/repository/` |
 | **Repository & SQL Queries**| `backend/internal/repository/` (чистый SQL, никакого ORM) |
-| **Migrations & DB Schema** | `backend/migrations/` (файлы `0001_...sql` – `0021_...sql`, `migrations.go`) |
+| **Migrations & DB Schema** | `backend/migrations/` (файлы `0001_...sql` – `0024_...sql`, `migrations.go`) |
 | **Domain Models** | `backend/internal/models/` |
 | **Middleware (Auth, CSRF)** | `backend/internal/middleware/` |
 | **Tests** | Unit/Integration в `backend/internal/**_test.go`; нагрузочные в `loadtest/` |
@@ -53,11 +55,11 @@
    - Используется `QueryExecModeSimpleProtocol` для совместимости с PgBouncer / Supabase.
 3. **Безопасность и Auth:**
    - Токены хранятся **только в `HttpOnly` Cookies** (`access_token`, `refresh_token`). Клиентский JS не имеет доступа к телу токенов.
-   - Все мутирующие запросы (`POST`, `PUT`, `PATCH`, `DELETE`) защищены `middleware.CSRF()` и требуют заголовок `X-CSRF-Token`.
-   - Сессии версионируются через `users.token_version`. При смене пароля или выходе (`/auth/logout`) версия инкрементируется в БД, мгновенно аннулируя старые JWT.
+   - Мутации защищённой группы маршрутов требуют `middleware.CSRF()` и `X-CSRF-Token`. Публичные auth POST находятся вне этой группы; `/notifications/mark-read` допускает запрос без заголовка при `Sec-Fetch-Site: same-origin`. Сверяйте границы в `main.go` и `middleware/csrf.go`.
+   - Сессии версионируются через `users.token_version`. При смене пароля или выходе (`/auth/logout`) версия инкрементируется в БД, запрещая последующий refresh токенов с прежней положительной версией. `middleware.Auth` не сверяет версию с БД: уже выданный access JWT может работать до истечения (15 минут). Logout логирует ошибку инвалидации и всё равно очищает cookies.
 4. **Медиафайлы и фоновые задачи:**
-   - Загрузка фотографий проходит через API (`PUT /storage/entry-photos/upload/:token`), где картинка валидируется, уменьшается до 1920px и пережимается в JPEG q=80 перед отправкой в S3.
-   - Серверный ресайз ограничен семафором параллелизма для защиты сервера (1 vCPU / 1 GB RAM) от OOM-киллера.
+   - Загрузка фотографий проходит через API (`PUT /storage/entry-photos/upload/:token`), где JPEG/PNG декодируются, уменьшаются до 1920px и пережимаются в JPEG q=80. Разрешённые WebP/GIF идут без этой обработки; типы и ограничения проверяйте в `handlers/storage.go`.
+   - Серверный ресайз ограничен канальным семафором на 2 операции. Тело запроса читается до захвата семафора; это не абсолютная защита от OOM. JPEG EXIF-ориентация нормализуется после уменьшения. Аудио также идёт через этот API upload endpoint, без перекодирования.
    - Браузерные Web Push рассылаются через фоновый пул воркеров без блокировки HTTP-хендлеров.
 
 ---
@@ -67,15 +69,15 @@
 - **Сохранение производительности ленты (Feed):**
   Лента построена на `WITH authors AS ... CROSS JOIN LATERAL (...)` и Keyset Cursor `(date, created_at, id)`. Никогда не заменяйте этот запрос на наивный плоский `JOIN entries` и не используйте `OFFSET`.
 - **Правила изменения Database Schema:**
-  - Никогда не изменяйте задним числом уже примененные миграции `0001`–`0021`.
-  - Любые изменения структуры БД оформляются строго новым файлом (например, `0022_name.sql`).
+  - Никогда не изменяйте задним числом уже примененные миграции `0001`–`0024`.
+  - Любые изменения структуры БД оформляются строго новым файлом (например, `0025_name.sql`; сначала проверьте последний номер в каталоге).
   - Миграции должны быть идемпотентными (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`) и выполняться в транзакции.
 - **Каноническое правило приватности (Friend Visibility):**
   Запись видна зрителю только если:
   `(e.user_id = viewer) OR (friendship.status = 'accepted' AND e.is_hidden = false AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false)`.
-  При изменении записей или настроек приватности обязательно вызывать `SummaryCache.InvalidateUser(userID)`.
+  При изменении записей или приватности сохраняйте инвалидацию кеша через существующий `Entries.InvalidateUserCache` / `SummaryCache.InvalidateUser`. `support_preference=no_discussion` запрещает новые комментарии на сервере; не ограничивайтесь отключением формы в UI.
 - **Изоляция новых друзей:**
-  При принятии дружбы (`friends.Respond` со статусом `accepted`) записи с кастомной видимостью автоматически скрываются для нового друга. Не удаляйте этот триггер/логику.
+  При принятии дружбы (`friends.Respond` со статусом `accepted`) записи с кастомной видимостью автоматически скрываются для нового друга. Это транзакционная логика репозитория; миграция `0019` — backfill, а не триггер. Не удаляйте её.
 - **Онбординг и анонсы:**
   Эндпоинт `/announcements/active-prompt` возвращает строго не более 1 активного объявления. Онбординг ограничен 7 днями с момента регистрации. Новые пользователи не видят исторические новости (`published_at >= u.created_at`).
 - **Соблюдение стилей и UX:**
@@ -105,7 +107,19 @@
    ```bash
    cd backend && go test ./...
    ```
-   *(Примечание: модульные тесты работают без БД; интеграционный E2E-тест `hidden_test.go` требует реальной тестовой БД PostgreSQL).*
+   Модульные тесты не требуют БД, но полный `go test ./...` включает интеграционные проверки:
+   - `internal/db/schema_test.go` читает `DATABASE_URL` через `config.Load()` (включая локальный `.env`), требует доступную БД с историей миграций.
+   - `internal/handlers/hidden_test.go` использует ту же настройку, применяет миграции, создаёт и удаляет тестовые аккаунты; при недоступной БД пропускается.
+   - `internal/repository/entries_search_test.go` использует `SEARCH_TEST_DATABASE_URL` и ожидает актуальную схему.
+   - `internal/repository/support_preference_test.go` использует `TEST_DATABASE_URL` и применяет миграции.
+   Используйте отдельную тестовую БД. Не запускайте интеграционные тесты на production. Если БД недоступна, отдельно выполните `go test ./... -skip 'TestCheckSchema|TestHiddenEntriesE2E|TestEntrySearchDatabase|TestSupportPreferenceIntegration'` и явно сообщите о пропущенных проверках.
+
+5. **Тесты frontend (Node.js, без Vitest):**
+   ```bash
+   cd frontend && node --test src/utils/*.test.js src/landing-preview/*.test.js
+   ```
+
+Для изменений только документации проверьте ссылки, пути и `git diff --check`. Не выдавайте наличие тестов или старые отчёты за результат текущего запуска. Workflow деплоя сейчас не выполняет lint и тесты.
 
 ---
 
@@ -121,6 +135,9 @@
 - **Социальная лента (Feed)** → [docs/features/feed.md](docs/features/feed.md)
 - **Друзья и приватность** → [docs/features/friends.md](docs/features/friends.md)
 - **Онбординг и анонсы** → [docs/features/onboarding.md](docs/features/onboarding.md)
+- **Поиск по дневнику** → [docs/features/search.md](docs/features/search.md)
+- **Предпочтение поддержки и комментарии** → [docs/features/support.md](docs/features/support.md)
+- **Блокировки и жалобы** → [docs/features/moderation.md](docs/features/moderation.md)
 - **Темы и стили** → [docs/themes.md](docs/themes.md)
 - **Развертывание и CI/CD** → [docs/deployment.md](docs/deployment.md)
 - **Архитектурные решения (ADR)** → [docs/decisions/README.md](docs/decisions/README.md)

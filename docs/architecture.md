@@ -81,13 +81,13 @@ internal/repository/     internal/services/push/   internal/storage/
 ### 2.2. Пайплайн Middleware (`backend/internal/middleware/`)
 1. **`Logger` & `gin.Recovery()` / `sentrygin`**: Логирование HTTP-запросов и перехват паник с отправкой исключений в Sentry.
 2. **`CORS`**: Разрешает кросс-доменные запросы с доверенных `CORS_ORIGIN`, пропуская необходимые заголовки (`Content-Type`, `X-CSRF-Token`, `X-Time-Zone`, `X-Mock-Date`).
-3. **`RateLimit`**: Защита от abuse на базе Token Bucket (`golang.org/x/time/rate`). Раздельные лимиты для аутентификации (5 зап. / 12 сек. по IP), сброса пароля (1 зап. / 60 сек.), загрузки файлов (10 зап. / 4 сек.), мутаций (15 зап. / 2 сек.), чтения (30 зап. / 600 мс) и health-check. При `DISABLE_RATE_LIMIT=true` лимитеры отключаются (для нагрузочного тестирования).
+3. **`RateLimit`**: Защита от abuse на базе Token Bucket (`golang.org/x/time/rate`). Лимиты задаются как burst и период пополнения одного токена: auth 5 / 12 сек. по IP, forgot-password 1 / 60 сек., upload 10 / 4 сек., mutation 15 / 2 сек., read 30 / 600 мс. Это не число запросов за фиксированное окно; остальные лимитеры — в `cmd/api/main.go`. При `DISABLE_RATE_LIMIT=true` лимитеры отключаются (для нагрузочного тестирования).
 4. **`Auth`**: Извлекает JWT из HTTP-Only cookie `access_token`. Валидирует подпись HMAC-SHA256, срок действия (15 минут), issuer (`moodshare`) и тип токена (`access`). Записывает в контекст Gin `userID`, `tokenVersion` и `csrfToken`. Возвращает заголовок ответа `X-CSRF-Token`.
 5. **`CSRF`**: Для изменяющих состояние методов (`POST`, `PUT`, `PATCH`, `DELETE`) сравнивает заголовок `X-CSRF-Token` со значением `csrfToken`, зашитым в claims проверенного access-токена.
 6. **`Admin`**: Проверяет флаг `is_admin` пользователя в БД (`users.ByID`). При отсутствии прав прерывает запрос со статусом `403 Forbidden`.
 
 ### 2.3. HTTP Handlers (`backend/internal/handlers/`)
-Отвечают исключительно за прием входящих данных, базовую валидацию форматов (UUID, JSON, допустимые диапазоны полей), вызов методов репозитория/сервисов и формирование JSON-ответов с соответствующими HTTP-статусами. Handlers **не содержат сырых SQL-запросов**.
+Отвечают за прием входящих данных, базовую валидацию форматов (UUID, JSON, допустимые диапазоны полей), вызов методов репозитория/сервисов и формирование JSON-ответов с соответствующими HTTP-статусами. Handlers **не содержат сырых SQL-запросов**.
 
 ### 2.4. Репозитории и Data Access Layer (`backend/internal/repository/`)
 Содержат всю работу с базой данных на чистом SQL через `pgxpool.Pool`.
@@ -97,8 +97,8 @@ internal/repository/     internal/services/push/   internal/storage/
 ### 2.5. Выделенные сервисы (Services & Infrastructure)
 - **`internal/services/push`**: Сервис Web Push (поддерживает VAPID RFC 8292, batch-отправку push-уведомлений по списку пользователей).
 - **`internal/storage`**: Взаимодействие с S3-совместимым хранилищем. Генерирует подписанные токены загрузки, осуществляет стриминг и удаление файлов.
-- **`internal/mailer`**: Отправка транзакционных писем через Resend SDK с HTML-шаблонами (в режиме `development` пишет ссылки сброса в консоль).
-- **`internal/backup`**: CLI и фоновый cron-планировщик, выполняющий `pg_dump` и отправляющий сжатые дампы в Google Drive.
+- **`internal/mailer`**: Отправка транзакционных писем через Resend REST API (`net/http`) с HTML-шаблонами (без API-ключа логирует ссылки вместо отправки).
+- **`internal/backup`**: CLI и фоновый планировщик бэкапа: `pg_dump` с fallback на Go-экспорт данных, gzip и Google Drive. Fallback не создаёт схему; см. ограничения в `deployment.md`.
 
 ---
 
@@ -139,17 +139,17 @@ internal/repository/     internal/services/push/   internal/storage/
         │                                 ├─────────────────────────────►│
         │                                 │ 8. S3 OK                     │
         │                                 │◄─────────────────────────────┤
-        │ 9. 200 OK                       │                              │
+        │ 9. 204 No Content                       │                              │
         │◄────────────────────────────────┤                              │
 ```
 
-- Клиент не общается напрямую с бакетом S3 для фото, что устраняет необходимость настройки сложных CORS-политик на стороне провайдера хранилища.
-- Тяжелые мобильные фотографии сжимаются на лету, экономя место и сетевой трафик.
-- Для аудиофайлов используется аналогичный двухшаговый тикетный флоу (`/storage/entry-audio/upload-url`).
+- Загрузка фото и аудио идёт через API; для чтения медиа браузер может обращаться к публичным или подписанным URL S3.
+- JPEG/PNG сжимаются в API; WebP/GIF проходят без перекодирования. Для JPEG учитывается EXIF-ориентация. Семафор допускает две операции обработки, но тела читаются до него.
+- Для аудио тикет запрашивается через `/storage/entry-audio/upload-url`, а бинарные данные отправляются на тот же `PUT /storage/entry-photos/upload/:token` без перекодирования.
 
 ### 3.3. Социальная лента (Feed Flow)
 - Клиент запрашивает `GET /feed?limit=10&cursor=<base64>&include_self=<bool>`.
-- Запрос проходит авторизацию и CSRF.
+- Запрос проходит авторизацию; для GET CSRF middleware не требует заголовка.
 - Репозиторий `Feed.List` выполняет оптимизированный SQL-запрос с `WITH authors AS ... CROSS JOIN LATERAL (...)` с ограничением локальной выборки по автору и составной фильтрацией приватности.
 - Реакции к записям подтягиваются вторым пакетом через `WHERE entry_id = ANY($1::uuid[])` и собираются в памяти Go.
 - Возвращается список записей и непрозрачный Base64-курсор пагинации `(date|created_at|id)`.
@@ -162,8 +162,8 @@ internal/repository/     internal/services/push/   internal/storage/
 |---|---|---|
 | **PostgreSQL 15+** | `jackc/pgx/v5` через `pgxpool` | Основное реляционное хранилище данных, транзакции, миграции |
 | **S3 Storage** | AWS S3 / Cloudflare R2 / MinIO | Долгосрочное хранение фотографий записей, аватаров и аудиозаметок |
-| **Resend** | `resend/resend-go` REST API | Транзакционная доставка email для восстановления пароля и удаления аккаунта |
-| **Web Push (VAPID)** | `SherClockHolmes/webpush-go` (RFC 8292) | Фоновые пуш-уведомления браузера о лайках, комментариях, заявках и постах |
+| **Resend** | Resend REST API через `net/http` | Транзакционная доставка email для восстановления пароля и удаления аккаунта |
+| **Web Push (VAPID)** | Собственная реализация VAPID и Web Push (`crypto/*`, `net/http`) | Фоновые пуш-уведомления браузера о лайках, комментариях, заявках и постах |
 | **Google Drive** | `google.golang.org/api/drive/v3` | Автоматическая архивация дампов базы данных каждые 3 часа с ротацией 7 дней |
 | **Sentry** | `getsentry/sentry-go` + `@sentry/react` | Трейсинг ошибок бэкенда и фронтенда, паник сервера и сбоев клиентского UI |
 
@@ -171,8 +171,15 @@ internal/repository/     internal/services/push/   internal/storage/
 
 ## 5. Архитектура развертывания (Production Deployment Mental Model)
 
-- **Целевая среда:** Linux VPS (протестировано под нагрузкой на конфигурации 1 vCPU / 1 GB RAM).
+- **Целевая среда:** Linux VPS с целевым профилем 1 vCPU / 1 GB RAM; актуальную производительность проверяют на стенде.
 - **Frontend:** Статический SPA-бандл (`frontend/dist`), собираемый с помощью Vite, обслуживаемый веб-сервером (Nginx или Caddy) с gzip/brotli сжатием и кешированием статики через Service Worker.
 - **Backend:** Единый скомпилированный бинарный файл Go (`moodila`), запускаемый как systemd-сервис или через легковесный Docker-контейнер на базе `alpine:3.21`.
 - **Reverse Proxy:** Nginx или Caddy проксирует запросы к Go API (порт `8080`), обеспечивает TLS-терминацию и передает заголовки `X-Forwarded-Proto`, `Host`, `X-Real-IP`.
 - **CI/CD:** GitHub Actions (`.github/workflows/go.yml`) компилирует Go-бинарник и фронтенд, передает артефакты по SSH/SCP в `/opt/moodila/incoming/` и инициирует выполнение сценария `/opt/moodila/deploy.sh`.
+
+## 6. Актуальные границы реализации
+
+- API при недоступной БД продолжает запуск с `pool=nil`; ошибки миграций тоже только логируются. Состояние процесса и готовность БД нужно проверять отдельно.
+- Auth middleware валидирует JWT без проверки версии в БД. Версия сравнивается при refresh; access JWT может действовать до истечения. CSRF защищает мутации authorized-группы, с исключением same-origin mark-read; публичные auth POST вне этой группы.
+- Подтверждение email, блокировки и жалобы добавлены миграцией `0022`, локаль push — `0023`, предпочтение поддержки — `0024`. См. [аутентификацию](authentication.md), [модерацию](features/moderation.md), [поддержку](features/support.md).
+- Лендинг использует отдельную Vite entry `landing-preview.html`, реальные страницы и изолированный demo transport из `frontend/src/landing-preview/`. При изменении API экранов обновляйте также demo-ответы и их тесты.

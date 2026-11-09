@@ -8,9 +8,9 @@
 
 Moodila использует **Cookie-Based JWT аутентификацию с двойной защитой от CSRF и версионированием сессий**:
 
-1. **Отказ от токенов в `localStorage`:** Токены доступа и обновления хранятся исключительно в cookies с флагом `HttpOnly`. Это полностью предотвращает кражу учетных данных через XSS-атаки в браузере.
+1. **Отказ от токенов в `localStorage`:** Токены доступа и обновления хранятся исключительно в cookies с флагом `HttpOnly`. Это запрещает JS читать JWT, но не предотвращает выполнение запросов от имени пользователя при XSS.
 2. **Встроенный в JWT токен CSRF:** При генерации `access_token` сервер создает криптографически стойкую 16-байтную случайную hex-строку и вшивает ее в claims токена (`csrf: "<hex>"`). Клиенту эта строка отдается в незащищенной cookie `csrf_token` (или в заголовке ответа `X-CSRF-Token`).
-3. **Мгновенная инвалидация через `token_version`:** В таблице `users` хранится целочисленное поле `token_version` (по умолчанию `1`). Оно зашивается в claims каждого токена. При смене пароля или выходе со всех устройств счетчик инкрементируется (`UPDATE users SET token_version = token_version + 1`), что немедленно аннулирует все выданные ранее токены без необходимости вести черные списки в БД/Redis.
+3. **Версионирование через `token_version`:** В таблице `users` хранится целочисленное поле `token_version` (по умолчанию `1`). Оно зашивается в claims каждого токена. При смене пароля или выходе со всех устройств счетчик инкрементируется (`UPDATE users SET token_version = token_version + 1`), что запрещает refresh токенов со старой положительной версией. Access JWT не сверяется с БД в middleware и может работать до истечения (15 минут).
 
 ---
 
@@ -49,13 +49,13 @@ Moodila использует **Cookie-Based JWT аутентификацию с 
    - `c.Set("userID", claims.Subject)`
    - `c.Set("tokenVersion", claims.TokenVersion)`
    - `c.Set("csrfToken", claims.CSRF)`
-5. Устанавливает заголовок ответа `X-CSRF-Token: claims.CSRF`.
+5. Не обращается к БД и не сравнивает `tokenVersion` с актуальным значением пользователя. Устанавливает заголовок ответа `X-CSRF-Token: claims.CSRF`.
 6. Обогащает контекст Sentry (`hub.Scope().SetUser(...)`).
 
 ### 3.2. `middleware.CSRF` (`backend/internal/middleware/csrf.go`)
 1. Проверяет HTTP-метод запроса.
 2. Для безопасных методов (`GET`, `HEAD`, `OPTIONS`) проверка пропускается.
-3. Для мутирующих методов (`POST`, `PUT`, `PATCH`, `DELETE`):
+3. Для `/notifications/mark-read` с `Sec-Fetch-Site: same-origin` проверка пропускается (service worker). Для остальных мутирующих методов защищённой группы (`POST`, `PUT`, `PATCH`, `DELETE`):
    - Считывает заголовок `X-CSRF-Token` из входящего запроса.
    - Извлекает `csrfToken` из контекста Gin (куда он попал из проверенного access-токена в `middleware.Auth`).
    - Если заголовок отсутствует или не совпадает с `csrfToken` из контекста — немедленно прерывает запрос: `403 {"error": "invalid or missing CSRF token"}`.
@@ -84,24 +84,24 @@ Moodila использует **Cookie-Based JWT аутентификацию с 
 5. При успехе сервер генерирует новые cookies `access_token` и `refresh_token` с обновленным CSRF-токеном.
 
 ### 4.3. Выход из системы (`POST /auth/logout`)
-Сервер удаляет куки `access_token`, `refresh_token` и `csrf_token`, устанавливая `MaxAge = -1` и пустое значение.
+Сервер извлекает пользователя из контекста или валидных cookies, пытается увеличить `token_version`, затем удаляет `access_token`, `refresh_token` и `csrf_token`. Ошибка инвалидации логируется; ответ всё равно успешный. Старые access JWT не отзываются middleware немедленно.
 
 ### 4.4. Смена пароля (`PATCH /auth/password`)
 1. Запрос требует авторизации и CSRF.
 2. Проверяется старый пароль по bcrypt.
 3. Пароль обновляется в БД, а поле `token_version` инкрементируется на `+1`.
-4. Перевыпускаются куки с новой версией токена для текущего клиента, а все остальные сессии на других устройствах становятся невалидными.
+4. Перевыпускаются куки с новой версией токена для текущего клиента, а refresh остальных сессий с прежней положительной версией отклоняется. Уже выданные access JWT могут работать до истечения.
 
 ### 4.5. Сброс забытого пароля через Email (Resend)
 1. `POST /auth/forgot-password`: Генерируется случайный криптографический токен (32 байта). В таблицу `password_reset_tokens` записывается SHA-256 хеш токена со сроком жизни 30 минут. Клиенту на email отправляется ссылка вида `/reset-password?token=<hex>`.
-2. `POST /auth/reset-password`: Сервер сверяет SHA-256 хеш токена, проверяет срок жизни и `used_at IS NULL`. После обновления пароля токен помечается использованным (`used_at = now()`), а `token_version` пользователя инкрементируется, завершая все активные сессии.
+2. `POST /auth/reset-password`: Сервер сверяет SHA-256 хеш токена, проверяет срок жизни и `used_at IS NULL`. После обновления пароля токен помечается использованным (`used_at = now()`), а `token_version` пользователя инкрементируется, блокируя refresh старых версий; ограничение для уже выданного access JWT сохраняется.
 
 ---
 
 ## 5. Поведение клиентского слоя (`frontend/src/api/client.js`)
 
 - Все fetch-запросы выполняются с `credentials: 'include'`.
-- CSRF-токен извлекается из `document.cookie` (`csrf_token`), заголовка ответа `X-CSRF-Token` или из тела ответа auth-запросов и сохраняется в памяти и `localStorage`.
+- CSRF-токен извлекается из `document.cookie` (`csrf_token`), заголовка ответа `X-CSRF-Token` или из тела ответа auth-запросов и сохраняется в памяти, `localStorage` и IndexedDB (`moodila_push_db/config`) для service worker. Это CSRF-токен, а не JWT.
 - В каждый запрос подставляются заголовки:
   - `Content-Type: application/json`
   - `X-CSRF-Token: <token>`
@@ -118,6 +118,7 @@ Moodila использует **Cookie-Based JWT аутентификацию с 
 - `POST /auth/register`
 - `POST /auth/login`
 - `POST /auth/refresh`
+- `POST /auth/verify-email`
 - `POST /auth/forgot-password`
 - `POST /auth/reset-password`
 - `POST /auth/account/delete-confirm`
@@ -131,8 +132,17 @@ Moodila использует **Cookie-Based JWT аутентификацию с 
 - Все маршруты `/storage/*` (`POST`, `PUT`)
 - Все маршруты `/announcements/*` (`GET`, `POST`)
 - `GET /auth/session`
-- `PATCH /auth/password`, `POST /auth/account/delete-request`
+- `PATCH /auth/password`, `POST /auth/account/delete-request`, `POST /auth/resend-verification`
+- `POST /users/:id/block`, `DELETE /users/:id/block`, `GET /users/blocked`, `POST /reports`
+- `GET /users/me/export`
 - `GET /users/me`, `PATCH /users/me`, `GET /users/:id/profile`, `GET /users/search`, `GET /stats`
 
 ### Административные эндпоинты (`Auth` + `CSRF` + `Admin`)
 - Все маршруты `/admin/announcements/*` (`GET`, `POST`, `PATCH`, `DELETE`)
+- `GET /admin/reports`, `PATCH /admin/reports/:id`, `POST /admin/reports/:id/delete-content`
+
+## 7. Подтверждение email
+
+Регистрация отправляет ссылку `/verify-email?token=...`. Случайный токен из 32 байт кодируется Base64URL; в `email_verification_tokens` хранится SHA-256 хеш с TTL 24 часа. `POST /auth/verify-email` принимает токен, `POST /auth/resend-verification` требует авторизацию и CSRF. В `users` хранится `email_verified_at`, в API — `is_verified`. Миграция `0022` помечает существовавшие аккаунты подтверждёнными. Общего запрета доступа для неподтверждённых аккаунтов сейчас нет.
+
+`JWT_SECRET` обязателен при любом запуске API и должен содержать минимум 32 байта. По умолчанию `COOKIE_SAMESITE=none`, но без Secure обработчик применяет Lax. Публичные auth POST (в том числе logout и refresh) не проходят `middleware.CSRF()`; полный список регистрации маршрутов — `backend/cmd/api/main.go`.

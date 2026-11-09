@@ -38,7 +38,7 @@ OR (
 Лента использует курсорную пагинацию (Keyset / Seek Pagination). Использование `OFFSET` категорически запрещено из-за квадратичной деградации времени выполнения на глубоких страницах.
 
 ### 2.1. Формат и кодирование курсора
-Курсор формируется как строка Base64, содержащая три разделителя:
+Курсор формируется как строка Base64, содержащая три поля и два разделителя:
 ```text
 base64( <date> | <created_at_RFC3339Nano> | <entry_id> )
 ```
@@ -81,13 +81,13 @@ matching_entries AS (
     SELECT x.*
     FROM authors a
     CROSS JOIN LATERAL (
-        SELECT e.id, e.user_id, e.date, e.mood, e.tags, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at
+        SELECT e.id, e.user_id, e.date, e.mood, e.tags, e.support_preference, e.text, e.photo_url, e.audio_url, e.audio_duration, e.created_at
         FROM entries e
         LEFT JOIN entry_friend_visibility efv ON efv.entry_id = e.id AND efv.friend_id = $1
         LEFT JOIN user_friend_visibility ufv ON ufv.user_id = e.user_id AND ufv.friend_id = $1
         WHERE e.user_id = a.uid
-          AND e.is_hidden = false
-          AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false
+          AND (a.uid = $1 OR (e.is_hidden = false
+               AND COALESCE(efv.is_hidden, ufv.hide_by_default, false) = false))
           -- AND (e.date, e.created_at, e.id) < ($cursorDate, $cursorCreatedAt, $cursorID) [при наличии курсора]
         ORDER BY e.date DESC, e.created_at DESC, e.id DESC
         LIMIT $limit + 1
@@ -95,7 +95,7 @@ matching_entries AS (
     ORDER BY x.date DESC, x.created_at DESC, x.id DESC
     LIMIT $limit + 1
 )
-SELECT m.id, m.date::text, m.mood, m.tags, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
+SELECT m.id, m.date::text, m.mood, m.tags, m.support_preference, m.text, m.photo_url, m.audio_url, m.audio_duration, m.created_at,
        u.id, u.username, u.display_name, u.avatar_url,
        0 AS like_count,
        false AS liked_by_me,
@@ -108,8 +108,8 @@ ORDER BY m.date DESC, m.created_at DESC, m.id DESC;
 
 ### 3.1. Почему `CROSS JOIN LATERAL` вместо плоского `JOIN`
 - В плоском `JOIN` планировщик PostgreSQL вынужден был сканировать и сортировать сотни тысяч записей из таблицы `entries`, чтобы найти 10 самых свежих среди всех друзей. Это приводило к сбросу промежуточных результатов на диск и времени ответа > 1300 мс под нагрузкой.
-- При `CROSS JOIN LATERAL` планировщик обращается к составному индексу каждого автора отдельно и берет не более 11 записей на каждого друга (Top-N per group). Объединение 10–50 авторов по 11 строк занимает считанные миллисекунды (~7.5 мс на базе из 300 000 записей).
-- Эквивалентность выборки этого алгоритма верифицирована на 200 пользователях через CLI-утилиту `backend/cmd/verify_feed/main.go`.
+- При `CROSS JOIN LATERAL` планировщик обращается к составному индексу каждого автора отдельно и берёт до `limit + 1` записей (11 при стандартном limit=10). Это ограничивает объём объединения; фактическое время зависит от данных, плана запроса и нагрузки.
+- Для проверки эквивалентности выборки на тестовой БД предусмотрена CLI-утилита `backend/cmd/verify_feed/main.go`.
 
 ---
 
@@ -168,3 +168,12 @@ ORDER BY m.date DESC, m.created_at DESC, m.id DESC;
 2. **Не удаляйте `id` из кортежа курсора:** Кортеж `(date, created_at, id)` гарантирует строгую детерминированность. Без `id` записи с одинаковой датой и временем создания будут либо дублироваться, либо выпадать из пагинации.
 3. **Не переносите расчет реакций в основной SELECT:** Подзапросы `(SELECT COUNT(*) FROM likes)` на каждую строку в основном запросе деградируют время выполнения.
 4. **Не нарушайте порядок в `COALESCE`:** Порядок `COALESCE(efv.is_hidden, ufv.hide_by_default, false)` определяет бизнес-логику: точечный оверрайд записи всегда побеждает дефолт аккаунта.
+
+
+## 8. Комментарии и предпочтение поддержки
+
+`support_preference` передаётся вместе с записью; при `no_discussion` закрывается только добавление новых комментариев, старые остаются видимыми. Репозиторий блокирует строку записи в транзакции перед INSERT; хендлер возвращает `403` с `code=comments_closed`. См. [контракт](support.md).
+
+После успешного добавления комментария `useAddCommentMutation` обновляет список комментариев и `comment_count` нужной записи во всех кешах ленты. Удаление также корректирует кеш; не заменяйте локальное обновление безусловной перезагрузкой всей ленты.
+
+Приведённый SQL иллюстрирует структуру запроса; актуальные поля и параметры проверяйте в `backend/internal/repository/feed.go`. Старые измерения и результаты `loadtest/` не являются текущим SLA.
