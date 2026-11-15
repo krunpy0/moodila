@@ -1,6 +1,7 @@
 /* Hallmark · designed-as-app · design-system: DESIGN.md · genre: editorial */
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useSearchParams, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useInfiniteFeedQuery,
   useLikeEntryMutation,
@@ -11,7 +12,9 @@ import {
   useFriendsQuery,
   useMarkNotificationsAsReadMutation,
   useBlockUserMutation,
+  queryKeys,
 } from "../api/queries";
+import { refreshFeed } from "../utils/feedUpdates";
 import CommentCard from "../components/CommentCard";
 import SupportPreferenceNote from "../components/SupportPreferenceNote";
 import AppLayout from "../components/AppLayout";
@@ -43,6 +46,7 @@ export default function Feed() {
   });
 
   const feedQuery = useInfiniteFeedQuery(10, includeSelf);
+  const queryClient = useQueryClient();
   const friendsQuery = useFriendsQuery();
   const likeMutation = useLikeEntryMutation();
   const blockMutation = useBlockUserMutation();
@@ -235,8 +239,14 @@ export default function Feed() {
               {t("feed.emptySubtitle")}
             </p>
           </div>
-          <div className="lg:hidden">
-            <HeaderBell />
+          <div className="flex items-center gap-xs">
+            <button type="button" disabled={feedQuery.isFetching}
+              onClick={() => { refreshFeed(queryClient, queryKeys.feed(includeSelf)); window.scrollTo({ top: 0 }); }}
+              className="flex min-h-11 items-center gap-xs rounded-full bg-surface-container-lowest px-sm text-label-md text-primary disabled:opacity-50">
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px]">refresh</span>
+              {t("feed.refresh")}
+            </button>
+            <div className="lg:hidden"><HeaderBell /></div>
           </div>
         </header>
 

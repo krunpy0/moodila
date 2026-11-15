@@ -153,5 +153,25 @@ func TestPerformanceIntegration(t *testing.T) {
 		if err != nil || len(found) != 1 || found[0].ID != ids[2] {
 			t.Fatalf("literal wildcard search: %+v %v", found, err)
 		}
+		var shortID string
+		if err := pool.QueryRow(ctx, `INSERT INTO users (email, username, display_name) VALUES ($1, 'qx', 'Short username') RETURNING id`, name+"short@test.invalid").Scan(&shortID); err != nil {
+			t.Fatal(err)
+		}
+		defer pool.Exec(context.Background(), `DELETE FROM users WHERE id = $1`, shortID)
+		found, err = friends.Search(ctx, userID, "QX")
+		if err != nil || len(found) != 1 || found[0].ID != shortID {
+			t.Fatalf("short exact username: %+v %v", found, err)
+		}
+		found, err = friends.Search(ctx, userID, "pe")
+		if err != nil || len(found) != 0 {
+			t.Fatalf("short queries must not match name substrings or username prefixes: %+v %v", found, err)
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO user_blocks (blocker_id, blocked_id) VALUES ($1, $2)`, shortID, userID); err != nil {
+			t.Fatal(err)
+		}
+		found, err = friends.Search(ctx, userID, "qx")
+		if err != nil || len(found) != 0 {
+			t.Fatalf("short search exposes blocked user: %+v %v", found, err)
+		}
 	})
 }

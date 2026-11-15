@@ -36,7 +36,8 @@ func (r Friends) Search(ctx context.Context, userID, query string) ([]models.Fri
 			FROM users u
 			WHERE u.id <> $1::uuid
 			  AND u.deleted_at IS NULL
-			  AND (u.username ILIKE $2 OR u.display_name ILIKE $3)
+			  AND ((char_length($4::text) < 3 AND u.username = $4)
+			       OR (char_length($4::text) >= 3 AND (u.username ILIKE $2 OR u.display_name ILIKE $3)))
 			  AND NOT EXISTS (
 			      SELECT 1 FROM user_blocks ub
 			      WHERE (ub.blocker_id = $1::uuid AND ub.blocked_id = u.id)
@@ -55,7 +56,7 @@ func (r Friends) Search(ctx context.Context, userID, query string) ([]models.Fri
 			AND GREATEST(f.requester_id, f.addressee_id) = GREATEST($1::uuid, u.id)
 		ORDER BY CASE WHEN u.username ILIKE $2 THEN 0 WHEN u.display_name ILIKE $2 THEN 1 ELSE 2 END,
 		         LOWER(u.display_name), u.username`,
-		userID, prefixPattern, containsPattern,
+		userID, prefixPattern, containsPattern, strings.ToLower(query),
 	)
 	if err != nil {
 		return nil, err
@@ -365,5 +366,3 @@ func (r Friends) CancelRequest(ctx context.Context, requesterID, targetID string
 	}
 	return nil
 }
-
-

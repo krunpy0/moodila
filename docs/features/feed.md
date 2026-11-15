@@ -155,6 +155,7 @@ ORDER BY m.date DESC, m.created_at DESC, m.id DESC;
   - Функция получения страницы: `getFeed({ cursor: pageParam, limit, includeSelf })`.
   - Извлечение следующей страницы: `getNextPageParam: (lastPage) => lastPage.next_cursor || undefined`.
 - **Infinite Scroll:** Реализован в `frontend/src/pages/Feed.jsx` через `IntersectionObserver` на невидимом элементе-стороже (`observerRef`) внизу списка.
+- **Push и обновление:** Push помечает кеш ленты устаревшим без немедленной перезагрузки страниц, сохраняя позицию чтения. Кнопка «Обновить» сбрасывает пагинацию и запрашивает только первую страницу; последующий скролл продолжает загрузку с её нового курсора.
 - **Deep-linking (Переход к конкретной записи):** Если в URL присутствует параметр `?entry=<entryId>`, страница после загрузки данных автоматически выполняет плавный скролл к элементу `feed-entry-${targetEntryId}`.
 - **Оптимистичные лайки:** При нажатии на реакцию мутация `useLikeEntryMutation` немедленно обновляет счетчик и локальное состояние реакции в кеше React Query, откатывая изменения при ошибке сети (`previousFeedQueries`).
 

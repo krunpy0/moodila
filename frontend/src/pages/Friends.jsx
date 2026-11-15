@@ -119,11 +119,13 @@ export default function Friends() {
                 maxLength={60}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('friends.searchPlaceholder')}
+                aria-describedby="user-search-hint"
                 className="w-full rounded-full border border-outline-variant/20 bg-surface-container-low py-4 pl-12 pr-4 text-body-md text-on-surface outline-none shadow-card placeholder:text-outline focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </label>
+            <p id="user-search-hint" className="text-body-sm text-on-surface-variant">{t('friends.searchHint')}</p>
 
-            {!isLoading && query.trim() && (
+            {!isLoading && Array.from(searchTerm).length >= 2 && (
               <UserSection title={t('common.seeAll')}>
                 {searchQuery.isLoading ? (
                   Array.from({ length: 3 }, (_, i) => <FriendRowSkeleton key={i} />)

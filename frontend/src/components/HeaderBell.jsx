@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useUnreadNotificationCountQuery, useAnnouncementsInboxQuery, queryKeys } from '../api/queries'
+import { useUnreadNotificationCountQuery, useAnnouncementsInboxQuery } from '../api/queries'
+import { handlePushMessage } from '../utils/feedUpdates'
 import NotificationCenterModal from './NotificationCenterModal'
 import { useLanguage } from '../context/LanguageContext'
 import { haptics } from '../utils/haptics'
@@ -17,19 +18,7 @@ export default function HeaderBell() {
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
-    const handleMessage = (event) => {
-      if (
-        event.data &&
-        (event.data.type === 'PUSH_NOTIFICATION_RECEIVED' || event.data.type === 'PUSH_NOTIFICATION_READ')
-      ) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.notifications })
-        queryClient.invalidateQueries({ queryKey: queryKeys.unreadCount })
-        queryClient.invalidateQueries({ queryKey: queryKeys.activePrompt })
-        queryClient.invalidateQueries({ queryKey: queryKeys.announcementsInbox })
-        queryClient.invalidateQueries({ queryKey: ['feed'] })
-        queryClient.invalidateQueries({ queryKey: queryKeys.pendingFriends })
-      }
-    }
+    const handleMessage = (event) => handlePushMessage(queryClient, event.data)
     navigator.serviceWorker.addEventListener('message', handleMessage)
     return () => navigator.serviceWorker.removeEventListener('message', handleMessage)
   }, [queryClient])

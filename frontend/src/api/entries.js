@@ -80,13 +80,17 @@ export async function uploadEntryPhoto(file) {
   })
   if (!response.ok) {
     let msg = 'Could not upload photo. Please try again.'
+    let code
     try {
       const data = await response.json()
       if (data && data.error) {
         msg = data.error
       }
+      code = data?.code
     } catch (_) {}
-    throw new Error(msg)
+    const error = new Error(msg)
+    error.code = code
+    throw error
   }
   return photoURL
 }

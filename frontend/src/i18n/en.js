@@ -262,6 +262,7 @@ export const en = {
     savingEntry: "Saving entry…",
     photoUploaded: "Photo attached.",
     maxPhotoSize: "Image must be 10 MB or smaller.",
+    photoDimensionsTooLarge: "The image resolution is too large. Reduce it before uploading.",
   },
 
   friendPrivacy: {
@@ -303,6 +304,7 @@ export const en = {
 
   // Feed Page
   feed: {
+    refresh: "Refresh",
     title: "Friend Feed",
     welcomeTitle: "Welcome to Moodila!",
     welcomeDesc: "Create your first entry or find friends to share your day.",
@@ -339,6 +341,7 @@ export const en = {
   friends: {
     title: "Friends",
     searchPlaceholder: "Search & add by @username…",
+    searchHint: "Enter at least 3 characters. For a 2-character username, enter the full username.",
     myFriends: "My Friends",
     addFriend: "Add friend",
     addFriendBtn: "Find & add friends",

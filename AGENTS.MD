@@ -9,6 +9,7 @@
 ## 1. О проекте (Project Summary)
 
 **Moodila** — кроссплатформенное мобильное PWA-приложение (дневник настроения и дня) с социальной лентой, двухуровневой системой приватности, аналитикой и Web Push уведомлениями.
+
 - **Backend:** Go REST API на базе Gin, работающий с PostgreSQL через пул `pgxpool` на чистом SQL (без ORM).
 - **Frontend:** React 19 SPA / PWA (Vite 8, Tailwind CSS, TanStack React Query v5).
 - **Целевая среда:** Linux VPS (1 vCPU / 1 GB RAM, целевой профиль; текущую производительность подтверждать измерениями).
@@ -17,31 +18,31 @@
 
 ## 2. Основной Tech Stack
 
-| Слой | Технологии |
-|---|---|
-| **Backend** | Go 1.25, Gin, `jackc/pgx/v5` (pgxpool), JWT (HS256), Sentry Go |
-| **Frontend** | React 19, Vite 8, React Router DOM 7, TanStack React Query v5, Tailwind CSS 3, Oxlint |
-| **Database** | PostgreSQL 15+ (чистый SQL, Simple Protocol, без ORM) |
-| **Storage & Media** | S3-compatible (AWS S3, Cloudflare R2, MinIO), серверный ресайз фото (JPEG 1920px) |
-| **Integrations** | VAPID Web Push (RFC 8292), Resend Email, Google Drive API v3 (бэкапы) |
+| Слой                | Технологии                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| **Backend**         | Go 1.25, Gin, `jackc/pgx/v5` (pgxpool), JWT (HS256), Sentry Go                        |
+| **Frontend**        | React 19, Vite 8, React Router DOM 7, TanStack React Query v5, Tailwind CSS 3, Oxlint |
+| **Database**        | PostgreSQL 15+ (чистый SQL, Simple Protocol, без ORM)                                 |
+| **Storage & Media** | S3-compatible (AWS S3, Cloudflare R2, MinIO), серверный ресайз фото (JPEG 1920px)     |
+| **Integrations**    | VAPID Web Push (RFC 8292), Resend Email, Google Drive API v3 (бэкапы)                 |
 
 ---
 
 ## 3. Навигационная карта: где что находится
 
-| Сущность / Подсистема | Расположение в репозитории |
-|---|---|
-| **Frontend Root** | `frontend/` (`frontend/src/` — исходники, `frontend/public/` — статика/SW) |
-| **Backend Root** | `backend/` (`cmd/` — исполняемые файлы, `internal/` — пакеты) |
-| **API Handlers & Routes** | `backend/internal/handlers/`, маршруты сконфигурированы в `backend/cmd/api/main.go` |
-| **Business Logic** | Распределена между `backend/internal/handlers/` и `backend/internal/repository/` |
-| **Repository & SQL Queries**| `backend/internal/repository/` (чистый SQL, никакого ORM) |
-| **Migrations & DB Schema** | `backend/migrations/` (файлы `0001_...sql` – `0025_...sql`, `migrations.go`) |
-| **Domain Models** | `backend/internal/models/` |
-| **Middleware (Auth, CSRF)** | `backend/internal/middleware/` |
-| **Tests** | Unit/Integration в `backend/internal/**_test.go`; нагрузочные в `loadtest/` |
-| **Deployment & CI/CD** | `.github/workflows/go.yml`, `backend/Dockerfile`, `docker-compose*.yml` |
-| **Detailed Documentation** | `docs/` (`architecture.md`, `database.md`, `decisions/`, etc.) |
+| Сущность / Подсистема        | Расположение в репозитории                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| **Frontend Root**            | `frontend/` (`frontend/src/` — исходники, `frontend/public/` — статика/SW)          |
+| **Backend Root**             | `backend/` (`cmd/` — исполняемые файлы, `internal/` — пакеты)                       |
+| **API Handlers & Routes**    | `backend/internal/handlers/`, маршруты сконфигурированы в `backend/cmd/api/main.go` |
+| **Business Logic**           | Распределена между `backend/internal/handlers/` и `backend/internal/repository/`    |
+| **Repository & SQL Queries** | `backend/internal/repository/` (чистый SQL, никакого ORM)                           |
+| **Migrations & DB Schema**   | `backend/migrations/` (файлы `0001_...sql` – `0025_...sql`, `migrations.go`)        |
+| **Domain Models**            | `backend/internal/models/`                                                          |
+| **Middleware (Auth, CSRF)**  | `backend/internal/middleware/`                                                      |
+| **Tests**                    | Unit/Integration в `backend/internal/**_test.go`; нагрузочные в `loadtest/`         |
+| **Deployment & CI/CD**       | `.github/workflows/go.yml`, `backend/Dockerfile`, `docker-compose*.yml`             |
+| **Detailed Documentation**   | `docs/` (`architecture.md`, `database.md`, `decisions/`, etc.)                      |
 
 ---
 
@@ -104,16 +105,18 @@
    cd backend && go build ./cmd/api
    ```
 4. **Тесты бэкенда:**
+
    ```bash
    cd backend && go test ./...
    ```
+
    Модульные тесты не требуют БД, но полный `go test ./...` включает интеграционные проверки:
    - `internal/db/schema_test.go` читает `DATABASE_URL` через `config.Load()` (включая локальный `.env`), требует доступную БД с историей миграций.
    - `internal/handlers/hidden_test.go` использует ту же настройку, применяет миграции, создаёт и удаляет тестовые аккаунты; при недоступной БД пропускается.
    - `internal/repository/entries_search_test.go` использует `SEARCH_TEST_DATABASE_URL` и ожидает актуальную схему.
    - `internal/repository/support_preference_test.go` использует `TEST_DATABASE_URL` и применяет миграции.
    - `internal/handlers/performance_test.go` использует `TEST_DATABASE_URL` с уже применёнными миграциями и проверяет число SQL-запросов статистики, формат ленты и поиск пользователей.
-   Используйте отдельную тестовую БД. Не запускайте интеграционные тесты на production. Если БД недоступна, отдельно выполните `go test ./... -skip 'TestCheckSchema|TestHiddenEntriesE2E|TestEntrySearchDatabase|TestSupportPreferenceIntegration|TestPerformanceIntegration'` и явно сообщите о пропущенных проверках.
+     Используйте отдельную тестовую БД. Не запускайте интеграционные тесты на production. Если БД недоступна, отдельно выполните `go test ./... -skip 'TestCheckSchema|TestHiddenEntriesE2E|TestEntrySearchDatabase|TestSupportPreferenceIntegration|TestPerformanceIntegration'` и явно сообщите о пропущенных проверках.
 
 5. **Тесты frontend (Node.js, без Vitest):**
    ```bash

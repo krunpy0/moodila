@@ -263,6 +263,7 @@ export const ru = {
     savingEntry: "Сохранение…",
     photoUploaded: "Фото прикреплено.",
     maxPhotoSize: "Размер фото не должен превышать 10 МБ.",
+    photoDimensionsTooLarge: "Разрешение фото слишком большое. Уменьшите его перед загрузкой.",
   },
 
   friendPrivacy: {
@@ -304,6 +305,7 @@ export const ru = {
 
   // Feed Page
   feed: {
+    refresh: "Обновить",
     title: "Лента друзей",
     welcomeTitle: "Добро пожаловать в Moodila!",
     welcomeDesc:
@@ -341,6 +343,7 @@ export const ru = {
   friends: {
     title: "Друзья",
     searchPlaceholder: "Найти друга по @username…",
+    searchHint: "Введите минимум 3 символа. Короткий username из 2 символов укажите целиком.",
     myFriends: "Мои друзья",
     addFriend: "Добавить",
     addFriendBtn: "Найти и добавить друзей",

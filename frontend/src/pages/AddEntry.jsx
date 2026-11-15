@@ -82,8 +82,9 @@ export default function AddEntry() {
       haptics.success()
     } catch (error) {
       haptics.error()
-      setStatus(error.message)
-      notify(error.message, 'error')
+      const message = error.code === 'image_too_large' ? t('addEntry.photoDimensionsTooLarge') : error.message
+      setStatus(message)
+      notify(message, 'error')
     } finally {
       setIsUploadingPhoto(false)
     }

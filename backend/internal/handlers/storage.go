@@ -22,16 +22,18 @@ import (
 )
 
 const (
-	maxPhotoBytes       = 10 * 1024 * 1024
-	storageUploadIssuer = "moodshare-storage"
-	maxImageSide        = 1920
-	jpegCompressionQual = 80
-	maxDimensionCap     = 20000
-	maxPixelAreaCap     = 50000000
+	maxPhotoBytes        = 10 * 1024 * 1024
+	storageUploadIssuer  = "moodshare-storage"
+	maxImageSide         = 1920
+	jpegCompressionQual  = 80
+	maxDimensionCap      = 20000
+	maxPixelAreaCap      = 50000000
+	maxDecodedPhotoBytes = 64 * 1024 * 1024
 )
 
 // Bound buffered uploads, including time spent decoding and sending them to S3.
 var uploadProcessingSem = make(chan struct{}, 2)
+var errPhotoMemoryLimit = errors.New("image requires too much memory; reduce its dimensions before uploading")
 
 type Storage struct {
 	Storage      storage.S3
@@ -209,6 +211,10 @@ func (h Storage) Upload(c *gin.Context) {
 				return
 			}
 			log.Printf("photo compression failed: %v", err)
+			if errors.Is(err, errPhotoMemoryLimit) {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "code": "image_too_large"})
+				return
+			}
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -245,6 +251,20 @@ func processAndCompressPhoto(raw []byte, contentType string) ([]byte, error) {
 	}
 	if cfg.Width > maxDimensionCap || cfg.Height > maxDimensionCap || int64(cfg.Width)*int64(cfg.Height) > maxPixelAreaCap {
 		return nil, fmt.Errorf("image dimensions exceed safety limits (%dx%d)", cfg.Width, cfg.Height)
+	}
+	bytesPerPixel := int64(4)
+	switch cfg.ColorModel {
+	case color.YCbCrModel:
+		bytesPerPixel = 3
+	case color.GrayModel:
+		bytesPerPixel = 1
+	case color.Gray16Model:
+		bytesPerPixel = 2
+	case color.RGBA64Model, color.NRGBA64Model:
+		bytesPerPixel = 8
+	}
+	if int64(cfg.Width)*int64(cfg.Height)*bytesPerPixel > maxDecodedPhotoBytes {
+		return nil, errPhotoMemoryLimit
 	}
 
 	orientation := 1
@@ -308,6 +328,26 @@ func resizeImage(src image.Image, maxSide int) image.Image {
 	dst := image.NewRGBA(image.Rect(0, 0, nw, nh))
 	xRatio := float64(w) / float64(nw)
 	yRatio := float64(h) / float64(nh)
+	rgbaAt := func(x, y int) (uint32, uint32, uint32, uint32) { return src.At(x, y).RGBA() }
+	// Concrete pixel access avoids boxing a color for every interpolation sample.
+	switch img := src.(type) {
+	case *image.YCbCr:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.YCbCrAt(x, y).RGBA() }
+	case *image.RGBA:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.RGBAAt(x, y).RGBA() }
+	case *image.NRGBA:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.NRGBAAt(x, y).RGBA() }
+	case *image.RGBA64:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.RGBA64At(x, y).RGBA() }
+	case *image.NRGBA64:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.NRGBA64At(x, y).RGBA() }
+	case *image.Gray:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.GrayAt(x, y).RGBA() }
+	case *image.Gray16:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.Gray16At(x, y).RGBA() }
+	case *image.CMYK:
+		rgbaAt = func(x, y int) (uint32, uint32, uint32, uint32) { return img.CMYKAt(x, y).RGBA() }
+	}
 
 	for y := 0; y < nh; y++ {
 		sy := (float64(y)+0.5)*yRatio - 0.5
@@ -333,10 +373,10 @@ func resizeImage(src image.Image, maxSide int) image.Image {
 				x1 = w - 1
 			}
 
-			r00, g00, b00, a00 := src.At(bounds.Min.X+x0, bounds.Min.Y+y0).RGBA()
-			r10, g10, b10, a10 := src.At(bounds.Min.X+x1, bounds.Min.Y+y0).RGBA()
-			r01, g01, b01, a01 := src.At(bounds.Min.X+x0, bounds.Min.Y+y1).RGBA()
-			r11, g11, b11, a11 := src.At(bounds.Min.X+x1, bounds.Min.Y+y1).RGBA()
+			r00, g00, b00, a00 := rgbaAt(bounds.Min.X+x0, bounds.Min.Y+y0)
+			r10, g10, b10, a10 := rgbaAt(bounds.Min.X+x1, bounds.Min.Y+y0)
+			r01, g01, b01, a01 := rgbaAt(bounds.Min.X+x0, bounds.Min.Y+y1)
+			r11, g11, b11, a11 := rgbaAt(bounds.Min.X+x1, bounds.Min.Y+y1)
 
 			w00 := (1 - fx) * (1 - fy)
 			w10 := fx * (1 - fy)

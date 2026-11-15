@@ -89,7 +89,7 @@ export const useUserSearchQuery = (query) =>
   useQuery({
     queryKey: ['users', 'search', query],
     queryFn: () => searchUsers(query),
-    enabled: Boolean(query),
+    enabled: Array.from(query || '').length >= 2,
     staleTime: STALE_TIMES.DYNAMIC,
     retry: false,
     meta: { suppressToast: true },

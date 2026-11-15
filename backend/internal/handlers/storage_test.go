@@ -3,10 +3,14 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"hash/crc32"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -21,6 +25,65 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+func TestPhotoMemoryLimitBeforeDecode(t *testing.T) {
+	var raw bytes.Buffer
+	img := image.NewNRGBA64(image.Rect(0, 0, 1, 1))
+	img.SetNRGBA64(0, 0, color.NRGBA64{R: 12345, A: 32768})
+	if err := png.Encode(&raw, img); err != nil {
+		t.Fatal(err)
+	}
+	data := raw.Bytes()
+	binary.BigEndian.PutUint32(data[16:20], 8000)
+	binary.BigEndian.PutUint32(data[20:24], 6000)
+	binary.BigEndian.PutUint32(data[29:33], crc32.ChecksumIEEE(data[12:29]))
+	if _, err := processAndCompressPhoto(data, "image/png"); !errors.Is(err, errPhotoMemoryLimit) {
+		t.Fatalf("expected memory rejection before pixel decoding, got %v", err)
+	}
+}
+
+type genericImage struct{ image.Image }
+
+func TestResizeImagePixelAccess(t *testing.T) {
+	bounds := image.Rect(7, 9, 24, 20)
+	for _, src := range []draw.Image{
+		image.NewRGBA(bounds), image.NewNRGBA(bounds), image.NewRGBA64(bounds),
+		image.NewNRGBA64(bounds), image.NewGray(bounds), image.NewGray16(bounds), image.NewCMYK(bounds),
+	} {
+		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+			for x := bounds.Min.X; x < bounds.Max.X; x++ {
+				src.Set(x, y, color.NRGBA64{R: uint16(x * 2000), G: uint16(y * 2000), B: 12345, A: 32768})
+			}
+		}
+		got := resizeImage(src, 8).(*image.RGBA)
+		want := resizeImage(genericImage{src}, 8).(*image.RGBA)
+		if !bytes.Equal(got.Pix, want.Pix) {
+			t.Fatalf("pixel conversion changed for %T", src)
+		}
+	}
+	src := image.NewYCbCr(bounds, image.YCbCrSubsampleRatio420)
+	for i := range src.Y {
+		src.Y[i] = uint8(i)
+	}
+	for i := range src.Cb {
+		src.Cb[i], src.Cr[i] = 90, 160
+	}
+	if !bytes.Equal(resizeImage(src, 8).(*image.RGBA).Pix, resizeImage(genericImage{src}, 8).(*image.RGBA).Pix) {
+		t.Fatal("YCbCr conversion changed")
+	}
+	if allocs := testing.AllocsPerRun(3, func() { resizeImage(src, 8) }); allocs > 4 {
+		t.Fatalf("resize allocates per pixel: %f allocations", allocs)
+	}
+}
+
+func BenchmarkResizeCameraPhoto(b *testing.B) {
+	src := image.NewYCbCr(image.Rect(0, 0, 4000, 3000), image.YCbCrSubsampleRatio420)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		resizeImage(src, 1920)
+	}
+}
 
 func createTestImage(w, h int) []byte {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
@@ -251,6 +314,23 @@ func TestUploadHandler_CompressionAndShortCircuit(t *testing.T) {
 		r.ServeHTTP(w, req)
 		if w.Code != http.StatusBadRequest {
 			t.Errorf("expected 400 Bad Request for corrupted image, got %d (body: %s)", w.Code, w.Body.String())
+		}
+	})
+	t.Run("Decoded memory limit returns a localized error code", func(t *testing.T) {
+		data := createTestImage(1, 1)
+		binary.BigEndian.PutUint32(data[16:20], 8000)
+		binary.BigEndian.PutUint32(data[20:24], 6000)
+		binary.BigEndian.PutUint32(data[29:33], crc32.ChecksumIEEE(data[12:29]))
+		token := makeToken("image/png", int64(len(data)))
+		req := httptest.NewRequest("PUT", "/storage/entry-photos/upload/"+token, bytes.NewReader(data))
+		req.Header.Set("Content-Type", "image/png")
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		var body struct {
+			Code string `json:"code"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || w.Code != http.StatusBadRequest || body.Code != "image_too_large" {
+			t.Fatalf("expected memory limit response, got %d: %s (%v)", w.Code, w.Body.String(), err)
 		}
 	})
 
