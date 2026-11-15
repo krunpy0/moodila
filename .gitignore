@@ -103,3 +103,5 @@ impeccable/
 
 .build/
 outputs/
+loadtest/results/
+loadtest-result.json

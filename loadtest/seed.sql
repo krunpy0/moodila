@@ -1,8 +1,8 @@
 -- ============================================================================
 -- Moodila Scaled Database Seed Script for Real Capacity Load Testing
 -- Target: 20,000 users (loadtest_0 .. loadtest_19999)
---         Degree distribution: 30-200 friends each (power-law / scale-free)
---         ~300,000 entries across the last 365 days
+--         Ring + skewed random extra friendships (up to 200 per user)
+--         Exactly 1,363,740 entries across the last 365 days
 --         Reactions, comments, account- & post-level privacy overrides
 --         All indexes and constraints preserved
 --         Finishes with VACUUM ANALYZE for query planner calibration
@@ -10,9 +10,23 @@
 -- ============================================================================
 
 \timing on
+\set ON_ERROR_STOP on
 
 -- Wrap data generation in transaction
 BEGIN;
+
+-- Never seed a development/production database or touch real users.
+DO $$ BEGIN
+    IF current_database() <> 'moodila_loadtest' THEN
+        RAISE EXCEPTION 'seed.sql requires the isolated moodila_loadtest database';
+    END IF;
+    IF EXISTS (SELECT 1 FROM users WHERE email IS NULL OR email !~ '^loadtest_[0-9]+@moodila[.]test$') THEN
+        RAISE EXCEPTION 'Database contains non-loadtest users';
+    END IF;
+END $$;
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+DELETE FROM users;
+SELECT setseed(0.42);
 
 -- 1. Create 20,000 Users (loadtest_0 .. loadtest_19999)
 -- Precomputed bcrypt hash for 'Password123!' (cost 10):
@@ -24,7 +38,7 @@ SELECT
     'loadtest_' || i,
     'Load Bot ' || i,
     '$2a$10$p4AFnmzWFzxZqZW6I0IguOsJdQnw2/lbN/N9SAh7Z6jrojspMedZa',
-    0,
+    1,
     now() - INTERVAL '365 days' + ((i % 1000) || ' minutes')::INTERVAL
 FROM generate_series(0, 19999) AS i
 ON CONFLICT (email) DO UPDATE 
@@ -37,7 +51,7 @@ SELECT
     email, 
     (substring(username from 10))::int AS bot_idx
 FROM users
-WHERE email LIKE 'loadtest_%@moodila.test';
+WHERE email ~ '^loadtest_[0-9]+@moodila[.]test$';
 
 CREATE INDEX ON tmp_load_users (bot_idx);
 CREATE INDEX ON tmp_load_users (id);
