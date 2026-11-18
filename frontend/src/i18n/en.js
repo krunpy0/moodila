@@ -127,6 +127,7 @@ export const en = {
       Tired: "Tired",
       Anxious: "Anxious",
       Overwhelmed: "Overwhelmed",
+      Angry: "Angry",
       Frustrated: "Frustrated",
       Lonely: "Lonely",
       Drained: "Drained",

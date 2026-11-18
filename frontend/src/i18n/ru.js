@@ -127,6 +127,7 @@ export const ru = {
       Tired: "Усталость",
       Anxious: "Тревога",
       Overwhelmed: "Перегрузка",
+      Angry: "Злость",
       Frustrated: "Раздражение",
       Lonely: "Одиночество",
       Drained: "Опустошение",
