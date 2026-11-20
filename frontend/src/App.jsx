@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSessionQuery } from "./api/queries";
+import { handlePushMessage } from "./utils/feedUpdates";
 import { setSentryUser, clearSentryUser } from "./sentry";
 import AnnouncementQueue from "./components/AnnouncementQueue";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
@@ -19,6 +21,16 @@ function SessionUserSync() {
     }
   }, [session]);
   return null;
+}
+
+function usePushMessages() {
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    const handleMessage = (event) => handlePushMessage(queryClient, event.data);
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", handleMessage);
+  }, [queryClient]);
 }
 
 const Home = lazy(() => import("./pages/Home"));
@@ -47,6 +59,7 @@ function PageFallback() {
 }
 
 export default function App() {
+  usePushMessages();
   return (
     <ErrorBoundary>
       <SessionUserSync />

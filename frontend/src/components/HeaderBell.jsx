@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useUnreadNotificationCountQuery, useAnnouncementsInboxQuery } from '../api/queries'
-import { handlePushMessage } from '../utils/feedUpdates'
 import NotificationCenterModal from './NotificationCenterModal'
 import { useLanguage } from '../context/LanguageContext'
 import { haptics } from '../utils/haptics'
@@ -11,17 +9,9 @@ export default function HeaderBell() {
   const { data } = useUnreadNotificationCountQuery()
   const { data: inboxAnnouncements = [] } = useAnnouncementsInboxQuery()
   const { t } = useLanguage()
-  const queryClient = useQueryClient()
 
   const unreadNewsCount = inboxAnnouncements.filter((a) => !a.is_read).length
   const unreadCount = (data?.unread_count || 0) + unreadNewsCount
-
-  useEffect(() => {
-    if (!('serviceWorker' in navigator)) return
-    const handleMessage = (event) => handlePushMessage(queryClient, event.data)
-    navigator.serviceWorker.addEventListener('message', handleMessage)
-    return () => navigator.serviceWorker.removeEventListener('message', handleMessage)
-  }, [queryClient])
 
   return (
     <>

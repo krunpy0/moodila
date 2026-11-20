@@ -14,7 +14,7 @@ import {
   useBlockUserMutation,
   queryKeys,
 } from "../api/queries";
-import { refreshFeed } from "../utils/feedUpdates";
+import { refreshFeed, trimFeedToFirstPage } from "../utils/feedUpdates";
 import CommentCard from "../components/CommentCard";
 import SupportPreferenceNote from "../components/SupportPreferenceNote";
 import AppLayout from "../components/AppLayout";
@@ -47,6 +47,9 @@ export default function Feed() {
 
   const feedQuery = useInfiniteFeedQuery(10, includeSelf);
   const queryClient = useQueryClient();
+  useEffect(() => () => {
+    trimFeedToFirstPage(queryClient, queryKeys.feed(includeSelf));
+  }, [queryClient, includeSelf]);
   const friendsQuery = useFriendsQuery();
   const likeMutation = useLikeEntryMutation();
   const blockMutation = useBlockUserMutation();
