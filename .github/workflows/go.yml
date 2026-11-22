@@ -30,6 +30,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Test frontend
+        working-directory: frontend
+        run: node --test src/utils/*.test.js src/landing-preview/*.test.js
+
       - name: Build frontend
         working-directory: frontend
         run: npm run build
@@ -41,6 +45,10 @@ jobs:
       - name: Download Go modules
         working-directory: backend
         run: go mod download
+
+      - name: Test backend
+        working-directory: backend
+        run: go test ./...
 
       - name: Build backend
         working-directory: backend
