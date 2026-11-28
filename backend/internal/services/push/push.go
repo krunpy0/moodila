@@ -29,6 +29,7 @@ import (
 type pushJob struct {
 	sub          models.PushSubscription
 	payloadBytes []byte
+	ttl          string
 }
 
 type Service struct {
@@ -40,7 +41,6 @@ type Service struct {
 	httpClient *http.Client
 	jobs       chan pushJob
 }
-
 
 func NewService(cfg config.Config, repo repository.PushSubscriptions) (*Service, error) {
 	pub := strings.TrimSpace(cfg.VAPIDPublicKey)
@@ -81,15 +81,16 @@ func NewService(cfg config.Config, repo repository.PushSubscriptions) (*Service,
 
 func (s *Service) worker() {
 	for job := range s.jobs {
-		s.dispatch(job.sub, job.payloadBytes)
+		s.dispatch(job)
 	}
 }
 
-func (s *Service) dispatch(sub models.PushSubscription, payloadBytes []byte) {
+func (s *Service) dispatch(job pushJob) {
+	sub := job.sub
 	sendCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := s.sendPushNotification(sendCtx, sub, payloadBytes)
+	err := s.sendPushNotification(sendCtx, sub, job.payloadBytes, job.ttl)
 	if err != nil {
 		log.Printf("[push] failed to send to endpoint %s: %v", sub.Endpoint, err)
 		// If push endpoint returned 404 Not Found or 410 Gone, subscription is invalid/expired
@@ -108,6 +109,10 @@ func (s *Service) SendToUser(ctx context.Context, userID string, payload models.
 }
 
 func (s *Service) SendToUsers(ctx context.Context, userIDs []string, payload models.PushPayload) error {
+	return s.enqueue(ctx, userIDs, payload, "86400")
+}
+
+func (s *Service) enqueue(ctx context.Context, userIDs []string, payload models.PushPayload, ttl string) error {
 	if len(userIDs) == 0 {
 		return nil
 	}
@@ -123,7 +128,7 @@ func (s *Service) SendToUsers(ctx context.Context, userIDs []string, payload mod
 
 	for _, sub := range subs {
 		select {
-		case s.jobs <- pushJob{sub: sub, payloadBytes: payloadBytes}:
+		case s.jobs <- pushJob{sub: sub, payloadBytes: payloadBytes, ttl: ttl}:
 		default:
 			log.Printf("[push] warning: push queue full, dropping notification for %s", sub.Endpoint)
 		}
@@ -131,7 +136,7 @@ func (s *Service) SendToUsers(ctx context.Context, userIDs []string, payload mod
 	return nil
 }
 
-func (s *Service) sendPushNotification(ctx context.Context, sub models.PushSubscription, payload []byte) error {
+func (s *Service) sendPushNotification(ctx context.Context, sub models.PushSubscription, payload []byte, ttl string) error {
 	reqBody, err := encryptAES128GCM(payload, sub.P256dh, sub.Auth)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt payload: %w", err)
@@ -155,7 +160,7 @@ func (s *Service) sendPushNotification(ctx context.Context, sub models.PushSubsc
 
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("Content-Encoding", "aes128gcm")
-	req.Header.Set("TTL", "86400")
+	req.Header.Set("TTL", ttl)
 	req.Header.Set("Authorization", fmt.Sprintf("vapid t=%s, k=%s", vapidJWT, s.vapidPub))
 
 	resp, err := s.httpClient.Do(req)

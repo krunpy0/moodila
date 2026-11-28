@@ -102,6 +102,7 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     (async () => {
+      const isMoodReminder = data.tag === 'mood-reminder';
       let lang = data.locale;
       if (!lang) {
         lang = await getLanguageFromIDB();
@@ -122,13 +123,14 @@ self.addEventListener('push', (event) => {
           entry_id: data.entry_id || null,
           notification_id: data.notification_id || null,
         },
-        actions: [
+        actions: isMoodReminder ? [] : [
           { action: 'mark-read', title: markReadText },
         ],
         vibrate: [100, 50, 100],
       };
 
       await self.registration.showNotification(title, options);
+      if (isMoodReminder) return;
       const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
       clients.forEach((client) => {
         client.postMessage({

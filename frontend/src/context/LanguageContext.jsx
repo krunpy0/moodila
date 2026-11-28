@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { en } from '../i18n/en'
 import { ru } from '../i18n/ru'
-import { api } from '../api/client'
 
 const translations = { en, ru }
 
@@ -50,11 +49,6 @@ export function LanguageProvider({ children, persist = true }) {
       localStorage.setItem('moodshare_lang', language)
       document.documentElement.lang = language
       saveLanguageToIDB(language)
-      // Best-effort sync to server notification settings if authenticated
-      api('/notifications/settings', {
-        method: 'PATCH',
-        body: JSON.stringify({ locale: language }),
-      }).catch(() => {})
     } catch {
       // Storage restriction fallback
     }

@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSessionQuery } from "./api/queries";
+import { updateNotificationSettings } from "./api/notifications";
+import { useLanguage } from "./context/LanguageContext";
 import { handlePushMessage } from "./utils/feedUpdates";
 import { setSentryUser, clearSentryUser } from "./sentry";
 import AnnouncementQueue from "./components/AnnouncementQueue";
@@ -11,6 +13,8 @@ import SplashScreen from "./components/SplashScreen";
 
 function SessionUserSync() {
   const { data: session } = useSessionQuery(true);
+  const { language } = useLanguage();
+  const userID = session?.user_id;
   useEffect(() => {
     const user =
       session?.user || (session?.user_id ? { user_id: session.user_id } : null);
@@ -20,6 +24,19 @@ function SessionUserSync() {
       clearSentryUser();
     }
   }, [session]);
+
+  useEffect(() => {
+    if (!userID) return;
+    const syncNotificationSettings = () => {
+      if (document.visibilityState !== "visible") return;
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      updateNotificationSettings({ locale: language, time_zone: timeZone }).catch(() => {});
+    };
+    syncNotificationSettings();
+    document.addEventListener("visibilitychange", syncNotificationSettings);
+    return () =>
+      document.removeEventListener("visibilitychange", syncNotificationSettings);
+  }, [userID, language]);
   return null;
 }
 

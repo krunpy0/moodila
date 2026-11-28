@@ -293,6 +293,11 @@ func main() {
 	}
 
 	shutdownComplete := make(chan struct{})
+	remindersCtx, stopReminders := context.WithCancel(context.Background())
+	defer stopReminders()
+	if pushService != nil && pool != nil {
+		go pushService.RunMoodReminders(remindersCtx, notificationSettingsRepo)
+	}
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -300,6 +305,7 @@ func main() {
 		log.Printf("Received signal %v, initiating graceful shutdown...", sig)
 
 		backupCancel()
+		stopReminders()
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

@@ -60,8 +60,7 @@ export async function subscribeToPushNotifications() {
   }
 
   const subJSON = subscription.toJSON()
-  const lang = isEn ? 'en' : 'ru'
-  await savePushSubscription(subJSON, lang)
+  await savePushSubscription(subJSON)
 
   return subJSON
 }

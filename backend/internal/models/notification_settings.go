@@ -18,4 +18,5 @@ type NotificationSettingsInput struct {
 	NotifyComments       *bool   `json:"notify_comments"`
 	NotifyFriendRequests *bool   `json:"notify_friend_requests"`
 	Locale               *string `json:"locale"`
+	TimeZone             *string `json:"time_zone"`
 }
