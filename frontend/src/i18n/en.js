@@ -427,6 +427,8 @@ export const en = {
 
   // Notification Settings
   notificationSettings: {
+    moodRemindersTitle: 'Mood reminders',
+    moodRemindersDesc: 'At 8 PM if you haven’t logged your mood today',
     title: "Push Notifications",
     subtitle: "Customize notification categories",
     configure: "Configure",

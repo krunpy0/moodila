@@ -430,6 +430,8 @@ export const ru = {
 
   // Notification Settings
   notificationSettings: {
+    moodRemindersTitle: 'Напоминания о настроении',
+    moodRemindersDesc: 'В 20:00, если ты ещё не отметил настроение за сегодня',
     title: "Push-уведомления",
     subtitle: "Настройка категорий уведомлений",
     configure: "Настроить",

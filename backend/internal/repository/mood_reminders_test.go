@@ -59,6 +59,18 @@ func TestMoodRemindersIntegration(t *testing.T) {
 	due := create("Asia/Kathmandu", "en", true)
 	recorded := create("Asia/Kathmandu", "ru", true)
 	otherZone := create("Europe/Berlin", "ru", true)
+	optedOut := create("Asia/Kathmandu", "ru", true)
+	enabled := false
+	if saved, err := settings.Update(ctx, optedOut, models.NotificationSettingsInput{NotifyMoodReminders: &enabled}); err != nil || saved.NotifyMoodReminders || !saved.NotifyComments {
+		t.Fatalf("disable reminders: %+v, %v", saved, err)
+	}
+	locale, zone := "en", "Asia/Kathmandu"
+	if _, err := settings.Update(ctx, optedOut, models.NotificationSettingsInput{Locale: &locale, TimeZone: &zone}); err != nil {
+		t.Fatal(err)
+	}
+	if saved, err := settings.GetByUserID(ctx, optedOut); err != nil || saved.NotifyMoodReminders {
+		t.Fatalf("sync must keep reminders disabled: %+v, %v", saved, err)
+	}
 	create("Asia/Kathmandu", "ru", false)
 	create("invalid/zone", "ru", true)
 	if _, err := pool.Exec(ctx, `INSERT INTO entries (user_id, date, mood, is_hidden)
@@ -79,5 +91,10 @@ func TestMoodRemindersIntegration(t *testing.T) {
 	check(14, 14)
 	check(14, 15, MoodReminder{UserID: due, Locale: "en"})
 	check(14, 16)
+	enabled = true
+	if saved, err := settings.Update(ctx, optedOut, models.NotificationSettingsInput{NotifyMoodReminders: &enabled}); err != nil || !saved.NotifyMoodReminders {
+		t.Fatalf("enable reminders: %+v, %v", saved, err)
+	}
+	check(14, 17, MoodReminder{UserID: optedOut, Locale: "en"})
 	check(18, 0, MoodReminder{UserID: otherZone, Locale: "ru"})
 }

@@ -72,6 +72,13 @@ export default function NotificationSettingsModal({ isOpen, onClose }) {
 
   const settingItems = [
     {
+      key: 'notify_mood_reminders',
+      icon: 'schedule',
+      title: t('notificationSettings.moodRemindersTitle'),
+      desc: t('notificationSettings.moodRemindersDesc'),
+      enabled: settings?.notify_mood_reminders !== false,
+    },
+    {
       key: 'notify_new_posts',
       icon: 'article',
       title: t('notificationSettings.newPostsTitle', 'Новые записи друзей'),

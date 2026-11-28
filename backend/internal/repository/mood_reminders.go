@@ -23,6 +23,7 @@ func (r NotificationSettings) ClaimMoodReminders(ctx context.Context, now time.T
 		SET last_mood_reminder_date = t.local_now::date
 		FROM local_times t
 		WHERE s.user_id = t.user_id AND s.time_zone = t.time_zone
+		  AND s.notify_mood_reminders
 		  AND t.local_now::time >= TIME '20:00' AND t.local_now::time < TIME '20:05'
 		  AND (s.last_mood_reminder_date IS NULL OR s.last_mood_reminder_date < t.local_now::date)
 		  AND EXISTS (SELECT 1 FROM push_subscriptions p WHERE p.user_id = s.user_id)

@@ -23,6 +23,7 @@ func (r NotificationSettings) GetByUserID(ctx context.Context, userID string) (m
 		NotifyReactions:      true,
 		NotifyComments:       true,
 		NotifyFriendRequests: true,
+		NotifyMoodReminders:  true,
 		Locale:               "ru",
 		UpdatedAt:            time.Now(),
 	}
@@ -34,11 +35,11 @@ func (r NotificationSettings) GetByUserID(ctx context.Context, userID string) (m
 	var s models.NotificationSettings
 	s.UserID = userID
 	err := r.Pool.QueryRow(ctx, `
-		SELECT notify_new_posts, notify_reactions, notify_comments, notify_friend_requests, COALESCE(locale, 'ru'), updated_at
+		SELECT notify_new_posts, notify_reactions, notify_comments, notify_friend_requests, notify_mood_reminders, COALESCE(locale, 'ru'), updated_at
 		FROM notification_settings
 		WHERE user_id = $1`,
 		userID,
-	).Scan(&s.NotifyNewPosts, &s.NotifyReactions, &s.NotifyComments, &s.NotifyFriendRequests, &s.Locale, &s.UpdatedAt)
+	).Scan(&s.NotifyNewPosts, &s.NotifyReactions, &s.NotifyComments, &s.NotifyFriendRequests, &s.NotifyMoodReminders, &s.Locale, &s.UpdatedAt)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -57,6 +58,7 @@ func (r NotificationSettings) Update(ctx context.Context, userID string, input m
 		NotifyReactions:      true,
 		NotifyComments:       true,
 		NotifyFriendRequests: true,
+		NotifyMoodReminders:  true,
 		Locale:               "ru",
 		UpdatedAt:            time.Now(),
 	}
@@ -77,7 +79,7 @@ func (r NotificationSettings) Update(ctx context.Context, userID string, input m
 	s.UserID = userID
 
 	err := r.Pool.QueryRow(ctx, `
-		INSERT INTO notification_settings (user_id, notify_new_posts, notify_reactions, notify_comments, notify_friend_requests, locale, time_zone, updated_at)
+		INSERT INTO notification_settings (user_id, notify_new_posts, notify_reactions, notify_comments, notify_friend_requests, locale, time_zone, notify_mood_reminders, updated_at)
 		VALUES (
 			$1,
 			COALESCE($2, true),
@@ -86,6 +88,7 @@ func (r NotificationSettings) Update(ctx context.Context, userID string, input m
 			COALESCE($5, true),
 			COALESCE($6, 'ru'),
 			(SELECT name FROM pg_timezone_names WHERE name = $7 AND name <> 'localtime'),
+			COALESCE($8, true),
 			NOW()
 		)
 		ON CONFLICT (user_id) DO UPDATE SET
@@ -95,10 +98,11 @@ func (r NotificationSettings) Update(ctx context.Context, userID string, input m
 			notify_friend_requests = COALESCE($5, notification_settings.notify_friend_requests),
 			locale = COALESCE($6, notification_settings.locale),
 			time_zone = COALESCE(EXCLUDED.time_zone, notification_settings.time_zone),
+			notify_mood_reminders = COALESCE($8, notification_settings.notify_mood_reminders),
 			updated_at = NOW()
-		RETURNING notify_new_posts, notify_reactions, notify_comments, notify_friend_requests, locale, updated_at`,
-		userID, input.NotifyNewPosts, input.NotifyReactions, input.NotifyComments, input.NotifyFriendRequests, cleanLocale, input.TimeZone,
-	).Scan(&s.NotifyNewPosts, &s.NotifyReactions, &s.NotifyComments, &s.NotifyFriendRequests, &s.Locale, &s.UpdatedAt)
+		RETURNING notify_new_posts, notify_reactions, notify_comments, notify_friend_requests, notify_mood_reminders, locale, updated_at`,
+		userID, input.NotifyNewPosts, input.NotifyReactions, input.NotifyComments, input.NotifyFriendRequests, cleanLocale, input.TimeZone, input.NotifyMoodReminders,
+	).Scan(&s.NotifyNewPosts, &s.NotifyReactions, &s.NotifyComments, &s.NotifyFriendRequests, &s.NotifyMoodReminders, &s.Locale, &s.UpdatedAt)
 
 	if err != nil {
 		return defaultSettings, err

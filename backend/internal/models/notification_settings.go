@@ -8,6 +8,7 @@ type NotificationSettings struct {
 	NotifyReactions      bool      `json:"notify_reactions"`
 	NotifyComments       bool      `json:"notify_comments"`
 	NotifyFriendRequests bool      `json:"notify_friend_requests"`
+	NotifyMoodReminders  bool      `json:"notify_mood_reminders"`
 	Locale               string    `json:"locale"`
 	UpdatedAt            time.Time `json:"updated_at,omitempty"`
 }
@@ -17,6 +18,7 @@ type NotificationSettingsInput struct {
 	NotifyReactions      *bool   `json:"notify_reactions"`
 	NotifyComments       *bool   `json:"notify_comments"`
 	NotifyFriendRequests *bool   `json:"notify_friend_requests"`
+	NotifyMoodReminders  *bool   `json:"notify_mood_reminders"`
 	Locale               *string `json:"locale"`
 	TimeZone             *string `json:"time_zone"`
 }
